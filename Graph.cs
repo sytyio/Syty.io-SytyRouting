@@ -8,19 +8,38 @@ namespace SytyRouting
             var connectionString = Constants.connectionString;
             string queryString;
 
+            List<Node> nodes = new List<Node>();
+
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
             // Preliminary test to read the first 100 'ways' rows and display the retrieved Node data
-            queryString = "SELECT * FROM public.ways ORDER BY gid ASC LIMIT 100";
+            queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
             Console.WriteLine("");
             Console.WriteLine(queryString);
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {
+                long nodeId;
+                double nodeX;
+                double nodeY;
+
                 while (await reader.ReadAsync())
                 {
-                    Console.WriteLine("Query result: node id:{0}, x={1}, y={2}", reader.GetValue(6),reader.GetValue(17),reader.GetValue(18));
+                    nodeId = Convert.ToInt64(reader.GetValue(6));
+                    nodeX = Convert.ToDouble(reader.GetValue(17));
+                    nodeY = Convert.ToDouble(reader.GetValue(18));
+                    
+                    Console.WriteLine("Query result: node id:{0}, x={1}, y={2}", nodeId, nodeX, nodeY);
+                    if(nodes.Exists(n => n.Id == nodeId))
+                    {
+                        Console.WriteLine("The node {0} is already in the List", nodeId);
+                    }
+                    else
+                    {
+                        var newNode = NodeRepository.Create(nodeId, nodeX, nodeY);
+                        nodes.Add(newNode);
+                    }
                 }
             }
         }
