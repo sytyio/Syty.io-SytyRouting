@@ -37,11 +37,18 @@ namespace SytyRouting
                     }
                     else
                     {
-                        var newNode = NodeRepository.Create(nodeId, nodeX, nodeY);
+                        var newNode = this.CreateNode(nodeId, nodeX, nodeY);
                         nodes.Add(newNode);
                     }
                 }
             }
         }
+
+        private Node CreateNode(long id, double x, double y)
+        {
+            var node = new Node{Id = id, X = x, Y = y};
+            return node;
+        }
+
     }
 }
