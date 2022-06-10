@@ -3,12 +3,11 @@ namespace SytyRouting
 {
     public class Graph
     {
+        public Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
         public async Task DBLoadAsync()
         {
             var connectionString = Constants.connectionString;
             string queryString;
-
-            List<Node> nodes = new List<Node>();
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
@@ -31,16 +30,22 @@ namespace SytyRouting
                     nodeY = Convert.ToDouble(reader.GetValue(18));
                     
                     Console.WriteLine("Query result: node id:{0}, x={1}, y={2}", nodeId, nodeX, nodeY);
-                    if(nodes.Exists(n => n.Id == nodeId))
+                    if (!Nodes.ContainsKey(nodeId))
                     {
-                        Console.WriteLine("The node {0} is already in the List", nodeId);
+                        var newNode = this.CreateNode(nodeId, nodeX, nodeY);
+                        Nodes.Add(nodeId, newNode);
+                        Console.WriteLine("New Node added for key = {0} (nodeId)", Nodes[nodeId]);
                     }
                     else
                     {
-                        var newNode = this.CreateNode(nodeId, nodeX, nodeY);
-                        nodes.Add(newNode);
+                        Console.WriteLine("The node {0} is already in the Node Dictionary", nodeId);
                     }
                 }
+            }
+            foreach(var node in Nodes)
+            {
+                Console.WriteLine("Nodes Key(Node Id) = {0}({1}), X = {2}, Y = {3}",
+                    node.Key, node.Value.Id, node.Value.X, node.Value.Y);
             }
         }
 
