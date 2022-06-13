@@ -31,7 +31,7 @@ namespace SytyRouting
                 double targetY;
 
                 long edgeId;
-                int edgeOneWay;
+                Constants.OneWayState edgeOneWay;
                 
                 Node sourceNode = new Node();
                 Node targetNode = new Node();
@@ -47,7 +47,7 @@ namespace SytyRouting
                     targetY = Convert.ToDouble(reader.GetValue(20));
                     
                     edgeId = Convert.ToInt64(reader.GetValue(0));
-                    edgeOneWay = Convert.ToInt32(reader.GetValue(15));
+                    edgeOneWay = (Constants.OneWayState)Convert.ToInt32(reader.GetValue(15));
 
                     Console.WriteLine("Query result:: source: id={0}, x={1}, y={2}; target: id={3}, x={4}, y={5}", sourceId, sourceX, sourceY, targetId, targetX, targetY);
 
@@ -57,8 +57,20 @@ namespace SytyRouting
                     // If it is not already in the Node dictionary, creates a Node based on the 'target' information
                     targetNode = CreateNode(targetId, targetX, targetY);
 
-                    // Check for one_way
-                    CreateEdge(edgeId, sourceNode, targetNode);
+                    // Check for one_way state
+                    switch (edgeOneWay)
+                    {
+                        case Constants.OneWayState.Yes: // Only forward direction
+                            CreateEdge(edgeId, sourceNode, targetNode);
+                            break;
+                        case Constants.OneWayState.Reversed: // Only backward direction
+                            CreateEdge(edgeId, targetNode, sourceNode);
+                            break;
+                        default: // Both ways
+                            CreateEdge(edgeId, sourceNode, targetNode);
+                            CreateEdge(edgeId, targetNode, sourceNode);
+                            break;
+                    }
                 }
             }
         }
@@ -92,6 +104,7 @@ namespace SytyRouting
         {
             var edge = new Edge{Id = edgeId, EndNode = targetNode};
             sourceNode.TargetEdges.Add(edge);
+            Console.WriteLine("Edge {0} was successfully added to Node {1}", edgeId, sourceNode.Id);
         }
     }
 }
