@@ -9,13 +9,14 @@ namespace SytyRouting
         public async Task DBLoadAsync()
         {
             var connectionString = Constants.connectionString;
-            string queryString;
+            string queryString;           
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
             
             // Read all 'ways' rows and creates the corresponding Nodes
             queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
+            
             Console.WriteLine("");
             Console.WriteLine(queryString);
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -29,6 +30,12 @@ namespace SytyRouting
                 double targetX;
                 double targetY;
 
+                long edgeId;
+                int edgeOneWay;
+                
+                Node sourceNode = new Node();
+                Node targetNode = new Node();
+
                 while (await reader.ReadAsync())
                 {
                     sourceId = Convert.ToInt64(reader.GetValue(6));
@@ -39,15 +46,21 @@ namespace SytyRouting
                     targetX = Convert.ToDouble(reader.GetValue(19));
                     targetY = Convert.ToDouble(reader.GetValue(20));
                     
+                    edgeId = Convert.ToInt64(reader.GetValue(0));
+                    edgeOneWay = Convert.ToInt32(reader.GetValue(15));
+
                     Console.WriteLine("Query result:: source: id={0}, x={1}, y={2}; target: id={3}, x={4}, y={5}", sourceId, sourceX, sourceY, targetId, targetX, targetY);
 
                     // If it is not already in the Node dictionary, creates a Node based on the 'source' information
-                    Node sourceNode = new Node();
                     sourceNode = this.CreateNode(sourceId, sourceX, sourceY);
                     
                     // If it is not already in the Node dictionary, creates a Node based on the 'target' information
-                    Node targetNode = new Node();
                     targetNode = this.CreateNode(targetId, targetX, targetY);
+
+                    if(this.AddTargetEdge(edgeId, sourceNode, targetNode))
+                    {
+                        Console.WriteLine("Edge {0} was successfully added to source Node {1}", edgeId, sourceNode.Id);
+                    }
                 }
             }
         }
@@ -75,6 +88,31 @@ namespace SytyRouting
             }
 
             return Nodes[id];
+        }
+
+        private bool AddTargetEdge(long edgeId, Node sourceNode, Node targetNode)
+        {
+            var edge = new Edge();
+            if(sourceNode.TargetEdges != null && sourceNode.TargetEdges!.Exists(e => e.Id == edgeId))
+            {
+                Console.WriteLine("The Edge {0} is already in the TargetEdges list of Node {1}", edgeId, sourceNode.Id);
+            }
+            else
+            {
+                edge = this.CreateEdge(edgeId, targetNode);
+                sourceNode.TargetEdges?.Add(edge);
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private Edge CreateEdge(long id, Node endNode)
+        {
+            var edge = new Edge{Id = id, EndNode = endNode};
+
+            return edge;
         }
     }
 }
