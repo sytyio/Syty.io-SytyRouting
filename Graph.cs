@@ -79,8 +79,20 @@ namespace SytyRouting
         {
             foreach(var node in this.Nodes)
             {
-                Console.WriteLine("Nodes Key(Node Id) = {0}({1}), X = {2}, Y = {3}",
+                Console.WriteLine("Node {0}({1}), X = {2}, Y = {3}",
                     node.Key, node.Value.Id, node.Value.X, node.Value.Y);
+                GetEdges(node.Value.Id);
+                Console.WriteLine();
+            }
+            
+        }
+
+        public void GetEdges(long nodeId)
+        {
+            Console.WriteLine("\tEdges in Node {0}:", nodeId);
+            foreach(var edge in Nodes[nodeId].TargetEdges)
+            {
+                Console.WriteLine("\t\tEdge: {0}, End Node Id: {1};", edge.Id, edge.EndNode?.Id);
             }
         }
 
