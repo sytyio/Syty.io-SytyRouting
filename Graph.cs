@@ -100,11 +100,11 @@ namespace SytyRouting
             return Nodes[id];
         }
 
-        private void CreateEdge(long edgeId, Node sourceNode, Node targetNode)
+        private void CreateEdge(long edgeId, Node baseNode, Node endNode)
         {
-            var edge = new Edge{Id = edgeId, EndNode = targetNode};
-            sourceNode.TargetEdges.Add(edge);
-            Console.WriteLine("Edge {0} was successfully added to Node {1}", edgeId, sourceNode.Id);
+            var edge = new Edge{Id = edgeId, EndNode = endNode};
+            baseNode.TargetEdges.Add(edge);
+            Console.WriteLine("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
         }
     }
 }
