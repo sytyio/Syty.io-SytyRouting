@@ -52,15 +52,13 @@ namespace SytyRouting
                     Console.WriteLine("Query result:: source: id={0}, x={1}, y={2}; target: id={3}, x={4}, y={5}", sourceId, sourceX, sourceY, targetId, targetX, targetY);
 
                     // If it is not already in the Node dictionary, creates a Node based on the 'source' information
-                    sourceNode = this.CreateNode(sourceId, sourceX, sourceY);
+                    sourceNode = CreateNode(sourceId, sourceX, sourceY);
                     
                     // If it is not already in the Node dictionary, creates a Node based on the 'target' information
-                    targetNode = this.CreateNode(targetId, targetX, targetY);
+                    targetNode = CreateNode(targetId, targetX, targetY);
 
-                    if(this.AddTargetEdge(edgeId, sourceNode, targetNode))
-                    {
-                        Console.WriteLine("Edge {0} was successfully added to source Node {1}", edgeId, sourceNode.Id);
-                    }
+                    // Check for one_way
+                    CreateEdge(edgeId, sourceNode, targetNode);
                 }
             }
         }
@@ -90,29 +88,10 @@ namespace SytyRouting
             return Nodes[id];
         }
 
-        private bool AddTargetEdge(long edgeId, Node sourceNode, Node targetNode)
+        private void CreateEdge(long edgeId, Node sourceNode, Node targetNode)
         {
-            var edge = new Edge();
-            if(sourceNode.TargetEdges != null && sourceNode.TargetEdges!.Exists(e => e.Id == edgeId))
-            {
-                Console.WriteLine("The Edge {0} is already in the TargetEdges list of Node {1}", edgeId, sourceNode.Id);
-            }
-            else
-            {
-                edge = this.CreateEdge(edgeId, targetNode);
-                sourceNode.TargetEdges?.Add(edge);
-
-                return true;
-            }
-
-            return false;
-        }
-
-        private Edge CreateEdge(long id, Node endNode)
-        {
-            var edge = new Edge{Id = id, EndNode = endNode};
-
-            return edge;
+            var edge = new Edge{Id = edgeId, EndNode = targetNode};
+            sourceNode.TargetEdges.Add(edge);
         }
     }
 }
