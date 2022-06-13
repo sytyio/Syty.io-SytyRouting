@@ -1,9 +1,11 @@
 using Npgsql;
+
 namespace SytyRouting
 {
     public class Graph
     {
         public Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
+
         public async Task DBLoadAsync()
         {
             var connectionString = Constants.connectionString;
@@ -11,38 +13,48 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-
-            // Preliminary test to read the first 100 'ways' rows and display the retrieved Node data
+            
+            // Read all 'ways' rows and creates the corresponding Nodes
             queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
             Console.WriteLine("");
             Console.WriteLine(queryString);
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {
-                long nodeId;
-                double nodeX;
-                double nodeY;
+                long sourceId;
+                double sourceX;
+                double sourceY;
+
+                long targetId;
+                double targetX;
+                double targetY;
 
                 while (await reader.ReadAsync())
                 {
-                    nodeId = Convert.ToInt64(reader.GetValue(6));
-                    nodeX = Convert.ToDouble(reader.GetValue(17));
-                    nodeY = Convert.ToDouble(reader.GetValue(18));
+                    sourceId = Convert.ToInt64(reader.GetValue(6));
+                    sourceX = Convert.ToDouble(reader.GetValue(17));
+                    sourceY = Convert.ToDouble(reader.GetValue(18));
                     
-                    Console.WriteLine("Query result: node id:{0}, x={1}, y={2}", nodeId, nodeX, nodeY);
-                    if (!Nodes.ContainsKey(nodeId))
-                    {
-                        var newNode = this.CreateNode(nodeId, nodeX, nodeY);
-                        Nodes.Add(nodeId, newNode);
-                        Console.WriteLine("New Node added for key = {0} (nodeId)", Nodes[nodeId]);
-                    }
-                    else
-                    {
-                        Console.WriteLine("The node {0} is already in the Node Dictionary", nodeId);
-                    }
+                    targetId = Convert.ToInt64(reader.GetValue(7));
+                    targetX = Convert.ToDouble(reader.GetValue(19));
+                    targetY = Convert.ToDouble(reader.GetValue(20));
+                    
+                    Console.WriteLine("Query result:: source: id={0}, x={1}, y={2}; target: id={3}, x={4}, y={5}", sourceId, sourceX, sourceY, targetId, targetX, targetY);
+
+                    // If it is not already in the Node dictionary, creates a Node based on the 'source' information
+                    Node sourceNode = new Node();
+                    sourceNode = this.CreateNode(sourceId, sourceX, sourceY);
+                    
+                    // If it is not already in the Node dictionary, creates a Node based on the 'target' information
+                    Node targetNode = new Node();
+                    targetNode = this.CreateNode(targetId, targetX, targetY);
                 }
             }
-            foreach(var node in Nodes)
+        }
+
+        public void GetNodes()
+        {
+            foreach(var node in this.Nodes)
             {
                 Console.WriteLine("Nodes Key(Node Id) = {0}({1}), X = {2}, Y = {3}",
                     node.Key, node.Value.Id, node.Value.X, node.Value.Y);
@@ -51,9 +63,18 @@ namespace SytyRouting
 
         private Node CreateNode(long id, double x, double y)
         {
-            var node = new Node{Id = id, X = x, Y = y};
-            return node;
-        }
+            if (!Nodes.ContainsKey(id))
+            {   
+                var node = new Node{Id = id, X = x, Y = y};
+                Nodes.Add(id, node);
+                Console.WriteLine("New Node added for key = {0} (nodeId)", Nodes[id].Id);
+            }
+            else
+            {
+                Console.WriteLine("The node {0} is already in the Node Dictionary", Nodes[id].Id);
+            }
 
+            return Nodes[id];
+        }
     }
 }
