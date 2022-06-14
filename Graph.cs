@@ -1,6 +1,7 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
+
 namespace SytyRouting
 {
     public class Graph
@@ -23,7 +24,7 @@ namespace SytyRouting
             
             // Read all 'ways' rows and creates the corresponding Nodes
             //                     0      1      2       3           4            5      6   7   8   9
-            queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways LIMIT 100";
+            queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways";
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -66,9 +67,14 @@ namespace SytyRouting
 
                     if (dbRowsProcessed % Constants.logStopIterations == 0)
                     {
-                        logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
+                        stopWatch.Stop();
+                        GraphCreationBenchmark(dbRowsProcessed, stopWatch.Elapsed, stopWatch.ElapsedMilliseconds);
+                        
+
+                        stopWatch.Start();
                     }
                 }
+                logger.Info("Total number of DB rows processed: {0}", dbRowsProcessed);
             }
         }
 
@@ -112,6 +118,17 @@ namespace SytyRouting
             var edge = new Edge{Id = edgeId, EndNode = endNode};
             baseNode.TargetEdges.Add(edge);
             logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
+        }
+
+        private void GraphCreationBenchmark(ulong dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
+        {
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+                timeSpan.Milliseconds);
+
+            logger.Info("Elapsed Time (HH:MM:S.mS) :: " + elapsedTime);
+            logger.Info("Elapsed Time (milliseconds) :: " + timeSpanMilliseconds);
+            logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
         }
     }
 }
