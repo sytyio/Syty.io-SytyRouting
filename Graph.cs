@@ -1,6 +1,9 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+
 namespace SytyRouting
 {
     public class Graph
@@ -8,6 +11,47 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
+
+
+        public Task FileSaveAsync()
+        {
+            FileStream fs = new FileStream("graph.dat", FileMode.Create);
+            BinaryFormatter formatter = new BinaryFormatter();
+            try
+            {
+                formatter.Serialize(fs, Nodes);
+            }
+            catch (SerializationException e)
+            {
+                logger.Fatal("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs.Close();
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task FileLoadAsync()
+        {
+            FileStream fs = new FileStream("graph.dat", FileMode.Open);
+            try
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                Nodes = (Dictionary<long, Node>)formatter.Deserialize(fs);
+            }
+            catch (SerializationException e)
+            {
+                logger.Fatal("Failed to serialize. Reason: " + e.Message);
+                throw;
+            }
+            finally
+            {
+                fs.Close();
+            }
+            return Task.CompletedTask;
+        }
 
         public async Task DBLoadAsync()
         {
@@ -23,7 +67,7 @@ namespace SytyRouting
             
             // Read all 'ways' rows and creates the corresponding Nodes
             // queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
-            queryString = "SELECT * FROM public.ways LIMIT 100";
+            queryString = "SELECT * FROM public.ways LIMIT 100000";
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))

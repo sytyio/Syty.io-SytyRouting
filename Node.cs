@@ -1,5 +1,7 @@
 namespace SytyRouting
 {
+
+    [Serializable]
     public class Node
     {
         public long Id {get; set;}

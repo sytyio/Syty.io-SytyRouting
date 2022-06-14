@@ -80,6 +80,7 @@ $RECYCLE.BIN/
 *.user
 *.userosscache
 *.sln.docstates
+*.dat
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

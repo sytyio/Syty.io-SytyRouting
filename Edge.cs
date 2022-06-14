@@ -1,5 +1,6 @@
 namespace SytyRouting
 {
+    [Serializable]
     public class Edge
     {
         public long Id {get; set;}
