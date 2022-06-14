@@ -1,5 +1,6 @@
 using Npgsql;
 using NLog;
+using System.Diagnostics;
 
 namespace SytyRouting
 {
@@ -7,10 +8,14 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
+        private Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
 
         public async Task DBLoadAsync()
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            // stopWatch.ElapsedMilliseconds;
+
             var connectionString = Constants.connectionString;
             string queryString;           
 
@@ -18,49 +23,36 @@ namespace SytyRouting
             await connection.OpenAsync();
             
             // Read all 'ways' rows and creates the corresponding Nodes
-            queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
+            // queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
+            queryString = "SELECT * FROM public.ways LIMIT 100";
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
-            {
-                long sourceId;
-                double sourceX;
-                double sourceY;
-
-                long targetId;
-                double targetX;
-                double targetY;
-
-                long edgeId;
-                Constants.OneWayState edgeOneWay;
-                
-                Node sourceNode = new Node();
-                Node targetNode = new Node();
-
+            {    
                 while (await reader.ReadAsync())
                 {
-                    sourceId = Convert.ToInt64(reader.GetValue(6));
-                    sourceX = Convert.ToDouble(reader.GetValue(17));
-                    sourceY = Convert.ToDouble(reader.GetValue(18));
+                    var sourceId = Convert.ToInt64(reader.GetValue(6));
+                    var sourceX = Convert.ToDouble(reader.GetValue(17));
+                    var sourceY = Convert.ToDouble(reader.GetValue(18));
                     
-                    targetId = Convert.ToInt64(reader.GetValue(7));
-                    targetX = Convert.ToDouble(reader.GetValue(19));
-                    targetY = Convert.ToDouble(reader.GetValue(20));
+                    var targetId = Convert.ToInt64(reader.GetValue(7));
+                    var targetX = Convert.ToDouble(reader.GetValue(19));
+                    var targetY = Convert.ToDouble(reader.GetValue(20));
                     
-                    edgeId = Convert.ToInt64(reader.GetValue(0));
-                    edgeOneWay = (Constants.OneWayState)Convert.ToInt32(reader.GetValue(15));
+                    var edgeId = Convert.ToInt64(reader.GetValue(0));
+                    var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(15));
 
-                    sourceNode = CreateNode(sourceId, sourceX, sourceY);
-                    targetNode = CreateNode(targetId, targetX, targetY);
+                    var sourceNode = CreateNode(sourceId, sourceX, sourceY);
+                    var targetNode = CreateNode(targetId, targetX, targetY);
 
                     // Check for one_way state
                     switch (edgeOneWay)
                     {
-                        case Constants.OneWayState.Yes: // Only forward direction
+                        case OneWayState.Yes: // Only forward direction
                             CreateEdge(edgeId, sourceNode, targetNode);
                             break;
-                        case Constants.OneWayState.Reversed: // Only backward direction
+                        case OneWayState.Reversed: // Only backward direction
                             CreateEdge(edgeId, targetNode, sourceNode);
                             break;
                         default: // Both ways
@@ -80,10 +72,9 @@ namespace SytyRouting
                     node.Key, node.Value.Id, node.Value.X, node.Value.Y);
                 GetEdges(node.Value.Id);
             }
-            
         }
 
-        public void GetEdges(long nodeId)
+        private void GetEdges(long nodeId)
         {
             logger.Debug("\tEdges in Node {0}:", nodeId);
             foreach(var edge in Nodes[nodeId].TargetEdges)
@@ -102,7 +93,7 @@ namespace SytyRouting
             }
             else
             {
-                logger.Warn("Node {0} is already in the Node collection", Nodes[id].Id);
+                logger.Trace("Node {0} is already in the Node collection", Nodes[id].Id);
             }
 
             return Nodes[id];
