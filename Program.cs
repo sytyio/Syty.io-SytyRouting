@@ -10,7 +10,7 @@ namespace SytyRouting
         {
             // Logger configuration
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
-            NLog.Common.InternalLogger.LogToConsole = true;
+            NLog.Common.InternalLogger.LogToConsole = false;
 
             logger.Info("syty.io routing engine for large scale datasets");
 
