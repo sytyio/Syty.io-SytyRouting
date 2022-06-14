@@ -1,7 +1,6 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
-
 namespace SytyRouting
 {
     public class Graph
@@ -30,6 +29,8 @@ namespace SytyRouting
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {    
+                ulong dbRowsProcessed = 0;
+
                 while (await reader.ReadAsync())
                 {
                     var sourceId = Convert.ToInt64(reader.GetValue(6));
@@ -59,6 +60,13 @@ namespace SytyRouting
                             CreateEdge(edgeId, sourceNode, targetNode);
                             CreateEdge(edgeId, targetNode, sourceNode);
                             break;
+                    }
+
+                    dbRowsProcessed++;
+
+                    if (dbRowsProcessed % Constants.logStopIterations == 0)
+                    {
+                        logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
                     }
                 }
             }
