@@ -14,10 +14,11 @@ namespace SytyRouting
 
             logger.Info("syty.io routing engine for large scale datasets");
 
-            // Console.WriteLine("syty.io routing engine for large scale datasets");
-
+            logger.Info("Creating syty.io routing graph from dataset");
             var graph = new Graph();
             await graph.DBLoadAsync();
+
+            logger.Info("Retrieving Node information");
             graph.GetNodes();
 
             // Logger flushing

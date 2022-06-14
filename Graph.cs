@@ -1,9 +1,12 @@
 using Npgsql;
+using NLog;
 
 namespace SytyRouting
 {
     public class Graph
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         public Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
 
         public async Task DBLoadAsync()
@@ -16,9 +19,8 @@ namespace SytyRouting
             
             // Read all 'ways' rows and creates the corresponding Nodes
             queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
-            
-            Console.WriteLine("");
-            Console.WriteLine(queryString);
+            logger.Debug("DB query: {0}", queryString);
+
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {
@@ -49,12 +51,7 @@ namespace SytyRouting
                     edgeId = Convert.ToInt64(reader.GetValue(0));
                     edgeOneWay = (Constants.OneWayState)Convert.ToInt32(reader.GetValue(15));
 
-                    Console.WriteLine("Query result:: source: id={0}, x={1}, y={2}; target: id={3}, x={4}, y={5}", sourceId, sourceX, sourceY, targetId, targetX, targetY);
-
-                    // If it is not already in the Node dictionary, creates a Node based on the 'source' information
                     sourceNode = CreateNode(sourceId, sourceX, sourceY);
-                    
-                    // If it is not already in the Node dictionary, creates a Node based on the 'target' information
                     targetNode = CreateNode(targetId, targetX, targetY);
 
                     // Check for one_way state
@@ -79,20 +76,19 @@ namespace SytyRouting
         {
             foreach(var node in this.Nodes)
             {
-                Console.WriteLine("Node {0}({1}), X = {2}, Y = {3}",
+                logger.Debug("Node {0}({1}), X = {2}, Y = {3}",
                     node.Key, node.Value.Id, node.Value.X, node.Value.Y);
                 GetEdges(node.Value.Id);
-                Console.WriteLine();
             }
             
         }
 
         public void GetEdges(long nodeId)
         {
-            Console.WriteLine("\tEdges in Node {0}:", nodeId);
+            logger.Debug("\tEdges in Node {0}:", nodeId);
             foreach(var edge in Nodes[nodeId].TargetEdges)
             {
-                Console.WriteLine("\t\tEdge: {0}, End Node Id: {1};", edge.Id, edge.EndNode?.Id);
+                logger.Debug("\t\tEdge: {0}, End Node Id: {1};", edge.Id, edge.EndNode?.Id);
             }
         }
 
@@ -102,11 +98,11 @@ namespace SytyRouting
             {   
                 var node = new Node{Id = id, X = x, Y = y};
                 Nodes.Add(id, node);
-                Console.WriteLine("New Node added for key = {0} (nodeId)", Nodes[id].Id);
+                logger.Trace("New Node added for key (nodeId) = {0} ", Nodes[id].Id);
             }
             else
             {
-                Console.WriteLine("The node {0} is already in the Node Dictionary", Nodes[id].Id);
+                logger.Warn("Node {0} is already in the Node collection", Nodes[id].Id);
             }
 
             return Nodes[id];
@@ -116,7 +112,7 @@ namespace SytyRouting
         {
             var edge = new Edge{Id = edgeId, EndNode = endNode};
             baseNode.TargetEdges.Add(edge);
-            Console.WriteLine("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
+            logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
         }
     }
 }
