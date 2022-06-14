@@ -22,8 +22,8 @@ namespace SytyRouting
             await connection.OpenAsync();
             
             // Read all 'ways' rows and creates the corresponding Nodes
-            // queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
-            queryString = "SELECT * FROM public.ways LIMIT 100";
+            //                     0      1      2       3           4            5      6   7   8   9
+            queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways LIMIT 100";
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -33,16 +33,16 @@ namespace SytyRouting
 
                 while (await reader.ReadAsync())
                 {
-                    var sourceId = Convert.ToInt64(reader.GetValue(6));
-                    var sourceX = Convert.ToDouble(reader.GetValue(17));
-                    var sourceY = Convert.ToDouble(reader.GetValue(18));
+                    var sourceId = Convert.ToInt64(reader.GetValue(1)); // surce
+                    var sourceX = Convert.ToDouble(reader.GetValue(6)); // x1
+                    var sourceY = Convert.ToDouble(reader.GetValue(7)); // y1 
                     
-                    var targetId = Convert.ToInt64(reader.GetValue(7));
-                    var targetX = Convert.ToDouble(reader.GetValue(19));
-                    var targetY = Convert.ToDouble(reader.GetValue(20));
+                    var targetId = Convert.ToInt64(reader.GetValue(2)); // target
+                    var targetX = Convert.ToDouble(reader.GetValue(8)); // x2
+                    var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     
-                    var edgeId = Convert.ToInt64(reader.GetValue(0));
-                    var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(15));
+                    var edgeId = Convert.ToInt64(reader.GetValue(0));   // gid
+                    var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
                     var sourceNode = CreateNode(sourceId, sourceX, sourceY);
                     var targetNode = CreateNode(targetId, targetX, targetY);
