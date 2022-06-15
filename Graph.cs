@@ -1,8 +1,11 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
+<<<<<<< HEAD
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
+=======
+>>>>>>> dac0af0bb3d1edbd3224f4a7fbe8b302f7b4fac8
 
 namespace SytyRouting
 {
@@ -66,8 +69,13 @@ namespace SytyRouting
             await connection.OpenAsync();
             
             // Read all 'ways' rows and creates the corresponding Nodes
+<<<<<<< HEAD
             // queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
             queryString = "SELECT * FROM public.ways LIMIT 100000";
+=======
+            //                     0      1      2       3           4            5      6   7   8   9
+            queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways";
+>>>>>>> dac0af0bb3d1edbd3224f4a7fbe8b302f7b4fac8
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -77,16 +85,16 @@ namespace SytyRouting
 
                 while (await reader.ReadAsync())
                 {
-                    var sourceId = Convert.ToInt64(reader.GetValue(6));
-                    var sourceX = Convert.ToDouble(reader.GetValue(17));
-                    var sourceY = Convert.ToDouble(reader.GetValue(18));
+                    var sourceId = Convert.ToInt64(reader.GetValue(1)); // surce
+                    var sourceX = Convert.ToDouble(reader.GetValue(6)); // x1
+                    var sourceY = Convert.ToDouble(reader.GetValue(7)); // y1 
                     
-                    var targetId = Convert.ToInt64(reader.GetValue(7));
-                    var targetX = Convert.ToDouble(reader.GetValue(19));
-                    var targetY = Convert.ToDouble(reader.GetValue(20));
+                    var targetId = Convert.ToInt64(reader.GetValue(2)); // target
+                    var targetX = Convert.ToDouble(reader.GetValue(8)); // x2
+                    var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     
-                    var edgeId = Convert.ToInt64(reader.GetValue(0));
-                    var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(15));
+                    var edgeId = Convert.ToInt64(reader.GetValue(0));   // gid
+                    var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
                     var sourceNode = CreateNode(sourceId, sourceX, sourceY);
                     var targetNode = CreateNode(targetId, targetX, targetY);
@@ -110,9 +118,14 @@ namespace SytyRouting
 
                     if (dbRowsProcessed % Constants.logStopIterations == 0)
                     {
-                        logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
+                        stopWatch.Stop();
+                        GraphCreationBenchmark(dbRowsProcessed, stopWatch.Elapsed, stopWatch.ElapsedMilliseconds);
+                        
+
+                        stopWatch.Start();
                     }
                 }
+                logger.Info("Total number of DB rows processed: {0}", dbRowsProcessed);
             }
         }
 
@@ -156,6 +169,17 @@ namespace SytyRouting
             var edge = new Edge{Id = edgeId, EndNode = endNode};
             baseNode.TargetEdges.Add(edge);
             logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
+        }
+
+        private void GraphCreationBenchmark(ulong dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
+        {
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+                timeSpan.Milliseconds);
+
+            logger.Info("Elapsed Time (HH:MM:S.mS) :: " + elapsedTime);
+            logger.Info("Elapsed Time (milliseconds) :: " + timeSpanMilliseconds);
+            logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
         }
     }
 }
