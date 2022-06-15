@@ -21,7 +21,21 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            
+
+            // Get the total number of rows to estimate the Graph creation time
+            long totalDbRows = 0;
+            queryString = "SELECT count(*) AS exact_count FROM public.ways";
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                while (await reader.ReadAsync())
+                {
+                    totalDbRows = Convert.ToInt64(reader.GetValue(0));
+                }
+            }
+
+            logger.Info("Total number of rows to process: {0}", totalDbRows);
+
             // Read all 'ways' rows and creates the corresponding Nodes
             //                     0      1      2       3           4            5      6   7   8   9
             queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways";
@@ -30,7 +44,7 @@ namespace SytyRouting
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {    
-                ulong dbRowsProcessed = 0;
+                long dbRowsProcessed = 0;
 
                 while (await reader.ReadAsync())
                 {
@@ -66,13 +80,14 @@ namespace SytyRouting
                     dbRowsProcessed++;
 
                     if (dbRowsProcessed % Constants.stopIterations == 0)
-                    {
-                        stopWatch.Stop();
-                        GraphCreationBenchmark(dbRowsProcessed, stopWatch);
-                        stopWatch.Start();
+                    {                        
+                        var timeSpan = stopWatch.Elapsed;
+                        var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                        GraphCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds);
                     }
                 }
-                logger.Info("Total number of DB rows processed: {0}", dbRowsProcessed);
+                stopWatch.Stop();
+                logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
             }
         }
 
@@ -118,19 +133,25 @@ namespace SytyRouting
             logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
         }
 
-        private void GraphCreationBenchmark(ulong dbRowsProcessed, Stopwatch stopwatch)
+        private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
         {
-            var timeSpan = stopwatch.Elapsed;
-            var timeSpanMilliseconds = stopwatch.ElapsedMilliseconds;
-
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
                 timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
                 timeSpan.Milliseconds);
 
-            var nodeCreationRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; 
-            logger.Info("Elapsed Time (HH:MM:S.mS) :: " + elapsedTime);
+            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000;
+            var graphCreationTimeSeconds = totalDbRows / rowProcessingRate;
+            var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
+
+            string totalTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                graphCreationTime.Hours, graphCreationTime.Minutes, graphCreationTime.Seconds,
+                graphCreationTime.Milliseconds);
+
             logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
-            logger.Info("Node creation rate: {0} [Nodes / s]", nodeCreationRate.ToString("F", CultureInfo.InvariantCulture));
+            logger.Info("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
+            logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
         }
     }
 }
+
