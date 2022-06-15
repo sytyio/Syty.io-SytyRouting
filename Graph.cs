@@ -1,6 +1,7 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace SytyRouting
 {
@@ -14,7 +15,6 @@ namespace SytyRouting
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
-            // stopWatch.ElapsedMilliseconds;
 
             var connectionString = Constants.connectionString;
             string queryString;           
@@ -65,12 +65,10 @@ namespace SytyRouting
 
                     dbRowsProcessed++;
 
-                    if (dbRowsProcessed % Constants.logStopIterations == 0)
+                    if (dbRowsProcessed % Constants.stopIterations == 0)
                     {
                         stopWatch.Stop();
-                        GraphCreationBenchmark(dbRowsProcessed, stopWatch.Elapsed, stopWatch.ElapsedMilliseconds);
-                        
-
+                        GraphCreationBenchmark(dbRowsProcessed, stopWatch);
                         stopWatch.Start();
                     }
                 }
@@ -120,15 +118,19 @@ namespace SytyRouting
             logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
         }
 
-        private void GraphCreationBenchmark(ulong dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
+        private void GraphCreationBenchmark(ulong dbRowsProcessed, Stopwatch stopwatch)
         {
+            var timeSpan = stopwatch.Elapsed;
+            var timeSpanMilliseconds = stopwatch.ElapsedMilliseconds;
+
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
                 timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
                 timeSpan.Milliseconds);
 
+            var nodeCreationRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; 
             logger.Info("Elapsed Time (HH:MM:S.mS) :: " + elapsedTime);
-            logger.Info("Elapsed Time (milliseconds) :: " + timeSpanMilliseconds);
             logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
+            logger.Info("Node creation rate: {0} [Nodes / s]", nodeCreationRate.ToString("F", CultureInfo.InvariantCulture));
         }
     }
 }
