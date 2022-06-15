@@ -1,8 +1,6 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
 using System.Globalization;
 
 namespace SytyRouting
