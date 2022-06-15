@@ -81,9 +81,10 @@ namespace SytyRouting
 
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
-            // Read all 'ways' rows and creates the corresponding Nodes
-            //                     0      1      2       3           4            5      6   7   8   9
-            queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways";
+            // Read all 'ways' rows and creates the corresponding Nodes            
+            //                     0      1      2       3         4          5      6   7   8   9
+            // queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways";
+            queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways ORDER BY source LIMIT 100"; // ORDER BY and LIMIT are for testing only
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -102,6 +103,8 @@ namespace SytyRouting
                     var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     
                     var edgeId = Convert.ToInt64(reader.GetValue(0));   // gid
+                    var edgeCost = Convert.ToDouble(reader.GetValue(3)); // cost
+                    var edgeReverseCost = Convert.ToDouble(reader.GetValue(4)); // reverse_cost
                     var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
                     var sourceNode = CreateNode(sourceId, sourceX, sourceY);
@@ -111,14 +114,14 @@ namespace SytyRouting
                     switch (edgeOneWay)
                     {
                         case OneWayState.Yes: // Only forward direction
-                            CreateEdge(edgeId, sourceNode, targetNode);
+                            CreateEdge(edgeId, edgeCost, sourceNode, targetNode);
                             break;
                         case OneWayState.Reversed: // Only backward direction
-                            CreateEdge(edgeId, targetNode, sourceNode);
+                            CreateEdge(edgeId, edgeReverseCost, targetNode, sourceNode);
                             break;
                         default: // Both ways
-                            CreateEdge(edgeId, sourceNode, targetNode);
-                            CreateEdge(edgeId, targetNode, sourceNode);
+                            CreateEdge(edgeId, edgeCost, sourceNode, targetNode);
+                            CreateEdge(edgeId, edgeReverseCost, targetNode, sourceNode);
                             break;
                     }
 
@@ -151,7 +154,7 @@ namespace SytyRouting
             logger.Debug("\tEdges in Node {0}:", nodeId);
             foreach(var edge in Nodes[nodeId].TargetEdges)
             {
-                logger.Debug("\t\tEdge: {0}, End Node Id: {1};", edge.Id, edge.EndNode?.Id);
+                logger.Debug("\t\tEdge: {0}, Cost: {1}, End Node Id: {2};", edge.Id, edge.Cost, edge.EndNode?.Id);
             }
         }
 
@@ -171,9 +174,9 @@ namespace SytyRouting
             return Nodes[id];
         }
 
-        private void CreateEdge(long edgeId, Node baseNode, Node endNode)
+        private void CreateEdge(long edgeId, double cost, Node baseNode, Node endNode)
         {
-            var edge = new Edge{Id = edgeId, EndNode = endNode};
+            var edge = new Edge{Id = edgeId, Cost = cost, EndNode = endNode};
             baseNode.TargetEdges.Add(edge);
             logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
         }
@@ -199,4 +202,3 @@ namespace SytyRouting
         }
     }
 }
-
