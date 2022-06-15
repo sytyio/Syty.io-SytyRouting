@@ -1,15 +1,9 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
-<<<<<<< HEAD
-<<<<<<< HEAD
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
-=======
->>>>>>> dac0af0bb3d1edbd3224f4a7fbe8b302f7b4fac8
-=======
 using System.Globalization;
->>>>>>> 845d4da18ede7692e308497e218129868d93d89d
 
 namespace SytyRouting
 {
@@ -86,13 +80,8 @@ namespace SytyRouting
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
             // Read all 'ways' rows and creates the corresponding Nodes
-<<<<<<< HEAD
-            // queryString = "SELECT * FROM public.ways ORDER BY source ASC LIMIT 100";
-            queryString = "SELECT * FROM public.ways LIMIT 100000";
-=======
             //                     0      1      2       3           4            5      6   7   8   9
             queryString = "SELECT gid, source, target, cost_s, reverse_cost_s, one_way, x1, y1, x2, y2 FROM public.ways";
->>>>>>> dac0af0bb3d1edbd3224f4a7fbe8b302f7b4fac8
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
