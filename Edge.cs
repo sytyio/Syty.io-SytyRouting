@@ -11,14 +11,14 @@ namespace SytyRouting
         public void WriteToStream(BinaryWriter bw, Dictionary<long, int> indexes)
         {
             bw.Write(Id);
-            bw.Write(CostS);
+            bw.Write(Cost);
             bw.Write(indexes[EndNode.Id]);
         }
 
         public void ReadFromStream(BinaryReader br, Node[] array)
         {
             Id = br.ReadInt64();
-            CostS = br.ReadDouble();
+            Cost = br.ReadDouble();
             EndNode = array[br.ReadInt32()];
         }
     }
