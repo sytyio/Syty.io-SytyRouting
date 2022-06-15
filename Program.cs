@@ -17,9 +17,7 @@ namespace SytyRouting
 
             logger.Info("Creating syty.io routing graph from dataset");
             var graph = new Graph();
-            await graph.DBLoadAsync();
-            await graph.FileSaveAsync();
-            await graph.FileLoadAsync();
+            await graph.FileLoadAsync("graph.dat");
             
 
             logger.Info("Retrieving Node information");

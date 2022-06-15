@@ -14,44 +14,46 @@ namespace SytyRouting
         private Dictionary<long, Node> Nodes = new Dictionary<long, Node>();
 
 
-        public Task FileSaveAsync()
+        public Task FileSaveAsync(string path)
         {
-            FileStream fs = new FileStream("graph.dat", FileMode.Create);
-            BinaryFormatter formatter = new BinaryFormatter();
-            try
+            using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(path)))
             {
-                formatter.Serialize(fs, Nodes);
-            }
-            catch (SerializationException e)
-            {
-                logger.Fatal("Failed to serialize. Reason: " + e.Message);
-                throw;
-            }
-            finally
-            {
-                fs.Close();
+                var array = Nodes.Values.ToArray();
+                var pos = Enumerable.Range(0, array.Length).ToDictionary(t => array[t].Id);
+                bw.Write(array.Length);
+                foreach(var node in array)
+                {
+                    node.WriteToStream(bw, pos);
+                }
             }
             return Task.CompletedTask;
         }
 
-        public Task FileLoadAsync()
+        public async Task FileLoadAsync(string path)
         {
-            FileStream fs = new FileStream("graph.dat", FileMode.Open);
             try
             {
-                BinaryFormatter formatter = new BinaryFormatter();
-                Nodes = (Dictionary<long, Node>)formatter.Deserialize(fs);
+                using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
+                {
+                    Nodes = new Dictionary<long, Node>();
+                    var length = br.ReadInt32();
+                    var array = new Node[length];
+                    for (int i = 0; i < length; i++)
+                        array[i] = new Node();
+                    for (int i = 0; i < length; i++)
+                    {
+                        array[i].ReadFromStream(br, array);
+                    }
+
+                    Nodes = array.ToDictionary(t => t.Id);
+                }
             }
-            catch (SerializationException e)
+            catch
             {
-                logger.Fatal("Failed to serialize. Reason: " + e.Message);
-                throw;
+                logger.Info("Could not load from file, loading from DB instead.");
+                await DBLoadAsync();
+                await FileSaveAsync(path);
             }
-            finally
-            {
-                fs.Close();
-            }
-            return Task.CompletedTask;
         }
 
         public async Task DBLoadAsync()
