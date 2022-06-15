@@ -84,7 +84,7 @@ namespace SytyRouting
             // Read all 'ways' rows and creates the corresponding Nodes            
             //                     0      1      2       3         4          5      6   7   8   9
             // queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways";
-            queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways ORDER BY source LIMIT 100"; // ORDER BY and LIMIT are for testing only
+            queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways"; // ORDER BY and LIMIT are for testing only
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
