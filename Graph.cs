@@ -13,7 +13,6 @@ namespace SytyRouting
 
         public Task FileSaveAsync(string path)
         {
-            CleanGraph();
             using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(path)))
             {
                 bw.Write(NodesArray.Length);
@@ -40,7 +39,6 @@ namespace SytyRouting
                         NodesArray[i].ReadFromStream(br, NodesArray);
                     }
                 }
-                CleanGraph();
             }
             catch
             {
@@ -127,6 +125,7 @@ namespace SytyRouting
                 var totalTime = FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
+                CleanGraph();
             }
         }
 
@@ -232,12 +231,48 @@ namespace SytyRouting
 
         private void CleanGraph()
         {
-            var components = new int[NodesArray.Length];
-            for (int i = 0; i < components.Length; i++)
+            logger.Info("Graph cleaning");
+            foreach(var node in NodesArray)
             {
-                components[i] = i;
+                node.ValidSource = false;
+                node.ValidTarget = false;
             }
+            NodesArray.First().ValidSource = true;
+            NodesArray.First().ValidTarget = true;
+            var done = false;
+            do
+            {
+                done = true;
+                foreach(var node in NodesArray)
+                {
+                    if(node.ValidSource)
+                    {
+                        foreach(var neighbor in node.InwardEdges)
+                        {
+                            if(!neighbor.SourceNode.ValidSource)
+                            {
+                                neighbor.SourceNode.ValidSource = true;
+                                done = false;
+                            }
+                        }
+                    }
+                    if(node.ValidTarget)
+                    {
+                        foreach(var neighbor in node.OutwardEdges)
+                        {
+                            if(!neighbor.TargetNode.ValidTarget)
+                            {
+                                neighbor.TargetNode.ValidTarget = true;
+                                done = false;
+                            }
+                        }
+                    }
+                }
+            }
+            while (!done);
+            logger.Info("Graph annotated and clean.");
         }
+
         private string FormatElapsedTime(TimeSpan timeSpan)
         {
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
