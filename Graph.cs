@@ -11,8 +11,6 @@ namespace SytyRouting
 
         private Node[] NodesArray = new Node[0];
 
-
-
         public Task FileSaveAsync(string path)
         {
             CleanGraph();
@@ -120,32 +118,41 @@ namespace SytyRouting
                         GraphCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds);
                     }
                 }
+                NodesArray = nodes.Values.ToArray();
+                for (int i = 0; i < NodesArray.Length; i++)
+                {
+                    NodesArray[i].Idx = i;
+                }
                 stopWatch.Stop();
                 var totalTime = FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
-                NodesArray = nodes.Values.ToArray();
-                for (int i = 0; i < NodesArray.Length; i++)
-                {
-                    nodes[i].Idx = i;
-                }
             }
         }
 
-        private void GetEdges(long nodeId)
+        public void GetNodes()
         {
-            logger.Debug("\tInward Edges in Node {0}:", nodeId);
-            foreach(var edge in Nodes[nodeId].InwardEdges)
+            foreach (var node in NodesArray)
+            {
+                logger.Debug("Node {0}({1}), X = {2}, Y = {3}",
+                    node.OsmID, node.X, node.Y);
+                GetEdges(node);
+            }
+        }
+        private void GetEdges(Node node)
+        {
+            logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
+            foreach(var edge in node.InwardEdges)
             {
                 logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
-                    edge.Id, edge.Cost, edge.SourceNode?.Id, edge.TargetNode?.Id);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
             
-            logger.Debug("\tOutward Edges in Node {0}:", nodeId);
-            foreach(var edge in Nodes[nodeId].OutwardEdges)
+            logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
+            foreach(var edge in node.OutwardEdges)
             {
                 logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
-                    edge.Id, edge.Cost, edge.SourceNode?.Id, edge.TargetNode?.Id);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
         }
         private Node CreateNode(long id, long osmID, double x, double y, Dictionary<long, Node> nodes)
@@ -231,8 +238,6 @@ namespace SytyRouting
                 components[i] = i;
             }
         }
-
-
         private string FormatElapsedTime(TimeSpan timeSpan)
         {
             string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
