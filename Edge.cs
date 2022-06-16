@@ -13,6 +13,10 @@ namespace SytyRouting
         {
             bw.Write(Id);
             bw.Write(Cost);
+            if(TargetNode == null)
+            {
+                throw new Exception("Incorrectly initialized structure");
+            }
             bw.Write(indexes[TargetNode.Id]);
         }
 
