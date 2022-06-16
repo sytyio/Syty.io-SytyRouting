@@ -38,8 +38,10 @@ namespace SytyRouting
 
             // Read all 'ways' rows and creates the corresponding Nodes            
             //                     0      1      2       3         4          5      6   7   8   9
-            // queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways";
-            queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways ORDER BY source LIMIT 100"; // ORDER BY and LIMIT are for testing only
+            queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways";
+            // queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways ORDER BY source LIMIT 100"; // ORDER BY and LIMIT are for testing only
+            // queryString = "SELECT gid, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2 FROM public.ways WHERE source = 10 OR target = 10 ORDER BY source LIMIT 100"; // ORDER BY and LIMIT are for testing only
+
             logger.Debug("DB query: {0}", queryString);
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -62,23 +64,10 @@ namespace SytyRouting
                     var edgeReverseCost = Convert.ToDouble(reader.GetValue(4)); // reverse_cost
                     var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
-                    var sourceNode = CreateNode(sourceId, sourceX, sourceY);
-                    var targetNode = CreateNode(targetId, targetX, targetY);
-
-                    // Check for one_way state
-                    switch (edgeOneWay)
-                    {
-                        case OneWayState.Yes: // Only forward direction
-                            CreateEdge(edgeId, edgeCost, sourceNode, targetNode);
-                            break;
-                        case OneWayState.Reversed: // Only backward direction
-                            CreateEdge(edgeId, edgeReverseCost, targetNode, sourceNode);
-                            break;
-                        default: // Both ways
-                            CreateEdge(edgeId, edgeCost, sourceNode, targetNode);
-                            CreateEdge(edgeId, edgeReverseCost, targetNode, sourceNode);
-                            break;
-                    }
+                    var source = CreateNode(sourceId, sourceX, sourceY);
+                    var target = CreateNode(targetId, targetX, targetY);
+                    
+                    CreateEdges(edgeId, edgeCost, edgeOneWay, source, target);
 
                     dbRowsProcessed++;
 
@@ -106,10 +95,18 @@ namespace SytyRouting
 
         private void GetEdges(long nodeId)
         {
-            logger.Debug("\tEdges in Node {0}:", nodeId);
-            foreach(var edge in Nodes[nodeId].TargetEdges)
+            logger.Debug("\tInward Edges in Node {0}:", nodeId);
+            foreach(var edge in Nodes[nodeId].InwardEdges)
             {
-                logger.Debug("\t\tEdge: {0}, Cost: {1}, End Node Id: {2};", edge.Id, edge.Cost, edge.EndNode?.Id);
+                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                    edge.Id, edge.Cost, edge.SourceNode?.Id, edge.TargetNode?.Id);
+            }
+            
+            logger.Debug("\tOutward Edges in Node {0}:", nodeId);
+            foreach(var edge in Nodes[nodeId].OutwardEdges)
+            {
+                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                    edge.Id, edge.Cost, edge.SourceNode?.Id, edge.TargetNode?.Id);
             }
         }
 
@@ -129,11 +126,54 @@ namespace SytyRouting
             return Nodes[id];
         }
 
-        private void CreateEdge(long edgeId, double cost, Node baseNode, Node endNode)
+        private void CreateEdge(long edgeId, double cost, Node source, Node target)
         {
-            var edge = new Edge{Id = edgeId, Cost = cost, EndNode = endNode};
-            baseNode.TargetEdges.Add(edge);
-            logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, baseNode.Id);
+            var edge = new Edge{Id = edgeId, Cost = cost, TargetNode = target};
+            source.OutwardEdges.Add(edge);
+            logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, source.Id);
+        }
+
+        private void CreateEdges(long edgeId, double cost, OneWayState oneWayState, Node source, Node target)
+        {
+            switch (oneWayState)
+            {
+                case OneWayState.Yes: // Only forward direction
+                {
+                    var edge = new Edge{Id = edgeId, Cost = cost, SourceNode = source, TargetNode = target};
+                    source.OutwardEdges.Add(edge);
+                    target.InwardEdges.Add(edge);
+
+                    logger.Trace("Edge {0} was added to Node {1} as an outward edge.", edgeId, source.Id);
+                    logger.Trace("Edge {0} was added to Node {1} as an inward edge.", edgeId, target.Id);                
+
+                    break;
+                }
+                case OneWayState.Reversed: // Only backward direction
+                {
+                    var edge = new Edge{Id = edgeId, Cost = cost, SourceNode = target, TargetNode = source};
+                    source.InwardEdges.Add(edge);
+                    target.OutwardEdges.Add(edge);
+
+                    logger.Trace("Edge {0} was added to Node {1} as an inward edge.", edgeId, source.Id);
+                    logger.Trace("Edge {0} was added to Node {1} as an outward edge.", edgeId, target.Id);
+
+                    break;
+                }
+                default: // Both ways
+                {
+                    var edge = new Edge{Id = edgeId, Cost = cost, SourceNode = source, TargetNode = target};
+                    source.OutwardEdges.Add(edge);
+                    target.InwardEdges.Add(edge);
+
+                    edge = new Edge{Id = edgeId, Cost = cost, SourceNode = target, TargetNode = source};
+                    source.InwardEdges.Add(edge);
+                    target.OutwardEdges.Add(edge);
+                    
+                    logger.Trace("Edge {0} was successfully added to Nodes {1} and {2} as an outward and inward edge, respectively.",
+                                edgeId, source.Id, target.Id);
+                    break;
+                }
+            }
         }
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
