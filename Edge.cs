@@ -3,26 +3,26 @@ namespace SytyRouting
     [Serializable]
     public class Edge
     {
-        public long Id {get; set;}
+        public long OsmID { get; set; }
         public double Cost {get; set;}
          
         public Node? SourceNode {get; set;}
         public Node? TargetNode {get; set;}
 
-        public void WriteToStream(BinaryWriter bw, Dictionary<long, int> indexes)
+        public void WriteToStream(BinaryWriter bw)
         {
-            bw.Write(Id);
+            bw.Write(OsmID);
             bw.Write(Cost);
             if(TargetNode == null)
             {
                 throw new Exception("Incorrectly initialized structure");
             }
-            bw.Write(indexes[TargetNode.Id]);
+            bw.Write(TargetNode.Idx);
         }
 
         public void ReadFromStream(BinaryReader br, Node[] array, Node source)
         {
-            Id = br.ReadInt64();
+            OsmID = br.ReadInt64();
             Cost = br.ReadDouble();
             TargetNode = array[br.ReadInt32()];
             TargetNode.InwardEdges.Add(this);
