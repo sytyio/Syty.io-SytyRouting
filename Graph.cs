@@ -79,6 +79,8 @@ namespace SytyRouting
                     }
                 }
                 stopWatch.Stop();
+                var totalTime = FormatElapsedTime(stopWatch.Elapsed);
+                logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
             }
         }
@@ -126,13 +128,6 @@ namespace SytyRouting
             return Nodes[id];
         }
 
-        private void CreateEdge(long edgeId, double cost, Node source, Node target)
-        {
-            var edge = new Edge{Id = edgeId, Cost = cost, TargetNode = target};
-            source.OutwardEdges.Add(edge);
-            logger.Trace("Edge {0} was successfully added to Node {1}", edgeId, source.Id);
-        }
-
         private void CreateEdges(long edgeId, double cost, OneWayState oneWayState, Node source, Node target)
         {
             switch (oneWayState)
@@ -178,22 +173,27 @@ namespace SytyRouting
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
         {
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
-                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
-                timeSpan.Milliseconds);
+            var elapsedTime = FormatElapsedTime(timeSpan);
 
-            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000;
+            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
             var graphCreationTimeSeconds = totalDbRows / rowProcessingRate;
             var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
 
-            string totalTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
-                graphCreationTime.Hours, graphCreationTime.Minutes, graphCreationTime.Seconds,
-                graphCreationTime.Milliseconds);
+            var totalTime = FormatElapsedTime(graphCreationTime);
 
             logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
             logger.Info("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
             logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
             logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
+        }
+
+        private string FormatElapsedTime(TimeSpan timeSpan)
+        {
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+                timeSpan.Milliseconds);
+
+            return elapsedTime;
         }
     }
 }
