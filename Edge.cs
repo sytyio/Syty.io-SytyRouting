@@ -4,6 +4,7 @@ namespace SytyRouting
     {
         public long Id {get; set;}
         public double Cost {get; set;}
-        public Node? EndNode {get; set;}
+        public Node? SourceNode {get; set;}
+        public Node? TargetNode {get; set;}
     }
 }
