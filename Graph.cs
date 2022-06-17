@@ -76,7 +76,7 @@ namespace SytyRouting
 
             // Read all 'ways' rows and creates the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways";
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways LIMIT 10";
 
             logger.Debug("DB query: {0}", queryString);
 
@@ -129,15 +129,18 @@ namespace SytyRouting
             }
         }
 
-        public void GetNodes()
+        public Node[] GetNodes()
         {
             foreach (var node in NodesArray)
             {
-                logger.Debug("Node {0}({1}), X = {2}, Y = {3}",
+                logger.Trace("Node {0}({1}), X = {2}, Y = {3}",
                     node.OsmID, node.X, node.Y);
                 GetEdges(node);
             }
+            
+            return NodesArray;
         }
+
         private void GetEdges(Node node)
         {
             logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
