@@ -17,6 +17,10 @@ namespace SytyRouting
 
         public void WriteToStream(BinaryWriter bw)
         {
+            if (OsmID == 0)
+            {
+                throw new Exception("Invalid data imported");
+            }
             bw.Write(OsmID);
             bw.Write(X);
             bw.Write(Y);
@@ -32,6 +36,10 @@ namespace SytyRouting
         public void ReadFromStream(BinaryReader br, Node[] array)
         {
             OsmID = br.ReadInt64();
+            if (OsmID == 0)
+            {
+                throw new Exception("Invalid data imported");
+            }
             X = br.ReadDouble();
             Y = br.ReadDouble();
             ValidTarget = br.ReadBoolean();

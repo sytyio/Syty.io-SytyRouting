@@ -18,10 +18,13 @@ namespace SytyRouting
             logger.Info("Creating syty.io routing graph from dataset");
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
-            
 
-            logger.Info("Retrieving Node information");
-            graph.GetNodes();
+
+            //logger.Info("Retrieving Node information");
+            //graph.GetNodes();
+
+            logger.Info("Testing point location");
+            graph.TestClosestNode("Synapsis", 4.369250640244246, 50.82125803679304);
 
             // Logger flushing
             LogManager.Shutdown();

@@ -2,6 +2,7 @@ using Npgsql;
 using NLog;
 using System.Diagnostics;
 using System.Globalization;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SytyRouting
 {
@@ -10,7 +11,7 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Node[] NodesArray = new Node[0];
-        private KDTree KDTree;
+        private KDTree KDTree = new KDTree(new Node[0]);
 
         public Task FileSaveAsync(string path)
         {
@@ -21,7 +22,7 @@ namespace SytyRouting
                 {
                     node.WriteToStream(bw);
                 }
-                KDTree.WriteToStream(bw);
+                KDTree?.WriteToStream(bw);
             }
             return Task.CompletedTask;
         }
@@ -50,6 +51,8 @@ namespace SytyRouting
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
+            //Temporary, recreate KD-tree
+            KDTree = new KDTree(NodesArray);
         }
 
         public async Task DBLoadAsync()
@@ -191,7 +194,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var edge = new Edge{Cost = cost, SourceNode = target, TargetNode = source};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -202,11 +205,11 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var edge = new Edge{Cost = cost, SourceNode = source, TargetNode = target};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    edge = new Edge{ Cost = cost, SourceNode = target, TargetNode = source};
+                    edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
@@ -248,7 +251,7 @@ namespace SytyRouting
             root.ValidSource = true;
             root.ValidTarget = true;
             toProcess.Enqueue(root);
-            Node node;
+            Node? node;
             while(toProcess.TryDequeue(out node))
             {
                 if (node.ValidSource)
@@ -285,6 +288,18 @@ namespace SytyRouting
                 timeSpan.Milliseconds);
 
             return elapsedTime;
+        }
+
+        public void TestClosestNode(string name, double x, double y)
+        {
+            var node = KDTree.GetNearestNeighbor(x, y);
+            logger.Info("Closest node to {0} has OSM ID {1}", name, node.OsmID);
+
+            var adjacentIds = node.OutwardEdges.Union(node.InwardEdges).Select(t => t.OsmID).Distinct();
+            foreach(var itm in adjacentIds)
+            {
+                logger.Info("     => Adjacent road has OSM ID {1}", name, itm);
+            }
         }
     }
 }
