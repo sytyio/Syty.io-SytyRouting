@@ -231,46 +231,47 @@ namespace SytyRouting
 
         private void CleanGraph()
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
             logger.Info("Graph cleaning");
-            foreach(var node in NodesArray)
+            foreach(var n in NodesArray)
             {
-                node.ValidSource = false;
-                node.ValidTarget = false;
+                n.ValidSource = false;
+                n.ValidTarget = false;
             }
-            NodesArray.First().ValidSource = true;
-            NodesArray.First().ValidTarget = true;
-            var done = false;
-            do
+            var toProcess = new Queue<Node>();
+            var root = NodesArray.First();
+            root.ValidSource = true;
+            root.ValidTarget = true;
+            toProcess.Enqueue(root);
+            Node node;
+            while(toProcess.TryDequeue(out node))
             {
-                done = true;
-                foreach(var node in NodesArray)
+                if (node.ValidSource)
                 {
-                    if(node.ValidSource)
+                    foreach (var neighbor in node.InwardEdges)
                     {
-                        foreach(var neighbor in node.InwardEdges)
+                        if (!neighbor.SourceNode.ValidSource)
                         {
-                            if(!neighbor.SourceNode.ValidSource)
-                            {
-                                neighbor.SourceNode.ValidSource = true;
-                                done = false;
-                            }
+                            neighbor.SourceNode.ValidSource = true;
+                            toProcess.Enqueue(neighbor.SourceNode);
                         }
                     }
-                    if(node.ValidTarget)
+                }
+                if (node.ValidTarget)
+                {
+                    foreach (var neighbor in node.OutwardEdges)
                     {
-                        foreach(var neighbor in node.OutwardEdges)
+                        if (!neighbor.TargetNode.ValidTarget)
                         {
-                            if(!neighbor.TargetNode.ValidTarget)
-                            {
-                                neighbor.TargetNode.ValidTarget = true;
-                                done = false;
-                            }
+                            neighbor.TargetNode.ValidTarget = true;
+                            toProcess.Enqueue(neighbor.TargetNode);
                         }
                     }
                 }
             }
-            while (!done);
-            logger.Info("Graph annotated and clean.");
+            logger.Info("Graph annotated and clean in {0}", FormatElapsedTime(stopWatch.Elapsed));
+            stopWatch.Stop();
         }
 
         private string FormatElapsedTime(TimeSpan timeSpan)
