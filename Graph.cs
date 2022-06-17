@@ -10,6 +10,7 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Node[] NodesArray = new Node[0];
+        private KDTree KDTree;
 
         public Task FileSaveAsync(string path)
         {
@@ -20,6 +21,7 @@ namespace SytyRouting
                 {
                     node.WriteToStream(bw);
                 }
+                KDTree.WriteToStream(bw);
             }
             return Task.CompletedTask;
         }
@@ -38,12 +40,14 @@ namespace SytyRouting
                     {
                         NodesArray[i].ReadFromStream(br, NodesArray);
                     }
+                    KDTree = new KDTree(br, NodesArray);
                 }
             }
             catch
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
+                KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
         }
