@@ -76,7 +76,7 @@ namespace SytyRouting
 
             // Read all 'ways' rows and creates the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways LIMIT 10";
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways";
 
             logger.Debug("DB query: {0}", queryString);
 
@@ -133,8 +133,8 @@ namespace SytyRouting
         {
             foreach (var node in NodesArray)
             {
-                logger.Trace("Node {0}({1}), X = {2}, Y = {3}",
-                    node.OsmID, node.X, node.Y);
+                logger.Trace("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
+                    node.Idx, node.OsmID, node.X, node.Y);
                 GetEdges(node);
             }
             
@@ -143,17 +143,17 @@ namespace SytyRouting
 
         private void GetEdges(Node node)
         {
-            logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tInward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.InwardEdges)
             {
-                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
             
-            logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.OutwardEdges)
             {
-                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
         }
