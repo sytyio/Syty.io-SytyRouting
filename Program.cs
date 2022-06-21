@@ -23,6 +23,14 @@ namespace SytyRouting
             logger.Info("Retrieving Node information");
             graph.GetNodes();
 
+
+            // Try Dijkstra's algorithm
+            var dijkstra = new DijkstraTest(graph.GetNodes(), 26913029, 10);
+
+            logger.Info("Retrieving Node information from the reduced dataset");
+            dijkstra.GetNodes();
+            
+
             // Logger flushing
             LogManager.Shutdown();
         }
