@@ -20,21 +20,15 @@ namespace SytyRouting
             await graph.FileLoadAsync("graph.dat");
             
 
-            logger.Info("Retrieving Node information");
-            graph.GetNodes();
-
-
             // Try Dijkstra's algorithm
-            var dijkstra = new DijkstraTest(graph.GetNodes(), 26913029, 20);
+            var dijkstra = new Dijkstra(graph.GetNodes());          
 
-            logger.Info("Retrieving Node information from the reduced dataset");
-            dijkstra.GetNodes();
-
-            logger.Info("Retrieving Dijkstra step information");
-            dijkstra.GetRoute(2135360285, 145351);
+            logger.Info("Route searching using Dijkstra's algorithm");
+            // dijkstra.GetRoute(2135360285, 145351);
             // dijkstra.GetRoute(26913029, 1486032529);
-            // dijkstra.GetRoute(26913029, 7911022011);
-            
+            dijkstra.GetRoute(26913029, 7911022011);
+            // dijkstra.GetRoute(2135360285, -145351);
+
 
             // Logger flushing
             LogManager.Shutdown();
