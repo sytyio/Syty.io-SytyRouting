@@ -25,10 +25,15 @@ namespace SytyRouting
 
 
             // Try Dijkstra's algorithm
-            var dijkstra = new DijkstraTest(graph.GetNodes(), 26913029, 10);
+            var dijkstra = new DijkstraTest(graph.GetNodes(), 26913029, 20);
 
             logger.Info("Retrieving Node information from the reduced dataset");
             dijkstra.GetNodes();
+
+            logger.Info("Retrieving Dijkstra step information");
+            dijkstra.GetRoute(2135360285, 145351);
+            // dijkstra.GetRoute(26913029, 1486032529);
+            // dijkstra.GetRoute(26913029, 7911022011);
             
 
             // Logger flushing
