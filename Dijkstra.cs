@@ -41,16 +41,16 @@ namespace SytyRouting
                 var firstStep = new DijkstraStep{TargetNode = originNode, CumulatedCost = 0};
                 dijkstraSteps.Enqueue(firstStep, firstStep.CumulatedCost);
                 
-                while(!visitedNodes.ContainsKey(destinationNode.Idx))
+                while(!visitedNodes.ContainsKey(destinationNode!.Idx))
                 {
                     dijkstraSteps.TryDequeue(out DijkstraStep? currentStep, out double priority);
-                    var targetNode = currentStep.TargetNode;
+                    var targetNode = currentStep!.TargetNode;
                 
                     if(targetNode != null && !visitedNodes.ContainsKey(targetNode.Idx))
                     {
                         foreach(var outwardEdge in targetNode.OutwardEdges)
                         {
-                            if(!visitedNodes.ContainsKey(outwardEdge.TargetNode.Idx))
+                            if(!visitedNodes.ContainsKey(outwardEdge.TargetNode!.Idx))
                             {
                                 var dijkstraStep = new DijkstraStep{PreviousStep = currentStep, TargetNode = outwardEdge.TargetNode, CumulatedCost = outwardEdge.Cost + currentStep.CumulatedCost};
                                 dijkstraSteps.Enqueue(dijkstraStep, dijkstraStep.CumulatedCost);
@@ -66,15 +66,16 @@ namespace SytyRouting
                 }
 
                 backwardStartSteps.TryPeek(out DijkstraStep? firstBackwardStep, out double totalCost);
-                route.Add(firstBackwardStep.TargetNode);
+
+                route.Add(firstBackwardStep!.TargetNode!);
 
                 logger.Info("Route reconstruction:");
-                DijkstraStep? currentBackwardStep = firstBackwardStep;
+                DijkstraStep currentBackwardStep = firstBackwardStep;
                 
-                while(currentBackwardStep?.TargetNode?.OsmID != originNodeOsmId)
+                while(currentBackwardStep.TargetNode?.OsmID != originNodeOsmId)
                 {
-                    var nextBackwardStep = currentBackwardStep?.PreviousStep;
-                    route.Add(nextBackwardStep.TargetNode);
+                    var nextBackwardStep = currentBackwardStep.PreviousStep;
+                    route.Add(nextBackwardStep!.TargetNode!);
                     currentBackwardStep = nextBackwardStep;
                 }
 
