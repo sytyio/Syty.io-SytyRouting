@@ -93,12 +93,12 @@ namespace SytyRouting
             };
         }
 
-        public Node GetNearestNeighbor(double x, double y)
+        public Node GetNearestNeighbor(double x, double y, bool isTarget = true, bool isSource = true)
         {
             logger.Trace("Query for x: {0} y: {1}", x, y);
             if (root != null)
             {
-                var result = GetNearestNeighbor(x, y, root, double.MaxValue).Item1;
+                var result = GetNearestNeighbor(x, y, root, double.MaxValue, isTarget, isSource).Item1;
                 if (result != null)
                 {
                     return result;
@@ -107,7 +107,7 @@ namespace SytyRouting
             throw new Exception("Impossible to query.");
         }
 
-        private (Node?, double) GetNearestNeighbor(double x, double y, KDNode? currentNode, double maxDist)
+        private (Node?, double) GetNearestNeighbor(double x, double y, KDNode? currentNode, double maxDist, bool isTarget, bool isSource)
         {
             if(currentNode == null)
             {
@@ -124,12 +124,12 @@ namespace SytyRouting
             }
 
             var distanceCurrent = GetDistance(currentNode.Item, x, y);
-            if(distanceCurrent < maxDist)
+            if(distanceCurrent < maxDist && (currentNode.Item.ValidSource || !isSource) && (currentNode.Item.ValidTarget || !isTarget))
             {
                 maxDist = distanceCurrent;
             }
-            var candidateBest = GetNearestNeighbor(x, y, lower ? currentNode.Low : currentNode.High, maxDist);
-            if(distanceCurrent < candidateBest.Item2)
+            var candidateBest = GetNearestNeighbor(x, y, lower ? currentNode.Low : currentNode.High, maxDist, isTarget, isSource);
+            if(distanceCurrent < candidateBest.Item2  && (currentNode.Item.ValidSource || !isSource) && (currentNode.Item.ValidTarget || !isTarget))
             {
                 candidateBest = (currentNode.Item, distanceCurrent);
             }
@@ -141,7 +141,7 @@ namespace SytyRouting
             var bestOtherSub = GetDistanceToHalfPlane(currentNode, x, y);
             if(bestOtherSub < maxDist)
             {
-                var candidateOtherSub = GetNearestNeighbor(x, y, lower ? currentNode.High : currentNode.Low, maxDist);
+                var candidateOtherSub = GetNearestNeighbor(x, y, lower ? currentNode.High : currentNode.Low, maxDist, isTarget, isSource);
                 if(candidateOtherSub.Item2 < candidateBest.Item2)
                 {
                     candidateBest = candidateOtherSub;
@@ -149,6 +149,8 @@ namespace SytyRouting
             }
             if(candidateBest.Item1 != null)
               logger.Trace("  Current best is x: {0} y: {1} at distance {2}", candidateBest.Item1.X, candidateBest.Item1.Y, candidateBest.Item2);
+            else
+                logger.Trace("  No best found");
             return candidateBest;
         }
 
