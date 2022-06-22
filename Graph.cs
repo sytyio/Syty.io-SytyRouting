@@ -11,7 +11,7 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Node[] NodesArray = new Node[0];
-        private KDTree KDTree = new KDTree(new Node[0]);
+        private KDTree? KDTree;
 
         public Task FileSaveAsync(string path)
         {
@@ -51,8 +51,6 @@ namespace SytyRouting
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
-            //Temporary, recreate KD-tree
-            KDTree = new KDTree(NodesArray);
         }
 
         public async Task DBLoadAsync()
@@ -292,13 +290,16 @@ namespace SytyRouting
 
         public void TestClosestNode(string name, double x, double y)
         {
-            var node = KDTree.GetNearestNeighbor(x, y);
-            logger.Info("Closest node to {0} has OSM ID {1}", name, node.OsmID);
-
-            var adjacentIds = node.OutwardEdges.Union(node.InwardEdges).Select(t => t.OsmID).Distinct();
-            foreach(var itm in adjacentIds)
+            if (KDTree != null)
             {
-                logger.Info("     => Adjacent road has OSM ID {1}", name, itm);
+                var node = KDTree.GetNearestNeighbor(x, y);
+                logger.Info("Closest node to {0} has OSM ID {1}", name, node.OsmID);
+
+                var adjacentIds = node.OutwardEdges.Union(node.InwardEdges).Select(t => t.OsmID).Distinct();
+                foreach (var itm in adjacentIds)
+                {
+                    logger.Info("     => Adjacent road has OSM ID {1}", name, itm);
+                }
             }
         }
     }

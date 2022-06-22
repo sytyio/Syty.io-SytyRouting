@@ -24,7 +24,7 @@ namespace SytyRouting
             //graph.GetNodes();
 
             logger.Info("Testing point location");
-            graph.TestClosestNode("Synapsis", 4.369250640244246, 50.82125803679304);
+            graph.TestClosestNode("Synapsis",4.369293555585981, 50.82126481464596);
 
             // Logger flushing
             LogManager.Shutdown();

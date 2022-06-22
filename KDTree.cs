@@ -12,6 +12,11 @@ namespace SytyRouting
         {
             logger.Debug("Creating a new KD-Tree");
             root = SplitSet(dataset, 0);
+            var count = CountItems(root);
+            if(count != dataset.Count())
+            {
+                throw new Exception("Invalid data!");
+            }
             logger.Debug("KD-Tree ready!");
         }
 
@@ -31,17 +36,20 @@ namespace SytyRouting
             }
             var sorted = orientation == 0 ? dataset.OrderBy(t => t.X).ToList() : dataset.OrderBy(t => t.Y).ToList() ;
             var middleIdx = count / 2;
-            var subLow = sorted.Take(middleIdx);
-            var subHigh = sorted.Skip(middleIdx + 1);
-            return new KDNode
+            var middle = sorted.ElementAt(middleIdx);
+            var subLow = sorted.Take(middleIdx).ToList();
+            var subHigh = sorted.Skip(middleIdx + 1).ToList();
+            
+            var result =  new KDNode
             {
-                Item = dataset.ElementAt(middleIdx),
+                Item = middle,
                 Orientation = orientation,
-                Low = SplitSet(subLow, orientation + 1 % 2),
-                High = SplitSet(subHigh, orientation + 1 % 2)
+                Low = SplitSet(subLow, (orientation + 1) % 2),
+                High = SplitSet(subHigh, (orientation + 1) % 2)
             };
-        }
 
+            return result;
+        }
         public void WriteToStream(BinaryWriter bw)
         {
             if (root != null)
@@ -80,16 +88,17 @@ namespace SytyRouting
             {
                 Item = array[idx],
                 Orientation = orientation,
-                Low = br.ReadBoolean() ? ReadFromStream(br, array, orientation + 1 % 2) : null,
-                High = br.ReadBoolean() ? ReadFromStream(br, array, orientation + 1 % 2) : null
+                Low = br.ReadBoolean() ? ReadFromStream(br, array, (orientation + 1) % 2) : null,
+                High = br.ReadBoolean() ? ReadFromStream(br, array, (orientation + 1) % 2) : null
             };
         }
 
         public Node GetNearestNeighbor(double x, double y)
         {
+            logger.Trace("Query for x: {0} y: {1}", x, y);
             if (root != null)
             {
-                var result = GetNearestNeighbor(x, y, root).Item1;
+                var result = GetNearestNeighbor(x, y, root, double.MaxValue).Item1;
                 if (result != null)
                 {
                     return result;
@@ -98,28 +107,48 @@ namespace SytyRouting
             throw new Exception("Impossible to query.");
         }
 
-        private (Node?, double) GetNearestNeighbor(double x, double y, KDNode? currentNode)
+        private (Node?, double) GetNearestNeighbor(double x, double y, KDNode? currentNode, double maxDist)
         {
             if(currentNode == null)
             {
                 return (null, Double.MaxValue);
             }
+            var lower = IsLower(x, y, currentNode);
+            if (lower)
+            {
+                logger.Trace("  We are lower than x: {0} y: {1} on the {2}-axis", currentNode.Item.X, currentNode.Item.Y, currentNode.Orientation == 0 ? "X": "Y");
+            }
+            else
+            {
+                logger.Trace("  We are higher than x: {0} y: {1} on the {2}-axis", currentNode.Item.X, currentNode.Item.Y, currentNode.Orientation == 0 ? "X" : "Y");
+            }
 
-            var candidateBest = GetNearestNeighbor(x, y, IsLower(x,y, currentNode) ? currentNode.Low : currentNode.High);
             var distanceCurrent = GetDistance(currentNode.Item, x, y);
+            if(distanceCurrent < maxDist)
+            {
+                maxDist = distanceCurrent;
+            }
+            var candidateBest = GetNearestNeighbor(x, y, lower ? currentNode.Low : currentNode.High, maxDist);
             if(distanceCurrent < candidateBest.Item2)
             {
                 candidateBest = (currentNode.Item, distanceCurrent);
             }
-            var bestOtherSub = GetDistance(currentNode, x, y);
-            if(bestOtherSub < candidateBest.Item2)
+
+            if(candidateBest.Item2 < maxDist)
             {
-                var candidateOtherSub = GetNearestNeighbor(x, y, IsLower(x,y, currentNode) ? currentNode.High : currentNode.Low);
+                maxDist = candidateBest.Item2;
+            }
+            var bestOtherSub = GetDistanceToHalfPlane(currentNode, x, y);
+            if(bestOtherSub < maxDist)
+            {
+                var candidateOtherSub = GetNearestNeighbor(x, y, lower ? currentNode.High : currentNode.Low, maxDist);
                 if(candidateOtherSub.Item2 < candidateBest.Item2)
                 {
                     candidateBest = candidateOtherSub;
                 }
             }
+            if(candidateBest.Item1 != null)
+              logger.Trace("  Current best is x: {0} y: {1} at distance {2}", candidateBest.Item1.X, candidateBest.Item1.Y, candidateBest.Item2);
             return candidateBest;
         }
 
@@ -144,7 +173,7 @@ namespace SytyRouting
             return GetDistance(n.X, n.Y, x, y);
         }
 
-        private double GetDistance(KDNode n, double x, double y)
+        private double GetDistanceToHalfPlane(KDNode n, double x, double y)
         {
             switch(n.Orientation)
             {
@@ -153,6 +182,13 @@ namespace SytyRouting
                 default:
                     return (n.Item.Y - y) * (n.Item.Y - y);
             }
+        }
+
+        private int CountItems(KDNode? n)
+        {
+            if(n == null)
+                return 0;
+            return 1 + CountItems(n.Low) + CountItems(n.High);
         }
     }
 }
