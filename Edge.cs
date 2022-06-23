@@ -22,25 +22,22 @@ namespace SytyRouting
             }
             bw.Write(OsmID);
             bw.Write(Cost);
-            if(TargetNode == null)
-            {
-                throw new Exception("Incorrectly initialized structure");
-            }
+            bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
         }
 
-        public void ReadFromStream(BinaryReader br, Node[] array, Node source)
+        public void ReadFromStream(byte[] bytes, ref int pos, Node[] array)
         {
-            OsmID = br.ReadInt64();
+            OsmID = BitHelper.ReadInt64(bytes, ref pos);
             if (OsmID == 0)
             {
                 throw new Exception("Invalid data imported");
             }
-            Cost = br.ReadDouble();
-            TargetNode = array[br.ReadInt32()];
+            Cost = BitHelper.ReadDouble(bytes, ref pos);
+            SourceNode = array[BitHelper.ReadInt32(bytes, ref pos)];
+            SourceNode.OutwardEdges.Add(this);
+            TargetNode = array[BitHelper.ReadInt32(bytes, ref pos)];
             TargetNode.InwardEdges.Add(this);
-            SourceNode = source;
-            source.OutwardEdges.Add(this);
         }
     }
 }

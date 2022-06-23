@@ -15,12 +15,18 @@ namespace SytyRouting
 
         public Task FileSaveAsync(string path)
         {
+            var edgesArray = NodesArray.SelectMany(t => t!.OutwardEdges).ToArray();
             using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(path)))
             {
                 bw.Write(NodesArray.Length);
                 foreach(var node in NodesArray)
                 {
                     node.WriteToStream(bw);
+                }
+                bw.Write(edgesArray.Length);
+                foreach(var edge in edgesArray)
+                {
+                    edge.WriteToStream(bw);
                 }
                 KDTree?.WriteToStream(bw);
             }
@@ -31,18 +37,31 @@ namespace SytyRouting
         {
             try
             {
-                using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+                var bytes = await File.ReadAllBytesAsync(path);
+                logger.Info("Read after {0}", FormatElapsedTime(stopWatch.Elapsed));
+                int pos = 0;
+                var length = BitHelper.ReadInt32(bytes, ref pos);
+                NodesArray = new Node[length];
+                for (int i = 0; i < length; i++)
+                    NodesArray[i] = new Node() { Idx = i };
+                logger.Info("Array created after {0}", FormatElapsedTime(stopWatch.Elapsed));
+                for (int i = 0; i < length; i++)
                 {
-                    var length = br.ReadInt32();
-                    NodesArray = new Node[length];
-                    for (int i = 0; i < length; i++)
-                        NodesArray[i] = new Node(){Idx=i};
-                    for (int i = 0; i < length; i++)
-                    {
-                        NodesArray[i].ReadFromStream(br, NodesArray);
-                    }
-                    KDTree = new KDTree(br, NodesArray);
+                    NodesArray[i].ReadFromStream(bytes, ref pos);
                 }
+                logger.Info("Nodes imported after {0}", FormatElapsedTime(stopWatch.Elapsed));
+                var edges = BitHelper.ReadInt32(bytes, ref pos);
+                for (int i = 0; i < edges; i++)
+                {
+                    var edge = new Edge();
+                    edge.ReadFromStream(bytes, ref pos, NodesArray);
+                }
+                logger.Info("Edges imported after {0}", FormatElapsedTime(stopWatch.Elapsed));
+                KDTree = new KDTree(bytes, ref pos, NodesArray);
+                logger.Info("Loaded in {0}", FormatElapsedTime(stopWatch.Elapsed));
+                stopWatch.Stop();
             }
             catch
             {
@@ -163,7 +182,7 @@ namespace SytyRouting
         {
             if (!nodes.ContainsKey(id))
             {   
-                var node = new Node{OsmID = osmID,  X = x, Y = y};
+                var node = new Node{OsmID = osmID,  X = x, Y = y, OutwardEdges = new List<Edge>(), InwardEdges = new List<Edge>()};
                 nodes.Add(id, node);
                 logger.Trace("New Node added for key (nodeId) = {0} ", id);
             }

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace SytyRouting
 {
 
@@ -12,8 +14,12 @@ namespace SytyRouting
         public bool ValidTarget { get; set; }
 
         public bool ValidSource { get; set; }
-        public List<Edge> InwardEdges {get; set;} = new List<Edge>();
-        public List<Edge> OutwardEdges {get; set;} = new List<Edge>();
+
+        [NotNull] 
+        public List<Edge>? InwardEdges {get; set;}
+
+        [NotNull] 
+        public List<Edge>? OutwardEdges {get; set;}
 
         public void WriteToStream(BinaryWriter bw)
         {
@@ -26,30 +32,23 @@ namespace SytyRouting
             bw.Write(Y);
             bw.Write(ValidTarget);
             bw.Write(ValidSource);
+            bw.Write(InwardEdges.Count);
             bw.Write(OutwardEdges.Count);
-            foreach(var edge in OutwardEdges)
-            {
-                edge.WriteToStream(bw);
-            }
         }
 
-        public void ReadFromStream(BinaryReader br, Node[] array)
+        public void ReadFromStream(byte[] bytes, ref int pos)
         {
-            OsmID = br.ReadInt64();
+            OsmID = BitHelper.ReadInt64(bytes, ref pos);
             if (OsmID == 0)
             {
                 throw new Exception("Invalid data imported");
             }
-            X = br.ReadDouble();
-            Y = br.ReadDouble();
-            ValidTarget = br.ReadBoolean();
-            ValidSource = br.ReadBoolean();
-            var count = br.ReadInt32();
-            for (int i = 0; i < count; i++)
-            {
-                var edge = new Edge();
-                edge.ReadFromStream(br, array, this);
-            }
+            X = BitHelper.ReadDouble(bytes, ref pos);
+            Y = BitHelper.ReadDouble(bytes, ref pos);
+            ValidTarget = BitHelper.ReadBoolean(bytes, ref pos);
+            ValidSource = BitHelper.ReadBoolean(bytes, ref pos);
+            InwardEdges = new List<Edge>(BitHelper.ReadInt32(bytes, ref pos));
+            OutwardEdges = new List<Edge>(BitHelper.ReadInt32(bytes, ref pos));
         }
         
     }
