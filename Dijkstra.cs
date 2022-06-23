@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using NLog;
 
 namespace SytyRouting
@@ -15,13 +16,15 @@ namespace SytyRouting
 
         public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId)
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            
             var route = new List<Node>();
 
             Dictionary<int, Node> visitedNodes = new Dictionary<int, Node>();
 
-            PriorityQueue<DijkstraStep, double> dijkstraSteps = new PriorityQueue<DijkstraStep, double>();
+            PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
             PriorityQueue<DijkstraStep, double> backwardStartSteps = new PriorityQueue<DijkstraStep, double>();
-
 
             var originNode = Array.Find(nodes, n => n.OsmID == originNodeOsmId);
             var destinationNode = Array.Find(nodes, n => n.OsmID == destinationNodeOsmId);
@@ -39,11 +42,11 @@ namespace SytyRouting
                 logger.Info("Destination Node\t OsmId = {0}", destinationNode?.OsmID);
 
                 var firstStep = new DijkstraStep{TargetNode = originNode, CumulatedCost = 0};
-                dijkstraSteps.Enqueue(firstStep, firstStep.CumulatedCost);
+                dijkstraStepsQueue.Enqueue(firstStep, firstStep.CumulatedCost);
                 
                 while(!visitedNodes.ContainsKey(destinationNode!.Idx))
                 {
-                    dijkstraSteps.TryDequeue(out DijkstraStep? currentStep, out double priority);
+                    dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority);
                     var targetNode = currentStep!.TargetNode;
                 
                     if(targetNode != null && !visitedNodes.ContainsKey(targetNode.Idx))
@@ -53,7 +56,7 @@ namespace SytyRouting
                             if(!visitedNodes.ContainsKey(outwardEdge.TargetNode!.Idx))
                             {
                                 var dijkstraStep = new DijkstraStep{PreviousStep = currentStep, TargetNode = outwardEdge.TargetNode, CumulatedCost = outwardEdge.Cost + currentStep.CumulatedCost};
-                                dijkstraSteps.Enqueue(dijkstraStep, dijkstraStep.CumulatedCost);
+                                dijkstraStepsQueue.Enqueue(dijkstraStep, dijkstraStep.CumulatedCost);
                                 
                                 if(dijkstraStep.TargetNode.OsmID == destinationNodeOsmId)
                                 {
@@ -70,7 +73,7 @@ namespace SytyRouting
                 route.Add(firstBackwardStep!.TargetNode!);
 
                 logger.Info("Route reconstruction:");
-                DijkstraStep currentBackwardStep = firstBackwardStep;
+                var currentBackwardStep = firstBackwardStep;
                 
                 while(currentBackwardStep.TargetNode?.OsmID != originNodeOsmId)
                 {
@@ -87,7 +90,20 @@ namespace SytyRouting
                 }
             }
 
+            stopWatch.Stop();
+            var totalTime = FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("Route created in {0} (HH:MM:S.mS)", totalTime);
+
             return route;
+        }
+
+        private string FormatElapsedTime(TimeSpan timeSpan)
+        {
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+                timeSpan.Milliseconds);
+
+            return elapsedTime;
         }
     }
 }
