@@ -108,8 +108,6 @@ namespace SytyRouting
             //                     0        1      2       3         4          5      6   7   8   9    10           11
             queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways";
 
-            logger.Debug("DB query: {0}", queryString);
-
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {    
@@ -127,8 +125,8 @@ namespace SytyRouting
                     var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     var targetOSMId = Convert.ToInt64(reader.GetValue(11)); // target_osm
                     
-                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));   // gid
-                    var edgeCost = Convert.ToDouble(reader.GetValue(3)); // cost
+                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));  // gid
+                    var edgeCost = Convert.ToDouble(reader.GetValue(3));  // cost
                     var edgeReverseCost = Convert.ToDouble(reader.GetValue(4)); // reverse_cost
                     var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
@@ -146,11 +144,13 @@ namespace SytyRouting
                         GraphCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds);
                     }
                 }
+
                 NodesArray = nodes.Values.ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)
                 {
                     NodesArray[i].Idx = i;
                 }
+
                 stopWatch.Stop();
                 var totalTime = FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
@@ -159,42 +159,56 @@ namespace SytyRouting
             }
         }
 
-        public void GetNodes()
+        public Node GetNodeByOsmId(long osmId)
+        {
+            var node = Array.Find(NodesArray, n => n.OsmID == osmId);
+            if(node == null)
+            {
+                logger.Info("Node OsmId {0} not found", osmId);
+                throw new ArgumentException(String.Format( "Node OsmId {0} not found", osmId), "osmId");
+            }
+
+            return node;
+        }
+
+        public Node[] GetNodes()
+        {            
+            return NodesArray;
+        }
+
+        public void TraceNodes()
         {
             foreach (var node in NodesArray)
             {
-                logger.Debug("Node {0}({1}), X = {2}, Y = {3}",
-                    node.OsmID, node.X, node.Y);
-                GetEdges(node);
+                logger.Trace("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
+                    node.Idx, node.OsmID, node.X, node.Y);
+                TraceEdges(node);
             }
         }
-        private void GetEdges(Node node)
+
+        private void TraceEdges(Node node)
         {
-            logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tInward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.InwardEdges)
             {
-                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
             
-            logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.OutwardEdges)
             {
-                logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
             }
         }
+
         private Node CreateNode(long id, long osmID, double x, double y, Dictionary<long, Node> nodes)
         {
             if (!nodes.ContainsKey(id))
             {
                 var node = new Node { OsmID = osmID, X = x, Y = y };
                 nodes.Add(id, node);
-                logger.Trace("New Node added for key (nodeId) = {0} ", id);
-            }
-            else
-            {
-                logger.Trace("Node {0} is already in the Node collection", id);
             }
 
             return nodes[id];
@@ -210,9 +224,6 @@ namespace SytyRouting
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    logger.Trace("Edge {0} was added to Node {1} as an outward edge.", osmID, source.OsmID);
-                    logger.Trace("Edge {0} was added to Node {1} as an inward edge.", osmID, target.OsmID);                
-
                     break;
                 }
                 case OneWayState.Reversed: // Only backward direction
@@ -220,9 +231,6 @@ namespace SytyRouting
                     var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
-
-                    logger.Trace("Edge {0} was added to Node {1} as an inward edge.", osmID, source.OsmID);
-                    logger.Trace("Edge {0} was added to Node {1} as an outward edge.", osmID, target.OsmID);
 
                     break;
                 }
@@ -236,8 +244,6 @@ namespace SytyRouting
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
-                    logger.Trace("Edge {0} was successfully added to Nodes {1} and {2} as an outward and inward edge, respectively.",
-                                osmID, source.OsmID, target.OsmID);
                     break;
                 }
             }
