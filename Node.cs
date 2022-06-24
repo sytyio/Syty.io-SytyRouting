@@ -39,12 +39,6 @@ namespace SytyRouting
             Y = br.ReadDouble();
             ValidTarget = br.ReadBoolean();
             ValidSource = br.ReadBoolean();
-            var count = br.ReadInt32();
-            for (int i = 0; i < count; i++)
-            {
-                var edge = new Edge();
-                edge.ReadFromStream(br, array, this);
-            }
-        }    
+        }
     }
 }
