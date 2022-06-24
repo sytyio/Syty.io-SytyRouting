@@ -1,4 +1,4 @@
-namespace SytyRouting
+namespace SytyRouting.Algorithms.Dijkstra
 {
 
     public class DijkstraStep

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using NLog;
 
-namespace SytyRouting
+namespace SytyRouting.Algorithms.Dijkstra
 {
     public class Dijkstra
     {
@@ -102,6 +102,16 @@ namespace SytyRouting
             logger.Info("Route created in {0} (HH:MM:S.mS)", totalTime);
 
             return route;
+        }
+
+        private void ReconstructRoute(DijkstraStep currentStep)
+        {
+            if (currentStep != null)
+            {
+                ReconstructRoute(currentStep.PreviousStep);
+                route.Add(currentStep.TargetNode);
+                logger.Trace("Node OsmId = {0}", currentStep.TargetNode.OsmID);
+            }
         }
     }
 }

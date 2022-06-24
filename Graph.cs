@@ -66,7 +66,7 @@ namespace SytyRouting
 
                     KDTree = new KDTree(br, NodesArray);
                 }
-                logger.Info("Loaded in {0}", FormatElapsedTime(stopWatch.Elapsed));
+                logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
                 stopWatch.Stop();
             }
             catch
@@ -309,17 +309,6 @@ namespace SytyRouting
             logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
         }
-<<<<<<< HEAD
-=======
-
-        private string FormatElapsedTime(TimeSpan timeSpan)
-        {
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
-                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
-                timeSpan.Milliseconds);
-
-            return elapsedTime;
-        }
 
         public void TestClosestNode(string name, double x, double y)
         {
@@ -335,6 +324,5 @@ namespace SytyRouting
                 }
             }
         }
->>>>>>> dev
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using NLog;
+using SytyRouting.Algorithms.Dijkstra;
 
 namespace SytyRouting
 {
