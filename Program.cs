@@ -18,13 +18,14 @@ namespace SytyRouting
             logger.Info("Creating syty.io routing graph from dataset");
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
-            
 
 
-            // Try Dijkstra's algorithm
-            var dijkstra = new Dijkstra(graph);          
+            logger.Info("Testing point location");
+            graph.TestClosestNode("Synapsis",4.369293555585981, 50.82126481464596);
+            graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
 
             logger.Info("Route searching using Dijkstra's algorithm");
+            var dijkstra = new Dijkstra(graph); 
             // dijkstra.GetRoute(2135360285, 145351);
             dijkstra.GetRoute(26913029, 1486032529);
             // dijkstra.GetRoute(26913029, 7911022011);

@@ -2,6 +2,7 @@ using Npgsql;
 using NLog;
 using System.Diagnostics;
 using System.Globalization;
+using SytyRouting.Algorithms.KDTree;
 
 namespace SytyRouting
 {
@@ -10,6 +11,7 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Node[] NodesArray = new Node[0];
+        private KDTree? KDTree;
 
         public Task FileSaveAsync(string path)
         {
@@ -20,6 +22,13 @@ namespace SytyRouting
                 {
                     node.WriteToStream(bw);
                 }
+                var edgesArray = NodesArray.SelectMany(t => t.OutwardEdges).ToArray();
+                bw.Write(edgesArray.Length);
+                foreach(var edge in edgesArray)
+                {
+                    edge.WriteToStream(bw);
+                }
+                KDTree?.WriteToStream(bw);
             }
             return Task.CompletedTask;
         }
@@ -28,22 +37,43 @@ namespace SytyRouting
         {
             try
             {
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+
                 using (BinaryReader br = new BinaryReader(File.OpenRead(path)))
                 {
                     var length = br.ReadInt32();
                     NodesArray = new Node[length];
                     for (int i = 0; i < length; i++)
-                        NodesArray[i] = new Node(){Idx=i};
+                        NodesArray[i] = new Node() { Idx = i };
                     for (int i = 0; i < length; i++)
                     {
-                        NodesArray[i].ReadFromStream(br, NodesArray);
+                        NodesArray[i].ReadFromStream(br);
                     }
+                    length = br.ReadInt32();
+                    var edgesArray = new Edge[length];
+                    for (int i = 0; i < length; i++)
+                        edgesArray[i] = new Edge();
+                    for (int i = 0; i < length; i++)
+                    {
+                        edgesArray[i].ReadFromStream(br, NodesArray);
+                    }
+                    foreach(var edge in edgesArray)
+                    {
+                        edge.SourceNode.OutwardEdges.Add(edge);
+                        edge.TargetNode.InwardEdges.Add(edge);
+                    }
+
+                    KDTree = new KDTree(br, NodesArray);
                 }
+                logger.Info("Loaded in {0}", FormatElapsedTime(stopWatch.Elapsed));
+                stopWatch.Stop();
             }
             catch
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
+                KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
         }
@@ -176,8 +206,8 @@ namespace SytyRouting
         private Node CreateNode(long id, long osmID, double x, double y, Dictionary<long, Node> nodes)
         {
             if (!nodes.ContainsKey(id))
-            {   
-                var node = new Node{OsmID = osmID,  X = x, Y = y};
+            {
+                var node = new Node { OsmID = osmID, X = x, Y = y };
                 nodes.Add(id, node);
             }
 
@@ -198,7 +228,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var edge = new Edge{Cost = cost, SourceNode = target, TargetNode = source};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -206,11 +236,11 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var edge = new Edge{Cost = cost, SourceNode = source, TargetNode = target};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    edge = new Edge{ Cost = cost, SourceNode = target, TargetNode = source};
+                    edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
@@ -250,7 +280,7 @@ namespace SytyRouting
             root.ValidSource = true;
             root.ValidTarget = true;
             toProcess.Enqueue(root);
-            Node node;
+            Node? node;
             while(toProcess.TryDequeue(out node))
             {
                 if (node.ValidSource)
@@ -279,5 +309,32 @@ namespace SytyRouting
             logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
         }
+<<<<<<< HEAD
+=======
+
+        private string FormatElapsedTime(TimeSpan timeSpan)
+        {
+            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
+                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+                timeSpan.Milliseconds);
+
+            return elapsedTime;
+        }
+
+        public void TestClosestNode(string name, double x, double y)
+        {
+            if (KDTree != null)
+            {
+                var node = KDTree.GetNearestNeighbor(x, y);
+                logger.Info("Closest node to {0} has OSM ID {1}", name, node.OsmID);
+
+                var adjacentIds = node.OutwardEdges.Union(node.InwardEdges).Select(t => t.OsmID).Distinct();
+                foreach (var itm in adjacentIds)
+                {
+                    logger.Info("     => Adjacent road has OSM ID {1}", name, itm);
+                }
+            }
+        }
+>>>>>>> dev
     }
 }

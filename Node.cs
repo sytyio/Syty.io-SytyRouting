@@ -12,26 +12,29 @@ namespace SytyRouting
         public bool ValidTarget { get; set; }
 
         public bool ValidSource { get; set; }
-        public List<Edge> InwardEdges {get; set;} = new List<Edge>();
-        public List<Edge> OutwardEdges {get; set;} = new List<Edge>();
+        public List<Edge> InwardEdges { get; set; } = new List<Edge>(4);
+        public List<Edge> OutwardEdges {get; set;} = new List<Edge>(4);
 
         public void WriteToStream(BinaryWriter bw)
         {
+            if (OsmID == 0)
+            {
+                throw new Exception("Invalid data imported");
+            }
             bw.Write(OsmID);
             bw.Write(X);
             bw.Write(Y);
             bw.Write(ValidTarget);
             bw.Write(ValidSource);
-            bw.Write(OutwardEdges.Count);
-            foreach(var edge in OutwardEdges)
-            {
-                edge.WriteToStream(bw);
-            }
         }
 
-        public void ReadFromStream(BinaryReader br, Node[] array)
+        public void ReadFromStream(BinaryReader br)
         {
             OsmID = br.ReadInt64();
+            if (OsmID == 0)
+            {
+                throw new Exception("Invalid data imported");
+            }
             X = br.ReadDouble();
             Y = br.ReadDouble();
             ValidTarget = br.ReadBoolean();
