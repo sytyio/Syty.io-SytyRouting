@@ -1,6 +1,6 @@
 using NLog;
 
-namespace SytyRouting
+namespace SytyRouting.Algorithms.KDTree
 {
     public class KDTree
     {

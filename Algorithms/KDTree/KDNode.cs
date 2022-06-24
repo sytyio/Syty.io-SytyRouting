@@ -1,7 +1,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace SytyRouting
+namespace SytyRouting.Algorithms.KDTree
 {
     public class KDNode
     {
