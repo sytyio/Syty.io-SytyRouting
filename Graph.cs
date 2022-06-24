@@ -95,8 +95,8 @@ namespace SytyRouting
                     var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     var targetOSMId = Convert.ToInt64(reader.GetValue(11)); // target_osm
                     
-                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));   // gid
-                    var edgeCost = Convert.ToDouble(reader.GetValue(3)); // cost
+                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));  // gid
+                    var edgeCost = Convert.ToDouble(reader.GetValue(3));  // cost
                     var edgeReverseCost = Convert.ToDouble(reader.GetValue(4)); // reverse_cost
                     var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
 
@@ -127,6 +127,18 @@ namespace SytyRouting
                 logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
                 CleanGraph();
             }
+        }
+
+        public Node GetNodeByOsmId(long osmId)
+        {
+            var node = Array.Find(NodesArray, n => n.OsmID == osmId);
+            if(node == null)
+            {
+                logger.Info("Node OsmId {0} not found", osmId);
+                throw new ArgumentException(String.Format( "Node OsmId {0} not found", osmId), "osmId");
+            }
+
+            return node;
         }
 
         public Node[] GetNodes()
