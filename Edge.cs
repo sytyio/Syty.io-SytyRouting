@@ -26,18 +26,17 @@ namespace SytyRouting
             bw.Write(TargetNode.Idx);
         }
 
-        public void ReadFromStream(byte[] bytes, ref int pos, Node[] array)
+        public void ReadFromStream(BinaryReader br, Node[] array)
         {
-            OsmID = BitHelper.ReadInt64(bytes, ref pos);
+            OsmID = br.ReadInt64();
             if (OsmID == 0)
             {
                 throw new Exception("Invalid data imported");
             }
-            Cost = BitHelper.ReadDouble(bytes, ref pos);
-            SourceNode = array[BitHelper.ReadInt32(bytes, ref pos)];
-            SourceNode.OutwardEdges.Add(this);
-            TargetNode = array[BitHelper.ReadInt32(bytes, ref pos)];
-            TargetNode.InwardEdges.Add(this);
+            Cost = br.ReadDouble();
+            SourceNode = array[br.ReadInt32()];
+            TargetNode = array[br.ReadInt32()];
+            
         }
     }
 }

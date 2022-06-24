@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace SytyRouting
 {
 
@@ -14,12 +12,8 @@ namespace SytyRouting
         public bool ValidTarget { get; set; }
 
         public bool ValidSource { get; set; }
-
-        [NotNull] 
-        public List<Edge>? InwardEdges {get; set;}
-
-        [NotNull] 
-        public List<Edge>? OutwardEdges {get; set;}
+        public List<Edge> InwardEdges { get; set; } = new List<Edge>(4);
+        public List<Edge> OutwardEdges {get; set;} = new List<Edge>(4);
 
         public void WriteToStream(BinaryWriter bw)
         {
@@ -32,24 +26,19 @@ namespace SytyRouting
             bw.Write(Y);
             bw.Write(ValidTarget);
             bw.Write(ValidSource);
-            bw.Write(InwardEdges.Count);
-            bw.Write(OutwardEdges.Count);
         }
 
-        public void ReadFromStream(byte[] bytes, ref int pos)
+        public void ReadFromStream(BinaryReader br)
         {
-            OsmID = BitHelper.ReadInt64(bytes, ref pos);
+            OsmID = br.ReadInt64();
             if (OsmID == 0)
             {
                 throw new Exception("Invalid data imported");
             }
-            X = BitHelper.ReadDouble(bytes, ref pos);
-            Y = BitHelper.ReadDouble(bytes, ref pos);
-            ValidTarget = BitHelper.ReadBoolean(bytes, ref pos);
-            ValidSource = BitHelper.ReadBoolean(bytes, ref pos);
-            InwardEdges = new List<Edge>(BitHelper.ReadInt32(bytes, ref pos));
-            OutwardEdges = new List<Edge>(BitHelper.ReadInt32(bytes, ref pos));
+            X = br.ReadDouble();
+            Y = br.ReadDouble();
+            ValidTarget = br.ReadBoolean();
+            ValidSource = br.ReadBoolean();
         }
-        
     }
 }

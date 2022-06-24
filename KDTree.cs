@@ -20,10 +20,10 @@ namespace SytyRouting
             logger.Debug("KD-Tree ready!");
         }
 
-        public KDTree(byte[] bytes, ref int pos, Node[] array)
+        public KDTree(BinaryReader br, Node[] array)
         {
             logger.Debug("Loading KD-Tree");
-            root = ReadFromStream(bytes,ref pos, array, 0);
+            root = ReadFromStream(br, array, 0);
             logger.Debug("KD-Tree ready!");
         }
 
@@ -81,15 +81,15 @@ namespace SytyRouting
             }
         }
 
-        private KDNode ReadFromStream(byte[] bytes, ref int pos, Node[] array, int orientation)
+        private KDNode ReadFromStream(BinaryReader br, Node[] array, int orientation)
         {
-            var idx = BitHelper.ReadInt32(bytes, ref pos);
+            var idx = br.ReadInt32();
             return new KDNode
             {
                 Item = array[idx],
                 Orientation = orientation,
-                Low = BitHelper.ReadBoolean(bytes, ref pos) ? ReadFromStream(bytes, ref pos, array, (orientation + 1) % 2) : null,
-                High = BitHelper.ReadBoolean(bytes, ref pos) ? ReadFromStream(bytes, ref pos, array, (orientation + 1) % 2) : null
+                Low = br.ReadBoolean() ? ReadFromStream(br, array, (orientation + 1) % 2) : null,
+                High = br.ReadBoolean() ? ReadFromStream(br, array, (orientation + 1) % 2) : null
             };
         }
 
