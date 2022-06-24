@@ -53,7 +53,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             var exist = bestScoreForNode.ContainsKey(nextNode.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { TargetNode = nextNode, CumulatedCost = cumulatedCost };
+                var step = new DijkstraStep { ActiveNode = nextNode, CumulatedCost = cumulatedCost };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
                 if(!exist)
                 {
@@ -64,7 +64,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                     bestScoreForNode[nextNode.Idx] = cumulatedCost;
                 }
             }
-
         }
 
         public List<Node> GetRoute(Node originNode, Node destinationNode)
@@ -80,15 +79,15 @@ namespace SytyRouting.Algorithms.Dijkstra
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep currentStep, out double priority))
             {
-                var targetNode = currentStep!.TargetNode;
-                if(targetNode == destinationNode)
+                var activeNode = currentStep!.ActiveNode;
+                if(activeNode == destinationNode)
                 {
                     ReconstructRoute(currentStep);
                     break;
                 }
-                if(priority <= bestScoreForNode[targetNode.Idx])
+                if(priority <= bestScoreForNode[activeNode.Idx])
                 {
-                    foreach(var outwardEdge in targetNode.OutwardEdges)
+                    foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
                         AddStep(outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
                     }
@@ -109,8 +108,8 @@ namespace SytyRouting.Algorithms.Dijkstra
             if (currentStep != null)
             {
                 ReconstructRoute(currentStep.PreviousStep);
-                route.Add(currentStep.TargetNode);
-                logger.Trace("Node OsmId = {0}", currentStep.TargetNode.OsmID);
+                route.Add(currentStep.ActiveNode);
+                logger.Info("Node OsmId = {0}", currentStep.ActiveNode.OsmID);
             }
         }
     }
