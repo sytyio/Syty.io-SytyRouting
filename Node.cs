@@ -42,7 +42,6 @@ namespace SytyRouting
                 var edge = new Edge();
                 edge.ReadFromStream(br, array, this);
             }
-        }
-        
+        }    
     }
 }

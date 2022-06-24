@@ -122,7 +122,7 @@ namespace SytyRouting
                 }
 
                 stopWatch.Stop();
-                var totalTime = FormatElapsedTime(stopWatch.Elapsed);
+                var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
                 CleanGraph();
@@ -221,13 +221,13 @@ namespace SytyRouting
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
         {
-            var elapsedTime = FormatElapsedTime(timeSpan);
+            var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
             var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
             var graphCreationTimeSeconds = totalDbRows / rowProcessingRate;
             var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
 
-            var totalTime = FormatElapsedTime(graphCreationTime);
+            var totalTime = Helper.FormatElapsedTime(graphCreationTime);
 
             logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
             logger.Info("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
@@ -276,17 +276,8 @@ namespace SytyRouting
                     }
                 }
             }
-            logger.Info("Graph annotated and clean in {0}", FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
-        }
-
-        private string FormatElapsedTime(TimeSpan timeSpan)
-        {
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
-                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
-                timeSpan.Milliseconds);
-
-            return elapsedTime;
         }
     }
 }
