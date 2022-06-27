@@ -159,6 +159,17 @@ namespace SytyRouting
             }
         }
 
+        public Node GetNodeByLatitudeLongitude(double x, double y)
+        {
+            if (KDTree != null)
+            {
+                var node = KDTree.GetNearestNeighbor(x, y);
+                logger.Info("The nearest node to ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
+                return node;
+            }
+            throw new Exception("Impossible to find the nearest node based on the provided coordinates.");
+        }
+
         public Node GetNodeByOsmId(long osmId)
         {
             var node = Array.Find(NodesArray, n => n.OsmID == osmId);
