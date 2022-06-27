@@ -48,12 +48,13 @@ namespace SytyRouting.Algorithms.Dijkstra
             return GetRoute(originNode, destinationNode);
         }
 
-        private void AddStep(Node nextNode, double cumulatedCost)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
-            var exist = bestScoreForNode.ContainsKey(nextNode.Idx);
+            var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { ActiveNode = nextNode, CumulatedCost = cumulatedCost };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
+
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
                 if(!exist)
                 {
@@ -75,9 +76,9 @@ namespace SytyRouting.Algorithms.Dijkstra
             logger.Info("Origin Node     \t OsmId = {0}", originNode?.OsmID);
             logger.Info("Destination Node\t OsmId = {0}", destinationNode?.OsmID);
 
-            AddStep(originNode, 0);
+            AddStep(null, originNode, 0);
 
-            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep currentStep, out double priority))
+            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
                 var activeNode = currentStep!.ActiveNode;
                 if(activeNode == destinationNode)
@@ -85,14 +86,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                     ReconstructRoute(currentStep);
                     break;
                 }
-                if(priority <= bestScoreForNode[activeNode.Idx])
+                if(priority <= bestScoreForNode[activeNode!.Idx])
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        AddStep(outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
                     }
                 }
             }
+
             dijkstraStepsQueue.Clear();
             bestScoreForNode.Clear();
 
@@ -103,13 +105,13 @@ namespace SytyRouting.Algorithms.Dijkstra
             return route;
         }
 
-        private void ReconstructRoute(DijkstraStep currentStep)
+        private void ReconstructRoute(DijkstraStep? currentStep)
         {
             if (currentStep != null)
             {
                 ReconstructRoute(currentStep.PreviousStep);
-                route.Add(currentStep.ActiveNode);
-                logger.Info("Node OsmId = {0}", currentStep.ActiveNode.OsmID);
+                route.Add(currentStep.ActiveNode!);
+                logger.Info("Node OsmId = {0}", currentStep.ActiveNode!.OsmID);
             }
         }
     }
