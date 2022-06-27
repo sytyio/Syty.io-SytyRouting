@@ -133,7 +133,7 @@ namespace SytyRouting
                     var source = CreateNode(sourceId, sourceOSMId, sourceX, sourceY, nodes);
                     var target = CreateNode(targetId, targetOSMId, targetX, targetY, nodes);
                     
-                    CreateEdges(edgeOSMId, edgeCost, edgeOneWay, source, target);
+                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target);
 
                     dbRowsProcessed++;
 
@@ -164,7 +164,7 @@ namespace SytyRouting
             if (KDTree != null)
             {
                 var node = KDTree.GetNearestNeighbor(x, y);
-                logger.Info("The nearest node to ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
+                logger.Debug("The closest node  for ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
                 return node;
             }
             throw new Exception("Impossible to find the nearest node based on the provided coordinates.");
@@ -225,7 +225,7 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, OneWayState oneWayState, Node source, Node target)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target)
         {
             switch (oneWayState)
             {
@@ -239,7 +239,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -251,7 +251,7 @@ namespace SytyRouting
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = target, TargetNode = source};
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
@@ -270,8 +270,8 @@ namespace SytyRouting
 
             var totalTime = Helper.FormatElapsedTime(graphCreationTime);
 
-            logger.Info("Number of DB rows already processed: {0}", dbRowsProcessed);
-            logger.Info("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            logger.Debug("Number of DB rows already processed: {0}", dbRowsProcessed);
+            logger.Debug("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
             logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
             logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
         }

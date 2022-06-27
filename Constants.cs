@@ -13,6 +13,6 @@ namespace SytyRouting
     {
         public const string connectionString = "Host=compute.syty.io:1234;Username=postgres;Password=test123;Database=sytyrun";
 
-        public const long stopIterations = 10000;
+        public const long stopIterations = 50000;
     }
 }
