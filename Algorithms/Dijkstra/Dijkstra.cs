@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Diagnostics;
 using NLog;
 
@@ -15,6 +16,14 @@ namespace SytyRouting.Algorithms.Dijkstra
         public Dijkstra(Graph graph)
         {
             _graph = graph;
+        }
+
+        public List<Node> GetRoute(double x1, double y1, double x2, double y2)
+        {           
+            var originNode = _graph.GetNodeByLatitudeLongitude(x1, y1);
+            var destinationNode = _graph.GetNodeByLatitudeLongitude(x2, y2);
+            
+            return GetRoute(originNode, destinationNode);
         }
 
         public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId)
@@ -48,6 +57,55 @@ namespace SytyRouting.Algorithms.Dijkstra
             return GetRoute(originNode, destinationNode);
         }
 
+        private List<Node> GetRoute(Node originNode, Node destinationNode)
+        {
+            route.Clear();
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            logger.Info("Origin Node     \t OsmId = {0}", originNode?.OsmID);
+            logger.Info("Destination Node\t OsmId = {0}", destinationNode?.OsmID);
+
+            AddStep(null, originNode, 0);
+
+            long stepsProcessed = 0;
+
+            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
+            {
+                var activeNode = currentStep!.ActiveNode;
+                if(activeNode == destinationNode)
+                {
+                    logger.Info("Calculated route:");
+                    ReconstructRoute(currentStep);
+                    break;
+                }
+                if(priority <= bestScoreForNode[activeNode!.Idx])
+                {
+                    foreach(var outwardEdge in activeNode.OutwardEdges)
+                    {
+                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                    }
+                }
+
+                stepsProcessed++;
+                if (stepsProcessed % Constants.stopIterations == 0)
+                {                        
+                    var timeSpan = stopWatch.Elapsed;
+                    var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                    RouteCreationBenchmark(stepsProcessed, timeSpan, timeSpanMilliseconds);
+                }
+            }
+
+            dijkstraStepsQueue.Clear();
+            bestScoreForNode.Clear();
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("Route created in {0} (HH:MM:S.mS)", totalTime);
+
+            return route;
+        }
+
         private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
@@ -67,44 +125,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
         }
 
-        public List<Node> GetRoute(Node originNode, Node destinationNode)
-        {
-            route.Clear();
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            logger.Info("Origin Node     \t OsmId = {0}", originNode?.OsmID);
-            logger.Info("Destination Node\t OsmId = {0}", destinationNode?.OsmID);
-
-            AddStep(null, originNode, 0);
-
-            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
-            {
-                var activeNode = currentStep!.ActiveNode;
-                if(activeNode == destinationNode)
-                {
-                    ReconstructRoute(currentStep);
-                    break;
-                }
-                if(priority <= bestScoreForNode[activeNode!.Idx])
-                {
-                    foreach(var outwardEdge in activeNode.OutwardEdges)
-                    {
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
-                    }
-                }
-            }
-
-            dijkstraStepsQueue.Clear();
-            bestScoreForNode.Clear();
-
-            stopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("Route created in {0} (HH:MM:S.mS)", totalTime);
-
-            return route;
-        }
-
         private void ReconstructRoute(DijkstraStep? currentStep)
         {
             if (currentStep != null)
@@ -113,6 +133,22 @@ namespace SytyRouting.Algorithms.Dijkstra
                 route.Add(currentStep.ActiveNode!);
                 logger.Info("Node OsmId = {0}", currentStep.ActiveNode!.OsmID);
             }
+        }
+
+        private void RouteCreationBenchmark(long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
+        {
+            var elapsedTime = Helper.FormatElapsedTime(timeSpan);
+
+            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
+            // var graphCreationTimeSeconds = totalSteps / rowProcessingRate;
+            // var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
+
+            // var totalTime = Helper.FormatElapsedTime(grakphCreationTime);
+
+            logger.Info("Number of steps already processed: {0}", dbRowsProcessed);
+            logger.Info("Step processing rate: {0} [Steps / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
+            // logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
         }
     }
 }
