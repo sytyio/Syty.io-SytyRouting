@@ -104,7 +104,7 @@ namespace SytyRouting
 
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
-            // Read all 'ways' rows and creates the corresponding Nodes            
+            // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11
             queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways";
 
@@ -154,7 +154,7 @@ namespace SytyRouting
                 stopWatch.Stop();
                 var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
-                logger.Info("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
+                logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
                 CleanGraph();
             }
         }
@@ -175,11 +175,21 @@ namespace SytyRouting
             var node = Array.Find(NodesArray, n => n.OsmID == osmId);
             if(node == null)
             {
-                logger.Info("Node OsmId {0} not found", osmId);
+                logger.Debug("Node OsmId {0} not found", osmId);
                 throw new ArgumentException(String.Format( "Node OsmId {0} not found", osmId), "osmId");
             }
 
             return node;
+        }
+
+        public Node GetNodeByIndex(int index)
+        {
+            return NodesArray[index];
+        }
+
+        public int GetNodesArraySize()
+        {            
+            return NodesArray.Length;
         }
 
         public Node[] GetNodes()
