@@ -26,6 +26,14 @@ namespace SytyRouting.Algorithms.Dijkstra
             return GetRoute(originNode, destinationNode);
         }
 
+        public void TraceRoute()
+        {
+            foreach(Node node in route)
+            {
+                logger.Trace("Node OsmId = {0}", node.OsmID);
+            }
+        }
+
         public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId)
         {
             Node originNode;
@@ -35,8 +43,8 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
             catch (ArgumentException e)
             {
-                logger.Info("Origin node (source_osm = {0}) not found", originNodeOsmId);
-                logger.Info("{0}: {1}", e.GetType().Name, e.Message);
+                logger.Debug("Origin node (source_osm = {0}) not found", originNodeOsmId);
+                logger.Debug("{0}: {1}", e.GetType().Name, e.Message);
 
                 throw new Exception("Unknown value for node osm id.");
             }
@@ -48,8 +56,8 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
             catch (ArgumentException e)
             {
-                logger.Info("Destination node (source_osm = {0}) not found", destinationNodeOsmId);
-                logger.Info("{0}: {1}", e.GetType().Name, e.Message);
+                logger.Debug("Destination node (source_osm = {0}) not found", destinationNodeOsmId);
+                logger.Debug("{0}: {1}", e.GetType().Name, e.Message);
 
                 throw new Exception("Unknown value for node osm id.");
             }
@@ -59,12 +67,13 @@ namespace SytyRouting.Algorithms.Dijkstra
 
         private List<Node> GetRoute(Node originNode, Node destinationNode)
         {
-            route.Clear();
+            logger.Info("Origin Node     \t OsmId {0}", originNode?.OsmID);
+            logger.Info("Destination Node\t OsmId {0}", destinationNode?.OsmID);
+
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            logger.Info("Origin Node     \t OsmId = {0}", originNode?.OsmID);
-            logger.Info("Destination Node\t OsmId = {0}", destinationNode?.OsmID);
+            route.Clear();
 
             AddStep(null, originNode, 0);
 
@@ -121,7 +130,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);
-                logger.Debug("Node OsmId = {0}", currentStep.ActiveNode!.OsmID);
             }
         }
     }
