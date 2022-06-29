@@ -84,7 +84,7 @@ namespace SytyRouting
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var connectionString = Constants.connectionString;
+            var connectionString = Constants.ConnectionString;
             string queryString;           
 
             await using var connection = new NpgsqlConnection(connectionString);
@@ -137,7 +137,7 @@ namespace SytyRouting
 
                     dbRowsProcessed++;
 
-                    if (dbRowsProcessed % Constants.stopIterations == 0)
+                    if (dbRowsProcessed % 50000 == 0)
                     {                        
                         var timeSpan = stopWatch.Elapsed;
                         var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
