@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Diagnostics;
 using NLog;
 
@@ -67,12 +66,6 @@ namespace SytyRouting.Algorithms.Dijkstra
 
         private List<Node> GetRoute(Node originNode, Node destinationNode)
         {
-            logger.Info("Origin Node     \t OsmId {0}", originNode?.OsmID);
-            logger.Info("Destination Node\t OsmId {0}", destinationNode?.OsmID);
-
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
             route.Clear();
 
             AddStep(null, originNode, 0);
@@ -82,7 +75,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                 var activeNode = currentStep!.ActiveNode;
                 if(activeNode == destinationNode)
                 {
-                    logger.Debug("Calculated route:");
                     ReconstructRoute(currentStep);
                     break;
                 }
@@ -97,10 +89,6 @@ namespace SytyRouting.Algorithms.Dijkstra
 
             dijkstraStepsQueue.Clear();
             bestScoreForNode.Clear();
-
-            stopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("Route created in {0} (HH:MM:S.mS)", totalTime);
 
             return route;
         }
