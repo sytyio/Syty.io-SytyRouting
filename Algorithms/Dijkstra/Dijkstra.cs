@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using NLog;
 
 namespace SytyRouting.Algorithms.Dijkstra
