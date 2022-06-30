@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using NLog;
 using SytyRouting.Algorithms.Dijkstra;
-
+using SytyRouting.Model;
 
 namespace SytyRouting
 {
@@ -26,9 +26,7 @@ namespace SytyRouting
 
         private static void RandomSourceTargetRouting(Graph graph, Dijkstra dijkstra, int numberOfNodes, int numberOfRuns)
         {
-            var seed = 100100;
-
-            Random randomIndex = new Random(seed);
+            Random randomIndex = new Random();
             
             Node originNode;
             Node destinationNode;

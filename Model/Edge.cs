@@ -1,8 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace SytyRouting
+namespace SytyRouting.Model
 {
-    [Serializable]
     public class Edge
     {
         public long OsmID { get; set; }
