@@ -1,3 +1,5 @@
+using SytyRouting.Model;
+
 namespace SytyRouting.Algorithms.Dijkstra
 {
 

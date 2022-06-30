@@ -1,4 +1,5 @@
 using NLog;
+using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms.KDTree
 {

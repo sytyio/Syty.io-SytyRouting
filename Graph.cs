@@ -3,6 +3,7 @@ using NLog;
 using System.Diagnostics;
 using System.Globalization;
 using SytyRouting.Algorithms.KDTree;
+using SytyRouting.Model;
 
 namespace SytyRouting
 {

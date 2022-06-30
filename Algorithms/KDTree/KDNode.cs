@@ -1,5 +1,6 @@
 
 using System.Diagnostics.CodeAnalysis;
+using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms.KDTree
 {
