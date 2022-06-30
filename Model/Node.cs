@@ -1,4 +1,4 @@
-namespace SytyRouting
+namespace SytyRouting.Model
 {
 
     public class Node
