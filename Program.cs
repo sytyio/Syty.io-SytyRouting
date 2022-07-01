@@ -22,8 +22,9 @@ namespace SytyRouting
             graph.TestClosestNode("Synapsis",4.369293555585981, 50.82126481464596);
             graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
 
-            Benchmarking.DijkstraBenchmarking(graph);
-            
+            // Benchmarking.DijkstraBenchmarking(graph);
+            // Benchmarking.BackwardDijkstraBenchmarking(graph);
+            Benchmarking.BidirectionalDijkstraBenchmarking(graph);
             
 
 

@@ -45,7 +45,7 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode);
         }
 
-        // Routing lgorithm implementation
+        // Routing algorithm implementation
         protected virtual List<Node> RouteSearch(Node origin, Node destination)
         {
             throw new NotImplementedException();

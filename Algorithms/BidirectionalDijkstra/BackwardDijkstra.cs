@@ -3,16 +3,16 @@ using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms.Dijkstra
 {
-    public class Dijkstra : BaseRoutingAlgorithm
+    public class BackwardDijkstra : BaseRoutingAlgorithm
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        
+
         private Graph _graph;
         private List<Node> route = new List<Node>();
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
    
-        public Dijkstra(Graph graph) : base(graph)
+        public BackwardDijkstra(Graph graph) : base(graph)
         {
             _graph = graph;
         }
@@ -30,21 +30,21 @@ namespace SytyRouting.Algorithms.Dijkstra
         {
             route.Clear();
 
-            AddStep(null, originNode, 0);
+            AddStep(null, destinationNode, 0);
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
                 var activeNode = currentStep!.ActiveNode;
-                if(activeNode == destinationNode)
+                if(activeNode == originNode)
                 {
                     ReconstructRoute(currentStep);
                     break;
                 }
                 if(priority <= bestScoreForNode[activeNode!.Idx])
                 {
-                    foreach(var outwardEdge in activeNode.OutwardEdges)
+                    foreach(var inwardEdge in activeNode.InwardEdges)
                     {
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                        AddStep(currentStep, inwardEdge.SourceNode, currentStep.CumulatedCost + inwardEdge.Cost);
                     }
                 }
             }
@@ -78,8 +78,8 @@ namespace SytyRouting.Algorithms.Dijkstra
         {
             if (currentStep != null)
             {
-                ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);
+                ReconstructRoute(currentStep.PreviousStep);
             }
         }
     }
