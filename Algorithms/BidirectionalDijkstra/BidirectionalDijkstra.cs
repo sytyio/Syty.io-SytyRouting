@@ -6,10 +6,7 @@ namespace SytyRouting.Algorithms.Dijkstra
     public class BidirectionalDijkstra : BaseRoutingAlgorithm
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        
-        private Graph _graph;
 
-        private List<Node> route = new List<Node>();
         private List<Node> forwardRoute = new List<Node>();
         private List<Node> backwardRoute = new List<Node>();
 
@@ -29,10 +26,7 @@ namespace SytyRouting.Algorithms.Dijkstra
 
 
    
-        public BidirectionalDijkstra(Graph graph) : base(graph)
-        {
-            _graph = graph;
-        }
+        public BidirectionalDijkstra(Graph graph) : base(graph) { }
 
         public void TraceRoute()
         {
