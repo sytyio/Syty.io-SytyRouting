@@ -7,14 +7,15 @@ namespace SytyRouting.Algorithms.Dijkstra
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
-        private Graph _graph;
-        private List<Node> route = new List<Node>();
+        // private Graph _graph;
+        // private List<Node> route = new List<Node>();
+        
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
    
         public Dijkstra(Graph graph) : base(graph)
         {
-            _graph = graph;
+            // _graph = graph;
         }
 
         public void TraceRoute()
