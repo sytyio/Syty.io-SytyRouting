@@ -4,8 +4,8 @@ namespace SytyRouting.Algorithms
 {
     public abstract class BaseRoutingAlgorithm : IRoutingAlgorithm
     {
-        private Graph _graph;
-        private List<Node> route = new List<Node>();
+        protected Graph _graph;
+        protected List<Node> route = new List<Node>();
 
         public BaseRoutingAlgorithm(Graph graph)
         {
