@@ -188,7 +188,7 @@ namespace SytyRouting
             return NodesArray[index];
         }
 
-        public int GetNodesArraySize()
+        public int GetNodeCount()
         {            
             return NodesArray.Length;
         }
