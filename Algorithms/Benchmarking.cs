@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using NLog;
+using SytyRouting.Algorithms.BackwardDijkstra;
+using SytyRouting.Algorithms.BidirectionalDijkstra;
 using SytyRouting.Algorithms.Dijkstra;
 using SytyRouting.Model;
 
@@ -9,81 +11,19 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();   
 
-        public static void DijkstraBenchmarking(Graph graph)
+        public static void MultipleDijkstraBenchmarking(Graph graph)
         {
-            var dijkstra = new Dijkstra(graph);
-            var numberOfNodes = graph.GetNodesArraySize();
-            // var numberOfRuns = 10;
+            Stopwatch benchmarkStopWatch = new Stopwatch();
+            benchmarkStopWatch.Start();
 
-            logger.Info("Route searching benchmarking using Dijkstra's algorithm");
-            // Selected Nodes:
-            // dijkstra.GetRoute(2135360285, 145351);
-            // dijkstra.GetRoute(26913029, 1486032529);
-            // dijkstra.GetRoute(26913029, 7911022011);
-            // dijkstra.GetRoute(2135360285, -145351);
-            // dijkstra.GetRoute(26913029, 401454717);
-            // dijkstra.GetRoute(26913024, 1486032529);
-            // dijkstra.GetRoute(26913024, 7911022011);
-
-            
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1486032529));
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(7911022011));
-            DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-            dijkstra.TraceRoute();
-
-            
-
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
-            // logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
-            // logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            // RandomSourceTargetRouting(graph, dijkstra, numberOfNodes, numberOfRuns);
-        }
-
-        public static void BackwardDijkstraBenchmarking(Graph graph)
-        {
-            var backwardDijkstra = new BackwardDijkstra(graph);
-            var numberOfNodes = graph.GetNodesArraySize();
-            // var numberOfRuns = 10;
-
-            logger.Info("Route searching benchmarking using Backward Dijkstra's algorithm");
-            // Selected Nodes:
-            // dijkstra.GetRoute(2135360285, 145351);
-            // dijkstra.GetRoute(26913029, 1486032529);
-            // dijkstra.GetRoute(26913029, 7911022011);
-            // dijkstra.GetRoute(2135360285, -145351);
-            // dijkstra.GetRoute(26913029, 401454717);
-            // backwardDijkstra.GetRoute(26913024, 1486032529);
-            // backwardDijkstra.GetRoute(26913024, 7911022011);
-
-
-            // BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1486032529));
-            // BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(7911022011));
-            BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-            backwardDijkstra.TraceRoute();
-
-            
-            
-            
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
-            // logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
-            // logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            // RandomSourceTargetRouting(graph, dijkstra, numberOfNodes, numberOfRuns);
-        }
-
-        public static void BidirectionalDijkstraBenchmarking(Graph graph)
-        {
             var dijkstra = new Dijkstra(graph);
             var backwardDijkstra = new BackwardDijkstra(graph);
             var bidirectionalDijkstra = new BidirectionalDijkstra(graph);
-            var numberOfRuns = 10;
 
-            logger.Info("Route searching benchmarking using Bidirectional Dijkstra's algorithm");
+            // var numberOfRuns = 2000*10; // 07:23:41.830
+            var numberOfRuns = 30; // 
+
+            
             // Selected Nodes:
             // From: Synapsis                            (4.369293555585981, 50.82126481464596) : 26913024
             // To: Robinson                              (4.3809799, 50.8045279) : 5137607046
@@ -102,108 +42,105 @@ namespace SytyRouting
             // logger.Debug("De Panne Markt, De Panne, Node OsmId:             {0}", graph.GetNodeByLatitudeLongitude(2.5919885, 51.0990340).OsmID);
 
 
-            // BidirectionalDijkstraRunTime(bidirectionalDijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1486032529));
-            // BidirectionalDijkstraRunTime(bidirectionalDijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(7911022011));
+            // Well-behaved routes for forward and backward Dijkstra                                  || Bidirectional ?
+
+            // var originNodeOsmId = 26913024;          // Synapsis
+            // // var destinationNodeOsmId = 1486032529; // Middle Traffic Light at Avenue Louise 379    || Ok
+            // // var destinationNodeOsmId = 7911022011; // IESSID Parking lot                           || Ok
+            // // var destinationNodeOsmId = 401454717;  // VUB                                          || Ok
+            // // var destinationNodeOsmId = 5137607046; //  Robinson                                    || Ok
+            // // var destinationNodeOsmId = 9331990615; //  Place Bara                                  || Ok
+            // // var destinationNodeOsmId = 3332515493; //  National Basilica of the Sacred Heart       || Ok
+            
+            // // var destinationNodeOsmId = 249542451;  //  Kasteel van Beersel, Beersel                || Ok
+            // // var destinationNodeOsmId = 1241290630; //  Sint-Niklaaskerk, Liedekerke                || Ok
+            // var destinationNodeOsmId = 1261889889; // De Panne Markt, De Panne                     || Ok
 
 
-            var originNodeOsmId = 26913024;             // Synapsis
-            // var destinationNodeOsmId = 1486032529;      // Middle Traffic Light at Avenue Louise 379
-            // var destinationNodeOsmId = 7911022011; // IESSID Parking lot
-            // var destinationNodeOsmId = 401454717;  // VUB
 
-            // var destinationNodeOsmId = 5137607046; //  Robinson
-            // var destinationNodeOsmId = 9331990615; //  Place Bara
-            // var destinationNodeOsmId = 3332515493; //  National Basilica of the Sacred Heart
-            // var destinationNodeOsmId = 249542451;  //  Kasteel van Beersel, Beersel
-            // var destinationNodeOsmId = 1241290630; //  Sint-Niklaaskerk, Liedekerke
-            var destinationNodeOsmId = 1261889889; // De Panne Markt
+
+            // // Problematic routes for forward and backward Dijkstra:
+            
+            // // var originNodeOsmId = 1585738565;        // Rue d'Havré, Havré
+            // // var destinationNodeOsmId = 3829602659;   // Avenue de la Hêtraie, Braine-le-Comte
+            
+            // // var originNodeOsmId = graph.GetNodeByIndex(844225).OsmID;        // ?
+            // // var destinationNodeOsmId = graph.GetNodeByIndex(946593).OsmID;   // ?
+
+            // // var originNodeOsmId = graph.GetNodeByIndex(844225).OsmID;        // ?
+            // // var destinationNodeOsmId = graph.GetNodeByIndex(238058).OsmID;   // ?
+
+            // // var originNodeOsmId = 1904589718;
+            // // var destinationNodeOsmId = 3134221830;
+
+            // // var originNodeOsmId =3848587943;
+            // // var destinationNodeOsmId = 7242683946;
+            
+            // // long[] destinationNodeOsmIds = new long[] {1486032529, 7911022011, 401454717, 5137607046, 9331990615, 3332515493, 249542451, 1241290630, 1261889889};
+
+
+
+            // // Problematic routes for bidirenctional Dijkstra: Not yet found
+               
+
+
+            // logger.Debug("Origin Node: {0},\tDestination Node {1}. (From Synapsis to De Panne)", originNodeOsmId, destinationNodeOsmId);
+
+            // var routeDijkstra =     DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
+            // // dijkstra.TraceRoute();
+
+            // var routeBackwardDijkstra = BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
+            // // backwardDijkstra.TraceRoute();
+
+            // var routeBidirectionalDijkstra = BidirectionalDijkstraRunTime(bidirectionalDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
+            // // bidirectionalDijkstra.TraceRoute();
+            
+
+
+            // logger.Debug("Comparison Forward vs. Backward");
+            // CompareRoutes(routeDijkstra, routeBackwardDijkstra);
+
+            // logger.Debug("Comparison Forward vs. Bidirectional");
+            // CompareRoutes(routeDijkstra, routeBidirectionalDijkstra);
+
+            // // logger.Debug("Comparison Backward vs. Bidirectional");
+            // // CompareRoutes(routeBackwardDijkstra, routeBidirectionalDijkstra);
+
+            // logger.Debug("Comparison Backward vs. Bidirectional (Reverse)");
+            // routeBackwardDijkstra.Reverse();
+            // routeBidirectionalDijkstra.Reverse();
+            // CompareRoutes(routeBackwardDijkstra, routeBidirectionalDijkstra);
 
             
-            var routeDijkstra = DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
-            // dijkstra.TraceRoute();
-
-            var routeBackwardDijkstra = BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
-            // backwardDijkstra.TraceRoute();
-
-            CompareRoutes(routeDijkstra, routeBackwardDijkstra);
-
-
-
-            // BidirectionalDijkstraRunTime(bidirectionalDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
-            // bidirectionalDijkstra.TraceRoute();
-            
-
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
-            // logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            // DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
-
             logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            RandomSourceTargetRoutingTwoAlgorithms(graph, dijkstra, backwardDijkstra, numberOfRuns);
-        }
-
-        private static void RandomSourceTargetRouting(Graph graph, Dijkstra dijkstra, int numberOfNodes, int numberOfRuns)
-        {
-            var seed = 100100;
-
-            Random randomIndex = new Random(seed);
+            RandomSourceTargetRoutingDijkstra(graph, dijkstra, backwardDijkstra, bidirectionalDijkstra, numberOfRuns);
             
-            Node originNode;
-            Node destinationNode;
 
-            long[] elapsedRunTimeTicks = new long[numberOfRuns];
-
-            Stopwatch stopWatch;
-
-            long frequency = Stopwatch.Frequency;
-            long nanosecondsPerTick = (1000L*1000L*1000L) / frequency;
-
-            for(int i = 0; i < numberOfRuns; i++)
-            {
-                while(true)
-                {
-                    var index = randomIndex.Next(0, numberOfNodes);
-                    originNode = graph.GetNodeByIndex(index);
-                    if(originNode.ValidSource)
-                    {
-                        break;
-                    }
-                }
-                while(true)
-                {
-                    var index = randomIndex.Next(0, numberOfNodes);
-                    destinationNode = graph.GetNodeByIndex(index);
-                    if(destinationNode.ValidTarget)
-                    {
-                        break;
-                    }
-                }
-
-                stopWatch = Stopwatch.StartNew();
-                dijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                stopWatch.Stop();
-                
-                elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
-            }
-
-            var averageTicks = elapsedRunTimeTicks.Average();
-            logger.Info("Dijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicks * nanosecondsPerTick / 1000000, numberOfRuns);
+            benchmarkStopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
+            logger.Info("Benchmark performed in {0} (HH:MM:S.mS)", totalTime);
         }
 
-        private static void RandomSourceTargetRoutingTwoAlgorithms(Graph graph, Dijkstra dijkstra, BackwardDijkstra backwardDijkstra, int numberOfRuns)
+        private static void RandomSourceTargetRoutingDijkstra(Graph graph, Dijkstra dijkstra, BackwardDijkstra backwardDijkstra, BidirectionalDijkstra bidirectionalDijkstra, int numberOfRuns)
         {
-            var seed = 100100;
-            Random randomIndex = new Random(seed);
-
+            // var seed = 100100;
+            // Random randomIndex = new Random(seed);
+            Random randomIndex = new Random();
+            
             Stopwatch stopWatch;
             long frequency = Stopwatch.Frequency;
             long nanosecondsPerTick = (1000L*1000L*1000L) / frequency;
             long[] elapsedDijkstraRunTimeTicks = new long[numberOfRuns];
             long[] elapsedBackwardDijkstraRunTimeTicks = new long[numberOfRuns];
+            long[] elapsedBidirectionalDijkstraRunTimeTicks = new long[numberOfRuns];
 
-            var numberOfNodes = graph.GetNodesArraySize();
+            var numberOfNodes = graph.GetNodeCount();
             Node originNode;
             Node destinationNode;
+
+            int numberOfRouteMismatchesForwardVsBackward = 0;
+            int numberOfRouteMismatchesForwardVsBidirectional = 0;
+            int numberOfRouteMismatchesBackwardVsBidirectional = 0;
 
             for(int i = 0; i < numberOfRuns; i++)
             {
@@ -229,12 +166,65 @@ namespace SytyRouting
                 stopWatch = Stopwatch.StartNew();
                 var dijkstraRoute = dijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
                 stopWatch.Stop();
-                
                 elapsedDijkstraRunTimeTicks[i] = stopWatch.ElapsedTicks;
+
+                stopWatch = Stopwatch.StartNew();
+                var backwardDijkstraRoute = backwardDijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                stopWatch.Stop();
+                elapsedBackwardDijkstraRunTimeTicks[i] = stopWatch.ElapsedTicks;
+
+                stopWatch = Stopwatch.StartNew();
+                var bidirectionalDijkstraRoute = bidirectionalDijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                stopWatch.Stop();
+                elapsedBidirectionalDijkstraRunTimeTicks[i] = stopWatch.ElapsedTicks;
+
+
+                logger.Trace("Comparing Dijkstra vs. Backward Dijkstra routes:");
+                var routesAreEqual = CompareRoutes(dijkstraRoute, backwardDijkstraRoute);
+                if(!routesAreEqual)
+                {
+                    numberOfRouteMismatchesForwardVsBackward++;
+                    logger.Debug("Routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesForwardVsBackward);
+                }
+                
+                logger.Trace("Comparing Dijkstra vs. Bidirectional Dijkstra routes:");
+                routesAreEqual = CompareRoutes(dijkstraRoute, bidirectionalDijkstraRoute);
+                if(!routesAreEqual)
+                {
+                    numberOfRouteMismatchesForwardVsBidirectional++;
+                    logger.Debug("Routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesForwardVsBidirectional);
+                }
+
+                logger.Trace("Comparing Backward Dijkstra vs. Bidirectional Dijkstra routes:");
+                routesAreEqual = CompareRoutes(backwardDijkstraRoute, bidirectionalDijkstraRoute);
+                if(!routesAreEqual)
+                {
+                    numberOfRouteMismatchesBackwardVsBidirectional++;
+                    logger.Debug("Routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesBackwardVsBidirectional);
+                }
+                
+                Console.Write("Run {0,5}\b\b\b\b\b\b\b\b\b", i);
+            }
+
+            if(numberOfRouteMismatchesForwardVsBackward > 0 || numberOfRouteMismatchesForwardVsBidirectional >0 || numberOfRouteMismatchesBackwardVsBidirectional >0)
+            {
+                logger.Debug("Mismatch route pairs errors (Forward vs. Backward): {0} in {1} trials", numberOfRouteMismatchesForwardVsBackward, numberOfRuns);
+                logger.Debug("Mismatch route pairs errors (Forward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesForwardVsBidirectional, numberOfRuns);
+                logger.Debug("Mismatch route pairs errors (Backward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesBackwardVsBidirectional, numberOfRuns);
+            }
+            else
+            {
+                logger.Debug("No discrepancies found between calclulated route pairs");
             }
 
             var averageTicksDijkstra = elapsedDijkstraRunTimeTicks.Average();
-            logger.Info("Dijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
+            logger.Info("        Dijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
+
+            var averageTicksBackwardDijkstra = elapsedBackwardDijkstraRunTimeTicks.Average();
+            logger.Info("BackwardDijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksBackwardDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
+
+            var averageTicksBidirectionalDijkstra = elapsedBidirectionalDijkstraRunTimeTicks.Average();
+            logger.Info("BidirectionalDijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksBidirectionalDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
         }
 
         private static List<Node> DijkstraRunTime(Dijkstra dijkstra, Node origin, Node destination)
@@ -282,22 +272,37 @@ namespace SytyRouting
             return route;
         }
 
-        private static void CompareRoutes(List<Node> firstRoute, List<Node> secondRoute)
+        private static bool CompareRoutes(List<Node> firstRoute, List<Node> secondRoute)
         {
-            logger.Debug("Route comparison:");
-            var routesAreEqual = Enumerable.SequenceEqual(firstRoute, secondRoute);
-            if(routesAreEqual)
+            var result = Enumerable.SequenceEqual(firstRoute, secondRoute);
+            if(result)
             {
-                logger.Debug("Routes are equal");
+                logger.Trace(" => Routes are equal.");
             }
             else
             {
-                logger.Debug("Routes side by side:");
-                for(int i = 0; i < firstRoute.Count; i++)
+                var maxNumberOfCalculatedNodes = (firstRoute.Count >= secondRoute.Count)? firstRoute.Count : secondRoute.Count;
+                logger.Trace(" => Routes are not equal.");
+                logger.Trace("    Routes side by side:");
+                for(int i = 0; i < maxNumberOfCalculatedNodes; i++)
                 {
-                    logger.Debug("{0} : {1}", firstRoute[i].Idx, secondRoute[i].Idx);
+                        
+                    string firstRouteNodeOsmId;
+                    if( i >= firstRoute.Count)
+                        firstRouteNodeOsmId = "(Empty)";
+                    else
+                        firstRouteNodeOsmId = firstRoute[i].OsmID.ToString();
+
+                    string secondRouteNodeOsmId;
+                    if( i >= secondRoute.Count)
+                        secondRouteNodeOsmId = "(Empty)";
+                    else
+                        secondRouteNodeOsmId = secondRoute[i].OsmID.ToString();
+
+                    logger.Trace("{0} : {1}", firstRouteNodeOsmId, secondRouteNodeOsmId);
                 }
             }
+            return result;
         }
     }
 }
