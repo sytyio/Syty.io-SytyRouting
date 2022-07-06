@@ -1,7 +1,8 @@
 using NLog;
+using SytyRouting.Algorithms.Dijkstra;
 using SytyRouting.Model;
 
-namespace SytyRouting.Algorithms.Dijkstra
+namespace SytyRouting.Algorithms.BidirectionalDijkstra
 {
     public class BidirectionalDijkstra : BaseRoutingAlgorithm
     {
@@ -16,15 +17,8 @@ namespace SytyRouting.Algorithms.Dijkstra
         private Dictionary<int, double> bestScoreForForwardNode = new Dictionary<int, double>();
         private Dictionary<int, double> bestScoreForBackwardNode = new Dictionary<int, double>();
 
-
-        private List<DijkstraStep> forwardSteps = new List<DijkstraStep>(0);
-        private List<DijkstraStep> backwardSteps = new List<DijkstraStep>(0);
-
-
-        private List<int> visitedForwardNodesIdxs = new List<int>(0);
-        private List<int> visitedBackwardNodesIdxs = new List<int>(0);
-
-
+        private List<DijkstraStep> forwardSteps = new List<DijkstraStep>(10000);
+        private List<DijkstraStep> backwardSteps = new List<DijkstraStep>(10000);
    
         public BidirectionalDijkstra(Graph graph) : base(graph) { }
 
@@ -44,87 +38,90 @@ namespace SytyRouting.Algorithms.Dijkstra
             AddForwardStep(null, originNode, 0);
             AddBackwardStep(null, destinationNode, 0);
 
-            var commonNodeFound = false;
+            var emptyQueues = 0;
 
-            while(!commonNodeFound)
+            double mu = double.PositiveInfinity;
+
+            if(!dijkstraStepsForwardQueue.TryPeek(out DijkstraStep? bestForwardStep, out double bestForwardPriority))
+            {
+                throw new Exception("Error retrieving initial Forward Dijkstra Step.");
+            }
+            if(!dijkstraStepsBackwardQueue.TryPeek(out DijkstraStep? bestBackwardStep, out double bestBackwardPriority))
+            {
+                throw new Exception("Error retrieving initial Backward Dijkstra Step.");
+            }
+
+            while(emptyQueues < 2)
             {
                 // Forward queue
                 if(dijkstraStepsForwardQueue.TryDequeue(out DijkstraStep? currentForwardStep, out double forwardPriority))
                 {
-                    var activeNode = currentForwardStep!.ActiveNode;
-
-                    // logger.Debug("Analizing forward Node {0}", activeNode!.Idx);
-
-                    commonNodeFound = visitedBackwardNodesIdxs.Contains(activeNode!.Idx);
-
-                    if(commonNodeFound || activeNode == destinationNode)
+                    var activeForwardNode = currentForwardStep.ActiveNode!;
+                    if(forwardPriority <= bestScoreForForwardNode[activeForwardNode!.Idx])
                     {
-                        if(commonNodeFound)
-                            logger.Debug("Common Node OsmId: {0} (f)", activeNode.OsmID);
-                        if(activeNode == originNode)
-                            logger.Debug("Active Node OsmId: {0} (f) == destination Node", activeNode.OsmID);
-
-                        //PrintStepNodes();
-                        ReconstructForwardRoute(currentForwardStep);
-                        var backwardStepMatch = backwardSteps.Find(s => s.ActiveNode!.Idx == activeNode.Idx);
-                        var backwardPreviousStep = backwardStepMatch!.PreviousStep;
-                        // ReconstructBackwardRoute(backwardPreviousStep);
-                        ReconstructBackwardRoute(backwardStepMatch);
-
-                        break;
-                    }
-
-                    if(forwardPriority <= bestScoreForForwardNode[activeNode!.Idx])
-                    {
-                        foreach(var outwardEdge in activeNode.OutwardEdges)
+                        foreach(var outwardEdge in activeForwardNode!.OutwardEdges)
                         {
-                            AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep.CumulatedCost + outwardEdge.Cost);
+                            AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep!.CumulatedCost + outwardEdge.Cost);
+                            if(bestScoreForBackwardNode.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx]) < mu)
+                            {
+                                mu = forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx];
+                                bestForwardStep = currentForwardStep;
+                                bestBackwardStep = backwardSteps.Find(s => s.ActiveNode.Idx == outwardEdge.TargetNode.Idx);
+                            }
                         }
                     }
-                    visitedForwardNodesIdxs.Add(activeNode.Idx);
+                }
+                else
+                {
+                    emptyQueues = emptyQueues + 1;
                 }
 
                 // Backward queue
                 if(dijkstraStepsBackwardQueue.TryDequeue(out DijkstraStep? currentBackwardStep, out double backwardPriority))
                 {
-                    var activeNode = currentBackwardStep!.ActiveNode;
-
-                    // logger.Debug("Analizing backward Node {0}", activeNode!.Idx);
-
-                    commonNodeFound = visitedForwardNodesIdxs.Contains(activeNode!.Idx);
-                    
-                    if(commonNodeFound || activeNode == originNode)
+                    var activeBackwardNode = currentBackwardStep.ActiveNode!;
+                    if(backwardPriority <= bestScoreForBackwardNode[activeBackwardNode!.Idx])
                     {
-                        if(commonNodeFound)
-                            logger.Debug("Common Node OsmId: {0} (b)", activeNode.OsmID);
-                        if(activeNode == originNode)
-                            logger.Debug("Active Node OsmId: {0} (b) == origin Node", activeNode.OsmID);
-
-                        ReconstructBackwardRoute(currentBackwardStep);
-                        break;
-                    }
-
-                    if(backwardPriority <= bestScoreForBackwardNode[activeNode!.Idx])
-                    {
-                        foreach(var inwardEdge in activeNode.InwardEdges)
+                        foreach(var inwardEdge in activeBackwardNode!.InwardEdges)
                         {
-                            AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep.CumulatedCost + inwardEdge.Cost);
+                            AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep!.CumulatedCost + inwardEdge.Cost);
+                            if(bestScoreForForwardNode.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx]) < mu)
+                            {
+                                mu = backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx];
+                                bestBackwardStep = currentBackwardStep;
+                                bestForwardStep = forwardSteps.Find(s => s.ActiveNode.Idx == inwardEdge.SourceNode.Idx);
+                            }
                         }
                     }
-                    visitedBackwardNodesIdxs.Add(activeNode.Idx);
+                }
+                else
+                {
+                    emptyQueues = emptyQueues + 1;
                 }
 
-                
+                if(forwardPriority + backwardPriority >= mu)
+                {
+                    ReconstructForwardRoute(bestForwardStep);
+                    ReconstructBackwardRoute(bestBackwardStep);
 
-                
+                    logger.Trace("            <=> Bidirectional cost (mu) {0}", mu);
+
+                    break;
+                }
+                    
+                    
             }
-
-            dijkstraStepsForwardQueue.Clear();
-            bestScoreForForwardNode.Clear();
 
             route = forwardRoute.Concat(backwardRoute).ToList();
 
-            // PrintStepNodes();
+            dijkstraStepsForwardQueue.Clear();
+            dijkstraStepsBackwardQueue.Clear();
+            bestScoreForForwardNode.Clear();
+            bestScoreForBackwardNode.Clear();
+            forwardRoute.Clear();
+            backwardRoute.Clear();
+            forwardSteps.Clear();
+            backwardSteps.Clear();
 
             return route;
         }
@@ -186,24 +183,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 backwardRoute.Add(currentStep.ActiveNode!);
                 ReconstructBackwardRoute(currentStep.PreviousStep);
-            }
-        }
-
-
-
-
-        private void PrintStepNodes()
-        {
-            logger.Debug("forward steps:");
-            foreach(var step in forwardSteps)
-            {
-                logger.Debug("active node idx {0}", step.ActiveNode!.Idx);
-            }
-            
-            logger.Debug("backward steps:");
-            foreach(var step in backwardSteps)
-            {
-                logger.Debug("active node idx {0}", step.ActiveNode!.Idx);
             }
         }
     }
