@@ -14,10 +14,10 @@ namespace SytyRouting.Algorithms.Dijkstra
 
         public void TraceRoute()
         {
-            logger.Debug("Displaying {0} route Nodes:", route.Count);
+            logger.Debug("Displaying {0} route Nodes (OsmId):", route.Count);
             foreach(Node node in route)
             {
-                logger.Debug("Node OsmId = {0}", node.OsmID);
+                logger.Debug("{0}", node.OsmID);
             }
         }
 
@@ -33,6 +33,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 if(activeNode == destinationNode)
                 {
                     ReconstructRoute(currentStep);
+                    logger.Trace("                                      =>             Forward cost {0}", currentStep.CumulatedCost);
                     break;
                 }
                 if(priority <= bestScoreForNode[activeNode!.Idx])
@@ -56,8 +57,8 @@ namespace SytyRouting.Algorithms.Dijkstra
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
-
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
+
                 if(!exist)
                 {
                     bestScoreForNode.Add(nextNode.Idx, cumulatedCost);
