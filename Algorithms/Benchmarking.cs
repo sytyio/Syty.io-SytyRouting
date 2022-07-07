@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using NLog;
-using SytyRouting.Algorithms.Dijkstra;
+using SytyRouting.Algorithms;
 using SytyRouting.Model;
 
 namespace SytyRouting
@@ -9,22 +9,23 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();   
 
-        public static void DijkstraBenchmarking(Graph graph)
+        public static void RoutingAlgorithmBenchmarking<T>(Graph graph) where T: IRoutingAlgorithm, new()
         {
-            var dijkstra = new Dijkstra(graph);
+            var routingAlgorithm = new T();
+            routingAlgorithm.Initialize(graph);
             var numberOfNodes = graph.GetNodesArraySize();
             var numberOfRuns = 10;
 
-            logger.Info("Route searching benchmarking using Dijkstra's algorithm");
+            logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
 
             logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
+            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
-            RandomSourceTargetRouting(graph, dijkstra, numberOfNodes, numberOfRuns);
+            RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
         }
 
-        private static void RandomSourceTargetRouting(Graph graph, Dijkstra dijkstra, int numberOfNodes, int numberOfRuns)
+        private static void RandomSourceTargetRouting(Graph graph, IRoutingAlgorithm routingAlgorithm, int numberOfNodes, int numberOfRuns)
         {
             Random randomIndex = new Random();
             
@@ -60,27 +61,27 @@ namespace SytyRouting
                 }
 
                 stopWatch = Stopwatch.StartNew();
-                dijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID);
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
             }
 
             var averageTicks = elapsedRunTimeTicks.Average();
-            logger.Info("Dijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicks * nanosecondsPerTick / 1000000, numberOfRuns);
+            logger.Info("RoutingAlgorithm average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicks * nanosecondsPerTick / 1000000, numberOfRuns);
         }
 
-        private static void DijkstraRunTime(Dijkstra dijkstra, Node origin, Node destination)
+        private static void RoutingAlgorithmRunTime(IRoutingAlgorithm routingAlgorithm, Node origin, Node destination)
         {
             Stopwatch stopWatch = new Stopwatch();
 
             long nanosecondsPerTick = (1000L*1000L*1000L) / Stopwatch.Frequency;
 
             stopWatch.Start();
-            dijkstra.GetRoute(origin.OsmID, destination.OsmID);
+            routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
             stopWatch.Stop();
 
-            logger.Info("Dijkstra execution time: {0:0.000} (ms)", stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000);
+            logger.Info("RoutingAlgorithm execution time: {0:0.000} (ms)", stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000);
         }
     }
 }

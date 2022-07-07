@@ -7,7 +7,7 @@ namespace SytyRouting.Algorithms
         protected Graph _graph;
         protected List<Node> route = new List<Node>();
 
-        public BaseRoutingAlgorithm(Graph graph)
+        public virtual void Initialize(Graph graph)
         {
             _graph = graph;
         }

@@ -9,8 +9,6 @@ namespace SytyRouting.Algorithms.Dijkstra
         
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
-   
-        public Dijkstra(Graph graph) : base(graph) { }
 
         public void TraceRoute()
         {
