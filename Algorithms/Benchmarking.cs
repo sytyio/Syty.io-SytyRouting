@@ -9,6 +9,13 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();   
 
+        public static void PointLocationTest(Graph graph)
+        {
+            logger.Info("Testing point location");
+            graph.TestClosestNode("Synapsis",4.369293555585981, 50.82126481464596);
+            graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
+        }
+
         public static void RoutingAlgorithmBenchmarking<T>(Graph graph) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
