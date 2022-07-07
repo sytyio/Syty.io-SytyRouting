@@ -24,6 +24,7 @@ namespace SytyRouting.Algorithms.Dijkstra
         protected override List<Node> RouteSearch(Node originNode, Node destinationNode)
         {
             route.Clear();
+            routeCost = 0;
 
             AddStep(null, originNode, 0);
 
@@ -33,7 +34,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 if(activeNode == destinationNode)
                 {
                     ReconstructRoute(currentStep);
-                    logger.Trace("                                      =>             Forward cost {0}", currentStep.CumulatedCost);
+                    routeCost = currentStep.CumulatedCost;
                     break;
                 }
                 if(priority <= bestScoreForNode[activeNode!.Idx])

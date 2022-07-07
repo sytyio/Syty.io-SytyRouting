@@ -34,7 +34,7 @@ namespace SytyRouting.Algorithms.BackwardDijkstra
                 if(activeNode == originNode)
                 {
                     ReconstructRoute(currentStep);
-                    logger.Trace("                      <=            Backward cost {0}", currentStep.CumulatedCost);
+                    routeCost = currentStep.CumulatedCost;
                     break;
                 }
                 if(priority <= bestScoreForNode[activeNode!.Idx])

@@ -6,6 +6,7 @@ namespace SytyRouting.Algorithms
     {
         protected Graph _graph;
         protected List<Node> route = new List<Node>();
+        protected double routeCost;
 
         public BaseRoutingAlgorithm(Graph graph)
         {
@@ -43,6 +44,11 @@ namespace SytyRouting.Algorithms
             }
 
             return RouteSearch(originNode, destinationNode);
+        }
+
+        public double GetRouteCost()
+        {
+            return routeCost;
         }
 
         // Routing algorithm implementation
