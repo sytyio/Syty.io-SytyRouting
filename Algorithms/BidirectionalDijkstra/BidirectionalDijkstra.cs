@@ -34,6 +34,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
         protected override List<Node> RouteSearch(Node originNode, Node destinationNode)
         {
             route.Clear();
+            routeCost = 0;
 
             AddForwardStep(null, originNode, 0);
             AddBackwardStep(null, destinationNode, 0);
@@ -59,14 +60,17 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                     var activeForwardNode = currentForwardStep.ActiveNode!;
                     if(forwardPriority <= bestScoreForForwardNode[activeForwardNode!.Idx])
                     {
-                        foreach(var outwardEdge in activeForwardNode!.OutwardEdges)
+                        foreach(var outwardEdge in activeForwardNode.OutwardEdges)
                         {
                             AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep!.CumulatedCost + outwardEdge.Cost);
                             if(bestScoreForBackwardNode.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx]) < mu)
                             {
                                 mu = forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx];
                                 bestForwardStep = currentForwardStep;
-                                bestBackwardStep = backwardSteps.Find(s => s.ActiveNode.Idx == outwardEdge.TargetNode.Idx);
+                                
+                                var allBestBackwardSteps = backwardSteps.FindAll(s => s.ActiveNode!.Idx == outwardEdge.TargetNode.Idx);
+                                var minCumulatedCost = allBestBackwardSteps.Select(s => s.CumulatedCost).Min();
+                                bestBackwardStep = allBestBackwardSteps.Find(s => s.CumulatedCost == minCumulatedCost);
                             }
                         }
                     }
@@ -82,14 +86,17 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                     var activeBackwardNode = currentBackwardStep.ActiveNode!;
                     if(backwardPriority <= bestScoreForBackwardNode[activeBackwardNode!.Idx])
                     {
-                        foreach(var inwardEdge in activeBackwardNode!.InwardEdges)
+                        foreach(var inwardEdge in activeBackwardNode.InwardEdges)
                         {
                             AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep!.CumulatedCost + inwardEdge.Cost);
                             if(bestScoreForForwardNode.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx]) < mu)
                             {
                                 mu = backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx];
                                 bestBackwardStep = currentBackwardStep;
-                                bestForwardStep = forwardSteps.Find(s => s.ActiveNode.Idx == inwardEdge.SourceNode.Idx);
+                                
+                                var allBestForwardSteps = forwardSteps.FindAll(s => s.ActiveNode!.Idx == inwardEdge.SourceNode.Idx);
+                                var minCumulatedCost = allBestForwardSteps.Select(s => s.CumulatedCost).Min();
+                                bestForwardStep = allBestForwardSteps.Find(s => s.CumulatedCost == minCumulatedCost);
                             }
                         }
                     }
@@ -103,8 +110,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                 {
                     ReconstructForwardRoute(bestForwardStep);
                     ReconstructBackwardRoute(bestBackwardStep);
-
-                    logger.Trace("            <=> Bidirectional cost (mu) {0}", mu);
+                    routeCost = mu;
 
                     break;
                 }
