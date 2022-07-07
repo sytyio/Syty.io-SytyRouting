@@ -13,7 +13,11 @@ namespace SytyRouting.Algorithms
         }
 
         public List<Node> GetRoute(double x1, double y1, double x2, double y2)
-        {           
+        {
+            if (_graph == null)
+            {
+                throw new ArgumentException("You must initialize the routing algorithm first!");
+            }
             var originNode = _graph.GetNodeByLatitudeLongitude(x1, y1);
             var destinationNode = _graph.GetNodeByLatitudeLongitude(x2, y2);
             
@@ -22,6 +26,10 @@ namespace SytyRouting.Algorithms
 
         public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId)
         {
+            if (_graph == null)
+            {
+                throw new ArgumentException("You must initialize the routing algorithm first!");
+            }
             Node originNode;
             try
             {
