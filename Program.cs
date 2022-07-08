@@ -18,14 +18,9 @@ namespace SytyRouting
             await graph.FileLoadAsync("graph.dat");
 
 
-            logger.Info("Testing point location");
-            graph.TestClosestNode("Synapsis",4.369293555585981, 50.82126481464596);
-            graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
+            //Benchmarking.PointLocationTest(graph);
 
-            logger.Info("Route searching benchmarking using Forward, Backward, and Bidirectional Dijkstra's algorithms");
-            Benchmarking.MultipleDijkstraBenchmarking(graph);
-            
-
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
             // Logger flushing
             LogManager.Shutdown();
