@@ -4,7 +4,7 @@ using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms.BidirectionalDijkstra
 {
-    public class BidirectionalDijkstraV0 : BaseRoutingAlgorithm
+    public class BidirectionalDijkstraV1 : BaseRoutingAlgorithm
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -20,7 +20,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
         private List<DijkstraStep> forwardSteps =  new List<DijkstraStep>(1000000);
         private List<DijkstraStep> backwardSteps = new List<DijkstraStep>(1000000);
    
-        public BidirectionalDijkstraV0(Graph graph) : base(graph) { }
+        public BidirectionalDijkstraV1(Graph graph) : base(graph) { }
 
         public void TraceRoute()
         {
