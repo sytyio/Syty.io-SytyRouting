@@ -18,10 +18,11 @@ namespace SytyRouting
 
             var dijkstra = new Dijkstra(graph);
             var backwardDijkstra = new BackwardDijkstra(graph);
-            var bidirectionalDijkstra = new BidirectionalDijkstra(graph);
+            var bidirectionalDijkstraV0 = new BidirectionalDijkstraV0(graph);
+            var bidirectionalDijkstraV1 = new BidirectionalDijkstraV1(graph);
 
             // var numberOfRuns = 2000*10; // 07:23:41.830
-            var numberOfRuns = 10; // 
+            var numberOfRuns = 1; // 
 
             
             // Selected Nodes:
@@ -120,7 +121,7 @@ namespace SytyRouting
 
 
 
-            logger.Debug("Origin Node: {0},\tDestination Node {1}. (From Synapsis to De Panne)", originNodeOsmId, destinationNodeOsmId);
+            logger.Info("Origin Node: {0},\tDestination Node {1}. (From Synapsis to De Panne)", originNodeOsmId, destinationNodeOsmId);
 
             var routeDijkstra =     DijkstraRunTime(dijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
             // dijkstra.TraceRoute();
@@ -128,7 +129,7 @@ namespace SytyRouting
             var routeBackwardDijkstra = BackwardDijkstraRunTime(backwardDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
             // backwardDijkstra.TraceRoute();
 
-            var routeBidirectionalDijkstra = BidirectionalDijkstraRunTime(bidirectionalDijkstra, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
+            var routeBidirectionalDijkstraV0 = BidirectionalDijkstraV0RunTime(bidirectionalDijkstraV0, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
             // bidirectionalDijkstra.TraceRoute();
             
 
@@ -140,15 +141,15 @@ namespace SytyRouting
 
 
             logger.Trace("Comparison Forward vs. Bidirectional");
-            CompareRouteNodes(routeDijkstra, routeBidirectionalDijkstra);
-            CompareForwardRouteCosts(routeDijkstra, dijkstra.GetRouteCost(), routeBidirectionalDijkstra, bidirectionalDijkstra.GetRouteCost());
-            CompareBackwardRouteCosts(routeDijkstra, dijkstra.GetRouteCost(), routeBidirectionalDijkstra, bidirectionalDijkstra.GetRouteCost());
+            CompareRouteNodes(routeDijkstra, routeBidirectionalDijkstraV0);
+            CompareForwardRouteCosts(routeDijkstra, dijkstra.GetRouteCost(), routeBidirectionalDijkstraV0, bidirectionalDijkstraV0.GetRouteCost());
+            CompareBackwardRouteCosts(routeDijkstra, dijkstra.GetRouteCost(), routeBidirectionalDijkstraV0, bidirectionalDijkstraV0.GetRouteCost());
             
 
             logger.Trace("Comparison Backward vs. Bidirectional");
-            CompareRouteNodes(routeBackwardDijkstra, routeBidirectionalDijkstra);
-            CompareForwardRouteCosts(routeBackwardDijkstra, backwardDijkstra.GetRouteCost(), routeBidirectionalDijkstra, bidirectionalDijkstra.GetRouteCost());
-            CompareBackwardRouteCosts(routeBackwardDijkstra, backwardDijkstra.GetRouteCost(), routeBidirectionalDijkstra, bidirectionalDijkstra.GetRouteCost());
+            CompareRouteNodes(routeBackwardDijkstra, routeBidirectionalDijkstraV0);
+            CompareForwardRouteCosts(routeBackwardDijkstra, backwardDijkstra.GetRouteCost(), routeBidirectionalDijkstraV0, bidirectionalDijkstraV0.GetRouteCost());
+            CompareBackwardRouteCosts(routeBackwardDijkstra, backwardDijkstra.GetRouteCost(), routeBidirectionalDijkstraV0, bidirectionalDijkstraV0.GetRouteCost());
 
             // Reversed routes:
             // logger.Debug("Comparison Backward vs. Bidirectional (Reverse)");
@@ -160,7 +161,7 @@ namespace SytyRouting
 
             
             logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            RandomSourceTargetRoutingDijkstra(graph, dijkstra, backwardDijkstra, bidirectionalDijkstra, numberOfRuns);
+            RandomSourceTargetRoutingDijkstra(graph, dijkstra, backwardDijkstra, bidirectionalDijkstraV0, numberOfRuns);
             
 
             benchmarkStopWatch.Stop();
@@ -168,7 +169,7 @@ namespace SytyRouting
             logger.Info("Benchmark performed in {0} (HH:MM:S.mS)", totalTime);
         }
 
-        private static void RandomSourceTargetRoutingDijkstra(Graph graph, Dijkstra dijkstra, BackwardDijkstra backwardDijkstra, BidirectionalDijkstra bidirectionalDijkstra, int numberOfRuns)
+        private static void RandomSourceTargetRoutingDijkstra(Graph graph, Dijkstra dijkstra, BackwardDijkstra backwardDijkstra, BidirectionalDijkstraV0 bidirectionalDijkstraV0, int numberOfRuns)
         {
             // var seed = 100100;
             // Random randomIndex = new Random(seed);
@@ -179,15 +180,15 @@ namespace SytyRouting
             long nanosecondsPerTick = (1000L*1000L*1000L) / frequency;
             long[] elapsedDijkstraRunTimeTicks = new long[numberOfRuns];
             long[] elapsedBackwardDijkstraRunTimeTicks = new long[numberOfRuns];
-            long[] elapsedBidirectionalDijkstraRunTimeTicks = new long[numberOfRuns];
+            long[] elapsedBidirectionalDijkstraV0RunTimeTicks = new long[numberOfRuns];
 
             var numberOfNodes = graph.GetNodeCount();
             Node originNode;
             Node destinationNode;
 
             int numberOfRouteMismatchesForwardVsBackward = 0;
-            int numberOfRouteMismatchesForwardVsBidirectional = 0;
-            int numberOfRouteMismatchesBackwardVsBidirectional = 0;
+            int numberOfRouteMismatchesForwardVsBidirectionalV0 = 0;
+            int numberOfRouteMismatchesBackwardVsBidirectionalV0 = 0;
 
             for(int i = 0; i < numberOfRuns; i++)
             {
@@ -221,9 +222,9 @@ namespace SytyRouting
                 elapsedBackwardDijkstraRunTimeTicks[i] = stopWatch.ElapsedTicks;
 
                 stopWatch = Stopwatch.StartNew();
-                var bidirectionalDijkstraRoute = bidirectionalDijkstra.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var bidirectionalDijkstraV0Route = bidirectionalDijkstraV0.GetRoute(originNode.OsmID, destinationNode.OsmID);
                 stopWatch.Stop();
-                elapsedBidirectionalDijkstraRunTimeTicks[i] = stopWatch.ElapsedTicks;
+                elapsedBidirectionalDijkstraV0RunTimeTicks[i] = stopWatch.ElapsedTicks;
 
 
                 logger.Trace("Comparing Dijkstra vs. Backward Dijkstra routes:");
@@ -235,29 +236,29 @@ namespace SytyRouting
                 }
                 
                 logger.Trace("Comparing Dijkstra vs. Bidirectional Dijkstra routes:");
-                routesAreEqual = CompareRouteNodes(dijkstraRoute, bidirectionalDijkstraRoute);
+                routesAreEqual = CompareRouteNodes(dijkstraRoute, bidirectionalDijkstraV0Route);
                 if(!routesAreEqual)
                 {
-                    numberOfRouteMismatchesForwardVsBidirectional++;
-                    logger.Debug(" FWD and BIDR routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesForwardVsBidirectional);
+                    numberOfRouteMismatchesForwardVsBidirectionalV0++;
+                    logger.Debug(" FWD and BIDR routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesForwardVsBidirectionalV0);
                 }
 
                 logger.Trace("Comparing Backward Dijkstra vs. Bidirectional Dijkstra routes:");
-                routesAreEqual = CompareRouteNodes(backwardDijkstraRoute, bidirectionalDijkstraRoute);
+                routesAreEqual = CompareRouteNodes(backwardDijkstraRoute, bidirectionalDijkstraV0Route);
                 if(!routesAreEqual)
                 {
-                    numberOfRouteMismatchesBackwardVsBidirectional++;
-                    logger.Debug("BKWD and BIDR routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesBackwardVsBidirectional);
+                    numberOfRouteMismatchesBackwardVsBidirectionalV0++;
+                    logger.Debug("BKWD and BIDR routes are not equal for origin OsmId {0} and destination OsmId {1}.\tRuns: {2},\tMismatches: {3}", originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatchesBackwardVsBidirectionalV0);
                 }
                 
                 Console.Write("Run {0,5}\b\b\b\b\b\b\b\b\b", i);
             }
 
-            if(numberOfRouteMismatchesForwardVsBackward > 0 || numberOfRouteMismatchesForwardVsBidirectional >0 || numberOfRouteMismatchesBackwardVsBidirectional >0)
+            if(numberOfRouteMismatchesForwardVsBackward > 0 || numberOfRouteMismatchesForwardVsBidirectionalV0 >0 || numberOfRouteMismatchesBackwardVsBidirectionalV0 >0)
             {
                 logger.Debug("Mismatch route pairs errors (Forward vs. Backward): {0} in {1} trials", numberOfRouteMismatchesForwardVsBackward, numberOfRuns);
-                logger.Debug("Mismatch route pairs errors (Forward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesForwardVsBidirectional, numberOfRuns);
-                logger.Debug("Mismatch route pairs errors (Backward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesBackwardVsBidirectional, numberOfRuns);
+                logger.Debug("Mismatch route pairs errors (Forward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesForwardVsBidirectionalV0, numberOfRuns);
+                logger.Debug("Mismatch route pairs errors (Backward vs. Bidirectional): {0} in {1} trials", numberOfRouteMismatchesBackwardVsBidirectionalV0, numberOfRuns);
             }
             else
             {
@@ -270,7 +271,7 @@ namespace SytyRouting
             var averageTicksBackwardDijkstra = elapsedBackwardDijkstraRunTimeTicks.Average();
             logger.Info("     BackwardDijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksBackwardDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
 
-            var averageTicksBidirectionalDijkstra = elapsedBidirectionalDijkstraRunTimeTicks.Average();
+            var averageTicksBidirectionalDijkstra = elapsedBidirectionalDijkstraV0RunTimeTicks.Average();
             logger.Info("BidirectionalDijkstra average execution time: {0:0.000} (ms / route) over {1} trial(s)", averageTicksBidirectionalDijkstra * nanosecondsPerTick / 1000000, numberOfRuns);
         }
 
@@ -304,14 +305,14 @@ namespace SytyRouting
             return route;
         }
 
-        private static List<Node> BidirectionalDijkstraRunTime(BidirectionalDijkstra bidirectionalDijkstra, Node origin, Node destination)
+        private static List<Node> BidirectionalDijkstraV0RunTime(BidirectionalDijkstraV0 bidirectionalDijkstraV0, Node origin, Node destination)
         {
             Stopwatch stopWatch = new Stopwatch();
 
             long nanosecondsPerTick = (1000L*1000L*1000L) / Stopwatch.Frequency;
 
             stopWatch.Start();
-            var route = bidirectionalDijkstra.GetRoute(origin.OsmID, destination.OsmID);
+            var route = bidirectionalDijkstraV0.GetRoute(origin.OsmID, destination.OsmID);
             stopWatch.Stop();
 
             logger.Info("BidirectionalDijkstra execution time: {0:0.000} (ms)", stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000);
@@ -388,27 +389,17 @@ namespace SytyRouting
         private static double ForwardRouteCost(List<Node> route)
         {
             double cost = 0;
-            // logger.Trace("Source Node; Target Node; Cumulated Cost");
             for(int i = 0; i < route.Count-1; i++)
             {
                 var allValidEdges = route[i].OutwardEdges.FindAll(e => e.TargetNode.Idx == route[i+1].Idx);
                 var minCost = allValidEdges.Select(e => e.Cost).Min();
                 var edge = allValidEdges.Find(e => e.Cost == minCost);
 
-                // if(route[i].OsmID == 4729277084)
-                // {
-                //     logger.Trace("Node {0}", route[i].OsmID);
-                // }
-
                 if(edge is not null)
-                {
                     cost = cost + edge.Cost;
-                    // logger.Trace("{0}; {1}; {2}", route[i].OsmID, route[i+1].OsmID, cost);
-                }
                 else
                     logger.Debug("Outward Edge not found. Source Node {0}. Target Node {1}", route[i].OsmID, route[i+1].OsmID);
             }
-            // logger.Debug("First Node {0},\t Last Node {1}", route[0].OsmID, route[route.Count-1].OsmID);
 
             return cost;
         }
@@ -416,22 +407,17 @@ namespace SytyRouting
         private static double BackwardRouteCost(List<Node> route)
         {
             double cost = 0;
-            // logger.Trace("Target Node; Source Node; Cumulated Cost");
             for(int i = route.Count-1; i > 0 ; i--)
             {
                 var allValidEdges = route[i].InwardEdges.FindAll(e => e.SourceNode.Idx == route[i-1].Idx);
                 var minCost = allValidEdges.Select(e => e.Cost).Min();
                 var edge = allValidEdges.Find(e => e.Cost == minCost);
-                // var edge = route[i].InwardEdges.Find(e => e.SourceNode.Idx == route[i-1].Idx);
+                
                 if(edge is not null)
-                {
                     cost = cost + edge.Cost;
-                    // logger.Trace("{0}; {1}; {2}", route[i].OsmID, route[i-1].OsmID, cost);
-                }
                 else
                     logger.Debug("Inward Edge not found. Source Node {0}. Source Node {1}", route[i].OsmID, route[i-1].OsmID);
             }
-            // logger.Debug("First Node {0},\t Last Node {1}", route[0].OsmID, route[route.Count-1].OsmID);
 
             return cost;
         }
@@ -456,13 +442,15 @@ namespace SytyRouting
             double cost = 0;
             for(int i = 0; i < route.Count-1; i++)
             {
-                var edge = route[i].InwardEdges.Find(e => e.SourceNode.Idx == route[i+1].Idx);
+                var allValidEdges = route[i].InwardEdges.FindAll(e => e.SourceNode.Idx == route[i+1].Idx);
+                var minCost = allValidEdges.Select(e => e.Cost).Min();
+                var edge = allValidEdges.Find(e => e.Cost == minCost);
+
                 if(edge is not null)
                     cost = cost + edge.Cost;
                 else
                     logger.Debug("Inward Edge not found. Source Node {0}. Target Node {1}", route[i].OsmID, route[i+1].OsmID);
             }
-            // logger.Debug("First Node {0},\t Last Node {1}", route[0].OsmID, route[route.Count-1].OsmID);
 
             return cost;
         }
