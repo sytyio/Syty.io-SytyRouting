@@ -20,7 +20,6 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
         private List<DijkstraStep> forwardSteps =  new List<DijkstraStep>(1000000);
         private List<DijkstraStep> backwardSteps = new List<DijkstraStep>(1000000);
    
-        public BidirectionalDijkstra(Graph graph) : base(graph) { }
 
         public void TraceRoute()
         {
