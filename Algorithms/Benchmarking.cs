@@ -21,11 +21,13 @@ namespace SytyRouting
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
             var numberOfNodes = graph.GetNodesArraySize();
-            var numberOfRuns = 10;
+            var numberOfRuns = 100;
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
 
             logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
+            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
+            logger.Info("SECOND Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
             RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
@@ -72,6 +74,7 @@ namespace SytyRouting
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
+                logger.Info("RoutingAlgorithm execution time : {0:0.000} (ms / route)", elapsedRunTimeTicks[i] * nanosecondsPerTick / 1000000);
             }
 
             var averageTicks = elapsedRunTimeTicks.Average();

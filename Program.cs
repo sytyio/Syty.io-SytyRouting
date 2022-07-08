@@ -20,7 +20,7 @@ namespace SytyRouting
 
             //Benchmarking.PointLocationTest(graph);
 
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.MultiDijkstra.MultiDijkstra>(graph);
 
             // Logger flushing
             LogManager.Shutdown();
