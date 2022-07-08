@@ -10,8 +10,6 @@ namespace SytyRouting.Algorithms.BackwardDijkstra
 
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
-   
-        public BackwardDijkstra(Graph graph) : base(graph) { }
 
         public void TraceRoute()
         {
