@@ -14,14 +14,8 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
         private PriorityQueue<DijkstraStep, double> dijkstraStepsForwardQueue = new PriorityQueue<DijkstraStep, double>();
         private PriorityQueue<DijkstraStep, double> dijkstraStepsBackwardQueue = new PriorityQueue<DijkstraStep, double>();
 
-        private Dictionary<int, double> bestScoreForForwardNode = new Dictionary<int, double>();
-        private Dictionary<int, double> bestScoreForBackwardNode = new Dictionary<int, double>();
-
         private Dictionary<int, DijkstraStep> bestForwardSteps  = new Dictionary<int, DijkstraStep>();
-        private Dictionary<int, DijkstraStep> bestBackwardSteps = new Dictionary<int, DijkstraStep>();
-
-
-   
+        private Dictionary<int, DijkstraStep> bestBackwardSteps = new Dictionary<int, DijkstraStep>();   
 
         public void TraceRoute()
         {
@@ -59,14 +53,14 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                 if(dijkstraStepsForwardQueue.TryDequeue(out DijkstraStep? currentForwardStep, out double forwardPriority))
                 {
                     var activeForwardNode = currentForwardStep.ActiveNode!;
-                    if(forwardPriority <= bestScoreForForwardNode[activeForwardNode!.Idx])
+                    if(forwardPriority <= bestForwardSteps[activeForwardNode!.Idx].CumulatedCost)
                     {
                         foreach(var outwardEdge in activeForwardNode.OutwardEdges)
                         {
                             AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep!.CumulatedCost + outwardEdge.Cost);
-                            if(bestScoreForBackwardNode.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx]) < mu)
+                            if(bestBackwardSteps.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost) < mu)
                             {
-                                mu = forwardPriority + outwardEdge.Cost + bestScoreForBackwardNode[outwardEdge.TargetNode.Idx];
+                                mu = forwardPriority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost;
                                 bestForwardStep = currentForwardStep;
                                 
                                 bestBackwardStep = bestBackwardSteps[outwardEdge.TargetNode.Idx];
@@ -83,14 +77,14 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                 if(dijkstraStepsBackwardQueue.TryDequeue(out DijkstraStep? currentBackwardStep, out double backwardPriority))
                 {
                     var activeBackwardNode = currentBackwardStep.ActiveNode!;
-                    if(backwardPriority <= bestScoreForBackwardNode[activeBackwardNode!.Idx])
+                    if(backwardPriority <= bestBackwardSteps[activeBackwardNode!.Idx].CumulatedCost)
                     {
                         foreach(var inwardEdge in activeBackwardNode.InwardEdges)
                         {
                             AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep!.CumulatedCost + inwardEdge.Cost);
-                            if(bestScoreForForwardNode.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx]) < mu)
+                            if(bestForwardSteps.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost) < mu)
                             {
-                                mu = backwardPriority + inwardEdge.Cost + bestScoreForForwardNode[inwardEdge.SourceNode.Idx];
+                                mu = backwardPriority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost;
                                 bestBackwardStep = currentBackwardStep;
                                 
                                 bestForwardStep = bestForwardSteps[inwardEdge.SourceNode.Idx];
@@ -111,17 +105,12 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
 
                     break;
                 }
-                    
-                    
             }
 
             route = forwardRoute.Concat(backwardRoute).ToList();
 
             dijkstraStepsForwardQueue.Clear();
             dijkstraStepsBackwardQueue.Clear();
-
-            bestScoreForForwardNode.Clear();
-            bestScoreForBackwardNode.Clear();
 
             bestForwardSteps.Clear();
             bestBackwardSteps.Clear();
@@ -134,47 +123,39 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
 
         private void AddForwardStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
-            var exist = bestScoreForForwardNode.ContainsKey(nextNode!.Idx);
-            if (!exist || bestScoreForForwardNode[nextNode.Idx] > cumulatedCost)
+            var exist = bestForwardSteps.ContainsKey(nextNode!.Idx);
+            if (!exist || bestForwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
             {
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
                 dijkstraStepsForwardQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
                 {
-                    bestScoreForForwardNode.Add(nextNode.Idx, cumulatedCost);
+                    bestForwardSteps.Add(nextNode.Idx, step);
                 }
                 else
                 {
-                    bestScoreForForwardNode[nextNode.Idx] = cumulatedCost;
+                    bestForwardSteps[nextNode.Idx] = step;
                 }
-                if(bestForwardSteps.ContainsKey(nextNode.Idx))
-                        bestForwardSteps[nextNode.Idx] = step;
-                else
-                        bestForwardSteps.Add(nextNode.Idx, step);
             }
         }
 
         private void AddBackwardStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
-            var exist = bestScoreForBackwardNode.ContainsKey(nextNode!.Idx);
-            if (!exist || bestScoreForBackwardNode[nextNode.Idx] > cumulatedCost)
+            var exist = bestBackwardSteps.ContainsKey(nextNode!.Idx);
+            if (!exist || bestBackwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
             {
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
                 dijkstraStepsBackwardQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
                 {
-                    bestScoreForBackwardNode.Add(nextNode.Idx, cumulatedCost);
+                    bestBackwardSteps.Add(nextNode.Idx, step);
                 }
                 else
                 {
-                    bestScoreForBackwardNode[nextNode.Idx] = cumulatedCost;
-                }
-                if( bestBackwardSteps.ContainsKey(nextNode.Idx))
                     bestBackwardSteps[nextNode.Idx] = step;
-                else
-                    bestBackwardSteps.Add(nextNode.Idx, step);
+                }
             }
         }
 
