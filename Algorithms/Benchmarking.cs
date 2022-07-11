@@ -46,7 +46,8 @@ namespace SytyRouting
             var algorithm1Name = algorithm1.GetType().Name;
             var algorithm2Name = algorithm2.GetType().Name;
 
-            var numberOfRuns = 10;
+            // var numberOfRuns = 50_000;
+            var numberOfRuns = 50;
 
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
@@ -194,7 +195,7 @@ namespace SytyRouting
                 if(!routesAreEqual)
                 {
                     numberOfRouteMismatches++;
-                    logger.Debug("{0} and {1} routes are not equal for origin OsmId {2} and destination OsmId {3}.\tRuns: {2},\tMismatches: {3}", algorithm1Name, algorithm2Name, originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatches);
+                    logger.Debug("{0} and {1} routes are not equal for origin OsmId {2} and destination OsmId {3}.\tRuns: {4},\tMismatches: {5}", algorithm1Name, algorithm2Name, originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatches);
                 }
                     
                 if(numberOfRuns > 10)
