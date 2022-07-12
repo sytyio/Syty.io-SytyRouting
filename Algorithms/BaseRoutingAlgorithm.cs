@@ -1,11 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms
 {
     public abstract class BaseRoutingAlgorithm : IRoutingAlgorithm
     {
-        protected Graph _graph;
+        [NotNull]
+        protected Graph? _graph;
         protected List<Node> route = new List<Node>();
+        protected double routeCost;
 
         public virtual void Initialize(Graph graph)
         {
@@ -53,7 +56,12 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode);
         }
 
-        // Routing lgorithm implementation
+        public double GetRouteCost()
+        {
+            return routeCost;
+        }
+
+        // Routing algorithm implementation
         protected virtual List<Node> RouteSearch(Node origin, Node destination)
         {
             throw new NotImplementedException();

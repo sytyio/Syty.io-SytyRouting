@@ -15,7 +15,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
         public override void Initialize(Graph graph)
         {
             base.Initialize(graph);
-            history = new DijkstraInstance[graph.GetNodesArraySize()];
+            history = new DijkstraInstance[graph.GetNodeCount()];
             historyL = new List<DijkstraInstance>();
         }
 
@@ -50,7 +50,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
         private DijkstraInstance GenerateInstance(Node originNode, Node destinationNode, bool quickRoute)
         {
             DijkstraInstance instance; 
-            var size = _graph.GetNodesArraySize();
+            var size = _graph.GetNodeCount();
 
             if (history[originNode.Idx] == null)
             {
