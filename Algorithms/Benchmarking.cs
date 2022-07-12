@@ -46,8 +46,7 @@ namespace SytyRouting
             var algorithm1Name = algorithm1.GetType().Name;
             var algorithm2Name = algorithm2.GetType().Name;
 
-            // var numberOfRuns = 50_000;
-            var numberOfRuns = 50;
+            var numberOfRuns = 10;
 
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
@@ -65,9 +64,7 @@ namespace SytyRouting
    
             
             logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            var algorithms = new List<IRoutingAlgorithm> {algorithm1, algorithm2};
-            MultipleRandomSourceTargetRouting(graph, algorithms, numberOfRuns);
-            
+            MultipleRandomSourceTargetRouting(graph, algorithm1, algorithm2, numberOfRuns);
 
             benchmarkStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
@@ -136,13 +133,13 @@ namespace SytyRouting
             logger.Info("{0,25} average execution time: {1,10:0.000} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
         }
 
-        private static void MultipleRandomSourceTargetRouting(Graph graph, List<IRoutingAlgorithm> routingAlgorithms, int numberOfRuns)
+        private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, int numberOfRuns)
         {
             // var seed = 100100;
             // Random randomIndex = new Random(seed);
             Random randomIndex = new Random();
             
-            Stopwatch stopWatch;
+            Stopwatch stopWatch = Stopwatch.StartNew();
             long frequency = Stopwatch.Frequency;
             long nanosecondsPerTick = (1000L*1000L*1000L) / frequency;
             long[] elapsedRunTimeTicks1 = new long[numberOfRuns];
@@ -153,9 +150,6 @@ namespace SytyRouting
             Node destinationNode;
 
             int numberOfRouteMismatches = 0;
-
-            var algorithm1 = routingAlgorithms[0];
-            var algorithm2 = routingAlgorithms[1];
 
             var algorithm1Name = algorithm1.GetType().Name;
             var algorithm2Name = algorithm2.GetType().Name;
@@ -181,15 +175,13 @@ namespace SytyRouting
                     }
                 }
 
-                stopWatch = Stopwatch.StartNew();
+                var startTicks = stopWatch.ElapsedTicks;
                 var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                stopWatch.Stop();
-                elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks;
+                elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks-startTicks;
 
-                stopWatch = Stopwatch.StartNew();
+                startTicks = stopWatch.ElapsedTicks;
                 var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                stopWatch.Stop();
-                elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks;
+                elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks-startTicks;
 
                 var routesAreEqual = CompareRouteSequences(route1, route2);
                 if(!routesAreEqual)
@@ -201,6 +193,8 @@ namespace SytyRouting
                 if(numberOfRuns > 10)
                     Console.Write("Run {0,5}\b\b\b\b\b\b\b\b\b", i);
             }
+
+            stopWatch.Stop();
 
             if(numberOfRouteMismatches > 0)
             {
