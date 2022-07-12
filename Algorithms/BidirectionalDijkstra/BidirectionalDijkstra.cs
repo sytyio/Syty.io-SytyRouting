@@ -34,7 +34,8 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
             AddForwardStep(null, originNode, 0);
             AddBackwardStep(null, destinationNode, 0);
 
-            var emptyQueues = 0;
+            var forwardQueueIsEmpty = false;
+            var backwardQueueIsEmpty = false;
 
             double mu = double.PositiveInfinity;
 
@@ -47,7 +48,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                 throw new Exception("Error retrieving initial Backward Dijkstra Step.");
             }
 
-            while(emptyQueues < 2)
+            while(!forwardQueueIsEmpty || !backwardQueueIsEmpty)
             {
                 // Forward queue
                 if(dijkstraStepsForwardQueue.TryDequeue(out DijkstraStep? currentForwardStep, out double forwardPriority))
@@ -60,17 +61,16 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                             AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep!.CumulatedCost + outwardEdge.Cost);
                             if(bestBackwardSteps.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost) < mu)
                             {
-                                mu = forwardPriority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost;
-                                bestForwardStep = currentForwardStep;
-                                
                                 bestBackwardStep = bestBackwardSteps[outwardEdge.TargetNode.Idx];
+                                mu = forwardPriority + outwardEdge.Cost + bestBackwardStep.CumulatedCost;
+                                bestForwardStep = currentForwardStep;
                             }
                         }
                     }
                 }
                 else
                 {
-                    emptyQueues = emptyQueues + 1;
+                    forwardQueueIsEmpty = true;
                 }
 
                 // Backward queue
@@ -84,17 +84,16 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
                             AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep!.CumulatedCost + inwardEdge.Cost);
                             if(bestForwardSteps.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost) < mu)
                             {
-                                mu = backwardPriority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost;
-                                bestBackwardStep = currentBackwardStep;
-                                
                                 bestForwardStep = bestForwardSteps[inwardEdge.SourceNode.Idx];
+                                mu = backwardPriority + inwardEdge.Cost + bestForwardStep.CumulatedCost;
+                                bestBackwardStep = currentBackwardStep;
                             }
                         }
                     }
                 }
                 else
                 {
-                    emptyQueues = emptyQueues + 1;
+                    backwardQueueIsEmpty = true;
                 }
 
                 if(forwardPriority + backwardPriority >= mu)
