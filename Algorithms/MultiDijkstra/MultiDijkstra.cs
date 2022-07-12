@@ -65,6 +65,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                 Array.Fill(samePath, -1);
                 if(closestInstances != null && closestInstances.Count() > 0)
                 {
+                    logger.Info("Found {0} helping Dijkstras", closestInstances.Count());
                     for (int i = 0; i < closestInstances.Length; i++)
                     {
                         for (var current = destinationNode.Idx; current != -1; current = closestInstances[i].Origins[current])
@@ -72,6 +73,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                             samePath[current] = i;
                         }
                     }
+                    //At the end of this loop, the samePath array contains -1 for all idx that are not on the root - destination path on any of the trees, and contains a number >= 0 for all idx that are on the path
                 }
                 else
                 {
@@ -93,6 +95,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                     }
                     if(quickRoute && currentIdx == destinationNode.Idx)
                     {
+                        //We only interrupt Dijkstra when quickrouting, and not when storing a full dijkstra.
                         break;
                     }
                     if (!done[currentIdx])
@@ -100,6 +103,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                         done[currentIdx] = true;
                         if(quickRoute && instance.Depths[currentIdx] > MaxDepth)
                         {
+                            //This is a criterion to go from quick Dijkstra to full Dijkstra
                             logger.Info("Generating a full Dijkstra");
                             return GenerateInstance(originNode, destinationNode, false);
                         }

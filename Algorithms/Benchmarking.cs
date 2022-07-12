@@ -104,6 +104,7 @@ namespace SytyRouting
 
             for(int i = 0; i < numberOfRuns; i++)
             {
+                logger.Info("Computing route");
                 while(true)
                 {
                     var index = randomIndex.Next(0, numberOfNodes);
