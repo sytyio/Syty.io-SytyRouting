@@ -35,6 +35,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                 var instance = GenerateInstance(originNode, destinationNode, true);
 
                 ReconstructRoute(instance, destinationNode.Idx);
+                routeCost = instance.TotalCosts[destinationNode.Idx];
 
                 return route;
             }
