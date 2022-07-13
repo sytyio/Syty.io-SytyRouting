@@ -10,5 +10,6 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
         [NotNull]
         public Node? ActiveNode { get; set; }
         public double CumulatedCost { get; set; }
+        public double Heuristic { get; set; }
     }
 }

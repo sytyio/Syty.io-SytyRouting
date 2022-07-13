@@ -24,9 +24,9 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
             route.Clear();
             routeCost = 0;
 
-            AddStep(null, originNode, 0);
+            AddStep(null, originNode, 0, destinationNode);
 
-            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
+            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double heuristic))
             {
                 var activeNode = currentStep!.ActiveNode;
                 if(activeNode == destinationNode)
@@ -35,11 +35,11 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
                     routeCost = currentStep.CumulatedCost;
                     break;
                 }
-                if(priority <= bestScoreForNode[activeNode!.Idx])
+                if(currentStep.CumulatedCost <= bestScoreForNode[activeNode!.Idx])
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, destinationNode);
                     }
                 }
             }
@@ -50,21 +50,30 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, Node destinationNode)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
-                dijkstraStepsQueue.Enqueue(step, cumulatedCost);
-
-                if(!exist)
+                var distance = Helper.GetDistance(nextNode, destinationNode);
+                var heuristic = cumulatedCost +  distance * _graph.MinCostPerDistance;
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, Heuristic = heuristic };
+                if(previousStep != null && previousStep.Heuristic > heuristic)
                 {
-                    bestScoreForNode.Add(nextNode.Idx, cumulatedCost);
+                    throw new Exception("Impossible case found.");
                 }
-                else
+                if (!bestScoreForNode.ContainsKey(destinationNode.Idx) || heuristic <= bestScoreForNode[destinationNode.Idx])
                 {
-                    bestScoreForNode[nextNode.Idx] = cumulatedCost;
+                    dijkstraStepsQueue.Enqueue(step, heuristic);
+
+                    if (!exist)
+                    {
+                        bestScoreForNode.Add(nextNode.Idx, cumulatedCost);
+                    }
+                    else
+                    {
+                        bestScoreForNode[nextNode.Idx] = cumulatedCost;
+                    }
                 }
             }
         }

@@ -124,7 +124,7 @@ namespace SytyRouting.Algorithms.KDTree
                 logger.Trace("  We are higher than x: {0} y: {1} on the {2}-axis", currentNode.Item.X, currentNode.Item.Y, currentNode.Orientation == 0 ? "X" : "Y");
             }
 
-            var distanceCurrent = GetDistance(currentNode.Item, x, y);
+            var distanceCurrent = Helper.GetSquaredDistance(currentNode.Item, x, y);
             if(distanceCurrent < maxDist && (currentNode.Item.ValidSource || !isSource) && (currentNode.Item.ValidTarget || !isTarget))
             {
                 maxDist = distanceCurrent;
@@ -139,7 +139,7 @@ namespace SytyRouting.Algorithms.KDTree
             {
                 maxDist = candidateBest.Item2;
             }
-            var bestOtherSub = GetDistanceToHalfPlane(currentNode, x, y);
+            var bestOtherSub = GetSquaredDistanceToHalfPlane(currentNode, x, y);
             if(bestOtherSub < maxDist)
             {
                 var candidateOtherSub = GetNearestNeighbor(x, y, lower ? currentNode.High : currentNode.Low, maxDist, isTarget, isSource);
@@ -166,17 +166,9 @@ namespace SytyRouting.Algorithms.KDTree
             }
         }
 
-        private double GetDistance(double x1, double y1, double x2, double y2)
-        {
-            return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
-        }
+        
 
-        private double GetDistance(Node n, double x, double y)
-        {
-            return GetDistance(n.X, n.Y, x, y);
-        }
-
-        private double GetDistanceToHalfPlane(KDNode n, double x, double y)
+        private double GetSquaredDistanceToHalfPlane(KDNode n, double x, double y)
         {
             switch(n.Orientation)
             {

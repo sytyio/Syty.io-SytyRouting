@@ -6,6 +6,7 @@ namespace SytyRouting.Model
     {
         public long OsmID { get; set; }
         public double Cost {get; set;}
+        public double LengthM { get; set; }
 
         [NotNull] 
         public Node? SourceNode {get; set;}
@@ -21,6 +22,7 @@ namespace SytyRouting.Model
             }
             bw.Write(OsmID);
             bw.Write(Cost);
+            bw.Write(LengthM);
             bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
         }
@@ -33,6 +35,7 @@ namespace SytyRouting.Model
                 throw new Exception("Invalid data imported");
             }
             Cost = br.ReadDouble();
+            LengthM = br.ReadDouble();
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             
