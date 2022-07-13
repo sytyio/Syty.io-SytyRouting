@@ -11,8 +11,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
         private List<Node> forwardRoute = new List<Node>();
         private List<Node> backwardRoute = new List<Node>();
 
-        private PriorityQueue<DijkstraStep, double> dijkstraStepsForwardQueue = new PriorityQueue<DijkstraStep, double>();
-        private PriorityQueue<DijkstraStep, double> dijkstraStepsBackwardQueue = new PriorityQueue<DijkstraStep, double>();
+        private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
 
         private Dictionary<int, DijkstraStep> bestForwardSteps  = new Dictionary<int, DijkstraStep>();
         private Dictionary<int, DijkstraStep> bestBackwardSteps = new Dictionary<int, DijkstraStep>();   
@@ -31,69 +30,53 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
             route.Clear();
             routeCost = 0;
 
-            AddForwardStep(null, originNode, 0);
-            AddBackwardStep(null, destinationNode, 0);
-
-            var forwardQueueIsEmpty = false;
-            var backwardQueueIsEmpty = false;
-
             double mu = double.PositiveInfinity;
 
-            if(!dijkstraStepsForwardQueue.TryPeek(out DijkstraStep? bestForwardStep, out double bestForwardPriority))
-            {
-                throw new Exception("Error retrieving initial Forward Dijkstra Step.");
-            }
-            if(!dijkstraStepsBackwardQueue.TryPeek(out DijkstraStep? bestBackwardStep, out double bestBackwardPriority))
-            {
-                throw new Exception("Error retrieving initial Backward Dijkstra Step.");
-            }
+            double forwardPriority = 0;
+            var bestForwardStep = new DijkstraStep {PreviousStep = null, ActiveNode = originNode, CumulatedCost = forwardPriority, Direction = StepDirection.Forward};
+            AddStep(null, originNode, forwardPriority, StepDirection.Forward);
 
-            while(!forwardQueueIsEmpty || !backwardQueueIsEmpty)
+            double backwardPriority = 0;
+            var bestBackwardStep = new DijkstraStep {PreviousStep = null, ActiveNode = destinationNode, CumulatedCost = backwardPriority, Direction = StepDirection.Backward};
+            AddStep(null, destinationNode, backwardPriority, StepDirection.Backward);
+
+            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
-                // Forward queue
-                if(dijkstraStepsForwardQueue.TryDequeue(out DijkstraStep? currentForwardStep, out double forwardPriority))
+                var activeNode = currentStep.ActiveNode!;   
+
+                if(currentStep.Direction == StepDirection.Forward)
                 {
-                    var activeForwardNode = currentForwardStep.ActiveNode!;
-                    if(forwardPriority <= bestForwardSteps[activeForwardNode!.Idx].CumulatedCost)
+                    if(priority <= bestForwardSteps[activeNode!.Idx].CumulatedCost)
                     {
-                        foreach(var outwardEdge in activeForwardNode.OutwardEdges)
+                        foreach(var outwardEdge in activeNode.OutwardEdges)
                         {
-                            AddForwardStep(currentForwardStep, outwardEdge.TargetNode, currentForwardStep!.CumulatedCost + outwardEdge.Cost);
-                            if(bestBackwardSteps.ContainsKey(outwardEdge.TargetNode.Idx) && (forwardPriority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost) < mu)
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep!.CumulatedCost + outwardEdge.Cost, StepDirection.Forward);
+                            if(bestBackwardSteps.ContainsKey(outwardEdge.TargetNode.Idx) && (priority + outwardEdge.Cost + bestBackwardSteps[outwardEdge.TargetNode.Idx].CumulatedCost) < mu)
                             {
                                 bestBackwardStep = bestBackwardSteps[outwardEdge.TargetNode.Idx];
-                                mu = forwardPriority + outwardEdge.Cost + bestBackwardStep.CumulatedCost;
-                                bestForwardStep = currentForwardStep;
+                                mu = priority + outwardEdge.Cost + bestBackwardStep.CumulatedCost;
+                                bestForwardStep = currentStep;
                             }
                         }
                     }
+                    forwardPriority = priority;
                 }
                 else
                 {
-                    forwardQueueIsEmpty = true;
-                }
-
-                // Backward queue
-                if(dijkstraStepsBackwardQueue.TryDequeue(out DijkstraStep? currentBackwardStep, out double backwardPriority))
-                {
-                    var activeBackwardNode = currentBackwardStep.ActiveNode!;
-                    if(backwardPriority <= bestBackwardSteps[activeBackwardNode!.Idx].CumulatedCost)
+                    if(priority <= bestBackwardSteps[activeNode!.Idx].CumulatedCost)
                     {
-                        foreach(var inwardEdge in activeBackwardNode.InwardEdges)
+                        foreach(var inwardEdge in activeNode.InwardEdges)
                         {
-                            AddBackwardStep(currentBackwardStep, inwardEdge.SourceNode, currentBackwardStep!.CumulatedCost + inwardEdge.Cost);
-                            if(bestForwardSteps.ContainsKey(inwardEdge.SourceNode.Idx) && (backwardPriority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost) < mu)
+                            AddStep(currentStep, inwardEdge.SourceNode, currentStep!.CumulatedCost + inwardEdge.Cost, StepDirection.Backward);
+                            if(bestForwardSteps.ContainsKey(inwardEdge.SourceNode.Idx) && (priority + inwardEdge.Cost + bestForwardSteps[inwardEdge.SourceNode.Idx].CumulatedCost) < mu)
                             {
                                 bestForwardStep = bestForwardSteps[inwardEdge.SourceNode.Idx];
-                                mu = backwardPriority + inwardEdge.Cost + bestForwardStep.CumulatedCost;
-                                bestBackwardStep = currentBackwardStep;
+                                mu = priority + inwardEdge.Cost + bestForwardStep.CumulatedCost;
+                                bestBackwardStep = currentStep;
                             }
                         }
                     }
-                }
-                else
-                {
-                    backwardQueueIsEmpty = true;
+                    backwardPriority = priority;
                 }
 
                 if(forwardPriority + backwardPriority >= mu)
@@ -108,8 +91,7 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
 
             route = forwardRoute.Concat(backwardRoute).ToList();
 
-            dijkstraStepsForwardQueue.Clear();
-            dijkstraStepsBackwardQueue.Clear();
+            dijkstraStepsQueue.Clear();
 
             bestForwardSteps.Clear();
             bestBackwardSteps.Clear();
@@ -120,41 +102,43 @@ namespace SytyRouting.Algorithms.BidirectionalDijkstra
             return route;
         }
 
-        private void AddForwardStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, StepDirection direction)
         {
-            var exist = bestForwardSteps.ContainsKey(nextNode!.Idx);
-            if (!exist || bestForwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
+            if(direction == StepDirection.Forward)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
-                dijkstraStepsForwardQueue.Enqueue(step, cumulatedCost);
+                var exist = bestForwardSteps.ContainsKey(nextNode!.Idx);
+                if (!exist || bestForwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
+                {
+                    var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, Direction = direction };
+                    dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
-                if(!exist)
-                {
-                    bestForwardSteps.Add(nextNode.Idx, step);
-                }
-                else
-                {
-                    bestForwardSteps[nextNode.Idx] = step;
+                    if(!exist)
+                    {
+                        bestForwardSteps.Add(nextNode.Idx, step);
+                    }
+                    else
+                    {
+                        bestForwardSteps[nextNode.Idx] = step;
+                    }
                 }
             }
-        }
-
-        private void AddBackwardStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
-        {
-            var exist = bestBackwardSteps.ContainsKey(nextNode!.Idx);
-            if (!exist || bestBackwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
+            else
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
-                dijkstraStepsBackwardQueue.Enqueue(step, cumulatedCost);
+                var exist = bestBackwardSteps.ContainsKey(nextNode!.Idx);
+                if (!exist || bestBackwardSteps[nextNode.Idx].CumulatedCost > cumulatedCost)
+                {
+                    var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, Direction = direction };
+                    dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
-                if(!exist)
-                {
-                    bestBackwardSteps.Add(nextNode.Idx, step);
-                }
-                else
-                {
-                    bestBackwardSteps[nextNode.Idx] = step;
-                }
+                    if(!exist)
+                    {
+                        bestBackwardSteps.Add(nextNode.Idx, step);
+                    }
+                    else
+                    {
+                        bestBackwardSteps[nextNode.Idx] = step;
+                    }
+                }        
             }
         }
 

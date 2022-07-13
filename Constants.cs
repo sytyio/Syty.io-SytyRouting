@@ -1,6 +1,12 @@
 namespace SytyRouting
 {
 
+    public enum StepDirection
+    {
+        Backward = -1,
+        Forward = 1,
+    }
+    
     public enum OneWayState
     {
         Reversed = -1,
