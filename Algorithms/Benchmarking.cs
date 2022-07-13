@@ -23,7 +23,7 @@ namespace SytyRouting
             var numberOfNodes = graph.GetNodeCount();
             var numberOfRuns = 10;
 
-            logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
+            logger.Info("Route searching benchmarking using {0}'s algorithm", routingAlgorithm.GetType().Name);
 
             logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
             RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
@@ -43,11 +43,7 @@ namespace SytyRouting
             algorithm1.Initialize(graph);
             algorithm2.Initialize(graph);
 
-            var algorithm1Name = algorithm1.GetType().Name;
-            var algorithm2Name = algorithm2.GetType().Name;
-
             var numberOfRuns = 10;
-
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
 
@@ -58,7 +54,7 @@ namespace SytyRouting
             var route1 = RoutingAlgorithmRunTime(algorithm1, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
             var route2 = RoutingAlgorithmRunTime(algorithm2, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
             
-            logger.Info("Output comparison of {0} vs. {1}:", algorithm1Name, algorithm2Name);
+            logger.Info("Output comparison of {0} vs. {1}:", algorithm1.GetType().Name, algorithm2.GetType().Name);
             CompareRoutesSideBySide(route1, route2);
             CompareRouteCostsSideBySide(route1, algorithm1.GetRouteCost(), route2, algorithm2.GetRouteCost());
    
@@ -151,9 +147,6 @@ namespace SytyRouting
 
             int numberOfRouteMismatches = 0;
 
-            var algorithm1Name = algorithm1.GetType().Name;
-            var algorithm2Name = algorithm2.GetType().Name;
-
             for(int i = 0; i < numberOfRuns; i++)
             {
                 while(true)
@@ -187,7 +180,7 @@ namespace SytyRouting
                 if(!routesAreEqual)
                 {
                     numberOfRouteMismatches++;
-                    logger.Debug("{0} and {1} routes are not equal for origin OsmId {2} and destination OsmId {3}.\tRuns: {4},\tMismatches: {5}", algorithm1Name, algorithm2Name, originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatches);
+                    logger.Debug("{0} and {1} routes are not equal for origin OsmId {2} and destination OsmId {3}.\tRuns: {4},\tMismatches: {5}", algorithm1.GetType().Name, algorithm2.GetType().Name, originNode.OsmID, destinationNode.OsmID, i+1, numberOfRouteMismatches);
                 }
                     
                 if(numberOfRuns > 10)
