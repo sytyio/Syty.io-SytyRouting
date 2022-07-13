@@ -30,7 +30,7 @@ namespace SytyRouting
                                                                //SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
 
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.MultiDijkstra.MultiDijkstra>(graph);
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
             // Logger flushing
             LogManager.Shutdown();
