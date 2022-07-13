@@ -21,7 +21,7 @@ namespace SytyRouting
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
             var numberOfNodes = graph.GetNodeCount();
-            var numberOfRuns = 10;
+            var numberOfRuns = 1000;
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
 
@@ -129,12 +129,12 @@ namespace SytyRouting
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
-                logger.Info("RoutingAlgorithm execution time : {0:0.000} (ms / route)", elapsedRunTimeTicks[i] * nanosecondsPerTick / 1000000);
+                logger.Info("RoutingAlgorithm execution time : {0:0} (ms / route)", elapsedRunTimeTicks[i] * nanosecondsPerTick / 1000000);
             }
 
             var averageTicks = elapsedRunTimeTicks.Average();
             
-            logger.Info("{0,25} average execution time: {1,10:0.000} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
+            logger.Info("{0,25} average execution time: {1,10:0} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
         }
 
         private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, int numberOfRuns)

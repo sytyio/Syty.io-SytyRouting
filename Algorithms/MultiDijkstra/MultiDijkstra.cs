@@ -10,8 +10,6 @@ namespace SytyRouting.Algorithms.MultiDijkstra
         private static DijkstraInstance[] history;
         private static List<DijkstraInstance> historyL;
 
-        private const int MaxDepth = 100;
-
         public override void Initialize(Graph graph)
         {
             base.Initialize(graph);
@@ -63,7 +61,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                 var closestInstances = quickRoute ? historyL.OrderBy(t => t.Depths[originNode.Idx]).Take(5).ToArray() : null;
                 var samePath = new int[size];
                 Array.Fill(samePath, -1);
-                if(closestInstances != null && closestInstances.Count() > 0)
+                if(closestInstances != null && closestInstances.Count() > 0 && closestInstances[0].Depths[originNode.Idx] < 100)
                 {
                     logger.Info("Found {0} helping Dijkstras", closestInstances.Count());
                     for (int i = 0; i < closestInstances.Length; i++)
@@ -73,11 +71,13 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                             samePath[current] = i;
                         }
                     }
+                    logger.Info("Tagging done");
                     //At the end of this loop, the samePath array contains -1 for all idx that are not on the root - destination path on any of the trees, and contains a number >= 0 for all idx that are on the path
                 }
                 else
                 {
                     quickRoute = false;
+                    logger.Info("Generating a full Dijkstra");
                 }
                 
 
@@ -101,12 +101,6 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                     if (!done[currentIdx])
                     {
                         done[currentIdx] = true;
-                        if(quickRoute && instance.Depths[currentIdx] > MaxDepth)
-                        {
-                            //This is a criterion to go from quick Dijkstra to full Dijkstra
-                            logger.Info("Generating a full Dijkstra");
-                            return GenerateInstance(originNode, destinationNode, false);
-                        }
                         
                         var activeNode = _graph.GetNodeByIndex(currentIdx);
                         foreach (var outwardEdge in activeNode.OutwardEdges)
@@ -119,7 +113,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
                                 instance.TotalCosts[target] = newCost;
                                 instance.Origins[target] = currentIdx;
                                 instance.Depths[target] = instance.Depths[currentIdx] + 1;
-                                if (newCost <= instance.TotalCosts[destinationNode.Idx])
+                                if (!quickRoute || newCost <= instance.TotalCosts[destinationNode.Idx])
                                 {
                                     queue.Enqueue(target, newCost);
                                 }
@@ -131,6 +125,16 @@ namespace SytyRouting.Algorithms.MultiDijkstra
 
                 if (!quickRoute)
                 {
+                    for(int i = 0; i < size; i++)
+                    {
+                        if(instance.Origins[i] == -1)
+                        {
+                            if(i != originNode.Idx && _graph.GetNodeByIndex(i).ValidTarget)
+                            {
+                                throw new Exception("Problem in Dijkstra");
+                            }
+                        }
+                    }
                     history[originNode.Idx] = instance;
                     historyL.Add(instance);
                 }
