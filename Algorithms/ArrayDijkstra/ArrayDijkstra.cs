@@ -2,14 +2,13 @@ using NLog;
 using SytyRouting.Algorithms.Dijkstra;
 using SytyRouting.Model;
 
-namespace SytyRouting.Algorithms.HeuristicDijkstra
+namespace SytyRouting.Algorithms.ArrayDijkstra
 {
-    public class HeuristicDijkstra : BaseRoutingAlgorithm
+    public class ArrayDijkstra : BaseRoutingAlgorithm
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
-
         private double[] bestScoreForNode = new double[0];
 
         public override void Initialize(Graph graph)
@@ -31,11 +30,11 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
         {
             route.Clear();
             routeCost = 0;
-            Array.Fill(bestScoreForNode, double.MaxValue);
+             Array.Fill(bestScoreForNode, double.MaxValue);
 
-            AddStep(null, originNode, 0, destinationNode);
+            AddStep(null, originNode, 0);
 
-            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double heuristic))
+            while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
                 var activeNode = currentStep!.ActiveNode;
                 if(activeNode == destinationNode)
@@ -44,11 +43,11 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
                     routeCost = currentStep.CumulatedCost;
                     break;
                 }
-                if(currentStep.CumulatedCost <= bestScoreForNode[activeNode!.Idx])
+                if(priority <= bestScoreForNode[activeNode!.Idx])
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, destinationNode);
+                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
                     }
                 }
             }
@@ -58,19 +57,14 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, Node destinationNode)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
             if (bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var distance = Helper.GetDistance(nextNode, destinationNode);
-                var heuristic = cumulatedCost +  distance * _graph.MinCostPerDistance;
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost};
-                if (heuristic <= bestScoreForNode[destinationNode.Idx])
-                {
-                    dijkstraStepsQueue.Enqueue(step, heuristic);
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
+                dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
-                    bestScoreForNode[nextNode.Idx] = cumulatedCost;
-                }
+                bestScoreForNode[nextNode.Idx] = cumulatedCost;
             }
         }
 

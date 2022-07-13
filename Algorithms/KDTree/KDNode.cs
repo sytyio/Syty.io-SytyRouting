@@ -7,10 +7,10 @@ namespace SytyRouting.Algorithms.KDTree
     public class KDNode
     {
         [NotNull]
-        public Node? Item { get;  set; }
-        public KDNode? Low { get; set; }
-        public KDNode? High { get; set; }
+        public Node? Item;
+        public KDNode? Low;
+        public KDNode? High;
 
-        public int Orientation { get; set; }
+        public int Orientation;
     }
 }

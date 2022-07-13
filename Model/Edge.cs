@@ -4,15 +4,15 @@ namespace SytyRouting.Model
 {
     public class Edge
     {
-        public long OsmID { get; set; }
-        public double Cost {get; set;}
-        public double LengthM { get; set; }
+        public long OsmID;
+        public double Cost;
+        public double LengthM;
 
-        [NotNull] 
-        public Node? SourceNode {get; set;}
-        
-        [NotNull] 
-        public Node? TargetNode {get; set;}
+        [NotNull]
+        public Node? SourceNode;
+
+        [NotNull]
+        public Node? TargetNode;
 
         public void WriteToStream(BinaryWriter bw)
         {

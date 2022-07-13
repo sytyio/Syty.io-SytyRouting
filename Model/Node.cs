@@ -3,17 +3,17 @@ namespace SytyRouting.Model
 
     public class Node
     {
-        public int Idx {get; set;}
+        public int Idx;
 
-        public long OsmID { get; set; }
-        public double X {get; set;}
-        public double Y {get; set;}
+        public long OsmID;
+        public double X;
+        public double Y;
 
-        public bool ValidTarget { get; set; }
+        public bool ValidTarget;
 
-        public bool ValidSource { get; set; }
-        public List<Edge> InwardEdges { get; set; } = new List<Edge>(4);
-        public List<Edge> OutwardEdges {get; set;} = new List<Edge>(4);
+        public bool ValidSource;
+        public List<Edge> InwardEdges = new List<Edge>(4);
+        public List<Edge> OutwardEdges = new List<Edge>(4);
 
         public void WriteToStream(BinaryWriter bw)
         {
