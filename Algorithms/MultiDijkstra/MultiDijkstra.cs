@@ -126,16 +126,6 @@ namespace SytyRouting.Algorithms.MultiDijkstra
 
                 if (!quickRoute)
                 {
-                    for(int i = 0; i < size; i++)
-                    {
-                        if(instance.Origins[i] == -1)
-                        {
-                            if(i != originNode.Idx && _graph.GetNodeByIndex(i).ValidTarget)
-                            {
-                                throw new Exception("Problem in Dijkstra");
-                            }
-                        }
-                    }
                     history[originNode.Idx] = instance;
                     historyL.Add(instance);
                 }

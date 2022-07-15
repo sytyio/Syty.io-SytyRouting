@@ -30,7 +30,7 @@ namespace SytyRouting.Algorithms.ArrayDijkstra
         {
             route.Clear();
             routeCost = 0;
-             Array.Fill(bestScoreForNode, double.MaxValue);
+            Array.Fill(bestScoreForNode, double.MaxValue);
 
             AddStep(null, originNode, 0);
 
