@@ -14,7 +14,10 @@ namespace SytyRouting
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        public Task FileSaveAsync(string path)
+        public double MinCostPerDistance { get; private set; }
+        public double MaxCostPerDistance { get; private set; }
+
+        private Task FileSaveAsync(string path)
         {
             using (BinaryWriter bw = new BinaryWriter(File.OpenWrite(path)))
             {
@@ -77,9 +80,28 @@ namespace SytyRouting
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
+            ComputeCost();
         }
 
-        public async Task DBLoadAsync()
+        private void ComputeCost()
+        {
+            MinCostPerDistance = double.MaxValue;
+            MaxCostPerDistance = double.MinValue;
+            for (int i = 0; i < NodesArray.Length;i++)
+            {
+                foreach (var edge in NodesArray[i].OutwardEdges)
+                {
+                    var distance = edge.LengthM;
+                    if (distance > 0)
+                    {
+                        MinCostPerDistance = Math.Min(MinCostPerDistance, edge.Cost / distance);
+                        MaxCostPerDistance = Math.Max(MaxCostPerDistance, edge.Cost / distance);
+                    }
+                }
+            }
+        }
+
+        private async Task DBLoadAsync()
         {
             Dictionary<long, Node> nodes = new Dictionary<long, Node>();
             Stopwatch stopWatch = new Stopwatch();
@@ -106,8 +128,8 @@ namespace SytyRouting
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9    10           11
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm FROM public.ways";
+            //                     0        1      2       3         4          5      6   7   8   9    10           11          12
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m FROM public.ways where length_m is not null";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -133,8 +155,10 @@ namespace SytyRouting
 
                     var source = CreateNode(sourceId, sourceOSMId, sourceX, sourceY, nodes);
                     var target = CreateNode(targetId, targetOSMId, targetX, targetY, nodes);
+
+                    var length_m = Convert.ToDouble(reader.GetValue(12)); 
                     
-                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target);
+                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m);
 
                     dbRowsProcessed++;
 
@@ -236,13 +260,13 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m)
         {
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
@@ -250,7 +274,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source};
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -258,11 +282,11 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source};
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     

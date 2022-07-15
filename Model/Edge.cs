@@ -4,14 +4,15 @@ namespace SytyRouting.Model
 {
     public class Edge
     {
-        public long OsmID { get; set; }
-        public double Cost {get; set;}
+        public long OsmID;
+        public double Cost;
+        public double LengthM;
 
-        [NotNull] 
-        public Node? SourceNode {get; set;}
-        
-        [NotNull] 
-        public Node? TargetNode {get; set;}
+        [NotNull]
+        public Node? SourceNode;
+
+        [NotNull]
+        public Node? TargetNode;
 
         public void WriteToStream(BinaryWriter bw)
         {
@@ -21,6 +22,7 @@ namespace SytyRouting.Model
             }
             bw.Write(OsmID);
             bw.Write(Cost);
+            bw.Write(LengthM);
             bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
         }
@@ -33,6 +35,7 @@ namespace SytyRouting.Model
                 throw new Exception("Invalid data imported");
             }
             Cost = br.ReadDouble();
+            LengthM = br.ReadDouble();
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             

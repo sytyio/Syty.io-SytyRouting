@@ -26,10 +26,16 @@ namespace SytyRouting
             Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
             Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+                                                               //SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+
             Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-                                                               SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+                                                               SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+                                                               //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
 
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
             // Logger flushing
             LogManager.Shutdown();

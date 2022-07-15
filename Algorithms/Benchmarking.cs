@@ -21,11 +21,13 @@ namespace SytyRouting
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
             var numberOfNodes = graph.GetNodeCount();
-            var numberOfRuns = 10;
+            var numberOfRuns = 100;
 
             logger.Info("Route searching benchmarking using {0}'s algorithm", routingAlgorithm.GetType().Name);
 
             logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
+            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
+            logger.Info("SECOND Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
             RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
@@ -98,6 +100,7 @@ namespace SytyRouting
 
             for(int i = 0; i < numberOfRuns; i++)
             {
+                logger.Info("Computing route");
                 while(true)
                 {
                     var index = randomIndex.Next(0, numberOfNodes);
@@ -122,11 +125,12 @@ namespace SytyRouting
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
+                logger.Info("RoutingAlgorithm execution time : {0:0} (ms / route)", elapsedRunTimeTicks[i] * nanosecondsPerTick / 1000000);
             }
 
             var averageTicks = elapsedRunTimeTicks.Average();
             
-            logger.Info("{0,25} average execution time: {1,10:0.000} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
+            logger.Info("{0,25} average execution time: {1,10:0} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
         }
 
         private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, int numberOfRuns)
