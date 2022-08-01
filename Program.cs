@@ -1,5 +1,6 @@
 ﻿using NLog;
-using SytyRouting.Algorithms;
+// using SytyRouting.Algorithms;
+using Npgsql;
 
 namespace SytyRouting
 {
@@ -20,22 +21,28 @@ namespace SytyRouting
             await graph.FileLoadAsync("graph.dat");
 
 
-            Benchmarking.PointLocationTest(graph);
+            // Benchmarking.PointLocationTest(graph);
 
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
+            // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
             // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
             //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
-            Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-                                                               SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
             //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
                                                                //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
 
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+
+
+            // Persona spatial data generation
+            var personaRouter = new PersonaRouter();
+            await personaRouter.DBPersonaLoadAsync();
+            personaRouter.TracePersonas();
 
             // Logger flushing
             LogManager.Shutdown();
