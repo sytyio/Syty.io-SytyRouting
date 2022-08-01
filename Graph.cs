@@ -138,7 +138,7 @@ namespace SytyRouting
 
                 while (await reader.ReadAsync())
                 {
-                    var sourceId = Convert.ToInt64(reader.GetValue(1)); // surce
+                    var sourceId = Convert.ToInt64(reader.GetValue(1)); // source
                     var sourceX = Convert.ToDouble(reader.GetValue(6)); // x1
                     var sourceY = Convert.ToDouble(reader.GetValue(7)); // y1 
                     var sourceOSMId = Convert.ToInt64(reader.GetValue(10)); // source_osm
