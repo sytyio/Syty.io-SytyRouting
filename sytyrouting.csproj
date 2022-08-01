@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
     <PackageReference Include="NLog" Version="5.0.1" />
     <PackageReference Include="Npgsql" Version="6.0.4" />
   </ItemGroup>
