@@ -3,16 +3,13 @@ using System.Diagnostics;
 using Npgsql;
 using System.Globalization;
 using SytyRouting.Model;
+using NetTopologySuite.Geometries;
 
 namespace SytyRouting
 {
     public class PersonaRouter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        // private Persona[] PersonasArray = new Persona[0];
-        private Dictionary<int, Persona> personas = new Dictionary<int, Persona>();
-
 
         public async Task DBPersonaLoadAsync()
         {
@@ -28,22 +25,26 @@ namespace SytyRouting
             
 
             // Get the total number of rows to estimate the creation time of the entire set of 'Personas'
-            long totalDbRows = 0;
+            int totalDbRows = 0;
             queryString = "SELECT count(*) AS exact_count FROM public.persona";
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {
                 while (await reader.ReadAsync())
                 {
-                    totalDbRows = Convert.ToInt64(reader.GetValue(0));
+                    totalDbRows = Convert.ToInt32(reader.GetValue(0));
                 }
             }
 
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
+            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();          // Total elapsed time: 00:02:37.178
+            Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);  // Total elapsed time: 00:02:45.795
+
+
             // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
             //                     0              1              2
-            queryString = "SELECT id, home_location, work_location FROM public.persona LIMIT 100";
+            queryString = "SELECT id, home_location, work_location FROM public.persona"; //  LIMIT 10000
             
             connection.TypeMapper.UseNetTopologySuite();
 
@@ -54,12 +55,15 @@ namespace SytyRouting
 
                 while(await reader.ReadAsync())
                 {
-                    var id = Convert.ToInt32(reader.GetValue(0)); // id
-                    CreatePersona(id);
+                    var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
+                    var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
+                    var workLocation = (Point)reader.GetValue(2); // work_location (Point)
+
+                    CreatePersona(id, homeLocation, workLocation, personas);
 
                     dbRowsProcessed++;
 
-                    if (dbRowsProcessed % 100 == 0)
+                    if (dbRowsProcessed % 10000 == 0)
                     {                        
                         var timeSpan = stopWatch.Elapsed;
                         var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
@@ -69,17 +73,19 @@ namespace SytyRouting
             }
         }
 
-        public void TracePersonas()
+        public void TracePersonas(Dictionary<int, Persona> personas)
         {
             foreach (var persona in personas)
             {
-                logger.Trace("Persona Id={0}", persona.Key);
+                logger.Trace("Persona: Id = {0},\n\t\t HomeLocation = ({1}, {2}),\n\t\t WorkLocation = ({3}, {4})", 
+                    persona.Key, persona.Value.HomeLocation?.X, persona.Value.HomeLocation?.Y,
+                    persona.Value.WorkLocation?.X, persona.Value.WorkLocation?.Y);
             }
         }
 
-        private Persona CreatePersona(int id)
+        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, Dictionary<int, Persona> personas)
         {           
-            var persona = new Persona { Id = id };
+            var persona = new Persona { Id = id, HomeLocation = homeLocation, WorkLocation = workLocation };
             personas.Add(id, persona);
 
             return personas[id];
