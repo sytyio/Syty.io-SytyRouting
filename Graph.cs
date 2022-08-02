@@ -108,28 +108,17 @@ namespace SytyRouting
             stopWatch.Start();
 
             var connectionString = Constants.ConnectionString;
-            string queryString;           
+            var tableName = "public.ways";
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
             // Get the total number of rows to estimate the Graph creation time
-            long totalDbRows = 0;
-            queryString = "SELECT count(*) AS exact_count FROM public.ways";
-            await using (var command = new NpgsqlCommand(queryString, connection))
-            await using (var reader = await command.ExecuteReaderAsync())
-            {
-                while (await reader.ReadAsync())
-                {
-                    totalDbRows = Convert.ToInt64(reader.GetValue(0));
-                }
-            }
-
-            logger.Info("Total number of rows to process: {0}", totalDbRows);
+            var totalDbRows = await Helper.DbTableRowsCount(connection, tableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11          12
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m FROM public.ways where length_m is not null";
+            var queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m FROM public.ways where length_m is not null";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -166,7 +155,7 @@ namespace SytyRouting
                     {                        
                         var timeSpan = stopWatch.Elapsed;
                         var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                        GraphCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds);
+                        Helper.SetCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
                     }
                 }
 
@@ -293,22 +282,6 @@ namespace SytyRouting
                     break;
                 }
             }
-        }
-
-        private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
-        {
-            var elapsedTime = Helper.FormatElapsedTime(timeSpan);
-
-            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
-            var graphCreationTimeSeconds = totalDbRows / rowProcessingRate;
-            var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
-
-            var totalTime = Helper.FormatElapsedTime(graphCreationTime);
-
-            logger.Debug("Number of DB rows already processed: {0}", dbRowsProcessed);
-            logger.Debug("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-            logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
-            logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
         }
 
         private void CleanGraph()
