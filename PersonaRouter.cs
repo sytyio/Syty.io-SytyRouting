@@ -12,6 +12,10 @@ namespace SytyRouting
 
         private Persona[] PersonasArray = new Persona[0];
 
+        private static int numberOfQueues = 1;
+        private static int numberOfBatchesPerQueue = 1;
+        private int numberOfBatches = numberOfQueues * numberOfBatchesPerQueue;
+
         public async Task DBPersonaLoadAsync()
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -23,18 +27,27 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite();
 
             var totalDbRows = await Helper.DbTableRowsCount(connection, tableName, logger);
+            // var totalDbRows = 100;
 
-            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();          // Total elapsed time: 00:02:37.178
-            Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);  // Total elapsed time: 00:02:45.795
+            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();             // Total elapsed time: 00:02:37.178
+            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);  // Total elapsed time: 00:02:45.795
+            // Queue<Persona> personas = new Queue<Persona>(totalDbRows);                      // Total elapsed time: 00:02:55.881
+            Queue<Persona>[] personaQueues = new Queue<Persona>[numberOfQueues];               // Total elapsed time: 00:02:36.108 (no individual size initialization)
+            for (var i = 0; i < personaQueues.Length-1; i++)
+            {
+                personaQueues[i] = (personaQueues[i]) ?? new Queue<Persona>();
+            }
+            personaQueues[personaQueues.Length-1] = (personaQueues[personaQueues.Length-1]) ?? new Queue<Persona>();
+
+            
 
 
             // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
             //                     0              1              2
-            var queryString = "SELECT id, home_location, work_location FROM " + tableName;
-            
-            connection.TypeMapper.UseNetTopologySuite();
+            var queryString = "SELECT id, home_location, work_location FROM " + tableName + " ORDER BY id ASC"; // + " LIMIT 100";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -47,7 +60,7 @@ namespace SytyRouting
                     var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                     var workLocation = (Point)reader.GetValue(2); // work_location (Point)
 
-                    CreatePersona(id, homeLocation, workLocation, personas);
+                    CreatePersona(id, homeLocation, workLocation, personaQueues[0]);
 
                     dbRowsProcessed++;
 
@@ -59,11 +72,11 @@ namespace SytyRouting
                     }
                 }
 
-                PersonasArray = personas.Values.ToArray();
+                // PersonasArray = personas.ToArray();
 
                 stopWatch.Stop();
                 var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-                logger.Info("Persona set creation time          (HH:MM:S.mS) :: " + totalTime);
+                logger.Info("                           Persona set creation time :: " + totalTime);
                 logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
             }
         }
@@ -78,12 +91,12 @@ namespace SytyRouting
             }
         }
 
-        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, Dictionary<int, Persona> personas)
+        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, Queue<Persona> personas)
         {           
             var persona = new Persona { Id = id, HomeLocation = homeLocation, WorkLocation = workLocation };
-            personas.Add(id, persona);
+            personas.Enqueue(persona);
 
-            return personas[id];
+            return persona; // Queue
         }
     }
 }
