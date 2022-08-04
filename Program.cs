@@ -41,8 +41,8 @@ namespace SytyRouting
 
             // Persona spatial data generation
             var personaRouter = new PersonaRouter();
-            await personaRouter.DBPersonaLoadAsync();
-            personaRouter.TracePersonas();
+            await personaRouter.StartRouting();
+            personaRouter.TracePersonaIds();
 
             // Logger flushing
             LogManager.Shutdown();

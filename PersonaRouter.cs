@@ -18,7 +18,30 @@ namespace SytyRouting
         private static int numberOfBatchesPerQueue = 3;
         private int numberOfBatches = numberOfQueues * numberOfBatchesPerQueue;
 
-        public async Task DBPersonaLoadAsync()
+                                                                                                // Total elapsed time:
+        // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();                  // 00:02:37.178
+        // Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);       // 00:02:45.795
+        // Queue<Persona> personas = new Queue<Persona>(totalDbRows);                           // 00:02:55.881
+        // Queue<Persona>[] personaQueues = new Queue<Persona>[numberOfQueues];                 // 00:02:36.108 (no individual size initialization),
+                                                                                                // 00:03:01.740 (individual size initialization),
+                                                                                                // 00:04:13.284 (individual size initialization, sequential queue switching)
+        private ConcurrentQueue<Persona>[] personaQueues = new ConcurrentQueue<Persona>[numberOfQueues];// 00:04:13.539 (using ConcurrentQueues, sequential queue switching)
+
+        public PersonaRouter()
+        {
+            // Initialize personaQueues
+            for (var i = 0; i < personaQueues.Length; i++)
+            {
+                personaQueues[i] = (personaQueues[i]) ?? new ConcurrentQueue<Persona>();
+            }
+        }
+
+        public async Task StartRouting()
+        {
+            await Task.Run(() => DBPersonaLoadAsync()); // Not really sure at this point if a Parallel.Invoke(.) should be used instead...
+        }
+
+        private async Task DBPersonaLoadAsync()
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -31,30 +54,13 @@ namespace SytyRouting
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite();
 
-            var totalDbRows = await Helper.DbTableRowsCount(connection, tableName, logger);
-            // var totalDbRows = 1000;
+            // var totalDbRows = await Helper.DbTableRowsCount(connection, tableName, logger);
+            var totalDbRows = 100;
 
-
-            var regularQueueSize = totalDbRows / numberOfQueues;
-            var lastQueueSize = regularQueueSize + totalDbRows % numberOfQueues;
             
             var regularBatchSize = totalDbRows / numberOfBatches;
             var lastBatchSize = regularBatchSize + totalDbRows % numberOfBatches;
 
-                                                                                                    // Total elapsed time:
-            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();                  // 00:02:37.178
-            // Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);       // 00:02:45.795
-            // Queue<Persona> personas = new Queue<Persona>(totalDbRows);                           // 00:02:55.881
-            // Queue<Persona>[] personaQueues = new Queue<Persona>[numberOfQueues];                 // 00:02:36.108 (no individual size initialization),
-                                                                                                    // 00:03:01.740 (individual size initialization),
-                                                                                                    // 00:04:13.284 (individual size initialization, sequential queue switching)
-            ConcurrentQueue<Persona>[] personaQueues = new ConcurrentQueue<Persona>[numberOfQueues];// 00:04:13.539 (using ConcurrentQueues, sequential queue switching)
-
-            for (var i = 0; i < personaQueues.Length-1; i++)
-            {
-                personaQueues[i] = (personaQueues[i]) ?? new ConcurrentQueue<Persona>();
-            }
-            personaQueues[personaQueues.Length-1] = (personaQueues[personaQueues.Length-1]) ?? new ConcurrentQueue<Persona>();
 
             int[] batchSizes = new int[numberOfBatches];
             for (var i = 0; i < batchSizes.Length-1; i++)
@@ -83,11 +89,11 @@ namespace SytyRouting
                         var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                         var workLocation = (Point)reader.GetValue(2); // work_location (Point)
 
-                        CreatePersona(id, homeLocation, workLocation, personaQueues[currentQueue]);
+                        CreatePersona(id, homeLocation, workLocation, currentQueue);
 
                         dbRowsProcessed++;
 
-                        if (dbRowsProcessed % (totalDbRows / 200) == 0)
+                        if (dbRowsProcessed % 50_000 == 0)
                         {
                             logger.Debug("Queue #{0}: {1} elements (batch #{2})", currentQueue, personaQueues[currentQueue].Count, b);
                             var timeSpan = stopWatch.Elapsed;
@@ -100,6 +106,7 @@ namespace SytyRouting
                 currentQueue = CycleQueue(currentQueue);
             }
 
+            // For debugging
             int numberOfQueueElements = 0;
             foreach(var queue in personaQueues)
             {
@@ -142,12 +149,12 @@ namespace SytyRouting
             }
         }
 
-        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, ConcurrentQueue<Persona> personas)
+        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, int currentQueue)
         {           
             var persona = new Persona { Id = id, HomeLocation = homeLocation, WorkLocation = workLocation };
-            personas.Enqueue(persona);
+            personaQueues[currentQueue].Enqueue(persona);
 
-            return persona; // Queue
+            return persona;
         }
 
         private int CycleQueue(int currentQueue)
