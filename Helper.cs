@@ -40,8 +40,9 @@ namespace SytyRouting
 
             logger.Debug("Number of DB rows already processed: {0}", dbRowsProcessed);
             logger.Debug("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-            logger.Info("                                        Elapsed Time (HH:MM:S.mS) :: " + elapsedTime);
-            logger.Info("{0,25} set creation time estimate (HH:MM:S.mS) :: {1}", callerName, totalTime);
+            logger.Info("                                                        hh:mm:ss.ms");
+            logger.Info("                                        Elapsed Time :: " + elapsedTime);
+            logger.Info("{0,25} set creation time estimate :: {1}", callerName, totalTime);
         }
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
