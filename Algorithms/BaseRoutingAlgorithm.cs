@@ -21,8 +21,8 @@ namespace SytyRouting.Algorithms
             {
                 throw new ArgumentException("You must initialize the routing algorithm first!");
             }
-            var originNode = _graph.GetNodeByLatitudeLongitude(x1, y1);
-            var destinationNode = _graph.GetNodeByLatitudeLongitude(x2, y2);
+            var originNode = _graph.GetNodeByLongitudeLatitude(x1, y1);
+            var destinationNode = _graph.GetNodeByLongitudeLatitude(x2, y2);
             
             return RouteSearch(originNode, destinationNode);
         }
