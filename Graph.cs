@@ -1,7 +1,6 @@
 using Npgsql;
 using NLog;
 using System.Diagnostics;
-using System.Globalization;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 
@@ -173,7 +172,7 @@ namespace SytyRouting
             }
         }
 
-        public Node GetNodeByLatitudeLongitude(double x, double y)
+        public Node GetNodeByLongitudeLatitude(double x, double y)
         {
             if (KDTree != null)
             {
