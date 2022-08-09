@@ -113,7 +113,7 @@ namespace SytyRouting
             await connection.OpenAsync();
 
             // Get the total number of rows to estimate the Graph creation time
-            var totalDbRows = await Helper.DbTableRowsCount(connection, tableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(connection, tableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11          12
@@ -154,7 +154,7 @@ namespace SytyRouting
                     {                        
                         var timeSpan = stopWatch.Elapsed;
                         var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                        Helper.SetCreationBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
+                        Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
                     }
                 }
 
@@ -177,7 +177,7 @@ namespace SytyRouting
             if (KDTree != null)
             {
                 var node = KDTree.GetNearestNeighbor(x, y);
-                logger.Debug("The closest node  for ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
+                // logger.Debug("The closest node  for ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
                 return node;
             }
             throw new Exception("Impossible to find the nearest node based on the provided coordinates.");
