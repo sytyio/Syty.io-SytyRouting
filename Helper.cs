@@ -9,7 +9,7 @@ namespace SytyRouting
     public class Helper
     {
         
-        public static async Task<int> DbTableRowsCount(NpgsqlConnection connection, string tableName, Logger logger)
+        public static async Task<int> DbTableRowCount(NpgsqlConnection connection, string tableName, Logger logger)
         {
             int totalDbRows = 0;
 
@@ -28,21 +28,22 @@ namespace SytyRouting
             return totalDbRows;
         }
         
-        public static void SetCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds, Logger logger, [CallerMemberName] string callerName = "")
+        public static void DataLoadBenchmark(long totalElements, long processedElements, TimeSpan timeSpan, long timeSpanMilliseconds, Logger logger, [CallerMemberName] string callerName = "")
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
-            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
-            var personasSetCreationTimeSeconds = totalDbRows / rowProcessingRate;
-            var personasSetCreationTime = TimeSpan.FromSeconds(personasSetCreationTimeSeconds);
+            var elementProcessingRate = (double)processedElements / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
+            var setCreationTimeSeconds = totalElements / elementProcessingRate;
+            var setCreationTime = TimeSpan.FromSeconds(setCreationTimeSeconds);
 
-            var totalTime = Helper.FormatElapsedTime(personasSetCreationTime);
+            var totalTime = Helper.FormatElapsedTime(setCreationTime);
 
-            logger.Debug("Number of DB rows already processed: {0}", dbRowsProcessed);
-            logger.Debug("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-            logger.Info("                                                        hh:mm:ss.ms");
-            logger.Info("                                        Elapsed Time :: " + elapsedTime);
-            logger.Info("{0,25} set creation time estimate :: {1}", callerName, totalTime);
+            logger.Debug("Number of elements already processed: {0}", processedElements);
+            logger.Debug("Element processing rate: {0} [Elements / s]", elementProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            logger.Info("{0,45} :: {1,-25}", "", "hh:mm:ss.ms");
+            logger.Info("{0,45} :: {1,-25}", "Elapsed Time", elapsedTime);
+            logger.Info("{0,45}", callerName);
+            logger.Info("{0,45} :: {1,-25}\n", "Set creation time estimate", totalTime);
         }
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
