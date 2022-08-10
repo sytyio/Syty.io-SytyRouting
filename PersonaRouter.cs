@@ -21,14 +21,21 @@ namespace SytyRouting
         private Graph _graph;
 
         private static int numberOfQueues = Environment.ProcessorCount; // 8-core computer;
-        private static int numberOfBatchesPerQueue = 1;
+        private static int numberOfBatchesPerQueue = 10;
         private int numberOfBatches = numberOfQueues * numberOfBatchesPerQueue;
         
-        private int numberOfExpectedRoutes;
+        // private int numberOfExpectedRoutes;
 
-        private ConcurrentDictionary<int, QueueBenchmark> queueBenchmarks = new ConcurrentDictionary<int, QueueBenchmark>(numberOfQueues, numberOfQueues); // For testing
-        // private ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[numberOfQueues]; // For testing
-        private Queue<Persona>[] PersonaQueues = new Queue<Persona>[numberOfQueues]; // For testing
+        private static int processStop = 0; // 0 == DO NOT STOP; 1 == STOP;
+        private static int elementsToProcess = 0;
+        private static int processedElements = 0;
+        // private static int elementsInQueues = 0;
+
+        private Task[] tasks = new Task[numberOfQueues + 1]; // #queues + 1 data load task
+
+        private ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks = new ConcurrentDictionary<int, DataSetBenchmark>(numberOfQueues, numberOfQueues); // For testing
+        private DataSetBenchmark dBSetBenchmark;
+        private ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[numberOfQueues];
         ConcurrentBag<Persona> personaIdsForCalculatedRoutes = new ConcurrentBag<Persona>(); // For degugging
 
 
@@ -38,15 +45,15 @@ namespace SytyRouting
 
             for (var i = 0; i < PersonaQueues.Length; i++)
             {
-                // PersonaQueues[i] = (PersonaQueues[i]) ?? new ConcurrentQueue<Persona>();
-                PersonaQueues[i] = (PersonaQueues[i]) ?? new Queue<Persona>();
+                PersonaQueues[i] = (PersonaQueues[i]) ?? new ConcurrentQueue<Persona>();
             }
 
             for (var i = 0; i < numberOfQueues; i++)
             {
-                if(!queueBenchmarks.TryAdd(i, new QueueBenchmark {Id = i}))
+                if(!queueBenchmarks.TryAdd(i, new DataSetBenchmark {Id = i}))
                     logger.Debug("Failed to initialize queues benchmarks at queue #{0}", i);
             }
+            dBSetBenchmark = new DataSetBenchmark {Id = numberOfQueues};
         }
 
         public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
@@ -71,22 +78,35 @@ namespace SytyRouting
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite();
 
-            // numberOfExpectedRoutes = await Helper.DbTableRowCount(connection, tableName, logger);
-            numberOfExpectedRoutes = 1000;
+            // elementsToProcess = await Helper.DbTableRowCount(connection, tableName, logger);
+            elementsToProcess = 1000;
 
-            // ////////////////////////////////////////////////////////// //
-            // awaited Queues load (sequential), queue routing (parallel) //
-            // ////////////////////////////////////////////////////////// //
-            // await Task.Run(() => DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes));
-            await DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes);
-            try
-            {
-                Parallel.For(0, numberOfQueues, (q) => CalculateRoutesForQueue(routingAlgorithms[q], q));
-            }
-            catch (AggregateException e)
-            {
-                logger.Debug("Parallel.For has thrown the following (unexpected) exception:\n{0}", e);
-            }
+            await connection.CloseAsync();
+
+            // ////////////////////////////////////////////////// //
+            // Queues load and queue routing in parallel          //
+            // ////////////////////////////////////////////////// //
+            
+            tasks[0] = DBPersonaLoadAsync(elementsToProcess);
+
+            // I cannot find why this loop gives this error: 'Index was outside the bounds of the array.'
+            // for(int q = 1; q < tasks.Length; ++q)
+            // {
+            //     tasks[q] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[q-1], q-1));
+            // }
+            tasks[1] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[0], 0));
+            tasks[2] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[1], 1));
+            tasks[3] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[2], 2));
+            tasks[4] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[3], 3));
+            tasks[5] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[4], 4));
+            tasks[6] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[5], 5));
+            tasks[7] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[6], 6));
+            tasks[8] = Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[7], 7));
+            
+
+            Task.WaitAll(tasks);
+            foreach (Task t in tasks)
+                Console.WriteLine("Task #{0} status: {1}", t.Id, t.Status);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -95,12 +115,17 @@ namespace SytyRouting
             logger.Debug("> StartRouting ended");
         }
 
-        private async Task DBPersonaLoadAsync(NpgsqlConnection connection, string tableName, int totalDbRows)
+        private async Task DBPersonaLoadAsync(int totalDbRows)
         {
+            logger.Debug("> Thread #{0}\t=>\tDBPersonaLoadAsync", Thread.CurrentThread.ManagedThreadId);
             logger.Debug("> DBPersonaLoadAsync started");
 
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
+
+            var connectionString = Constants.ConnectionString;
+            var tableName = "public.persona";
+
             
             var regularBatchSize = totalDbRows / numberOfBatches;
             var lastBatchSize = regularBatchSize + totalDbRows % numberOfBatches;
@@ -120,6 +145,10 @@ namespace SytyRouting
 
             for(var b = 0; b < numberOfBatches; b++)
             {
+                await using var connection = new NpgsqlConnection(connectionString);
+                await connection.OpenAsync();
+                connection.TypeMapper.UseNetTopologySuite();
+
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                     0              1              2
                 var queryString = "SELECT id, home_location, work_location FROM " + tableName + " ORDER BY id ASC LIMIT " + batchSizes[b] + " OFFSET " + offset;
@@ -142,39 +171,35 @@ namespace SytyRouting
                             logger.Debug("Queue #{0}: {1} elements (batch #{2})", currentQueue, PersonaQueues[currentQueue].Count, b);
                             var timeSpan = stopWatch.Elapsed;
                             var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                            Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
+                            var result = Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
+                            dBSetBenchmark.PendingElements = result.PendingElements;
+                            dBSetBenchmark.ProcessedElements = result.ProcessedElements;
+                            dBSetBenchmark.ProcessingRate = result.ProcessingRate;
+                            dBSetBenchmark.ElapsedTime = result.ElapsedTime;
+                            dBSetBenchmark.ExpectedCompletionTime = result.ExpectedCompletionTime;
                         }
                     }
                 }
                 offset = offset + batchSizes[b];
                 currentQueue = ChangeQueue(currentQueue);
+
+                await connection.CloseAsync();
             }
 
-            // For debugging
-            int numberOfQueueElements = 0;
-            foreach(var queue in PersonaQueues)
-            {
-                numberOfQueueElements = numberOfQueueElements + queue.Count;
-                Personas = Personas.Concat(queue.ToList());
-            }
-            SortedPersonas = Personas.OrderBy(p => p.Id);   
-            
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
             logger.Info("                           Persona set creation time :: " + totalTime);
             logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
             logger.Debug("Number of Queues: {0}", numberOfQueues);
-            logger.Debug("Total number of elements in queues: {0}", numberOfQueueElements);
+            logger.Debug("Total number of elements in queues: {0}", elementsToProcess);
 
             logger.Debug("> DBPersonaLoadAsync ended");
         }
 
-        private Persona CreatePersona(int id, Point homeLocation, Point workLocation, int currentQueue)
+        private void CreatePersona(int id, Point homeLocation, Point workLocation, int currentQueue)
         {   
             var persona = new Persona { Id = id, HomeLocation = homeLocation, WorkLocation = workLocation };
             PersonaQueues[currentQueue].Enqueue(persona);
-
-            return persona;
         }
 
         private void CalculateRoutesForQueue(IRoutingAlgorithm routingAlgorithm, int queueNumber)
@@ -186,22 +211,34 @@ namespace SytyRouting
 
             logger.Debug("> Thread #{0}\t=>\tQueue #{1}", Thread.CurrentThread.ManagedThreadId, queueNumber);
             logger.Debug("> CalculateRoutesForQueue started for Queue #{0}", queueNumber);
-            while(PersonaQueues[queueNumber].TryDequeue(out Persona? persona))
+            while(processStop != 1)
             {
-                var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
-                var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
-                var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
-        
-                personaIdsForCalculatedRoutes.Add(persona);
-                calculatedRoutes++;
-
-                if (calculatedRoutes % 50 == 0)
+                if(PersonaQueues[queueNumber].TryDequeue(out Persona? persona))
                 {
-                    var timeSpan = stopWatch.Elapsed;
-                    var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                    QueueRoutingBenchmark(numberOfExpectedRoutes  / numberOfQueues, calculatedRoutes, timeSpan, timeSpanMilliseconds, queueNumber);
+                    var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
+                    var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
+                    var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
+            
+                    personaIdsForCalculatedRoutes.Add(persona);
+                    calculatedRoutes++;
+
+                    if(elementsToProcess == Interlocked.Increment(ref processedElements))
+                    {
+                        Interlocked.Exchange(ref processStop, 1);
+                    }
+
+                    if (calculatedRoutes % 100 == 0)
+                    {
+                        var timeSpan = stopWatch.Elapsed;
+                        var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                        QueueRoutingBenchmark(elementsToProcess / numberOfQueues, calculatedRoutes, PersonaQueues[queueNumber].Count, timeSpan, timeSpanMilliseconds, queueNumber, ref queueBenchmarks, ref dBSetBenchmark);
+                    }
                 }
-            }           
+                else
+                {
+                    Task.Delay(10);
+                }
+            }
             logger.Debug("> CalculateRoutesForQueue ended for Queue #{0}", queueNumber);
         }
 
@@ -279,7 +316,8 @@ namespace SytyRouting
             } 
         }
 
-        public void QueueRoutingBenchmark(int totalElements, int processedElements, TimeSpan timeSpan, long timeSpanMilliseconds, int queueNumber)
+        private static void QueueRoutingBenchmark(int totalElements, int processedElements, int pendingElements, TimeSpan timeSpan, long timeSpanMilliseconds,
+                                                    int queueNumber, ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks, ref DataSetBenchmark dBSetBenchmark)
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
@@ -289,24 +327,24 @@ namespace SytyRouting
 
             var totalCompletionTimeEstimate = Helper.FormatElapsedTime(completionTimeEstimate);
 
-            queueBenchmarks[queueNumber].PendingElements = PersonaQueues[queueNumber].Count;
+            queueBenchmarks[queueNumber].PendingElements = pendingElements;
             queueBenchmarks[queueNumber].ProcessedElements = processedElements;
             queueBenchmarks[queueNumber].ProcessingRate = elementProcessingRate;
             queueBenchmarks[queueNumber].ElapsedTime = elapsedTime;
             queueBenchmarks[queueNumber].ExpectedCompletionTime = totalCompletionTimeEstimate;
 
-            var bestScoreQueue = GetBestScoreQueue();
-            var worstScoreQueue = GetWorstScoreQueue();
-            var averageEstimatedCompletionTime = GetAverageEstimatedCompletionTime();
+            var bestScoreQueue = GetBestScoreQueue(ref queueBenchmarks);
+            var worstScoreQueue = GetWorstScoreQueue(ref queueBenchmarks);
+            var averageEstimatedCompletionTime = GetAverageEstimatedCompletionTime(ref queueBenchmarks);
 
-            string queueString                     = "                     Queue # ::";
-            string pendingElementString            = "            Pending elements ::";
-            string processedElementString          = "          Processed elements ::";
-            string processingRateString            = "Processing rate [routes / s] ::";
-            string elapsedTimeString               = "                Elapsed time ::";
-            string expectedCompletionTimeString    = "   Estimated completion time ::";
-            string bestScoreString                 = "              Best (^) score ::";
-            string worstScoreString                = "             Worst (~) score ::";
+            string queueString                     = "                       Queue # ::";
+            string pendingElementString            = "              Pending elements ::";
+            string processedElementString          = "            Processed elements ::";
+            string processingRateString            = "Processing rate [elements / s] ::";
+            string elapsedTimeString               = "                  Elapsed time ::";
+            string expectedCompletionTimeString    = "     Estimated completion time ::";
+            string bestScoreString                 = "                Best (^) score ::";
+            string worstScoreString                = "               Worst (~) score ::";
             for(int q =0; q < numberOfQueues; q++)
             {
                 queueString += String.Format("{0,-15}", "\t" + q);
@@ -318,6 +356,13 @@ namespace SytyRouting
                 bestScoreString += String.Format("{0,-15}", "\t" + ((q==bestScoreQueue)? "^^^^^^^^^^^^":""));
                 worstScoreString += String.Format("{0,-15}", "\t" + ((q==worstScoreQueue)? "~~~~~~~~~~~~":""));
             }
+
+            queueString                  += "\t||" + String.Format("{0,-15}", "\t" + "persona data set");
+            pendingElementString         += "\t||" + String.Format("{0,-15}", "\t" + dBSetBenchmark.PendingElements);
+            processedElementString       += "\t||" + String.Format("{0,-15}", "\t" + dBSetBenchmark.ProcessedElements);
+            processingRateString         += "\t||" + String.Format("{0,-15}", "\t" + dBSetBenchmark.ProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            elapsedTimeString            += "\t||" + String.Format("{0,-15}", "\t" + dBSetBenchmark.ElapsedTime);
+            expectedCompletionTimeString += "\t||" + String.Format("{0,-15}", "\t" + dBSetBenchmark.ExpectedCompletionTime);
             
             logger.Debug(queueString);
             logger.Debug(pendingElementString);
@@ -332,13 +377,13 @@ namespace SytyRouting
             logger.Debug("");
         }
 
-        public int GetBestScoreQueue()
+        private static int GetBestScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
         {
             int bestScoreQueue = 0;
             double bestProcessingRate = 0;
             for(var s = 0; s < queueBenchmarks.Count; ++s)
             {
-                if(queueBenchmarks.TryGetValue(s, out QueueBenchmark? benchmark))
+                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
                 {
                     if(benchmark.ProcessingRate > bestProcessingRate)
                     {
@@ -351,13 +396,13 @@ namespace SytyRouting
             return bestScoreQueue;
         }
 
-        public int GetWorstScoreQueue()
+        private static int GetWorstScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
         {
             int worstScoreQueue = 0;
             double worstProcessingRate = Double.PositiveInfinity;
             for(var s = 0; s < queueBenchmarks.Count; ++s)
             {
-                if(queueBenchmarks.TryGetValue(s, out QueueBenchmark? benchmark))
+                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
                 {
                     if(benchmark.ProcessingRate < worstProcessingRate)
                     {
@@ -370,13 +415,13 @@ namespace SytyRouting
             return worstScoreQueue;
         }
 
-        public string GetAverageEstimatedCompletionTime()
+        private static string GetAverageEstimatedCompletionTime(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
         {
             var numberOfBenchmarks = queueBenchmarks.Count;
             TimeSpan timeStampAverage = TimeSpan.Zero;
             for(var s = 0; s < numberOfBenchmarks; ++s)
             {
-                if(queueBenchmarks.TryGetValue(s, out QueueBenchmark? benchmark))
+                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
                 {
                     if(benchmark.ExpectedCompletionTime is not null)
                     {
