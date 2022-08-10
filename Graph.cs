@@ -122,7 +122,7 @@ namespace SytyRouting
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {    
-                long dbRowsProcessed = 0;
+                int dbRowsProcessed = 0;
 
                 while (await reader.ReadAsync())
                 {
