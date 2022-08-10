@@ -28,7 +28,7 @@ namespace SytyRouting
             return totalDbRows;
         }
         
-        public static void DataLoadBenchmark(long totalElements, long processedElements, TimeSpan timeSpan, long timeSpanMilliseconds, Logger logger, [CallerMemberName] string callerName = "")
+        public static DataSetBenchmark DataLoadBenchmark(int totalElements, int processedElements, TimeSpan timeSpan, long timeSpanMilliseconds, Logger logger, [CallerMemberName] string callerName = "")
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
@@ -43,7 +43,9 @@ namespace SytyRouting
             logger.Info("{0,45} :: {1,-25}", "", "hh:mm:ss.ms");
             logger.Info("{0,45} :: {1,-25}", "Elapsed Time", elapsedTime);
             logger.Info("{0,45}", callerName);
-            logger.Info("{0,45} :: {1,-25}\n", "Set creation time estimate", totalTime);
+            logger.Info("{0,45} :: {1,-25}\n", "Data set creation time estimate", totalTime);
+
+            return new DataSetBenchmark {PendingElements = totalElements - processedElements, ProcessedElements = processedElements, ProcessingRate = elementProcessingRate, ElapsedTime = elapsedTime, ExpectedCompletionTime = totalTime};
         }
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
