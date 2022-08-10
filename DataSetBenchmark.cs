@@ -1,6 +1,6 @@
 namespace SytyRouting.Model
 {
-    public class QueueBenchmark
+    public class DataSetBenchmark
     {
         public int Id;
         public int PendingElements;
