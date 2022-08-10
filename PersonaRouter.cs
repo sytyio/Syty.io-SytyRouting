@@ -21,22 +21,14 @@ namespace SytyRouting
         private Graph _graph;
 
         private static int numberOfQueues = Environment.ProcessorCount; // 8-core computer;
-        // private static int numberOfQueues = 3; // 8-core computer;
         private static int numberOfBatchesPerQueue = 1;
         private int numberOfBatches = numberOfQueues * numberOfBatchesPerQueue;
         
         private int numberOfExpectedRoutes;
 
-        private ConcurrentDictionary<int, QueueBenchmark> queueBenchmarks = new ConcurrentDictionary<int, QueueBenchmark>(numberOfQueues, numberOfQueues); // For debugging
-                                                                                                // Total elapsed time:
-        // Dictionary<int, Persona> personas = new Dictionary<int, Persona>();                  // 00:02:37.178
-        // Dictionary<int, Persona> personas = new Dictionary<int, Persona>(totalDbRows);       // 00:02:45.795
-        // Queue<Persona> personas = new Queue<Persona>(totalDbRows);                           // 00:02:55.881
-        // Queue<Persona>[] personaQueues = new Queue<Persona>[numberOfQueues];                 // 00:02:36.108 (no individual size initialization),
-                                                                                                // 00:03:01.740 (individual size initialization),
-                                                                                                // 00:04:13.284 (individual size initialization, sequential queue switching)
-        private ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[numberOfQueues];// 00:04:13.539 (using ConcurrentQueues, sequential queue switching)
-
+        private ConcurrentDictionary<int, QueueBenchmark> queueBenchmarks = new ConcurrentDictionary<int, QueueBenchmark>(numberOfQueues, numberOfQueues); // For testing
+        // private ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[numberOfQueues]; // For testing
+        private Queue<Persona>[] PersonaQueues = new Queue<Persona>[numberOfQueues]; // For testing
         ConcurrentBag<Persona> personaIdsForCalculatedRoutes = new ConcurrentBag<Persona>(); // For degugging
 
 
@@ -46,7 +38,8 @@ namespace SytyRouting
 
             for (var i = 0; i < PersonaQueues.Length; i++)
             {
-                PersonaQueues[i] = (PersonaQueues[i]) ?? new ConcurrentQueue<Persona>();
+                // PersonaQueues[i] = (PersonaQueues[i]) ?? new ConcurrentQueue<Persona>();
+                PersonaQueues[i] = (PersonaQueues[i]) ?? new Queue<Persona>();
             }
 
             for (var i = 0; i < numberOfQueues; i++)
@@ -81,26 +74,11 @@ namespace SytyRouting
             // numberOfExpectedRoutes = await Helper.DbTableRowCount(connection, tableName, logger);
             numberOfExpectedRoutes = 1000;
 
-            
-            
-            
-            
-            // ////////////////////////// //
-            // async-awaited (sequential) //
-            // ////////////////////////// //
-            // await Task.Run(() => DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes)); // Not really sure at this point if a Parallel.Invoke(.) should be used instead...
-            // for(var q = 0; q < numberOfQueues; q++)
-            // {
-            //     await Task.Run(() => CalculateRoutesForQueue(routingAlgorithms[q], q));
-            // }
-
-
-
-
             // ////////////////////////////////////////////////////////// //
             // awaited Queues load (sequential), queue routing (parallel) //
             // ////////////////////////////////////////////////////////// //
-            await Task.Run(() => DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes)); // Not really sure at this point if a Parallel.Invoke(.) should be used instead...
+            // await Task.Run(() => DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes));
+            await DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes);
             try
             {
                 Parallel.For(0, numberOfQueues, (q) => CalculateRoutesForQueue(routingAlgorithms[q], q));
@@ -109,14 +87,6 @@ namespace SytyRouting
             {
                 logger.Debug("Parallel.For has thrown the following (unexpected) exception:\n{0}", e);
             }
-
-            
-
-
-
-            // Action version
-            //Action action1 = () => DBPersonaLoadAsync(connection, tableName, numberOfExpectedRoutes);
-
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -187,9 +157,7 @@ namespace SytyRouting
                 numberOfQueueElements = numberOfQueueElements + queue.Count;
                 Personas = Personas.Concat(queue.ToList());
             }
-            SortedPersonas = Personas.OrderBy(p => p.Id);
-
-                
+            SortedPersonas = Personas.OrderBy(p => p.Id);   
             
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -227,7 +195,7 @@ namespace SytyRouting
                 personaIdsForCalculatedRoutes.Add(persona);
                 calculatedRoutes++;
 
-                if (calculatedRoutes % 100 == 0)
+                if (calculatedRoutes % 50 == 0)
                 {
                     var timeSpan = stopWatch.Elapsed;
                     var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
