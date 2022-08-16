@@ -38,20 +38,22 @@ namespace SytyRouting
 
             var totalTime = Helper.FormatElapsedTime(setCreationTime);
 
-            logger.Debug("Number of elements already processed: {0}", processedElements);
-            logger.Debug("Element processing rate: {0} [Elements / s]", elementProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-            logger.Info("{0,45} :: {1,-25}", "", "hh:mm:ss.ms");
-            logger.Info("{0,45} :: {1,-25}", "Elapsed Time", elapsedTime);
-            logger.Info("{0,45}", callerName);
-            logger.Info("{0,45} :: {1,-25}\n", "Data set creation time estimate", totalTime);
+            logger.Info("{0}:", callerName);
+            logger.Info("Number of elements already processed: {0}", processedElements);
+            logger.Info("Element processing rate: {0} [Elements / s]", elementProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+            string baseString = "{0,48} :: {1,-25}";
+            logger.Info(baseString, "", "ddd:hh:mm:ss.ms");
+            logger.Info(baseString, "Elapsed Time", elapsedTime);
+            logger.Info(baseString, "Data set creation time estimate", totalTime);
+            logger.Info("");
 
             return new DataSetBenchmark {PendingElements = totalElements - processedElements, ProcessedElements = processedElements, ProcessingRate = elementProcessingRate, ElapsedTime = elapsedTime, ExpectedCompletionTime = totalTime};
         }
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
         {
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}.{3:000}",
-                timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
+            string elapsedTime = String.Format("{0:000}:{1:00}:{2:00}:{3:00}.{4:000}",
+                timeSpan.Days, timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
                 timeSpan.Milliseconds);
 
             return elapsedTime;
