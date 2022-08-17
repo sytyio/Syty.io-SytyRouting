@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Npgsql;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using System.Collections.Concurrent;
 using SytyRouting.Algorithms;
 
 namespace SytyRouting
@@ -121,15 +120,12 @@ namespace SytyRouting
                         personas[personasIdx] = persona;
 
                         personasIdx++;
-
-                        if (personasIdx % 100 == 0)
-                        {
-                            var timeSpan = stopWatch.Elapsed;
-                            var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                            var t = Task.Run(() => Helper.DataLoadBenchmark(elementsToProcess, personasIdx, timeSpan, timeSpanMilliseconds, logger));
-                        }
                     }
                 }
+                var timeSpan = stopWatch.Elapsed;
+                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                var t = Task.Run(() => Helper.DataLoadBenchmark(elementsToProcess, personasIdx, timeSpan, timeSpanMilliseconds, logger));
+
                 DispatchData(batchSizes[batchNumber], personasIdx);
                 offset = offset + batchSizes[batchNumber];
             }
