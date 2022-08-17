@@ -56,6 +56,36 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode);
         }
 
+        public List<Edge> ConvertRouteFromNodesToEdges(List<Node> route)
+        {
+            if (_graph == null)
+            {
+                throw new ArgumentException("You must initialize the routing algorithm first!");
+            }
+
+            List<Edge> edgeRoute = new List<Edge>(0);
+            for(var i = 0; i < route.Count-1; i++)
+            {
+                var edge = route[i].OutwardEdges.Find(e => e.TargetNode.Idx == route[i+1].Idx);
+                if(edge is not null)
+                {
+                    edgeRoute.Add(edge);
+                }
+                else
+                {
+                    throw new Exception("Impossible to find corresponding Outward Edge");
+                }
+            }
+
+            Console.WriteLine("Edge OsmIDs:");
+            foreach(var edge in edgeRoute)
+            {
+                Console.WriteLine("{0}", edge.OsmID);
+            }
+
+            return edgeRoute;
+        }
+
         public double GetRouteCost()
         {
             return routeCost;

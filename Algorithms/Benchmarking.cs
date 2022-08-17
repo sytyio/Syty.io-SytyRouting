@@ -77,6 +77,7 @@ namespace SytyRouting
 
             stopWatch.Start();
             var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
+            var edgeRoute = routingAlgorithm.ConvertRouteFromNodesToEdges(route);
             stopWatch.Stop();
 
             logger.Info("{0,25} execution time: {1,10:0.000} (ms)", routingAlgorithm.GetType().Name, stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000.0);
