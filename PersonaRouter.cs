@@ -79,8 +79,8 @@ namespace SytyRouting
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite();
 
-            // elementsToProcess = await Helper.DbTableRowCount(connection, tableName, logger);
-            elementsToProcess = 1379;// 5139; // 5137; // 5137; // = 5137; To Crash the DB load.
+            elementsToProcess = await Helper.DbTableRowCount(connection, tableName, logger);
+            // elementsToProcess = 1379;// 5139; // 5137; // 5137; // = 5137; To Crash the DB load.
 
             await connection.CloseAsync();
 
