@@ -33,8 +33,17 @@ namespace SytyRouting
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
             var elementProcessingRate = (double)processedElements / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
-            var setCreationTimeSeconds = totalElements / elementProcessingRate;
-            var setCreationTime = TimeSpan.FromSeconds(setCreationTimeSeconds);
+            double setCreationTimeSeconds;
+            TimeSpan setCreationTime;
+            if(elementProcessingRate != 0)
+            {
+                setCreationTimeSeconds = totalElements / elementProcessingRate;
+                setCreationTime = TimeSpan.FromSeconds(setCreationTimeSeconds);
+            }
+            else
+            {
+                setCreationTime = TimeSpan.MaxValue;
+            }
 
             var totalTime = Helper.FormatElapsedTime(setCreationTime);
 
