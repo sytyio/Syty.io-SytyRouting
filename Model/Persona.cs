@@ -8,5 +8,7 @@ namespace SytyRouting.Model
         public int Id;
         public Point? HomeLocation;
         public Point? WorkLocation;
+        public List<Node>? Route;
+        public bool SuccessfulRouteComputation;
     }
 }

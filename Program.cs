@@ -42,12 +42,11 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            // personaRouter.TracePersonas();
             // personaRouter.TracePersonasIds();
-            // personaRouter.TracePersonasWithRouteIds();
-            // personaRouter.TraceSortedPersonasIds();
-            // personaRouter.TraceSortedPersonasWithRouteIds();
             
-            personaRouter.TracePersonasWithCalculatedRoute();
+            // personaRouter.TraceSortedPersonasIds();
+            
 
             // Logger flushing
             LogManager.Shutdown();
