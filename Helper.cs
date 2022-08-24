@@ -9,9 +9,14 @@ namespace SytyRouting
     public class Helper
     {
         
-        public static async Task<int> DbTableRowCount(NpgsqlConnection connection, string tableName, Logger logger)
+        public static async Task<int> DbTableRowCount(string tableName, Logger logger)
         {
             int totalDbRows = 0;
+
+            var connectionString = Constants.ConnectionString;
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite();
 
             var queryString = "SELECT count(*) AS exact_count FROM " + tableName;
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -22,6 +27,7 @@ namespace SytyRouting
                     totalDbRows = Convert.ToInt32(reader.GetValue(0));
                 }
             }
+            await connection.CloseAsync();
 
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
