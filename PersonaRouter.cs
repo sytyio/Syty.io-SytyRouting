@@ -21,9 +21,10 @@ namespace SytyRouting
 
 
         public IEnumerable<Persona> Personas = new List<Persona>(0);
-        private List<Persona> personas = new List<Persona>();
-        private Queue<Persona> personasQueue = new Queue<Persona>();
 
+
+        private List<Persona> personas = new List<Persona>();
+        
         private Graph _graph;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
@@ -41,7 +42,7 @@ namespace SytyRouting
         private int regularBatchSize = simultaneousRoutingTasks * RegularRoutingTaskBatchSize;
 
 
-        Stopwatch stopWatch = new Stopwatch();
+        private Stopwatch stopWatch = new Stopwatch();
 
 
         public PersonaRouter(Graph graph)
@@ -54,7 +55,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 1_000_000; // 13579;
+            elementsToProcess = 1000; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -97,13 +98,19 @@ namespace SytyRouting
 
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
-            var lastBatchSize = elementsToProcess - batchSize * (numberOfBatches - 1);
-            int[] batchSizes = GetBatchPartition(batchSize, lastBatchSize, numberOfBatches);
+            int[] batchSizes = GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
 
             int offset = 0;
             for(var batchNumber = 0; batchNumber < numberOfBatches; batchNumber++)
             {
                 var currentBatchSize = batchSizes[batchNumber];
+
+                var routingTaskBatchSize = currentBatchSize / simultaneousRoutingTasks;
+                int[] routingTaskBatchSizes = GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);
+
+                var taskIndex = 0;
+                var personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
+                var personaIndex = 0;
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                     0              1              2
@@ -120,41 +127,27 @@ namespace SytyRouting
 
                         var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation};
                         personas.Add(persona);
-                        personasQueue.Enqueue(persona);
+                        
+                        personaTaskArray[personaIndex] = persona;
+                        personaIndex++;
 
+                        if(personaIndex >= routingTaskBatchSizes[taskIndex])
+                        {
+                            personaTaskArraysQueue.Enqueue(personaTaskArray);
+                            personaIndex = 0;
+                            taskIndex++;
+                            if(taskIndex < simultaneousRoutingTasks)
+                                personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
+                        }
                         processedDbElements++;
                     }
                 }
-                DispatchData(currentBatchSize);
                 offset += currentBatchSize;
 
                 while(personaTaskArraysQueue.Count > taskArraysQueueThreshold)
                     Thread.Sleep(DBPersonaLoadAsyncSleepMilliseconds);
             }
             await connection.CloseAsync();
-        }
-
-        private void DispatchData(int currentBatchSize)
-        {
-            var routingTaskBatchSize = currentBatchSize / simultaneousRoutingTasks;
-            var lastRoutingTaskBatchSize = currentBatchSize - routingTaskBatchSize * (simultaneousRoutingTasks - 1);
-            int[] routingTaskBatchSizes = GetBatchPartition(routingTaskBatchSize, lastRoutingTaskBatchSize, simultaneousRoutingTasks);
-            for (var taskIndex = 0; taskIndex < simultaneousRoutingTasks; taskIndex++)
-            {
-                Persona[] personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
-                for(var p = 0; p < routingTaskBatchSizes[taskIndex]; p++)
-                {
-                    if(personasQueue.TryDequeue(out Persona? persona))
-                    {
-                        personaTaskArray[p] = persona;
-                    }
-                    else
-                    {
-                        logger.Debug(" ==>> Unable to retrieve persona from personaQueue");
-                    }
-                }
-                personaTaskArraysQueue.Enqueue(personaTaskArray);
-            }                
         }
 
         private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
@@ -209,8 +202,9 @@ namespace SytyRouting
             }
         }
 
-        public int[] GetBatchPartition(int regularSlice, int lastSlice, int numberOfSlices)
+        private int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
         {
+            int lastSlice = whole - regularSlice * (numberOfSlices - 1);
             int[] batchPartition = new int[numberOfSlices];
             for (var i = 0; i < batchPartition.Length-1; i++)
             {
@@ -251,22 +245,12 @@ namespace SytyRouting
             }
         }
 
-        public void TracePersonasIds()
+        public void TracePersonasRouteResult()
         {
             logger.Debug("Personas Ids:");
             foreach (var persona in Personas)
             {
-                logger.Debug("Persona: Id = {0}", persona.Id);
-            }
-        }
-
-        public void TraceSortedPersonasIds()
-        {
-            var sortedPersonas = Personas.OrderBy(p => p.Id).ToArray();
-            logger.Debug("Sorted Personas Ids:");
-            foreach (var persona in sortedPersonas)
-            {
-                logger.Debug("Persona: Id = {0}", persona.Id);
+                logger.Debug("Persona: Id = {0}, route found = {1}", persona.Id, persona.SuccessfulRouteComputation);
             }
         }
     }
