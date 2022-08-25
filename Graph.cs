@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
+using NetTopologySuite.Geometries;
 
 namespace SytyRouting
 {
@@ -112,6 +113,7 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite();
 
             // Get the total number of rows to estimate the Graph creation time
             long totalDbRows = 0;
@@ -128,8 +130,8 @@ namespace SytyRouting
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9    10           11          12
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m FROM public.ways where length_m is not null";
+            //                     0        1      2       3         4          5      6   7   8   9    10           11          12        13
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null LIMIT 10";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -156,9 +158,11 @@ namespace SytyRouting
                     var source = CreateNode(sourceId, sourceOSMId, sourceX, sourceY, nodes);
                     var target = CreateNode(targetId, targetOSMId, targetX, targetY, nodes);
 
-                    var length_m = Convert.ToDouble(reader.GetValue(12)); 
+                    var length_m = Convert.ToDouble(reader.GetValue(12));
+
+                    var theGeom = (LineString)reader.GetValue(13); // the_geom (?)
                     
-                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m);
+                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom);
 
                     dbRowsProcessed++;
 
@@ -184,7 +188,7 @@ namespace SytyRouting
             }
         }
 
-        public Node GetNodeByLatitudeLongitude(double x, double y)
+        public Node GetNodeByLongitudeLatitude(double x, double y)
         {
             if (KDTree != null)
             {
@@ -239,6 +243,8 @@ namespace SytyRouting
             {
                 logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
+
+                TraceInternalGeometry(edge);
             }
             
             logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
@@ -246,6 +252,21 @@ namespace SytyRouting
             {
                 logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
                     edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
+
+                TraceInternalGeometry(edge);
+            }
+        }
+
+        private void TraceInternalGeometry(Edge edge)
+        {
+            if(edge.InternalGeometry is not null)
+            {
+                logger.Trace("\t\tInternal geometry in Edge {0}:", edge.OsmID);
+                foreach(var xymPoint in edge.InternalGeometry)
+                {
+                    logger.Trace("\t\t\tX: {0},\tY: {1},\tM: {2};",
+                        xymPoint.X, xymPoint.Y, xymPoint.M);
+                }
             }
         }
 
@@ -260,13 +281,14 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString lineString)
         {
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m};
+                    var internalGeometry = GetInternalGeometry(osmID, lineString, oneWayState);
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
@@ -274,7 +296,8 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m};
+                    var internalGeometry = GetInternalGeometry(osmID, lineString, oneWayState);
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -282,17 +305,59 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m};
+                    var internalGeometry = GetInternalGeometry(osmID, lineString, OneWayState.Yes);
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m};
+                    internalGeometry = GetInternalGeometry(osmID, lineString, OneWayState.Reversed);
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
                     break;
                 }
             }
+        }
+
+        private List<XYMPoint> GetInternalGeometry(long osmID, LineString lineString, OneWayState oneWayState)
+        {
+            List<XYMPoint> internalGeometry = new List<XYMPoint>(0);
+            Coordinate[] coordinates = lineString.Coordinates;
+            double cumulatedDistance = 0; // units ?
+            
+            if(oneWayState == OneWayState.Reversed)
+                coordinates = coordinates.Reverse().ToArray();
+
+            double previousX = coordinates[0].X;
+            double previousY = coordinates[0].Y;
+
+            double lastX = coordinates.Last().X;
+            double lastY = coordinates.Last().Y;
+
+            double normalizationDistance = Helper.GetDistance(previousX, previousY, lastX, lastY);
+
+            if(normalizationDistance != 0)
+            {
+                for(int c = 0; c < coordinates.Length; c++)
+                {
+                    double x = coordinates[c].X;
+                    double y = coordinates[c].Y;
+                    // double m = coordinates[c].M;
+
+                    double distance = Helper.GetDistance(previousX, previousY, x, y);
+                    cumulatedDistance += distance / normalizationDistance;
+                    double m = cumulatedDistance;
+
+                    XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
+                    internalGeometry.Add(xYMPoint);
+
+                    previousX = x;
+                    previousY = y;
+                }
+            }
+
+            return internalGeometry;
         }
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)

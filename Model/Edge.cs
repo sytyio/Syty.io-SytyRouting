@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Model
 {
@@ -13,6 +14,8 @@ namespace SytyRouting.Model
 
         [NotNull]
         public Node? TargetNode;
+
+        public List<XYMPoint>? InternalGeometry;
 
         public void WriteToStream(BinaryWriter bw)
         {
