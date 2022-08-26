@@ -320,7 +320,7 @@ namespace SytyRouting
             }
         }
 
-        private List<XYMPoint> GetInternalGeometry(long osmID, LineString lineString, OneWayState oneWayState)
+        private List<XYMPoint> GetInternalGeometry2(long osmID, LineString lineString, OneWayState oneWayState)
         {
             List<XYMPoint> internalGeometry = new List<XYMPoint>(0);
             Coordinate[] coordinates = lineString.Coordinates;
@@ -329,35 +329,79 @@ namespace SytyRouting
             if(oneWayState == OneWayState.Reversed)
                 coordinates = coordinates.Reverse().ToArray();
 
-            double previousX = coordinates[0].X;
-            double previousY = coordinates[0].Y;
+            double x = coordinates[0].X;
+            double y = coordinates[0].Y;
+            double m = 0; // Initial 'distance'
 
-            double lastX = coordinates.Last().X;
-            double lastY = coordinates.Last().Y;
+            XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
+            internalGeometry.Add(xYMPoint);
+            
+            double previousX = x;
+            double previousY = y;
 
-            double normalizationDistance = Helper.GetDistance(previousX, previousY, lastX, lastY);
-
-            if(normalizationDistance != 0)
+            for(int c = 1; c < coordinates.Length; c++)
             {
-                for(int c = 0; c < coordinates.Length; c++)
-                {
-                    double x = coordinates[c].X;
-                    double y = coordinates[c].Y;
-                    // double m = coordinates[c].M;
+                x = coordinates[c].X;
+                y = coordinates[c].Y;
 
-                    double distance = Helper.GetDistance(previousX, previousY, x, y);
-                    cumulatedDistance += distance / normalizationDistance;
-                    double m = cumulatedDistance;
+                double distance = Helper.GetDistance(previousX, previousY, x, y);
+                
+                cumulatedDistance += distance;
+                m = cumulatedDistance;
 
-                    XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
-                    internalGeometry.Add(xYMPoint);
+                xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
+                internalGeometry.Add(xYMPoint);
 
-                    previousX = x;
-                    previousY = y;
-                }
+                previousX = x;
+                previousY = y;
             }
 
             return internalGeometry;
+        }
+
+        private XYMPoint[] GetInternalGeometry(long osmID, LineString lineString, OneWayState oneWayState)
+        {
+            List<XYMPoint> internalGeometry = new List<XYMPoint>(0);
+            Coordinate[] coordinates = lineString.Coordinates;
+                        
+            if(oneWayState == OneWayState.Reversed)
+                coordinates = coordinates.Reverse().ToArray();
+            
+            var internalGeometryArray = new XYMPoint[coordinates.Length];
+            
+            for(int c = 0; c < coordinates.Length; c++)
+            {
+                double x = coordinates[c].X;
+                double y = coordinates[c].Y;
+                double m = 0;
+
+                XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
+
+                internalGeometryArray[c] = xYMPoint;
+            }
+
+            CalculateCumulativeDistance(internalGeometryArray, internalGeometryArray.Length-1);
+
+            return internalGeometryArray;
+        }
+
+        private double CalculateCumulativeDistance(XYMPoint[] internalGeometryArray, int index)
+        {
+            while(index > 0 && index < internalGeometryArray.Length)
+            {
+                var x1 = internalGeometryArray[index].X;
+                var y1 = internalGeometryArray[index].Y;
+                var x2 = internalGeometryArray[index-1].X;
+                var y2 = internalGeometryArray[index-1].Y;
+                var distance = Helper.GetDistance(x1, y1, x2, y2);
+
+                var cumulativeDistance = distance + CalculateCumulativeDistance(internalGeometryArray, index-1);
+
+                internalGeometryArray[index].M = cumulativeDistance;
+
+                return cumulativeDistance;
+            }
+            return 0;
         }
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)

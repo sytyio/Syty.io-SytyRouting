@@ -15,7 +15,7 @@ namespace SytyRouting.Model
         [NotNull]
         public Node? TargetNode;
 
-        public List<XYMPoint>? InternalGeometry;
+        public XYMPoint[]? InternalGeometry;
 
         public void WriteToStream(BinaryWriter bw)
         {
