@@ -10,5 +10,17 @@ namespace SytyRouting.Model
         public double Y; // Latitude
 
         public double M; // M-coordinate (time stamp? percege or relative portion of the entire line?)
+
+        public void WriteToStream(BinaryWriter bw)
+        {
+            if (edgeOsmID == 0)
+            {
+                throw new Exception("Invalid data imported");
+            }
+            bw.Write(edgeOsmID);
+            bw.Write(X);
+            bw.Write(Y);
+            bw.Write(M);
+        }
     }
 }

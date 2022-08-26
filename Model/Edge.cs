@@ -28,6 +28,8 @@ namespace SytyRouting.Model
             bw.Write(LengthM);
             bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
+
+            
         }
 
         public void ReadFromStream(BinaryReader br, Node[] array)
