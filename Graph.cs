@@ -131,7 +131,7 @@ namespace SytyRouting
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11          12        13
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null LIMIT 10";
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null"; //  LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())

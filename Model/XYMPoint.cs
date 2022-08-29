@@ -13,14 +13,18 @@ namespace SytyRouting.Model
 
         public void WriteToStream(BinaryWriter bw)
         {
-            if (edgeOsmID == 0)
-            {
-                throw new Exception("Invalid data imported");
-            }
             bw.Write(edgeOsmID);
             bw.Write(X);
             bw.Write(Y);
             bw.Write(M);
+        }
+
+        public void ReadFromStream(BinaryReader br)
+        {
+            edgeOsmID = br.ReadInt64();
+            X = br.ReadDouble();
+            Y = br.ReadDouble();
+            M = br.ReadDouble();
         }
     }
 }
