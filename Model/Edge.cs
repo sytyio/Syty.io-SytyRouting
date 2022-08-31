@@ -38,10 +38,9 @@ namespace SytyRouting.Model
 
             if(InternalGeometry != null)
             {
-                bw.Write(InternalGeometry.Length);
+                bw.Write((ushort)InternalGeometry.Length);
                 foreach(var xymPoint in InternalGeometry)
                 {
-                    // xymPoint.WriteToStream(bw);
                     bw.Write(xymPoint.X);
                     bw.Write(xymPoint.Y);
                     bw.Write(xymPoint.M);
@@ -65,12 +64,9 @@ namespace SytyRouting.Model
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             
-            InternalGeometry = new XYMPoint[br.ReadInt32()];
+            InternalGeometry = new XYMPoint[br.ReadUInt16()];
             for(int i = 0; i < InternalGeometry.Length; i++)
             {
-                // InternalGeometry[i] = new XYMPoint();
-                // InternalGeometry[i].ReadFromStream(br);
-
                 InternalGeometry[i].X = br.ReadDouble();
                 InternalGeometry[i].Y = br.ReadDouble();
                 InternalGeometry[i].M = br.ReadDouble();
