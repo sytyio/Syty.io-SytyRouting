@@ -131,7 +131,7 @@ namespace SytyRouting
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9    10           11          12        13
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null"; //  LIMIT 10
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -320,84 +320,44 @@ namespace SytyRouting
             }
         }
 
-        private List<XYMPoint> GetInternalGeometry2(long osmID, LineString lineString, OneWayState oneWayState)
-        {
-            List<XYMPoint> internalGeometry = new List<XYMPoint>(0);
-            Coordinate[] coordinates = lineString.Coordinates;
-            double cumulatedDistance = 0; // units ?
-            
-            if(oneWayState == OneWayState.Reversed)
-                coordinates = coordinates.Reverse().ToArray();
-
-            double x = coordinates[0].X;
-            double y = coordinates[0].Y;
-            double m = 0; // Initial 'distance'
-
-            XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
-            internalGeometry.Add(xYMPoint);
-            
-            double previousX = x;
-            double previousY = y;
-
-            for(int c = 1; c < coordinates.Length; c++)
-            {
-                x = coordinates[c].X;
-                y = coordinates[c].Y;
-
-                double distance = Helper.GetDistance(previousX, previousY, x, y);
-                
-                cumulatedDistance += distance;
-                m = cumulatedDistance;
-
-                xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
-                internalGeometry.Add(xYMPoint);
-
-                previousX = x;
-                previousY = y;
-            }
-
-            return internalGeometry;
-        }
-
         private XYMPoint[] GetInternalGeometry(long osmID, LineString lineString, OneWayState oneWayState)
         {
-            List<XYMPoint> internalGeometry = new List<XYMPoint>(0);
             Coordinate[] coordinates = lineString.Coordinates;
                         
             if(oneWayState == OneWayState.Reversed)
                 coordinates = coordinates.Reverse().ToArray();
             
-            var internalGeometryArray = new XYMPoint[coordinates.Length];
+            var internalGeometry = new XYMPoint[coordinates.Length];
             
             for(int c = 0; c < coordinates.Length; c++)
             {
-                double x = coordinates[c].X;
-                double y = coordinates[c].Y;
-                double m = 0;
+                XYMPoint xYMPoint;
 
-                XYMPoint xYMPoint = new XYMPoint {edgeOsmID = osmID, X = x, Y = y, M = m};
+                xYMPoint.X = coordinates[c].X;
+                xYMPoint.Y = coordinates[c].Y;
+                xYMPoint.M = 0;
 
-                internalGeometryArray[c] = xYMPoint;
+                internalGeometry[c] = xYMPoint;
             }
 
-            CalculateCumulativeDistance(internalGeometryArray, internalGeometryArray.Length-1);
+            CalculateCumulativeDistance(internalGeometry, internalGeometry.Length-1);
 
-            return internalGeometryArray;
+            return internalGeometry;
         }
 
-        private double CalculateCumulativeDistance(XYMPoint[] internalGeometryArray, int index)
+        private double CalculateCumulativeDistance(XYMPoint[] internalGeometry, int index)
         {
-            while(index > 0 && index < internalGeometryArray.Length)
+            while(index > 0 && index < internalGeometry.Length)
             {
-                var x1 = internalGeometryArray[index].X;
-                var y1 = internalGeometryArray[index].Y;
-                var x2 = internalGeometryArray[index-1].X;
-                var y2 = internalGeometryArray[index-1].Y;
+                var x1 = internalGeometry[index].X;
+                var y1 = internalGeometry[index].Y;
+                var x2 = internalGeometry[index-1].X;
+                var y2 = internalGeometry[index-1].Y;
                 var distance = Helper.GetDistance(x1, y1, x2, y2);
 
-                var cumulativeDistance = distance + CalculateCumulativeDistance(internalGeometryArray, index-1);
+                var cumulativeDistance = distance + CalculateCumulativeDistance(internalGeometry, index-1);
 
-                internalGeometryArray[index].M = cumulativeDistance;
+                internalGeometry[index].M = cumulativeDistance;
 
                 return cumulativeDistance;
             }

@@ -3,6 +3,13 @@ using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Model
 {
+    public struct XYMPoint
+    {
+        public double X;
+        public double Y;
+        public double M;
+    }
+
     public class Edge
     {
         public long OsmID;
@@ -34,7 +41,10 @@ namespace SytyRouting.Model
                 bw.Write(InternalGeometry.Length);
                 foreach(var xymPoint in InternalGeometry)
                 {
-                    xymPoint.WriteToStream(bw);
+                    // xymPoint.WriteToStream(bw);
+                    bw.Write(xymPoint.X);
+                    bw.Write(xymPoint.Y);
+                    bw.Write(xymPoint.M);
                 }
             }
             else
@@ -58,8 +68,12 @@ namespace SytyRouting.Model
             InternalGeometry = new XYMPoint[br.ReadInt32()];
             for(int i = 0; i < InternalGeometry.Length; i++)
             {
-                InternalGeometry[i] = new XYMPoint();
-                InternalGeometry[i].ReadFromStream(br);
+                // InternalGeometry[i] = new XYMPoint();
+                // InternalGeometry[i].ReadFromStream(br);
+
+                InternalGeometry[i].X = br.ReadDouble();
+                InternalGeometry[i].Y = br.ReadDouble();
+                InternalGeometry[i].M = br.ReadDouble();
             }
         }
     }
