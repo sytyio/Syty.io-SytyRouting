@@ -253,9 +253,10 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
-                            TraceInternalGeometry(edge);
+            logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y);
+            
+            TraceInternalGeometry(edge);
         }
 
         private void TraceInternalGeometry(Edge edge)
@@ -268,6 +269,10 @@ namespace SytyRouting
                     logger.Trace("\t\t\tX: {0},\tY: {1},\tM: {2};",
                         xymPoint.X, xymPoint.Y, xymPoint.M);
                 }
+            }
+            else
+            {
+                logger.Trace("\t\tNo Internal geometry in Edge {0}:", edge.OsmID);
             }
         }
 
@@ -321,29 +326,42 @@ namespace SytyRouting
             }
         }
 
-        private XYMPoint[] GetInternalGeometry(LineString geometry, OneWayState oneWayState)
+        private XYMPoint[]? GetInternalGeometry(LineString geometry, OneWayState oneWayState)
         {
-            Coordinate[] coordinates = geometry.Coordinates;
-                        
-            if(oneWayState == OneWayState.Reversed)
-                coordinates = coordinates.Reverse().ToArray();
-            
-            var internalGeometry = new XYMPoint[coordinates.Length];
-            
-            for(int c = 0; c < coordinates.Length; c++)
+            if(geometry.Count > 2)
             {
-                XYMPoint xYMPoint;
+                Coordinate[] coordinates = geometry.Coordinates;
+                            
+                if(oneWayState == OneWayState.Reversed)
+                    coordinates = coordinates.Reverse().ToArray();
+                
+                var fullGeometry = new XYMPoint[coordinates.Length];
+                
+                for(int c = 0; c < coordinates.Length; c++)
+                {
+                    XYMPoint xYMPoint;
 
-                xYMPoint.X = coordinates[c].X;
-                xYMPoint.Y = coordinates[c].Y;
-                xYMPoint.M = 0;
+                    xYMPoint.X = coordinates[c].X;
+                    xYMPoint.Y = coordinates[c].Y;
+                    xYMPoint.M = 0;
 
-                internalGeometry[c] = xYMPoint;
+                    fullGeometry[c] = xYMPoint;
+                }
+
+                CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
+
+                var internalGeometry = new XYMPoint[coordinates.Length-2];
+                for(var i = 0; i < internalGeometry.Length; i++)
+                {
+                    internalGeometry[i] = fullGeometry[i+1];
+                }
+
+                return internalGeometry;
             }
-
-            CalculateCumulativeDistance(internalGeometry, internalGeometry.Length-1);
-
-            return internalGeometry;
+            else
+            {
+                return null;
+            }
         }
 
         private double CalculateCumulativeDistance(XYMPoint[] internalGeometry, int index)

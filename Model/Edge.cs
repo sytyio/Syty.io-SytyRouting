@@ -48,7 +48,7 @@ namespace SytyRouting.Model
             }
             else
             {
-                bw.Write(0);
+                bw.Write((ushort)0);
             }
         }
 
@@ -64,12 +64,16 @@ namespace SytyRouting.Model
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             
-            InternalGeometry = new XYMPoint[br.ReadUInt16()];
-            for(int i = 0; i < InternalGeometry.Length; i++)
+            var internalGeometryLength = br.ReadUInt16();
+            if(internalGeometryLength > 0)
             {
-                InternalGeometry[i].X = br.ReadDouble();
-                InternalGeometry[i].Y = br.ReadDouble();
-                InternalGeometry[i].M = br.ReadDouble();
+                InternalGeometry = new XYMPoint[internalGeometryLength];
+                for(int i = 0; i < InternalGeometry.Length; i++)
+                {
+                    InternalGeometry[i].X = br.ReadDouble();
+                    InternalGeometry[i].Y = br.ReadDouble();
+                    InternalGeometry[i].M = br.ReadDouble();
+                }
             }
         }
     }
