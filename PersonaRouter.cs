@@ -55,16 +55,19 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 1000; // 13579;
+            elementsToProcess = 13579; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
                 return;
             }
+            else if(elementsToProcess < simultaneousRoutingTasks)
+            {
+                simultaneousRoutingTasks = elementsToProcess;
+            }
             
             Task loadingTask = Task.Run(() => DBPersonaLoadAsync());
             Thread.Sleep(InitialDataLoadSleepMilliseconds);
-
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
             {
                 logger.Info(" ==>> Initial DB load timeout ({0} ms) elapsed. Unable to start the routing process.", InitialDataLoadSleepMilliseconds);
@@ -105,7 +108,7 @@ namespace SytyRouting
             {
                 var currentBatchSize = batchSizes[batchNumber];
 
-                var routingTaskBatchSize = currentBatchSize / simultaneousRoutingTasks;
+                var routingTaskBatchSize = (currentBatchSize / simultaneousRoutingTasks > 0) ? currentBatchSize / simultaneousRoutingTasks : 1;
                 int[] routingTaskBatchSizes = GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);
 
                 var taskIndex = 0;
