@@ -241,20 +241,21 @@ namespace SytyRouting
             logger.Trace("\tInward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.InwardEdges)
             {
-                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
-
-                TraceInternalGeometry(edge);
+                TraceEdge(edge);
             }
             
             logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.OutwardEdges)
             {
-                logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
-
-                TraceInternalGeometry(edge);
+                TraceEdge(edge);
             }
+        }
+
+        private void TraceEdge(Edge edge)
+        {
+            logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2},\ttarget Node Id: {3};",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.TargetNode?.OsmID);
+                            TraceInternalGeometry(edge);
         }
 
         private void TraceInternalGeometry(Edge edge)
@@ -281,13 +282,13 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString lineString)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry)
         {
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
                 {
-                    var internalGeometry = GetInternalGeometry(osmID, lineString, oneWayState);
+                    var internalGeometry = GetInternalGeometry(geometry, oneWayState);
                     var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
@@ -296,7 +297,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var internalGeometry = GetInternalGeometry(osmID, lineString, oneWayState);
+                    var internalGeometry = GetInternalGeometry(geometry, oneWayState);
                     var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
@@ -305,12 +306,12 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var internalGeometry = GetInternalGeometry(osmID, lineString, OneWayState.Yes);
+                    var internalGeometry = GetInternalGeometry(geometry, OneWayState.Yes);
                     var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    internalGeometry = GetInternalGeometry(osmID, lineString, OneWayState.Reversed);
+                    internalGeometry = GetInternalGeometry(geometry, OneWayState.Reversed);
                     edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
@@ -320,9 +321,9 @@ namespace SytyRouting
             }
         }
 
-        private XYMPoint[] GetInternalGeometry(long osmID, LineString lineString, OneWayState oneWayState)
+        private XYMPoint[] GetInternalGeometry(LineString geometry, OneWayState oneWayState)
         {
-            Coordinate[] coordinates = lineString.Coordinates;
+            Coordinate[] coordinates = geometry.Coordinates;
                         
             if(oneWayState == OneWayState.Reversed)
                 coordinates = coordinates.Reverse().ToArray();
