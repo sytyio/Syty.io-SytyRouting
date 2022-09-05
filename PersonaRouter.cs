@@ -21,9 +21,11 @@ namespace SytyRouting
 
 
         public IEnumerable<Persona> Personas = new List<Persona>(0);
+        public IEnumerable<Persona> PersonasWithRoute = new List<Persona>(0);
 
 
         private List<Persona> personas = new List<Persona>();
+        private List<Persona> personasWithRoute = new List<Persona>();
         
         private Graph _graph;
 
@@ -170,6 +172,8 @@ namespace SytyRouting
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
                         persona.Route = route.ToList();
                         persona.SuccessfulRouteComputation = true;
+
+                        personasWithRoute.Add(persona); // For comparison purposes only
 
                         Interlocked.Increment(ref computedRoutes);
                     }
