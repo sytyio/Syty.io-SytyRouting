@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using NetTopologySuite.Geometries;
 using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms
@@ -58,33 +59,75 @@ namespace SytyRouting.Algorithms
 
         public List<Edge> ConvertRouteFromNodesToEdges(List<Node> route)
         {
-            if (_graph == null)
-            {
-                throw new ArgumentException("You must initialize the routing algorithm first!");
-            }
-
             List<Edge> edgeRoute = new List<Edge>(0);
+            List<XYMPoint> geometryRoute = new List<XYMPoint>(0);
+
             for(var i = 0; i < route.Count-1; i++)
             {
+                Console.WriteLine("> Node {0} :: ", route[i].OsmID);
+                double lastM = 0;
                 var edge = route[i].OutwardEdges.Find(e => e.TargetNode.Idx == route[i+1].Idx);
                 if(edge is not null)
                 {
                     edgeRoute.Add(edge);
+
+                    XYMPoint xymSourcePoint;
+                    xymSourcePoint.X = edge.SourceNode.X;
+                    xymSourcePoint.Y = edge.SourceNode.Y;
+                    xymSourcePoint.M = 0;
+
+                    geometryRoute.Add(xymSourcePoint);
+
+                    Console.WriteLine("S({0}, {1}, {2})", xymSourcePoint.X, xymSourcePoint.Y, xymSourcePoint.M);
+
+                    if(edge.InternalGeometry is not null)
+                    {
+                        for(var j = 0; j < edge.InternalGeometry.Length; j++)
+                        {
+                            XYMPoint xymInternalPoint;
+                            xymInternalPoint.X = edge.InternalGeometry[j].X;
+                            xymInternalPoint.Y = edge.InternalGeometry[j].Y;
+                            xymInternalPoint.M = edge.InternalGeometry[j].M;
+
+                            lastM = xymInternalPoint.M;
+
+                            geometryRoute.Add(xymInternalPoint);
+
+                            Console.WriteLine("{0}({1}, {2}, {3})", j, xymInternalPoint.X, xymInternalPoint.Y, xymInternalPoint.M);
+                        }
+                    }
+
+                    XYMPoint xymTargetPoint;
+                    xymTargetPoint.X = edge.TargetNode.X;
+                    xymTargetPoint.Y = edge.TargetNode.Y;
+                    xymTargetPoint.M = edge.LengthM;
+
+                    geometryRoute.Add(xymTargetPoint);
+
+                    var mDifference = lastM - xymTargetPoint.M;
+                    if(mDifference>0)
+                        throw new Exception("Inconsistent distance");
+                    Console.WriteLine("T({0}, {1}, {2})", xymTargetPoint.X, xymTargetPoint.Y, xymTargetPoint.M);
+                    Console.WriteLine(" :: M-difference: {0} - {1} = {2}", lastM, xymTargetPoint.M, mDifference);
                 }
                 else
                 {
-                    throw new Exception("Impossible to find corresponding Outward Edge");
+                    throw new Exception("Impossible to find the corresponding Outward Edge");
                 }
-            }
-
-            Console.WriteLine("Edge OsmIDs:");
-            foreach(var edge in edgeRoute)
-            {
-                Console.WriteLine("{0}", edge.OsmID);
             }
 
             return edgeRoute;
         }
+
+        // private LineString CreateLineStringRoute(List<XYMPoint> xymPointRoute)
+        // {
+        //     CoordinateSequence coordinateSequence = new CoordinateSequence(0,3,1);
+        //     // foreach(var xymPoint in xymPointRoute)
+        //     // {
+        //     //     Point point = new Point(xymPoint.X, )
+        //     // }
+            
+        // }
 
         public double GetRouteCost()
         {

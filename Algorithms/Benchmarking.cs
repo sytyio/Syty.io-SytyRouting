@@ -122,7 +122,8 @@ namespace SytyRouting
                 }
 
                 stopWatch = Stopwatch.StartNew();
-                routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var route = routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var edgeRoute = routingAlgorithm.ConvertRouteFromNodesToEdges(route);
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
@@ -175,10 +176,12 @@ namespace SytyRouting
 
                 var startTicks = stopWatch.ElapsedTicks;
                 var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var edgeRoute1 = algorithm1.ConvertRouteFromNodesToEdges(route1);
                 elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks-startTicks;
 
                 startTicks = stopWatch.ElapsedTicks;
                 var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var edgeRoute2 = algorithm2.ConvertRouteFromNodesToEdges(route2);
                 elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks-startTicks;
 
                 var routesAreEqual = CompareRouteSequences(route1, route2);
