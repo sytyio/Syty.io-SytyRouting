@@ -57,7 +57,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 13579; // 13579;
+            elementsToProcess = 1000000; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -175,7 +175,7 @@ namespace SytyRouting
 
                         personasWithRoute.Add(persona); // For comparison purposes only
 
-                        Interlocked.Increment(ref computedRoutes);
+                        // Interlocked.Increment(ref computedRoutes);
                     }
                     catch
                     {
@@ -190,6 +190,7 @@ namespace SytyRouting
         {
             while(true)
             {
+                computedRoutes = personasWithRoute.Count();
                 var timeSpan = stopWatch.Elapsed;
                 var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
                 Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
