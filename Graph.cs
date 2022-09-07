@@ -130,8 +130,8 @@ namespace SytyRouting
             logger.Info("Total number of rows to process: {0}", totalDbRows);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9    10           11          12        13
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -158,11 +158,12 @@ namespace SytyRouting
                     var source = CreateNode(sourceId, sourceOSMId, sourceX, sourceY, nodes);
                     var target = CreateNode(targetId, targetOSMId, targetX, targetY, nodes);
 
-                    var length_m = Convert.ToDouble(reader.GetValue(12));
-
+                    var length_m = Convert.ToDouble(reader.GetValue(12)); // length_m [m]
                     var theGeom = (LineString)reader.GetValue(13); // the_geom (?)
+                    var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
+                    var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
                     
-                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom);
+                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s);
 
                     dbRowsProcessed++;
 
@@ -287,14 +288,14 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward)
         {
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
@@ -303,7 +304,7 @@ namespace SytyRouting
                 case OneWayState.Reversed: // Only backward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -312,12 +313,12 @@ namespace SytyRouting
                 default: // Both ways
                 {
                     var internalGeometry = GetInternalGeometry(geometry, OneWayState.Yes);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
                     internalGeometry = GetInternalGeometry(geometry, OneWayState.Reversed);
-                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry};
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
