@@ -349,6 +349,7 @@ namespace SytyRouting
                 }
 
                 CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
+                NormalizeGeometry(fullGeometry);
 
                 // var internalGeometry = new XYMPoint[coordinates.Length-2];
                 // for(var i = 0; i < internalGeometry.Length; i++)
@@ -383,6 +384,15 @@ namespace SytyRouting
                 return cumulativeDistance;
             }
             return 0;
+        }
+
+        private void NormalizeGeometry(XYMPoint[] geometry)
+        {
+            double normalizationParameter = geometry.Last().M;
+            for(int g = 0; g < geometry.Length; g++)
+            {
+                geometry[g].M = geometry[g].M / normalizationParameter;
+            }
         }
 
         private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
