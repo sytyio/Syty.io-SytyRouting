@@ -352,13 +352,13 @@ namespace SytyRouting
                 CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
                 NormalizeGeometry(fullGeometry);
 
-                // var internalGeometry = new XYMPoint[coordinates.Length-2];
-                // for(var i = 0; i < internalGeometry.Length; i++)
-                // {
-                //     internalGeometry[i] = fullGeometry[i+1];
-                // }
+                var internalGeometry = new XYMPoint[coordinates.Length-2];
+                for(var i = 0; i < internalGeometry.Length; i++)
+                {
+                    internalGeometry[i] = fullGeometry[i+1];
+                }
 
-                var internalGeometry =  fullGeometry;
+                // var internalGeometry =  fullGeometry;
 
                 return internalGeometry;
             }
