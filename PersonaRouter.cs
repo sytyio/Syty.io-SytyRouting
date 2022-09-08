@@ -57,7 +57,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 1000000; // 13579;
+            elementsToProcess = 13579; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
