@@ -31,7 +31,37 @@ namespace SytyRouting
             RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
-            // RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
+            RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
+
+            // TestConvertRouteFromNodesToXYMPoints(routingAlgorithm);
+            
+        }
+
+        public static void TestConvertRouteFromNodesToXYMPoints(IRoutingAlgorithm routingAlgorithm)
+        {
+            var testRoute = new List<Node>(0);
+            for(var i=0; i<5; i++)
+            {
+                var node = new Node {Idx=i,OsmID=i,X=i,Y=i};
+                testRoute.Add(node);
+            }
+
+            int[] lengths = new int[] {5,3,2,7};
+            for(var i=0; i<testRoute.Count-1; i++)
+            {
+                var edge = new Edge {OsmID=i, LengthM=lengths[i], MaxSpeedMPerS=1000.0, SourceNode=testRoute[i], TargetNode=testRoute[i+1]};
+                var internalGeometry = new XYMPoint[] {new XYMPoint{M=0.25}, new XYMPoint{M=0.5}, new XYMPoint{M=0.75}};
+                edge.InternalGeometry = internalGeometry;
+                testRoute[i].OutwardEdges.Add(edge);
+            }
+
+            Console.WriteLine("Test Route:");
+            foreach(var node in testRoute)
+            {
+                Console.WriteLine("Node {0}", node.Idx);
+            }
+
+            routingAlgorithm.ConvertRouteFromNodesToXYMPoints(testRoute, TimeSpan.Zero);
         }
 
         public static void MultipleRoutingAlgorithmsBenchmarking<T, U>(Graph graph) where T: IRoutingAlgorithm, new() where U: IRoutingAlgorithm, new()

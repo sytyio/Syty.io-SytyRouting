@@ -64,10 +64,8 @@ namespace SytyRouting.Algorithms
             XYMPoint xymSourcePoint;
             xymSourcePoint.X = nodeRoute[0].X;
             xymSourcePoint.Y = nodeRoute[0].Y;
-            xymSourcePoint.M = initialTimeStamp.TotalMilliseconds;// 0;
-
-            Console.WriteLine("                             < Node {0}", nodeRoute[0].OsmID);
-            Console.WriteLine("S({0}, {1}, {2})", xymSourcePoint.X, xymSourcePoint.Y, xymSourcePoint.M);
+            xymSourcePoint.M = initialTimeStamp.TotalMilliseconds;
+            var previousTimeInterval = xymSourcePoint.M;
 
             xymRoute.Add(xymSourcePoint);
 
@@ -76,7 +74,6 @@ namespace SytyRouting.Algorithms
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
                 if(edge is not null)
                 {
-                    Console.WriteLine("                             < Node {0} (max. speed {1} [km/h])", nodeRoute[i].OsmID, edge.MaxSpeedMPerS * 60 * 60 / 1000);
                     var minTimeIntervalMilliseconds = edge.LengthM / edge.MaxSpeedMPerS * 1000; // [s]*[1000 ms / 1s]
                     if(edge.InternalGeometry is not null)
                     {
@@ -85,22 +82,19 @@ namespace SytyRouting.Algorithms
                             XYMPoint xymInternalPoint;
                             xymInternalPoint.X = edge.InternalGeometry[j].X;
                             xymInternalPoint.Y = edge.InternalGeometry[j].Y;
-                            xymInternalPoint.M = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds;
+                            xymInternalPoint.M = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeInterval;
 
                             xymRoute.Add(xymInternalPoint);
-
-                            Console.WriteLine("{0}({1}, {2}, {3})", j, xymInternalPoint.X, xymInternalPoint.Y, xymInternalPoint.M);
                         }
                     }
 
                     XYMPoint xymTargetPoint;
                     xymTargetPoint.X = edge.TargetNode.X;
                     xymTargetPoint.Y = edge.TargetNode.Y;
-                    xymTargetPoint.M = minTimeIntervalMilliseconds; // 1; // edge.LengthM;
+                    xymTargetPoint.M = minTimeIntervalMilliseconds + previousTimeInterval;
+                    previousTimeInterval = xymTargetPoint.M;
 
                     xymRoute.Add(xymTargetPoint);
-
-                    Console.WriteLine("T({0}, {1}, {2})", xymTargetPoint.X, xymTargetPoint.Y, xymTargetPoint.M);
                 }
                 else
                 {
@@ -108,29 +102,7 @@ namespace SytyRouting.Algorithms
                 }
             }
 
-            XYMPoint[] spaceTimeRoute = xymRoute.ToArray();
-            CalculateCumulativeMOrdinate(spaceTimeRoute, spaceTimeRoute.Length - 1);
-
-            Console.WriteLine("> Final space-time route:");
-            foreach(var p in spaceTimeRoute)
-            {
-                Console.WriteLine("P({0}, {1}, {2})", p.X, p.Y, p.M);
-            }
-
-            return spaceTimeRoute.ToList();
-        }
-
-        private double CalculateCumulativeMOrdinate(XYMPoint[] xymPointSequence, int index)
-        {
-            while(index > 0 && index < xymPointSequence.Length)
-            {
-                var cumulativeM = xymPointSequence[index].M + CalculateCumulativeMOrdinate(xymPointSequence, index-1);
-
-                xymPointSequence[index].M = cumulativeM;
-
-                return cumulativeM;
-            }
-            return xymPointSequence[0].M;
+            return xymRoute;
         }
 
         // private LineString CreateLineStringRoute(List<XYMPoint> xymPointRoute)
