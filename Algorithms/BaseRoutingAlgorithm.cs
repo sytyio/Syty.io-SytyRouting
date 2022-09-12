@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms
@@ -57,17 +58,18 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode);
         }
 
-        public List<XYMPoint> ConvertRouteFromNodesToXYMPoints(List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString ConvertRouteFromNodesToXYMPoints(List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
-            List<XYMPoint> xymRoute = new List<XYMPoint>(0);
+            List<Coordinate> xyCoordinates = new List<Coordinate>(0);
+            List<double> mOrdinates = new List<double>(0);
 
-            XYMPoint xymSourcePoint;
-            xymSourcePoint.X = nodeRoute[0].X;
-            xymSourcePoint.Y = nodeRoute[0].Y;
-            xymSourcePoint.M = initialTimeStamp.TotalMilliseconds;
-            var previousTimeInterval = xymSourcePoint.M;
+            var sourcePointX = nodeRoute[0].X;
+            var sourcePointY = nodeRoute[0].Y;
+            var sourcePointM = initialTimeStamp.TotalMilliseconds;
+            var previousTimeInterval = sourcePointM;
 
-            xymRoute.Add(xymSourcePoint);
+            xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
+            mOrdinates.Add(sourcePointM);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {                
@@ -79,22 +81,22 @@ namespace SytyRouting.Algorithms
                     {
                         for(var j = 0; j < edge.InternalGeometry.Length; j++)
                         {
-                            XYMPoint xymInternalPoint;
-                            xymInternalPoint.X = edge.InternalGeometry[j].X;
-                            xymInternalPoint.Y = edge.InternalGeometry[j].Y;
-                            xymInternalPoint.M = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeInterval;
+                            var internalPointX = edge.InternalGeometry[j].X;
+                            var internalPointY = edge.InternalGeometry[j].Y;
+                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeInterval;
 
-                            xymRoute.Add(xymInternalPoint);
+                            xyCoordinates.Add(new Coordinate(internalPointX, internalPointY));
+                            mOrdinates.Add(internalPointM);
                         }
                     }
 
-                    XYMPoint xymTargetPoint;
-                    xymTargetPoint.X = edge.TargetNode.X;
-                    xymTargetPoint.Y = edge.TargetNode.Y;
-                    xymTargetPoint.M = minTimeIntervalMilliseconds + previousTimeInterval;
-                    previousTimeInterval = xymTargetPoint.M;
+                    var targetPointX = edge.TargetNode.X;
+                    var targetPointY = edge.TargetNode.Y;
+                    var targetPointM = minTimeIntervalMilliseconds + previousTimeInterval;
+                    previousTimeInterval = targetPointM;
 
-                    xymRoute.Add(xymTargetPoint);
+                    xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
+                    mOrdinates.Add(targetPointM);
                 }
                 else
                 {
@@ -102,18 +104,20 @@ namespace SytyRouting.Algorithms
                 }
             }
 
-            return xymRoute;
-        }
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
+            for(var i = 0; i < coordinateSequence.Count; i++)
+            {
+                coordinateSequence.SetM(i, mOrdinates[i]);
+            }
+            coordinateSequence.ReleaseCoordinateArray();
 
-        // private LineString CreateLineStringRoute(List<XYMPoint> xymPointRoute)
-        // {
-        //     CoordinateSequence coordinateSequence = new CoordinateSequence(0,3,1);
-        //     // foreach(var xymPoint in xymPointRoute)
-        //     // {
-        //     //     Point point = new Point(xymPoint.X, )
-        //     // }
-            
-        // }
+            var lineStringRoute = new LineString(coordinateSequence, geometryFactory);
+
+
+            return lineStringRoute;
+        }
 
         public double GetRouteCost()
         {
