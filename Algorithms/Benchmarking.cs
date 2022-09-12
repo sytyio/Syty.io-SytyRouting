@@ -107,7 +107,7 @@ namespace SytyRouting
 
             stopWatch.Start();
             var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
-            var edgeRoute = routingAlgorithm.ConvertRouteFromNodesToXYMPoints(route, TimeSpan.Zero);
+            var xympRoute = routingAlgorithm.ConvertRouteFromNodesToXYMPoints(route, TimeSpan.Zero);
             stopWatch.Stop();
 
             logger.Info("{0,25} execution time: {1,10:0.000} (ms)", routingAlgorithm.GetType().Name, stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000.0);
@@ -153,7 +153,7 @@ namespace SytyRouting
 
                 stopWatch = Stopwatch.StartNew();
                 var route = routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                var edgeRoute = routingAlgorithm.ConvertRouteFromNodesToXYMPoints(route, TimeSpan.Zero);
+                var xympRoute = routingAlgorithm.ConvertRouteFromNodesToXYMPoints(route, TimeSpan.Zero);
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
@@ -206,12 +206,12 @@ namespace SytyRouting
 
                 var startTicks = stopWatch.ElapsedTicks;
                 var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                var edgeRoute1 = algorithm1.ConvertRouteFromNodesToXYMPoints(route1, TimeSpan.Zero);
+                var xympRoute1 = algorithm1.ConvertRouteFromNodesToXYMPoints(route1, TimeSpan.Zero);
                 elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks-startTicks;
 
                 startTicks = stopWatch.ElapsedTicks;
                 var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID);
-                var edgeRoute2 = algorithm2.ConvertRouteFromNodesToXYMPoints(route2, TimeSpan.Zero);
+                var xympRoute2 = algorithm2.ConvertRouteFromNodesToXYMPoints(route2, TimeSpan.Zero);
                 elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks-startTicks;
 
                 var routesAreEqual = CompareRouteSequences(route1, route2);
