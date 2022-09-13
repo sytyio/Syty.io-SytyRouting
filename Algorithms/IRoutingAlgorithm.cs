@@ -8,7 +8,7 @@ namespace SytyRouting.Algorithms
         void Initialize(Graph graph);
         List<Node> GetRoute(double originLatitude, double originLongitude, double destinationLatitude, double destinationLongitud);
         List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId);
-        LineString ConvertRouteFromNodesToXYMPoints(List<Node> route, TimeSpan initialTimeStamp);
+        LineString ConvertRouteFromNodesToLineString(List<Node> route, TimeSpan initialTimeStamp);
         double GetRouteCost();
     }
 }

@@ -58,18 +58,17 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode);
         }
 
-        public LineString ConvertRouteFromNodesToXYMPoints(List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString ConvertRouteFromNodesToLineString(List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
             List<Coordinate> xyCoordinates = new List<Coordinate>(0);
             List<double> mOrdinates = new List<double>(0);
 
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
-            var sourcePointM = initialTimeStamp.TotalMilliseconds;
-            var previousTimeInterval = sourcePointM;
+            var previousTimeInterval = initialTimeStamp.TotalMilliseconds;
 
             xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
-            mOrdinates.Add(sourcePointM);
+            mOrdinates.Add(previousTimeInterval);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {                
@@ -92,11 +91,10 @@ namespace SytyRouting.Algorithms
 
                     var targetPointX = edge.TargetNode.X;
                     var targetPointY = edge.TargetNode.Y;
-                    var targetPointM = minTimeIntervalMilliseconds + previousTimeInterval;
-                    previousTimeInterval = targetPointM;
+                    previousTimeInterval = minTimeIntervalMilliseconds + previousTimeInterval;
 
                     xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
-                    mOrdinates.Add(targetPointM);
+                    mOrdinates.Add(previousTimeInterval);
                 }
                 else
                 {
@@ -113,10 +111,7 @@ namespace SytyRouting.Algorithms
             }
             coordinateSequence.ReleaseCoordinateArray();
 
-            var lineStringRoute = new LineString(coordinateSequence, geometryFactory);
-
-
-            return lineStringRoute;
+            return new LineString(coordinateSequence, geometryFactory);
         }
 
         public double GetRouteCost()
