@@ -32,7 +32,7 @@ namespace SytyRouting
             RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
-            // RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
+            RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
 
             var lineStringRoute = TestConvertRouteFromNodesToLineString(routingAlgorithm);
             TraceLineStringRoute(lineStringRoute);
