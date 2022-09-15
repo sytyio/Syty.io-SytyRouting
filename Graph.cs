@@ -4,6 +4,7 @@ using System.Diagnostics;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
+using System.Globalization;
 
 namespace SytyRouting
 {
@@ -384,22 +385,6 @@ namespace SytyRouting
             {
                 geometry[g].M = geometry[g].M / normalizationParameter;
             }
-        }
-
-        private void GraphCreationBenchmark(long totalDbRows, long dbRowsProcessed, TimeSpan timeSpan, long timeSpanMilliseconds)
-        {
-            var elapsedTime = Helper.FormatElapsedTime(timeSpan);
-
-            var rowProcessingRate = (double)dbRowsProcessed / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
-            var graphCreationTimeSeconds = totalDbRows / rowProcessingRate;
-            var graphCreationTime = TimeSpan.FromSeconds(graphCreationTimeSeconds);
-
-            var totalTime = Helper.FormatElapsedTime(graphCreationTime);
-
-            logger.Debug("Number of DB rows already processed: {0}", dbRowsProcessed);
-            logger.Debug("Row processing rate: {0} [Rows / s]", rowProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-            logger.Info("Elapsed Time                 (HH:MM:S.mS) :: " + elapsedTime);
-            logger.Info("Graph creation time estimate (HH:MM:S.mS) :: " + totalTime);
         }
 
         private void CleanGraph()
