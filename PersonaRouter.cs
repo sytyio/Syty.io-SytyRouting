@@ -57,7 +57,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 13579; // 13579;
+            elementsToProcess = 135; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -170,12 +170,12 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
-                        persona.Route = route.ToList();
+                        //persona.Route = route.ToList();
+                        TimeSpan currentTime = TimeSpan.Zero;
+                        persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
                         persona.SuccessfulRouteComputation = true;
 
                         personasWithRoute.Add(persona); // For comparison purposes only
-
-                        // Interlocked.Increment(ref computedRoutes);
                     }
                     catch
                     {
@@ -241,25 +241,35 @@ namespace SytyRouting
         {
             if(persona.Route is not null)
             {
-                string routeString = String.Format(" > Route ({0}):", persona.Route.Count());
-                for(var n = 0; n < persona.Route.Count; n++)
+                var routeCoordinates = persona.Route.Coordinates;
+
+                Node node;
+                string routeString = String.Format(" > Route ({0}):", routeCoordinates.Length);
+                for(var n = 0; n < routeCoordinates.Length; n++)
                 {
-                    routeString += String.Format(" {0},", persona.Route[n].OsmID);
+                    node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
+                    routeString += String.Format(" {0},", node.OsmID);
                     if(n>2)
                         break;
                 }
-                routeString += String.Format(" ..., {0} ", persona.Route[persona.Route.Count -1].OsmID);
+                node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[persona.Route.Count -1].X, routeCoordinates[persona.Route.Count -1].Y);
+                routeString += String.Format(" ..., {0} ", node.OsmID);
                 logger.Debug(routeString);
             }
         }
 
         public void TracePersonasRouteResult()
         {
-            logger.Debug("Personas Ids:");
+            int routeComputationFails = 0;
             foreach (var persona in Personas)
             {
-                logger.Debug("Persona: Id = {0}, route found = {1}", persona.Id, persona.SuccessfulRouteComputation);
+                if(persona.SuccessfulRouteComputation is not true)
+                {
+                    logger.Debug("Persona: Id = {0}, route found = {1}", persona.Id, persona.SuccessfulRouteComputation);
+                    routeComputationFails++;
+                }
             }
+            logger.Debug("Number of routes not present: {0}", routeComputationFails);
         }
     }
 }
