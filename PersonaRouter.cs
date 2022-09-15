@@ -269,7 +269,7 @@ namespace SytyRouting
                     routeComputationFails++;
                 }
             }
-            logger.Debug("Number of routes not present: {0}", routeComputationFails);
+            logger.Debug("{0} routes missing", routeComputationFails);
         }
     }
 }
