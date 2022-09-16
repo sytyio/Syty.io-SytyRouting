@@ -14,6 +14,12 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
+            // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
+            NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
+            
+
+
+
             logger.Info("syty.io routing engine for large scale datasets");
 
             logger.Info("Creating syty.io routing graph from dataset");

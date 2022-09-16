@@ -8,7 +8,6 @@ namespace SytyRouting
 {
     public class Helper
     {
-        
         public static async Task<int> DbTableRowCount(string tableName, Logger logger)
         {
             int totalDbRows = 0;
@@ -16,7 +15,7 @@ namespace SytyRouting
             var connectionString = Constants.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            connection.TypeMapper.UseNetTopologySuite();
+            // connection.TypeMapper.UseNetTopologySuite();
 
             var queryString = "SELECT count(*) AS exact_count FROM " + tableName;
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -67,7 +66,8 @@ namespace SytyRouting
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
         {
-            string elapsedTime = String.Format("{0:000}:{1:00}:{2:00}:{3:00}.{4:000}",
+            // Format: [-][d.]hh:mm:ss[.fffffff]
+            string elapsedTime = String.Format("{0:0}.{1:00}:{2:00}:{3:00}.{4:000}",
                 timeSpan.Days, timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
                 timeSpan.Milliseconds);
 
