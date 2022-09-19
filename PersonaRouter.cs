@@ -225,8 +225,8 @@ namespace SytyRouting
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
-            var connectionString = Constants.LocalConnectionString; // Local DB for testing
-            // var connectionString = Constants.ConnectionString;
+            // var connectionString = Constants.LocalConnectionString; // Local DB for testing
+            var connectionString = Constants.ConnectionString;
             
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
