@@ -54,7 +54,7 @@ namespace SytyRouting
             var personaRouter = new PersonaRouter(graph);
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
             // personaRouter.TracePersonas();
-            personaRouter.TracePersonasRouteResult();
+            // personaRouter.TracePersonasRouteResult();
             
 
             // Logger flushing

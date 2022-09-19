@@ -347,9 +347,7 @@ namespace SytyRouting
                 {
                     internalGeometry[i] = fullGeometry[i+1];
                 }
-
-                // var internalGeometry =  fullGeometry;
-
+                
                 return internalGeometry;
             }
             else
