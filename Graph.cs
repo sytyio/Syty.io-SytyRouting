@@ -115,7 +115,6 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            // connection.TypeMapper.UseNetTopologySuite();
 
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(TableName, logger);

@@ -1,5 +1,4 @@
 ﻿using NLog;
-// using SytyRouting.Algorithms;
 using Npgsql;
 
 namespace SytyRouting
@@ -31,7 +30,7 @@ namespace SytyRouting
 
             // // Benchmarking.PointLocationTest(graph);
 
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             
             // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -54,7 +53,7 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
-            personaRouter.TracePersonas();
+            // personaRouter.TracePersonas();
             personaRouter.TracePersonasRouteResult();
             
 

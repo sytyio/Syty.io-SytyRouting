@@ -59,7 +59,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 13; // 13579;
+            elementsToProcess = 500_000; // 1357; // 13579;
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -92,7 +92,7 @@ namespace SytyRouting
             Personas = personas.ToList();
             PersonasWithRoute = personasWithRoute.ToList();
 
-            await DBPersonaUploadAsync();
+            // await DBPersonaUploadAsync();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -104,7 +104,6 @@ namespace SytyRouting
             var connectionString = Constants.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            // connection.TypeMapper.UseNetTopologySuite();
 
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
@@ -174,8 +173,12 @@ namespace SytyRouting
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
+                        if(origin.Idx == destination.Idx)
+                        {
+                            logger.Debug("Origin and Destination Nodes are equal");
+                        }
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
-                        //persona.Route = route.ToList();
+                        
                         TimeSpan currentTime = TimeSpan.Zero;
                         persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
                         persona.SuccessfulRouteComputation = true;
@@ -289,7 +292,7 @@ namespace SytyRouting
             using (var reader = cmd.ExecuteReader())
             {
                 reader.Read();
-                Assert.IsEquals(reader[0], persona.Route, "Test failed. Routes are not equal");
+                Assert.IsEquals(reader[0], persona.Route, "Test failed. Original and Uploaded Routes are not equal");
                 uploadedDownloadedRoute  = (LineString)reader[0];
             }
 
@@ -337,6 +340,16 @@ namespace SytyRouting
 
    
             await connection.CloseAsync();
+        }
+
+        public void TracePersonaDetails(Persona persona)
+        {
+            var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
+            var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
+            logger.Debug("Persona details:");
+            logger.Debug("Id {0}", persona.Id);
+            logger.Debug("Home location: ({0,18},{1,18})\t : Origin OsmID      {2}", persona.HomeLocation!.X, persona.HomeLocation!.Y, origin.OsmID);
+            logger.Debug("Work location: ({0,18},{1,18})\t : Destination OsmID {2}", persona.WorkLocation!.X, persona.WorkLocation!.Y, origin.OsmID);
         }
 
         public void TracePersonas()
@@ -398,6 +411,7 @@ namespace SytyRouting
                 if(persona.SuccessfulRouteComputation is not true)
                 {
                     logger.Debug("Persona: Id = {0}, route found = {1}", persona.Id, persona.SuccessfulRouteComputation);
+                    TracePersonaDetails(persona);
                     routeComputationFails++;
                 }
             }

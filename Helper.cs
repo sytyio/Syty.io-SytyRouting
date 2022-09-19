@@ -15,7 +15,6 @@ namespace SytyRouting
             var connectionString = Constants.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            // connection.TypeMapper.UseNetTopologySuite();
 
             var queryString = "SELECT count(*) AS exact_count FROM " + tableName;
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -56,7 +55,7 @@ namespace SytyRouting
             logger.Info("Number of elements already processed: {0}", processedElements);
             logger.Info("Element processing rate: {0} [Elements / s]", elementProcessingRate.ToString("F", CultureInfo.InvariantCulture));
             string baseString = "{0,48} :: {1,-25}";
-            logger.Info(baseString, "", "ddd:hh:mm:ss.ms");
+            logger.Info(baseString, "", "d.hh:mm:ss.ms");
             logger.Info(baseString, "Elapsed Time", elapsedTime);
             logger.Info(baseString, "Data set creation time estimate", totalTime);
             logger.Info("");
