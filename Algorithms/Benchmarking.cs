@@ -21,7 +21,7 @@ namespace SytyRouting
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
             var numberOfNodes = graph.GetNodeCount();
-            var numberOfRuns = 10;
+            var numberOfRuns = 100;
 
             logger.Info("Route searching benchmarking using {0}'s algorithm", routingAlgorithm.GetType().Name);
 
@@ -45,7 +45,7 @@ namespace SytyRouting
             algorithm1.Initialize(graph);
             algorithm2.Initialize(graph);
 
-            var numberOfRuns = 100;
+            var numberOfRuns = 10;
 
             logger.Info("Route searching benchmarking using RoutingAlgorithm's algorithm");
 

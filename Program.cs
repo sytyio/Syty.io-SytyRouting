@@ -25,6 +25,7 @@ namespace SytyRouting
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
 
             // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
             //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
@@ -33,7 +34,10 @@ namespace SytyRouting
             //                                                   SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
             Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-                                                               SytyRouting.Algorithms.MultiDijkstra.MultiDijkstra>(graph);
+                                                               SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
+                                                               
+            Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra,
+                                                               SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
 
             //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
                                                                //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);

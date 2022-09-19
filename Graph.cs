@@ -99,6 +99,7 @@ namespace SytyRouting
                     }
                 }
             }
+            var averageDegree = NodesArray.Select(t => t.OutwardEdges.Count).Average();
         }
 
         private async Task DBLoadAsync()
