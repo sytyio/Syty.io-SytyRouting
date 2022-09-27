@@ -1,0 +1,12 @@
+{
+    "DbConnectionSettings": {
+        "ConnectionString" : "Host=compute.syty.io;Port=1234;Username=postgres;Password=test123;Database=sytyrun;",
+        "LocalConnectionString" : "Host=localhost;Port=5432;Username=postgres;Password=;Database=sytyrun_local;"
+    },
+    "DbTableSettings": {
+        "PersonaTableName" : "public.persona",
+        "EdgeTableName" : "public.ways",
+        "RouteTableName" : "persona_route_upload_test"
+    }
+}
+ 

@@ -12,8 +12,6 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private const string TableName = "public.ways";
-
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
@@ -110,14 +108,14 @@ namespace SytyRouting
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            var connectionString = Constants.ConnectionString;
+            var connectionString = Configuration.ConnectionString;
             string queryString;           
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
             // Get the total number of rows to estimate the Graph creation time
-            var totalDbRows = await Helper.DbTableRowCount(TableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15
