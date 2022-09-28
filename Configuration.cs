@@ -26,9 +26,9 @@ namespace SytyRouting
         {
             // Build a config object, using env vars and JSON providers.
             IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("settings.application.json")
-                .AddJsonFile("settings.database.json")
-                .AddJsonFile("settings.routing.json")
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.data.json")
+                .AddJsonFile("appsettings.routing.json")
                 // .AddEnvironmentVariables()
                 .Build();
 

@@ -21,17 +21,17 @@
 		</None>
 	</ItemGroup>
   <ItemGroup>
-      <None Update="settings.application.json">
+      <None Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
    </ItemGroup>
    <ItemGroup>
-      <None Update="settings.database.json">
+      <None Update="appsettings.data.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
    </ItemGroup>
   <ItemGroup>
-      <None Update="settings.routing.json">
+      <None Update="appsettings.routing.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
    </ItemGroup>
