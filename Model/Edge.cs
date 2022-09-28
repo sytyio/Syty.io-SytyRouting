@@ -16,6 +16,7 @@ namespace SytyRouting.Model
         public double Cost;
         public double LengthM;
         public double MaxSpeedMPerS;
+        public TransportMode TransportModes;
 
         [NotNull]
         public Node? SourceNode;
@@ -35,6 +36,7 @@ namespace SytyRouting.Model
             bw.Write(Cost);
             bw.Write(LengthM);
             bw.Write(MaxSpeedMPerS);
+            bw.Write((byte)TransportModes);
             bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
 
@@ -64,6 +66,7 @@ namespace SytyRouting.Model
             Cost = br.ReadDouble();
             LengthM = br.ReadDouble();
             MaxSpeedMPerS = br.ReadDouble();
+            TransportModes = (TransportMode)br.ReadByte();
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             

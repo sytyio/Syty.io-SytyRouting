@@ -4,7 +4,7 @@ using System.Diagnostics;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using System.Globalization;
+
 
 namespace SytyRouting
 {
@@ -16,6 +16,8 @@ namespace SytyRouting
 
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
+
+        Dictionary<OSMTagId,TransportMode> tagIdToTransportMode = new Dictionary<OSMTagId,TransportMode>(OSMTagId.GetValues(typeof(OSMTagId)).Length);
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -106,9 +108,12 @@ namespace SytyRouting
 
         private async Task DBLoadAsync()
         {
-            Dictionary<long, Node> nodes = new Dictionary<long, Node>();
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
+
+            Dictionary<long, Node> nodes = new Dictionary<long, Node>();
+
+            CreateMappingTagIdToTransportMode();
 
             var connectionString = Constants.ConnectionString;
             string queryString;           
@@ -120,8 +125,8 @@ namespace SytyRouting
             var totalDbRows = await Helper.DbTableRowCount(TableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -152,8 +157,10 @@ namespace SytyRouting
                     var theGeom = (LineString)reader.GetValue(13); // the_geom (?)
                     var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
                     var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
+
+                    var tagId = (OSMTagId)reader.GetValue(16); // tag_id
                     
-                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s);
+                    CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s, tagId);
 
                     dbRowsProcessed++;
 
@@ -221,7 +228,7 @@ namespace SytyRouting
         {
             foreach (var node in NodesArray)
             {
-                logger.Trace("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
+                logger.Debug("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
                     node.Idx, node.OsmID, node.X, node.Y);
                 TraceEdges(node);
             }
@@ -229,13 +236,13 @@ namespace SytyRouting
 
         private void TraceEdges(Node node)
         {
-            logger.Trace("\tInward Edges in Node {0}:", node.OsmID);
+            logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.InwardEdges)
             {
                 TraceEdge(edge);
             }
             
-            logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
+            logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
             foreach(var edge in node.OutwardEdges)
             {
                 TraceEdge(edge);
@@ -244,8 +251,8 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y);
+            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} ({9})",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, edge.TransportModes, (int)edge.TransportModes);
             
             TraceInternalGeometry(edge);
         }
@@ -254,16 +261,16 @@ namespace SytyRouting
         {
             if(edge.InternalGeometry is not null)
             {
-                logger.Trace("\t\tInternal geometry in Edge {0}:", edge.OsmID);
+                logger.Debug("\t\tInternal geometry in Edge {0}:", edge.OsmID);
                 foreach(var xymPoint in edge.InternalGeometry)
                 {
-                    logger.Trace("\t\t\tX: {0},\tY: {1},\tM: {2};",
+                    logger.Debug("\t\t\tX: {0},\tY: {1},\tM: {2};",
                         xymPoint.X, xymPoint.Y, xymPoint.M);
                 }
             }
             else
             {
-                logger.Trace("\t\tNo Internal geometry in Edge {0}:", edge.OsmID);
+                logger.Debug("\t\tNo Internal geometry in Edge {0}:", edge.OsmID);
             }
         }
 
@@ -278,14 +285,15 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, OSMTagId tagId)
         {
+            var transportModes = GetTransportModes(tagId);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
@@ -294,7 +302,7 @@ namespace SytyRouting
                 case OneWayState.Reversed: // Only backward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward};
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -303,18 +311,273 @@ namespace SytyRouting
                 default: // Both ways
                 {
                     var internalGeometry = GetInternalGeometry(geometry, OneWayState.Yes);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
                     internalGeometry = GetInternalGeometry(geometry, OneWayState.Reversed);
-                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward};
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
                     break;
                 }
             }
+        }
+
+        private TransportMode GetTransportModes(OSMTagId tagId)
+        {
+            if (tagIdToTransportMode.ContainsKey(tagId))
+            {
+                return tagIdToTransportMode[tagId];
+            }
+            else
+            {
+                logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
+                return TransportMode.None;
+            }
+        }
+
+        private void CreateMappingTagIdToTransportMode()
+        {
+            var osmTagIdValues = OSMTagId.GetValues(typeof(OSMTagId));
+            foreach (OSMTagId tagId in osmTagIdValues)
+            {
+                TransportMode mask; // = TransportMode.Undefined;
+                switch(tagId)
+                {
+                    case OSMTagId.CyclewayLane:
+                    {
+                        // Bicycle
+                        mask = TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.CyclewayOpposite:
+                    {
+                        // Bicycle
+                        mask = TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.CyclewayOppositeLane:
+                    {
+                        // Bicycle
+                        mask = TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.CyclewayTrack:
+                    {
+                        // Bicycle
+                        mask = TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.HighwayBridleway:
+                    {
+                        // Foot, Bicycle, Horse*
+                        mask = TransportMode.Bicycle | TransportMode.Bicycle | TransportMode.Horse;
+                        break;
+                    }
+                    case OSMTagId.HighwayBusGuideway:
+                    {
+                        // Bus
+                        mask = TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayByway:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.HighwayCycleway:
+                    {
+                        // Foot, Bicycle*
+                        mask = TransportMode.Foot | TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.HighwayFootway:
+                    {
+                        // Foot*, Bicycle
+                        mask = TransportMode.Foot | TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.HighwayLivingStreet: 
+                    {
+                        // Foot, Bicycle, Car
+                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car;
+                        break;
+                    }
+                    case OSMTagId.HighwayMotorway:      
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayMotorwayJunction:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayMotorwayLink:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayPath:
+                    {
+                        // Foot, Bicycle
+                        mask = TransportMode.Foot | TransportMode.Bicycle;
+                        break;
+                    }
+                    case OSMTagId.HighwayPedestrian:
+                    {
+                        // Foot
+                        mask = TransportMode.Foot;
+                        break;
+                    }
+                    case OSMTagId.HighwayPrimary:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayPrimaryLink:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayResidential:
+                    {
+                        // Foot, Bicycle, Car, Bus
+                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayRoad:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.HighwaySecondary:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwaySecondaryLink:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayService:
+                    {
+                        // Foot, Bicycle, Car, Bus
+                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayServices:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwaySteps:
+                    {
+                        // Foot
+                        mask = TransportMode.Foot;
+                        break;
+                    }
+                    case OSMTagId.HighwayTertiary:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayTertiaryLink:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayTrack:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.HighwayTrunk:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayTrunkLink:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.HighwayUnclassified:
+                    {
+                        // Bicycle, Car
+                        mask = TransportMode.Bicycle | TransportMode.Car;
+                        break;
+                    }
+                    case OSMTagId.JunctionRoundabout:
+                    {
+                        // Car, Bus
+                        mask = TransportMode.Car | TransportMode.Bus;
+                        break;
+                    }
+                    case OSMTagId.TrackTypeGrade1:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.TrackTypeGrade2:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.TrackTypeGrade3:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.TrackTypeGrade4:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    case OSMTagId.TrackTypeGrade5:
+                    {
+                        // Undefined
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                    default:
+                    {
+                        mask = TransportMode.Undefined;
+                        break;
+                    }
+                }
+
+                if (!tagIdToTransportMode.ContainsKey(tagId))
+                {
+                    tagIdToTransportMode.Add(tagId, mask);
+                }
+                else
+                {
+                    logger.Debug("Unable to add key to OSM tag_id to Transport Mode mapping. Tag id: {0}", tagId);
+                }
+            }            
         }
 
         private XYMPoint[]? GetInternalGeometry(LineString geometry, OneWayState oneWayState)

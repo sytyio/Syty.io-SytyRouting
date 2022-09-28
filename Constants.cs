@@ -3,53 +3,57 @@ namespace SytyRouting
     [Flags]
     public enum TransportMode
     {
-        None = 0,
-        Foot = 1,
-        Bicycle = 2,
-        Car = 4,
-        Bus = 8,
-        Tram = 16,
-        Train = 32,
+        None =        0,
+        Foot =        1,
+        Bicycle =     2,
+        Horse =       4,
+        Car =         8,
+        Bus =        16,
+        Tram =       32,
+        Train =      64,
+        Undefined = 128,
     }
 
-    public enum TagId
+    // OSM Tags reference: https://wiki.openstreetmap.org/wiki/Tags
+    // * main transport mode
+    public enum OSMTagId
     {
-        CyclewayLane = 201,
-        CyclewayOpposite = 204,
-        CyclewayOppositeLane = 203,
-        CyclewayTrack = 202,
-        HighwayBridleway = 120,
-        HighwayBusGuideway = 116,
-        HighwayByway = 121,
-        HighwayCycleway = 118,
-        HighwayFootway = 119,
-        HighwayLivingStreet = 111,
-        HighwayMotorway = 101,
-        HighwayMotorwayJunction = 103,
-        HighwayMotorwayLink = 102,
-        HighwayPath = 117,
-        HighwayPedestrian = 114,
-        HighwayPrimary = 106,
-        HighwayPrimaryLink = 107,
-        HighwayResidential = 110,
-        HighwayRoad = 100,
-        HighwaySecondary = 108,
-        HighwaySecondaryLink = 124,
-        HighwayService = 112,
-        HighwayServices = 115,
-        HighwaySteps = 122,
-        HighwayTertiary = 109,
-        HighwayTertiaryLink = 125,
-        HighwayTrack = 113,
-        HighwayTrunk = 104,
-        HighwayTrunkLink = 105,
-        HighwayUnclassified = 123,
-        JunctionRoundabout = 401,
-        TrackTypeGrade1 = 301,
-        TrackTypeGrade2 = 302,
-        TrackTypeGrade3 = 303,
-        TrackTypeGrade4 = 304,
-        TrackTypeGrade5 = 305
+        CyclewayLane = 201,            // Bicycle
+        CyclewayOpposite = 204,        // Bicycle
+        CyclewayOppositeLane = 203,    // Bicycle
+        CyclewayTrack = 202,           // Bicycle
+        HighwayBridleway = 120,        // Foot, Bicycle, Horse*
+        HighwayBusGuideway = 116,      // Bus
+        HighwayByway = 121,            // Undefined. (OSM: Using this tag is discouraged, use highway=track/path + designation + access instead.)
+        HighwayCycleway = 118,         // Foot, Bicycle*
+        HighwayFootway = 119,          // Foot*, Bicycle
+        HighwayLivingStreet = 111,     // Foot, Bicycle, Car
+        HighwayMotorway = 101,         // Car, Bus
+        HighwayMotorwayJunction = 103, // Car, Bus. (Motorway exit.)
+        HighwayMotorwayLink = 102,     // Car, Bus. (Motorway on- off-ramps.)
+        HighwayPath = 117,             // Foot, Bicycle
+        HighwayPedestrian = 114,       // Foot
+        HighwayPrimary = 106,          // Car, Bus
+        HighwayPrimaryLink = 107,      // Car, Bus. (Slip roads/ramps connecting a Primary Highway to minor roadways.)
+        HighwayResidential = 110,      // Foot, Bicycle, Car, Bus
+        HighwayRoad = 100,             // Undefined. (OSM: This tag is intentionally vague. Treat it as an error.)
+        HighwaySecondary = 108,        // Car, Bus
+        HighwaySecondaryLink = 124,    // Car, Bus. (Slip roads/ramps connecting a Secondary Highway to minor roadways.)
+        HighwayService = 112,          // Foot, Bicycle, Car, Bus
+        HighwayServices = 115,         // Car, Bus. (Motorway rest/service area.)
+        HighwaySteps = 122,            // Foot. (Flights of steps on footways and paths.)
+        HighwayTertiary = 109,         // Car, Bus
+        HighwayTertiaryLink = 125,     // Car, Bus. (Slip roads/ramps connecting a Tertiary Highway to minor roadways.)
+        HighwayTrack = 113,            // Undefined. (OSM: used for agriculture, forestry, outdoor recreation, and similar activities on open land.)
+        HighwayTrunk = 104,            // Car, Bus
+        HighwayTrunkLink = 105,        // Car, Bus. (Slip roads/ramps connecting a Trunk Highway to other roadways.)
+        HighwayUnclassified = 123,     // Bicycle, Car. (OSM: Minor public roads, less important than Tertiary roads.)
+        JunctionRoundabout = 401,      // Car, Bus
+        TrackTypeGrade1 = 301,         // Undefined. (OSM: Solid. Usually a paved surface.)
+        TrackTypeGrade2 = 302,         // Undefined. (OSM: Mostly solid. Usually an unpaved track.)
+        TrackTypeGrade3 = 303,         // Undefined. (OSM: Neither solid nor soft? An unpaved track.)
+        TrackTypeGrade4 = 304,         // Undefined. (OSM: Mostly soft. An unpaved track.)
+        TrackTypeGrade5 = 305          // Undefined. (OSM: Soft. An unimproved track.)
     }
 
     public enum StepDirection
