@@ -14,6 +14,7 @@ namespace SytyRouting
         Undefined = 128,
     }
 
+    // Database: compute.syty.io
     // OSM Tags reference: https://wiki.openstreetmap.org/wiki/Tags
     // * main transport mode
     public enum OSMTagId
