@@ -1,8 +1,12 @@
 ﻿using NLog;
 using Npgsql;
 
+
 namespace SytyRouting
 {
+    using Gtfs.ModelCsv;
+    using Gtfs.GtfsUtils;
+
     class Program
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -12,49 +16,72 @@ namespace SytyRouting
             // Logger configuration
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
+    
+         //  await MethodsGtfs.DownloadsGtfs();
 
-            // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
-            NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
+             // The chosen provider
+            ProviderCsv choice = ProviderCsv.stib;
+
+            
+            // Data of the provider
+            List<StopCsv> recordsStop = MethodsCsv.GetAllStops(choice);
+            List<RouteCsv> recordsRoute = MethodsCsv.GetAllRoutes(choice);
+            List<TripCsv> recordsTrip = MethodsCsv.GetAllTrips(choice);
+            List<ShapeCsv> recordsShape = MethodsCsv.GetAllShapes(choice);
+            List<StopTimesCsv> recordStopTime = MethodsCsv.GetAllStopTimes(choice);
+
+            logger.Info(recordsStop[0]);
+            logger.Info(recordsRoute[0]);
+            logger.Info(recordsTrip[0]);
+            logger.Info(recordsShape[0]);
+            logger.Info(recordStopTime[0]);
+
+            //MethodsGtfs.CleanGtfs();
+
+
+// ========================================
+            // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
+            // NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
             
 
 
 
-            logger.Info("syty.io routing engine for large scale datasets");
+            // logger.Info("syty.io routing engine for large scale datasets");
 
-            logger.Info("Creating syty.io routing graph from dataset");
-            var graph = new Graph();
-            await graph.FileLoadAsync("graph.dat");
+            // logger.Info("Creating syty.io routing graph from dataset");
+            // var graph = new Graph();
+            // await graph.FileLoadAsync("graph.dat");
 
-            // graph.TraceNodes();
+            // // graph.TraceNodes();
 
 
-            // // Benchmarking.PointLocationTest(graph);
+            // // // Benchmarking.PointLocationTest(graph);
 
+            // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            
+            // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             
-            // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            
-            // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
-            // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            // // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
+            // // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
-            // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // // //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            // // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            // // // //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
 
-            // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // // //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            // // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            // // // //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
-            // // //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
+            // // // //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            // // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
 
-            // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            // // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            // Persona spatial data generation
-            var personaRouter = new PersonaRouter(graph);
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
-            // personaRouter.TracePersonas();
-            // personaRouter.TracePersonasRouteResult();
+            // // Persona spatial data generation
+            // var personaRouter = new PersonaRouter(graph);
+            // await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            // // personaRouter.TracePersonas();
+            // // personaRouter.TracePersonasRouteResult();
             
 
             // Logger flushing
