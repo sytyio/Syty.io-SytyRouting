@@ -13,7 +13,7 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private const string ConfigurationTableName = "public.configuration";
-        private const string WaysTableName = "public.ways";
+        // private const string WaysTableName = "public.ways";
 
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
@@ -117,7 +117,8 @@ namespace SytyRouting
 
             
 
-            var connectionString = Constants.ConnectionString;
+            // var connectionString = Constants.ConnectionString;
+            var connectionString = Configuration.ConnectionString;
             string queryString;           
 
             await using var connection = new NpgsqlConnection(connectionString);
@@ -160,11 +161,12 @@ namespace SytyRouting
 
 
             // Get the total number of rows to estimate the Graph creation time
-            totalDbRows = await Helper.DbTableRowCount(WaysTableName, logger);
+            totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
+            //var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + WaysTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())

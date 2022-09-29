@@ -12,10 +12,27 @@
     <PackageReference Include="NLog" Version="5.0.2" />
     <PackageReference Include="Npgsql" Version="6.0.6" />
     <PackageReference Include="Npgsql.NetTopologySuite" Version="6.0.6" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
   </ItemGroup>
   <ItemGroup>
 		<None Update="NLog.config">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+  <ItemGroup>
+      <None Update="appsettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+   </ItemGroup>
+   <ItemGroup>
+      <None Update="appsettings.data.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+   </ItemGroup>
+  <ItemGroup>
+      <None Update="appsettings.routing.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+   </ItemGroup>
 </Project>

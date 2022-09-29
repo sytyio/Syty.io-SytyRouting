@@ -23,7 +23,7 @@ namespace SytyRouting
 
             logger.Info("Creating syty.io routing graph from dataset");
             var graph = new Graph();
-            await graph.FileLoadAsync("graph.dat");
+            await graph.FileLoadAsync(Configuration.GraphFileName);
 
             graph.TraceNodes();
 
@@ -55,7 +55,7 @@ namespace SytyRouting
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
             // personaRouter.TracePersonas();
             // personaRouter.TracePersonasRouteResult();
-            
+           
 
             // Logger flushing
             LogManager.Shutdown();

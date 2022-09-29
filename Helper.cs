@@ -12,7 +12,7 @@ namespace SytyRouting
         {
             int totalDbRows = 0;
 
-            var connectionString = Constants.ConnectionString;
+            var connectionString = Configuration.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 

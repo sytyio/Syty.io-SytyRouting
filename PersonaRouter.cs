@@ -5,7 +5,6 @@ using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using SytyRouting.Algorithms;
 using System.Collections.Concurrent;
-using NetTopologySuite.Utilities;
 using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting
@@ -13,12 +12,6 @@ namespace SytyRouting
     public class PersonaRouter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        private const string TableName = "public.persona";
-        private const int MonitorSleepMilliseconds = 5_000;
-        private const int DBPersonaLoadAsyncSleepMilliseconds = 100;
-        private const int InitialDataLoadSleepMilliseconds = 2_000;
-        private const int RegularRoutingTaskBatchSize = 100;
 
         private List<Persona> personas = new List<Persona>();
         
@@ -36,7 +29,7 @@ namespace SytyRouting
         private static int computedRoutes = 0;
         private bool routingTasksHaveEnded = false;
     
-        private int regularBatchSize = simultaneousRoutingTasks * RegularRoutingTaskBatchSize;
+        private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
 
 
         private Stopwatch stopWatch = new Stopwatch();
@@ -51,8 +44,10 @@ namespace SytyRouting
         {
             stopWatch.Start();
 
-            // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 1000; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
+
+            // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
+            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -64,10 +59,10 @@ namespace SytyRouting
             }
             
             Task loadingTask = Task.Run(() => DBPersonaDownloadAsync());
-            Thread.Sleep(InitialDataLoadSleepMilliseconds);
+            Thread.Sleep(initialDataLoadSleepMilliseconds);
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
             {
-                logger.Info(" ==>> Initial DB load timeout ({0} ms) elapsed. Unable to start the routing process.", InitialDataLoadSleepMilliseconds);
+                logger.Info(" ==>> Initial DB load timeout ({0} ms) elapsed. Unable to start the routing process.", initialDataLoadSleepMilliseconds);
                 return;
             }
             
@@ -91,9 +86,13 @@ namespace SytyRouting
 
         private async Task DBPersonaDownloadAsync()
         {
-            var connectionString = Constants.ConnectionString;
+            int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
+
+            var connectionString = Configuration.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
+
+            var personaTableName = Configuration.PersonaTableName;
 
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
@@ -113,7 +112,7 @@ namespace SytyRouting
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                     0              1              2
-                var queryString = "SELECT id, home_location, work_location FROM " + TableName + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                var queryString = "SELECT id, home_location, work_location FROM " + personaTableName + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -144,7 +143,7 @@ namespace SytyRouting
                 offset += currentBatchSize;
 
                 while(personaTaskArraysQueue.Count > taskArraysQueueThreshold)
-                    Thread.Sleep(DBPersonaLoadAsyncSleepMilliseconds);
+                    Thread.Sleep(dBPersonaLoadAsyncSleepMilliseconds);
             }
             await connection.CloseAsync();
         }
@@ -186,6 +185,7 @@ namespace SytyRouting
 
         private void MonitorRouteCalculation()
         {
+            int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
             while(true)
             {
                 var timeSpan = stopWatch.Elapsed;
@@ -203,7 +203,7 @@ namespace SytyRouting
                     return;
                 }
 
-                Thread.Sleep(MonitorSleepMilliseconds);
+                Thread.Sleep(monitorSleepMilliseconds);
             }
         }
 
@@ -225,16 +225,17 @@ namespace SytyRouting
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
-            // var connectionString = Constants.LocalConnectionString; // Local DB for testing
-            var connectionString = Constants.ConnectionString;
+            var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
+            // var connectionString = ConfigurationHelper.GetConnectionString();            
             
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
-            string tableName = "persona_route_upload_test";
+            // string routeTableName = "persona_route_upload_test";
+            var routeTableName = Configuration.RouteTableName;
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + tableName + " (persona_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, route GEOMETRY);", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeTableName + " (persona_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, route GEOMETRY);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -244,7 +245,7 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + tableName + " (persona_id, route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET route = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTableName + " (persona_id, route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET route = $2", connection)
                     {
                         Parameters =
                         {
