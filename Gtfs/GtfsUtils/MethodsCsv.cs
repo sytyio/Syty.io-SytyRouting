@@ -229,7 +229,6 @@ public class MethodsCsv
             arrayOfCoordinate[i] = coordinate;
         }
         LineString lineString = new LineString(arrayOfCoordinate);
-        logger.Info("Two first points of linestring {0} and {1} ", lineString[0], lineString[1]);
         return lineString;
     }
 
