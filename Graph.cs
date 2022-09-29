@@ -12,12 +12,14 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private const string TableName = "public.ways";
+        private const string ConfigurationTableName = "public.configuration";
+        private const string WaysTableName = "public.ways";
 
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        Dictionary<OSMTagId,TransportMode> tagIdToTransportMode = new Dictionary<OSMTagId,TransportMode>(OSMTagId.GetValues(typeof(OSMTagId)).Length);
+        private Dictionary<OSMTagId,TransportMode> tagIdToTransportMode = new Dictionary<OSMTagId,TransportMode>(OSMTagId.GetValues(typeof(OSMTagId)).Length);
+        private Dictionary<int,String> transportModes = new Dictionary<int,String>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -113,7 +115,7 @@ namespace SytyRouting
 
             Dictionary<long, Node> nodes = new Dictionary<long, Node>();
 
-            CreateMappingTagIdToTransportMode();
+            
 
             var connectionString = Constants.ConnectionString;
             string queryString;           
@@ -121,12 +123,48 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
+            
+            var totalDbRows = await Helper.DbTableRowCount(ConfigurationTableName, logger);
+            int[] osmTagIds = new int[totalDbRows];
+            // Read the 'configuration' rows and create an array of tag_ids
+            //                      0
+            queryString = "SELECT tag_id FROM " + ConfigurationTableName;
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {    
+                int tagIdIndex = 0;
+
+                while (await reader.ReadAsync())
+                {
+                    var tagId = (OSMTagId)reader.GetValue(0); // tag_id
+                    try
+                    {
+                        osmTagIds[tagIdIndex] = Convert.ToInt32(tagId);
+                    }
+                    catch (Exception e)
+                    {
+                        logger.Debug("Unable to process tag_id: {0}", e.Message);
+                    }
+                    tagIdIndex++;
+                }
+            }
+
+            for(int i = 0; i < osmTagIds.Length; i++)
+            {
+                Console.WriteLine("osmTagId = {0}", osmTagIds[i]);
+            }
+
+            LoadTransportModes();
+            CreateMappingTagIdToTransportMode(osmTagIds);
+
+
             // Get the total number of rows to estimate the Graph creation time
-            var totalDbRows = await Helper.DbTableRowCount(TableName, logger);
+            totalDbRows = await Helper.DbTableRowCount(WaysTableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + WaysTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -325,6 +363,28 @@ namespace SytyRouting
             }
         }
 
+        private void LoadTransportModes()
+        {
+            transportModes.Add(0,"Default 0");
+            for(int n = 0; n < 8; n++)
+            {
+                var twoToTheNth = (int)Math.Pow(2,n);
+                var transportName = String.Format("Transport mode {0}",twoToTheNth);
+                if(!transportModes.ContainsKey(twoToTheNth))
+                {
+                    transportModes.Add(twoToTheNth,transportName);
+                }
+                else
+                {
+                    logger.Info("Unable to load Transport Mode {0}: {1}", twoToTheNth,transportName);
+                }
+            }
+            foreach(var tm in transportModes)
+            {
+                Console.WriteLine("{0}: {1}", tm.Key,tm.Value);
+            }
+        }
+
         private TransportMode GetTransportModes(OSMTagId tagId)
         {
             if (tagIdToTransportMode.ContainsKey(tagId))
@@ -338,10 +398,9 @@ namespace SytyRouting
             }
         }
 
-        private void CreateMappingTagIdToTransportMode()
+        private void CreateMappingTagIdToTransportMode(int[] osmTagIds)
         {
-            var osmTagIdValues = OSMTagId.GetValues(typeof(OSMTagId));
-            foreach (OSMTagId tagId in osmTagIdValues)
+            foreach (OSMTagId tagId in osmTagIds)
             {
                 TransportMode mask; // = TransportMode.Undefined;
                 switch(tagId)
@@ -575,7 +634,7 @@ namespace SytyRouting
                 }
                 else
                 {
-                    logger.Debug("Unable to add key to OSM tag_id to Transport Mode mapping. Tag id: {0}", tagId);
+                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagId);
                 }
             }            
         }
