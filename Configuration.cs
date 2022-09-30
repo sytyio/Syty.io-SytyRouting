@@ -12,6 +12,7 @@ namespace SytyRouting
         public static string LocalConnectionString {get;}
         
         // DB table settings:
+        public static string ConfigurationTableName {get;}
         public static string PersonaTableName {get;}
         public static string RouteTableName {get;}
         public static string EdgeTableName {get;}
@@ -22,6 +23,11 @@ namespace SytyRouting
         public static int InitialDataLoadSleepMilliseconds {get;}
         public static int RegularRoutingTaskBatchSize {get;}
 
+        // Transport parameters:
+        public static string[] TransportModeNames {get;}
+        public static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
+
+
         static Configuration()
         {
             // Build a config object, using env vars and JSON providers.
@@ -29,6 +35,7 @@ namespace SytyRouting
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile("appsettings.data.json")
                 .AddJsonFile("appsettings.routing.json")
+                .AddJsonFile("appsettings.transport.json")
                 // .AddEnvironmentVariables()
                 .Build();
 
@@ -41,6 +48,7 @@ namespace SytyRouting
             LocalConnectionString = dBConnectionSettings.LocalConnectionString;
             
             DbSettings dBTableSettings = config.GetRequiredSection("DbTableSettings").Get<DbSettings>();
+            ConfigurationTableName = dBTableSettings.ConfigurationTableName;
             PersonaTableName = dBTableSettings.PersonaTableName;
             RouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
@@ -51,6 +59,9 @@ namespace SytyRouting
             InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
+            TransportSettings transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
+            TransportModeNames= transportSettings.TransportModeNames;
+            OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
     }
 }

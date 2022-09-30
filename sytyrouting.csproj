@@ -24,15 +24,20 @@
       <None Update="appsettings.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-   </ItemGroup>
-   <ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
       <None Update="appsettings.data.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-   </ItemGroup>
+  </ItemGroup>
   <ItemGroup>
       <None Update="appsettings.routing.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-   </ItemGroup>
+  </ItemGroup>
+  <ItemGroup>
+      <None Update="appsettings.transport.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+  </ItemGroup>
 </Project>

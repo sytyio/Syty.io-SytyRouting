@@ -12,14 +12,11 @@ namespace SytyRouting
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private const string ConfigurationTableName = "public.configuration";
-        // private const string WaysTableName = "public.ways";
-
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        private Dictionary<OSMTagId,TransportMode> tagIdToTransportMode = new Dictionary<OSMTagId,TransportMode>(OSMTagId.GetValues(typeof(OSMTagId)).Length);
-        private Dictionary<int,String> transportModes = new Dictionary<int,String>();
+        private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
+        private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -125,20 +122,19 @@ namespace SytyRouting
             await connection.OpenAsync();
 
             
-            var totalDbRows = await Helper.DbTableRowCount(ConfigurationTableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(Configuration.ConfigurationTableName, logger);
             int[] osmTagIds = new int[totalDbRows];
             // Read the 'configuration' rows and create an array of tag_ids
             //                      0
-            queryString = "SELECT tag_id FROM " + ConfigurationTableName;
+            queryString = "SELECT tag_id FROM " + Configuration.ConfigurationTableName;
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {    
                 int tagIdIndex = 0;
-
                 while (await reader.ReadAsync())
                 {
-                    var tagId = (OSMTagId)reader.GetValue(0); // tag_id
+                    var tagId = Convert.ToInt32(reader.GetValue(0)); // tag_id
                     try
                     {
                         osmTagIds[tagIdIndex] = Convert.ToInt32(tagId);
@@ -156,7 +152,7 @@ namespace SytyRouting
                 Console.WriteLine("osmTagId = {0}", osmTagIds[i]);
             }
 
-            LoadTransportModes();
+            LoadTransportModeMasks();
             CreateMappingTagIdToTransportMode(osmTagIds);
 
 
@@ -198,7 +194,7 @@ namespace SytyRouting
                     var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
                     var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
 
-                    var tagId = (OSMTagId)reader.GetValue(16); // tag_id
+                    var tagId = Convert.ToInt32(reader.GetValue(16)); // tag_id
                     
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s, tagId);
 
@@ -292,7 +288,7 @@ namespace SytyRouting
         private void TraceEdge(Edge edge)
         {
             logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} ({9})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, edge.TransportModes, (int)edge.TransportModes);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModesToString(edge.TransportModes), edge.TransportModes);
             
             TraceInternalGeometry(edge);
         }
@@ -325,9 +321,9 @@ namespace SytyRouting
             return nodes[id];
         }
 
-        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, OSMTagId tagId)
+        private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
-            var transportModes = GetTransportModes(tagId);
+            byte transportModes = GetTransportModes(tagId);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
@@ -365,29 +361,53 @@ namespace SytyRouting
             }
         }
 
-        private void LoadTransportModes()
+        private void LoadTransportModeMasks()
         {
-            transportModes.Add(0,"Default 0");
-            for(int n = 0; n < 8; n++)
+            // Create a bitmask for the Transport Modes based on a Dictionary
+            try
             {
-                var twoToTheNth = (int)Math.Pow(2,n);
-                var transportName = String.Format("Transport mode {0}",twoToTheNth);
-                if(!transportModes.ContainsKey(twoToTheNth))
+                var allowedTransportModes=Configuration.OSMTagsToTransportModes;
+                
+                transportModeMasks.Add(Configuration.TransportModeNames[0],0);
+                for(int n = 0; n < Configuration.TransportModeNames.Length-1; n++)
                 {
-                    transportModes.Add(twoToTheNth,transportName);
+                    var twoToTheNth = (byte)Math.Pow(2,n);
+                    var transportName = Configuration.TransportModeNames[n+1];
+                    if(!transportModeMasks.ContainsKey(transportName))
+                    {
+                        // twoToTheNth
+                        transportModeMasks.Add(transportName,twoToTheNth);
+                    }
+                    else
+                    {
+                        logger.Info("Unable to load Transport Mode {0}: {1}",transportName,twoToTheNth);
+                    }
                 }
-                else
+                foreach(var tmm in transportModeMasks)
                 {
-                    logger.Info("Unable to load Transport Mode {0}: {1}", twoToTheNth,transportName);
+                    Console.WriteLine("{0}: {1}", tmm.Key,tmm.Value);
                 }
             }
-            foreach(var tm in transportModes)
+            catch (Exception e)
             {
-                Console.WriteLine("{0}: {1}", tm.Key,tm.Value);
+                logger.Info("Transport Modes error: {0}", e.Message);
             }
         }
 
-        private TransportMode GetTransportModes(OSMTagId tagId)
+        private string TransportModesToString(int transportModes)
+        {
+            string result = "";
+            foreach(var tmm in transportModeMasks)
+            {
+                if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
+                {
+                    result += tmm.Key + ", ";
+                }
+            }
+            return result;
+        }
+
+        private byte GetTransportModes(int tagId)
         {
             if (tagIdToTransportMode.ContainsKey(tagId))
             {
@@ -396,236 +416,237 @@ namespace SytyRouting
             else
             {
                 logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
-                return TransportMode.None;
+                return (byte)0; // Default: transportModes["None"];
             }
         }
 
+
         private void CreateMappingTagIdToTransportMode(int[] osmTagIds)
         {
-            foreach (OSMTagId tagId in osmTagIds)
+            foreach (var tagId in osmTagIds)
             {
-                TransportMode mask; // = TransportMode.Undefined;
+                byte mask; // = TransportMode.Undefined;
                 switch(tagId)
                 {
-                    case OSMTagId.CyclewayLane:
-                    {
-                        // Bicycle
-                        mask = TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.CyclewayOpposite:
-                    {
-                        // Bicycle
-                        mask = TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.CyclewayOppositeLane:
-                    {
-                        // Bicycle
-                        mask = TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.CyclewayTrack:
-                    {
-                        // Bicycle
-                        mask = TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.HighwayBridleway:
-                    {
-                        // Foot, Bicycle, Horse*
-                        mask = TransportMode.Bicycle | TransportMode.Bicycle | TransportMode.Horse;
-                        break;
-                    }
-                    case OSMTagId.HighwayBusGuideway:
-                    {
-                        // Bus
-                        mask = TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayByway:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.HighwayCycleway:
-                    {
-                        // Foot, Bicycle*
-                        mask = TransportMode.Foot | TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.HighwayFootway:
-                    {
-                        // Foot*, Bicycle
-                        mask = TransportMode.Foot | TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.HighwayLivingStreet: 
-                    {
-                        // Foot, Bicycle, Car
-                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car;
-                        break;
-                    }
-                    case OSMTagId.HighwayMotorway:      
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayMotorwayJunction:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayMotorwayLink:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayPath:
-                    {
-                        // Foot, Bicycle
-                        mask = TransportMode.Foot | TransportMode.Bicycle;
-                        break;
-                    }
-                    case OSMTagId.HighwayPedestrian:
-                    {
-                        // Foot
-                        mask = TransportMode.Foot;
-                        break;
-                    }
-                    case OSMTagId.HighwayPrimary:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayPrimaryLink:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayResidential:
-                    {
-                        // Foot, Bicycle, Car, Bus
-                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayRoad:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.HighwaySecondary:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwaySecondaryLink:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayService:
-                    {
-                        // Foot, Bicycle, Car, Bus
-                        mask = TransportMode.Foot | TransportMode.Bicycle | TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayServices:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwaySteps:
-                    {
-                        // Foot
-                        mask = TransportMode.Foot;
-                        break;
-                    }
-                    case OSMTagId.HighwayTertiary:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayTertiaryLink:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayTrack:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.HighwayTrunk:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayTrunkLink:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.HighwayUnclassified:
-                    {
-                        // Bicycle, Car
-                        mask = TransportMode.Bicycle | TransportMode.Car;
-                        break;
-                    }
-                    case OSMTagId.JunctionRoundabout:
-                    {
-                        // Car, Bus
-                        mask = TransportMode.Car | TransportMode.Bus;
-                        break;
-                    }
-                    case OSMTagId.TrackTypeGrade1:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.TrackTypeGrade2:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.TrackTypeGrade3:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.TrackTypeGrade4:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
-                    case OSMTagId.TrackTypeGrade5:
-                    {
-                        // Undefined
-                        mask = TransportMode.Undefined;
-                        break;
-                    }
+            //         case OSMTagId.CyclewayLane:
+            //         {
+            //             // Bicycle
+            //             mask = transportModeMasks["Bicycle"];
+            //             break;
+            //         }
+            //         case OSMTagId.CyclewayOpposite:
+            //         {
+            //             // Bicycle
+            //             mask = transportModeMasks["Bicycle"];
+            //             break;
+            //         }
+            //         case OSMTagId.CyclewayOppositeLane:
+            //         {
+            //             // Bicycle
+            //             mask = transportModeMasks["Bicycle"];
+            //             break;
+            //         }
+            //         case OSMTagId.CyclewayTrack:
+            //         {
+            //             // Bicycle
+            //             mask = transportModeMasks["Bicycle"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayBridleway:
+            //         {
+            //             // Foot, Bicycle, Horse*
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"] | transportModeMasks["Horse"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayBusGuideway:
+            //         {
+            //             // Bus
+            //             mask = transportModeMasks["Bus"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayByway:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayCycleway:
+            //         {
+            //             // Foot, Bicycle*
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayFootway:
+            //         {
+            //             // Foot*, Bicycle
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayLivingStreet: 
+            //         {
+            //             // Foot, Bicycle, Car
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"] | transportModeMasks["Car"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayMotorway:      
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayMotorwayJunction:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayMotorwayLink:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayPath:
+            //         {
+            //             // Foot, Bicycle
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayPedestrian:
+            //         {
+            //             // Foot
+            //             mask = transportModeMasks["Foot"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayPrimary:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayPrimaryLink:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayResidential:
+            //         {
+            //             // Foot, Bicycle, Car, Bus
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"] | transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayRoad:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwaySecondary:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwaySecondaryLink:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayService:
+            //         {
+            //             // Foot, Bicycle, Car, Bus
+            //             mask = (byte)(transportModeMasks["Foot"] | transportModeMasks["Bicycle"] | transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayServices:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwaySteps:
+            //         {
+            //             // Foot
+            //             mask = transportModeMasks["Foot"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayTertiary:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayTertiaryLink:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayTrack:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayTrunk:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayTrunkLink:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.HighwayUnclassified:
+            //         {
+            //             // Bicycle, Car
+            //             mask = (byte)(transportModeMasks["Bicycle"] | transportModeMasks["Car"]);
+            //             break;
+            //         }
+            //         case OSMTagId.JunctionRoundabout:
+            //         {
+            //             // Car, Bus
+            //             mask = (byte)(transportModeMasks["Car"] | transportModeMasks["Bus"]);
+            //             break;
+            //         }
+            //         case OSMTagId.TrackTypeGrade1:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.TrackTypeGrade2:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.TrackTypeGrade3:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.TrackTypeGrade4:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
+            //         case OSMTagId.TrackTypeGrade5:
+            //         {
+            //             // Undefined
+            //             mask = transportModeMasks["Undefined"];
+            //             break;
+            //         }
                     default:
                     {
-                        mask = TransportMode.Undefined;
+                        mask = transportModeMasks["Undefined"];
                         break;
                     }
                 }
