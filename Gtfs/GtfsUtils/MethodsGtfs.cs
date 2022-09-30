@@ -1,120 +1,193 @@
-using System.Net; //download file 
-using System.IO.Compression; //zip
 using NLog;
 using SytyRouting.Gtfs.ModelCsv;
+using SytyRouting.Gtfs.ModelGtfs;
+using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Gtfs.GtfsUtils
 {
-public class MethodsGtfs
-{
-
-    private static Logger logger = LogManager.GetCurrentClassLogger();
-
-    public static async Task DownloadsGtfs()
+    public class MethodsGtfs
     {
-        CleanGtfs();
-        List<Task> listDwnld = new List<Task>();
-        foreach (ProviderCsv provider in Enum.GetValues(typeof(ProviderCsv)))
-        {
 
-            listDwnld.Add(DownloadGtfs(provider));
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        }
-        if(listDwnld.Count == 0)
+        public static Dictionary<string, StopGtfs> createStopGtfsDictionary(List<StopCsv> recordsStop)
         {
-            logger.Info("Nothing to download");
-        }
-        try
-        {
-            await Task.WhenAll(listDwnld);
-        }
-        catch (AggregateException e)
-        {
-            var collectedExceptions = e.InnerExceptions;
-            logger.Info("Error with the download of {0} provider(s)", collectedExceptions.Count);
-            foreach (var inEx in collectedExceptions)
+            var stopDico = new Dictionary<string, StopGtfs>();
+            foreach (StopCsv stop in recordsStop)
             {
-                logger.Info(inEx.Message);
+                stopDico.Add(stop.Id, new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
+            }
+            return stopDico;
+        }
+
+        // Creates the routes but trips are empty
+        public static Dictionary<string, RouteGtfs> createRouteGtfsDictionary(List<RouteCsv> recordsRoute)
+        {
+            var routeDico = new Dictionary<string, RouteGtfs>();
+            foreach (RouteCsv route in recordsRoute)
+            {
+                routeDico.Add(route.Id, new RouteGtfs(route.Id, route.LongName, route.Type, new Dictionary<string, TripGtfs>()));
+
+            }
+            return routeDico;
+        }
+
+        // Create the shapes
+        public static Dictionary<string, ShapeGtfs> createShapeGtfsDictionary(List<ShapeCsv> recordsShape)
+        {
+
+            var shapeDico = new Dictionary<string, ShapeGtfs>();
+            foreach (var shape in recordsShape)
+            {
+                ShapeGtfs shapeBuff = null;
+                if (!shapeDico.TryGetValue(shape.Id, out shapeBuff))
+                {
+                    shapeDico.Add(shape.Id, new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), MethodsCsv.CreateLineString(recordsShape, shape.Id)));
+                    shapeDico.TryGetValue(shape.Id, out shapeBuff);
+                }
+
+                Point pointBuff = null;
+                if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
+                {
+                    shapeBuff.ItineraryPoints.Add(shape.PtSequence, new Point(shape.PtLon, shape.PtLat));
+                }
+            }
+            return shapeDico;
+        }
+
+        public static Dictionary<string, ScheduleGtfs> createScheduleGtfsDictionary(List<StopTimesCsv> recordStopTime, Dictionary<string, StopGtfs> stopDico, Dictionary<string, TripGtfs> tripDico)
+        {
+            TripGtfs targetTrip = null;
+            ScheduleGtfs schedule = null;
+            StopGtfs stopBuff = null;
+
+            // Create the timeStop with an dico details
+            var scheduleDico = new Dictionary<string, ScheduleGtfs>();  // String = l'id du trip
+            foreach (var stopTime in recordStopTime)
+            {
+                stopDico.TryGetValue(stopTime.StopId, out stopBuff);
+                TimeSpan arrivalTime = MethodsCsv.ParseMore24Hours(stopTime.ArrivalTime);
+                TimeSpan departureTime = MethodsCsv.ParseMore24Hours(stopTime.DepartureTime);
+                StopTimesGtfs newStopTime = new StopTimesGtfs(stopBuff, arrivalTime, departureTime, stopTime.Sequence);
+                // If a line already exists
+                if (scheduleDico.TryGetValue(stopTime.TripId, out schedule))
+                {
+                    schedule.Details.Add(stopTime.Sequence, newStopTime);
+                }
+                else
+                {
+                    tripDico.TryGetValue(stopTime.TripId, out targetTrip);
+                    Dictionary<int, StopTimesGtfs> myDico = new Dictionary<int, StopTimesGtfs>();
+                    myDico.Add(stopTime.Sequence, newStopTime);
+                    scheduleDico.Add(stopTime.TripId, new ScheduleGtfs(targetTrip.Id, myDico));
+                }
+            }
+            return scheduleDico;
+        }
+
+        internal static void addTripsToRoute(Dictionary<string, TripGtfs> tripDico)
+        {
+            foreach (KeyValuePair<string, TripGtfs> trip in tripDico)
+            {
+                // add the current trip to the route
+                var route = trip.Value.Route;
+                var listTrips = route.Trips;
+                TripGtfs buffTrips = null;
+                if (!listTrips.TryGetValue(trip.Key, out buffTrips))
+                {
+                    listTrips.Add(trip.Key, trip.Value);
+                }
             }
         }
-        catch(Exception)
+
+        // Create a trip with a shape (if there's an available shape) and with no schedule
+        public static Dictionary<string, TripGtfs> createTripGtfsDictionary(List<TripCsv> recordsTrip, Dictionary<string, ShapeGtfs> shapeDico, Dictionary<string, RouteGtfs> routeDico)
         {
-            // Case when there is no provider.
+            var tripDico = new Dictionary<string, TripGtfs>();
+            RouteGtfs buffRoute = null;
+            ShapeGtfs buffShape = null;
+            foreach (TripCsv trip in recordsTrip)
+            {
+                if (routeDico.TryGetValue(trip.RouteId, out buffRoute))
+                {
+                    TripGtfs newTrip;
+                    if (trip.ShapeId != null && shapeDico.TryGetValue(trip.ShapeId, out buffShape))
+                    {
+                        newTrip = new TripGtfs(buffRoute, trip.Id, buffShape, null);
+                    }
+                    else
+                    {
+                        newTrip = new TripGtfs(buffRoute, trip.Id, null, null);
+                    }
+
+                    tripDico.Add(trip.Id, newTrip);
+                }
+            }
+            return tripDico;
+        }
+
+        public static void addScheduleToTrip(Dictionary<string, ScheduleGtfs> scheduleDico, Dictionary<string, TripGtfs> tripDico)
+        {
+            TripGtfs tripBuff = null;
+            foreach (var schedule in scheduleDico)
+            {
+                if (tripDico.TryGetValue(schedule.Key, out tripBuff))
+                {
+                    tripBuff.Schedule = schedule.Value;
+                }
+            }
+        }
+
+        public static void printTripDico(Dictionary<string, TripGtfs> tripDico)
+        {
+            foreach (KeyValuePair<string, TripGtfs> trip in tripDico)
+            {
+                logger.Info("Key = {0}, Value = {1}", trip.Key, trip.Value);
+            }
+        }
+
+        public static void printRouteDico(Dictionary<string, RouteGtfs> routeDico)
+        {
+            foreach (KeyValuePair<string, RouteGtfs> route in routeDico)
+            {
+                logger.Info("Key = {0}, Value = {1}", route.Key, route.Value);
+            }
+        }
+
+        public static void printShapeDico(Dictionary<string, ShapeGtfs> shapeDico)
+        {
+            foreach (var shape in shapeDico)
+            {
+                logger.Info("Key {0}, Value {1}", shape.Key, shape.Value);
+            }
+        }
+
+        public static void printScheduleDico(Dictionary<string, ScheduleGtfs> scheduleDico)
+        {
+            foreach (var schedule in scheduleDico)
+            {
+                logger.Info("Key {0}, Value {1}", schedule.Key, schedule.Value);
+            }
+        }
+
+        public static void printStopDico(Dictionary<string, StopGtfs> stopDico)
+        {
+            foreach (var stop in stopDico)
+            {
+                logger.Info("Key {0}, Value {1}", stop.Key, stop.Value);
+            }
+        }
+
+        public static void printStopTimeForOneTrip(Dictionary<string, TripGtfs> tripDico, string tripId)
+        {
+            TripGtfs targetedTrip = null;
+            tripDico.TryGetValue(tripId, out targetedTrip);
+            logger.Info("Mon voyage {0} ", targetedTrip);
+            logger.Info("Mon horaire pour un voyage");
+            foreach (KeyValuePair<int, StopTimesGtfs> stopTime in targetedTrip.Schedule.Details)
+            {
+                logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
+            }
         }
     }
-
-    public static void CleanGtfs()
-    {
-        if (Directory.Exists("GtfsData"))
-        {
-            Directory.Delete("GtfsData", true);
-            logger.Info("Cleaning GtfsData");
-
-        }
-        else
-        {
-            logger.Info("No data found");
-        }
-    }
-
-    private static async Task DownloadGtfs(ProviderCsv provider)
-    {
-        string path = System.IO.Path.GetFullPath("GtfsData");
-
-        logger.Info("Start download {0}", provider);
-        string fullPathDwln = path + $"\\{provider}\\gtfs.zip";
-        string fullPathExtract = path + $"\\{provider}\\gtfs";
-        Uri linkOfGtfs = new Uri("https://huhu");
-        Directory.CreateDirectory(path);
-        Directory.CreateDirectory(path + $"\\{provider}");
-        switch (provider)
-        {
-            case ProviderCsv.stib:
-                linkOfGtfs = new Uri("https://stibmivb.opendatasoft.com/api/datasets/1.0/gtfs-files-production/alternative_exports/gtfszip/");
-                break;
-            case ProviderCsv.tec:
-                linkOfGtfs = new Uri("https://gtfs.irail.be/tec/tec-gtfs.zip");
-                break;
-            case ProviderCsv.ter:
-                linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export-ter-gtfs-last.zip");
-                break;
-            case ProviderCsv.canada:
-                linkOfGtfs = new Uri("https://transitfeeds.com/p/calgary-transit/238/latest/download");
-                break;
-            case ProviderCsv.tgv:
-                linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export_gtfs_voyages.zip");
-                break;
-            case ProviderCsv.suisse:
-                linkOfGtfs = new Uri("https://opentransportdata.swiss/de/dataset/timetable-2021-gtfs2020/resource_permalink/gtfs_fp2021_2021-12-08_09-10.zip");
-                break;
-        }
-        Task dwnldAsync;
-
-        using (WebClient wc = new WebClient())
-        {
-            dwnldAsync = wc.DownloadFileTaskAsync(
-                // Param1 = Link of file
-                linkOfGtfs,
-                // Param2 = Path to save
-                fullPathDwln);
-            logger.Info("downloaded directory for {0}", provider);
-        }
-        try
-        {
-            await dwnldAsync;
-        }
-        catch
-        {
-            logger.Info("Error with the provider {0}", provider);
-            throw;
-        }
-        await Task.Run(() => ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract));
-        logger.Info("{0} done", provider);
-
-        if (Directory.Exists(fullPathExtract))
-        {
-            File.Delete(fullPathDwln); //delete .zip
-        }
-    }
-}
 }

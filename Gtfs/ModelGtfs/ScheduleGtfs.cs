@@ -1,19 +1,21 @@
-namespace SytyRouting.Gtfs.ModelGtfs{
 
+namespace SytyRouting.Gtfs.ModelGtfs
+{
+    public class ScheduleGtfs
+    {
+        public string Trip { get; set; }
 
+        public Dictionary<int, StopTimesGtfs> Details { get; set; }
 
-    public class ScheduleGtfs{
+        public override string ToString()
+        {
+            return "Trip = " + Trip + "Nb of stoptimes = " + Details.Count;
+        }
 
-        public StopGtfs Stop { get; set; }
-
-        public TimeSpan? ArrivalTime { get; set; }
-
-        public TimeSpan? DepartureTime { get; set; }
-
-        public ScheduleGtfs(StopGtfs stop, TimeSpan arrivalTime, TimeSpan departureTime){
-            this.ArrivalTime=arrivalTime;
-            this.DepartureTime=departureTime;
-            this.Stop=stop;
+        public ScheduleGtfs(string trip, Dictionary<int, StopTimesGtfs> details)
+        {
+            this.Trip = trip;
+            this.Details = details;
         }
     }
 }

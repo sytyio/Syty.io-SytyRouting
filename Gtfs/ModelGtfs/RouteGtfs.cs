@@ -1,6 +1,3 @@
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
-
 namespace SytyRouting.Gtfs.ModelGtfs
 {
     public class RouteGtfs
@@ -15,7 +12,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public override string ToString()
         {
-            return "Id: " + Id +" Name : " + LongName + " Nb trips associés = "+ Trips.Count ; //" Type : " + Type + 
+            return "Id: " + Id +" Name : " + LongName + " Nb trips associés = "+ Trips.Count ;
         }
 
         public RouteGtfs(string id, string name, int type, Dictionary<string,TripGtfs>? trips){
@@ -24,6 +21,5 @@ namespace SytyRouting.Gtfs.ModelGtfs
             this.Type=type;
             this.Trips=trips;
         }
-
     }
 }

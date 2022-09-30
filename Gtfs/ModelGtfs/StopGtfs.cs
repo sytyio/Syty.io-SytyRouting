@@ -1,6 +1,3 @@
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
-using System.Text;
 namespace SytyRouting.Gtfs.ModelGtfs
 
 {

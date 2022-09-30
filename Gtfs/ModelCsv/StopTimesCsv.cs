@@ -17,10 +17,13 @@ namespace SytyRouting.Gtfs.ModelCsv
         [Name("stop_id")]
         public string? StopId { get; set; }
 
+        [Name("stop_sequence")]
+        public int Sequence { get; set; }
+
 
         public override string ToString()
         {
-            return "TripId = " + TripId + " ArrivalTime = " + ArrivalTime + " DepartureTime = " + DepartureTime + " StopId = " + StopId;
+            return "TripId = " + TripId + " ArrivalTime = " + ArrivalTime + " DepartureTime = " + DepartureTime + " StopId = " + StopId + "Stop Sequence = "+ Sequence;
         }
     }
 }

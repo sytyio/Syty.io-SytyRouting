@@ -1,25 +1,27 @@
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
-
-namespace SytyRouting.Gtfs.ModelGtfs
-{
-    public class StopTimesGtfs
-    {
-        public TripGtfs Trip { get; set; }
+namespace SytyRouting.Gtfs.ModelGtfs{
 
 
-       public Dictionary<int,ScheduleGtfs> Details { get; set; }
 
+    public class StopTimesGtfs{
+
+        public StopGtfs Stop { get; set; }
+
+        public TimeSpan? ArrivalTime { get; set; }
+
+        public TimeSpan? DepartureTime { get; set; }
+
+        public int Sequence { get; set; }
 
         public override string ToString()
         {
-            return "Trip = " + Trip + " Details = "+Details;
+            return "Stop "+ Stop + "Arrival = "+ ArrivalTime + "Departure = " + DepartureTime;
         }
 
-        public StopTimesGtfs(TripGtfs trip, Dictionary<int,ScheduleGtfs> details)
-        {
-            this.Trip=trip;
-            this.Details=details;
+        public StopTimesGtfs(StopGtfs stop, TimeSpan arrivalTime, TimeSpan departureTime, int sequence){
+            this.ArrivalTime=arrivalTime;
+            this.DepartureTime=departureTime;
+            this.Stop=stop;
+            this.Sequence=sequence;
         }
     }
 }

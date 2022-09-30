@@ -1,5 +1,3 @@
-using CsvHelper.Configuration;
-using CsvHelper.Configuration.Attributes;
 using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Gtfs.ModelGtfs
@@ -15,7 +13,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public override string ToString()
         {
-            return "Id = " + Id + " Nb points = " + ItineraryPoints.Count + " LineString = "+LineString;
+            return "Id = " + Id + " Nb points = " + ItineraryPoints.Count; //+" LineString = "+LineString
         }
 
         public ShapeGtfs(string id, Dictionary<int,Point> itineraryPoints, LineString lineString){
