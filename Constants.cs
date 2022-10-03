@@ -79,5 +79,6 @@ namespace SytyRouting
     {
         // public const string ConnectionString = "Host=compute.syty.io;Port=1234;Username=postgres;Password=test123;Database=sytyrun";
         // public const string LocalConnectionString = "Host=localhost;Port=5432;Username=postgres;Password=;Database=sytyrun_local";
+        public const int MaxNumberOfTransportModes = sizeof(ushort) * 8; // Number of bits to be used in the TransportModes masks
     }
 }

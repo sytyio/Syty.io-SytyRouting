@@ -1,9 +1,12 @@
 using Microsoft.Extensions.Configuration;
+using NLog;
 
 namespace SytyRouting
 {
     public static class Configuration
     { 
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         // Program settings:
         public static string GraphFileName {get;}
 
@@ -14,7 +17,7 @@ namespace SytyRouting
         // DB table settings:
         public static string ConfigurationTableName {get;}
         public static string PersonaTableName {get;}
-        public static string RouteTableName {get;}
+        public static string ComputedRouteTableName {get;}
         public static string EdgeTableName {get;}
 
         // Routing parameters:
@@ -36,10 +39,10 @@ namespace SytyRouting
                 .AddJsonFile("appsettings.data.json")
                 .AddJsonFile("appsettings.routing.json")
                 .AddJsonFile("appsettings.transport.json")
-                // .AddEnvironmentVariables()
                 .Build();
 
-            // Get values from the config given their key and their target type.
+            // Get values from the config representation given their key and their target type:
+
             Settings settings = config.GetRequiredSection("Settings").Get<Settings>();
             GraphFileName = settings.GraphFileName;
 
@@ -50,7 +53,7 @@ namespace SytyRouting
             DbSettings dBTableSettings = config.GetRequiredSection("DbTableSettings").Get<DbSettings>();
             ConfigurationTableName = dBTableSettings.ConfigurationTableName;
             PersonaTableName = dBTableSettings.PersonaTableName;
-            RouteTableName = dBTableSettings.RouteTableName;
+            ComputedRouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
 
             RoutingSettings routingSettings = config.GetRequiredSection("RoutingSettings").Get<RoutingSettings>();
@@ -60,8 +63,39 @@ namespace SytyRouting
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
             TransportSettings transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
-            TransportModeNames= transportSettings.TransportModeNames;
+            TransportModeNames= ValidateTransportModeNames(transportSettings.TransportModeNames);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
+        }
+
+        static string[] ValidateTransportModeNames(string[] configTransportModeNames)
+        {
+            string defaultTransportMode = "None";
+            string[] validTransportModeNames =  new string[Constants.MaxNumberOfTransportModes+1];
+            validTransportModeNames[0] = defaultTransportMode;
+            try
+            {
+                var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
+                
+                if(transportModeNames.Length < Constants.MaxNumberOfTransportModes)
+                {
+                    Array.Resize(ref validTransportModeNames, transportModeNames.Length + 1);
+                }
+                else
+                {
+                    logger.Info("The number of transport modes in the config file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", Constants.MaxNumberOfTransportModes, configTransportModeNames.Length - Constants.MaxNumberOfTransportModes);
+                }
+
+                for(int i = 1; i < validTransportModeNames.Length; i++)
+                {
+                    validTransportModeNames[i] = transportModeNames[i-1]; 
+                }                
+            }
+            catch(Exception e)
+            {
+                logger.Debug("Configuration error. Transport mode names: {0}", e.Message);
+            }
+
+            return validTransportModeNames;
         }
     }
 }
