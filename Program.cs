@@ -19,10 +19,10 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-            //  await MethodsSetUp.DownloadsGtfs();
+            await MethodsSetUp.DownloadsGtfs();
 
             // The chosen provider
-            ProviderCsv choice = ProviderCsv.ter;
+            ProviderCsv choice = ProviderCsv.stib;
 
 
             // Data of the provider
@@ -31,24 +31,30 @@ namespace SytyRouting
             List<TripCsv> recordsTrip = MethodsCsv.GetAllTrips(choice);
             List<ShapeCsv> recordsShape = MethodsCsv.GetAllShapes(choice);
             List<StopTimesCsv> recordStopTime = MethodsCsv.GetAllStopTimes(choice);
+            List<CalendarCsv> recordsCalendar = MethodsCsv.GetAllCalendar(choice);
 
 
             // Create the Gtfs objects
             var stopDico = MethodsGtfs.createStopGtfsDictionary(recordsStop);
             var routeDico = MethodsGtfs.createRouteGtfsDictionary(recordsRoute);
             var shapeDico = MethodsGtfs.createShapeGtfsDictionary(recordsShape);
-            var tripDico = MethodsGtfs.createTripGtfsDictionary(recordsTrip, shapeDico, routeDico);
+            var calendarDico = MethodsGtfs.createCalendarGtfsDictionary(recordsCalendar);
+            var tripDico = MethodsGtfs.createTripGtfsDictionary(recordsTrip, shapeDico, routeDico, calendarDico);
             MethodsGtfs.addTripsToRoute(tripDico);
             var scheduleDico = MethodsGtfs.createScheduleGtfsDictionary(recordStopTime, stopDico, tripDico);
             MethodsGtfs.addScheduleToTrip(scheduleDico,tripDico);
-
-
-            // Some prints
-            string tripId = "OCESN105330F223219:2022-09-27T00:33:07Z";
-            MethodsGtfs.printStopTimeForOneTrip(tripDico,tripId);
-          //  MethodsGtfs.printTripDico(tripDico);
             
-            //MethodsSetUp.CleanGtfs();
+
+
+
+
+
+
+
+            MethodsGtfs.printNumberTripsSunday(tripDico,scheduleDico);
+
+            
+            MethodsSetUp.CleanGtfs();
 
 
             // ========================================

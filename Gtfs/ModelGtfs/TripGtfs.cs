@@ -11,17 +11,20 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public ScheduleGtfs? Schedule { get; set; }
 
+        public CalendarGtfs Service {get;set;}
+
         public override string ToString()
         {
-            return "Trip id: " + Id + " Route : " + Route + " Shape : " + Shape + "Schedule =" + Schedule;
+            return "Trip id: " + Id + " Service Id = "+ Service+ " Route : " + Route + " Shape : " + Shape + "Schedule =" + Schedule;
         }
 
         // Add shape if there is one
-        public TripGtfs(RouteGtfs route, string id, ShapeGtfs shape, ScheduleGtfs schedule){ //ScheduleGtfs2 schedule
+        public TripGtfs(RouteGtfs route, string id, ShapeGtfs shape, ScheduleGtfs schedule, CalendarGtfs service){
             this.Route=route;
             this.Id=id;
             this.Shape=shape;
             this.Schedule=schedule;
+            this.Service=service;
         }
 
 

@@ -55,6 +55,30 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return shapeDico;
         }
 
+
+
+        public static Dictionary<string, CalendarGtfs> createCalendarGtfsDictionary(List<CalendarCsv> recordsCalendar)
+        {
+            Dictionary<string, CalendarGtfs> days = new Dictionary<string, CalendarGtfs>();
+            CalendarGtfs calBuff = null;
+            foreach (var calendar in recordsCalendar)
+            {
+                bool[] daysBool = new bool[7];
+                if (!days.TryGetValue(calendar.ServiceId, out calBuff))
+                {
+                    days.Add(calendar.ServiceId, new CalendarGtfs(calendar.ServiceId, daysBool));
+                    daysBool[0] = Convert.ToBoolean(calendar.Monday);
+                    daysBool[1] = Convert.ToBoolean(calendar.Tuesday);
+                    daysBool[2] = Convert.ToBoolean(calendar.Wednesday);
+                    daysBool[3] = Convert.ToBoolean(calendar.Thursday);
+                    daysBool[4] = Convert.ToBoolean(calendar.Friday);
+                    daysBool[5] = Convert.ToBoolean(calendar.Saturday);
+                    daysBool[6] = Convert.ToBoolean(calendar.Sunday);
+                }
+            }
+            return days;
+        }
+
         public static Dictionary<string, ScheduleGtfs> createScheduleGtfsDictionary(List<StopTimesCsv> recordStopTime, Dictionary<string, StopGtfs> stopDico, Dictionary<string, TripGtfs> tripDico)
         {
             TripGtfs targetTrip = null;
@@ -101,23 +125,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
         }
 
         // Create a trip with a shape (if there's an available shape) and with no schedule
-        public static Dictionary<string, TripGtfs> createTripGtfsDictionary(List<TripCsv> recordsTrip, Dictionary<string, ShapeGtfs> shapeDico, Dictionary<string, RouteGtfs> routeDico)
+        public static Dictionary<string, TripGtfs> createTripGtfsDictionary(List<TripCsv> recordsTrip, Dictionary<string, ShapeGtfs> shapeDico, Dictionary<string, RouteGtfs> routeDico, Dictionary<string, CalendarGtfs> calDico)
         {
             var tripDico = new Dictionary<string, TripGtfs>();
             RouteGtfs buffRoute = null;
             ShapeGtfs buffShape = null;
+            CalendarGtfs buffCal = null;
             foreach (TripCsv trip in recordsTrip)
             {
                 if (routeDico.TryGetValue(trip.RouteId, out buffRoute))
                 {
+                    calDico.TryGetValue(trip.ServiceId, out buffCal);
                     TripGtfs newTrip;
                     if (trip.ShapeId != null && shapeDico.TryGetValue(trip.ShapeId, out buffShape))
                     {
-                        newTrip = new TripGtfs(buffRoute, trip.Id, buffShape, null);
+                        newTrip = new TripGtfs(buffRoute, trip.Id, buffShape, null, buffCal);
                     }
                     else
                     {
-                        newTrip = new TripGtfs(buffRoute, trip.Id, null, null);
+                        newTrip = new TripGtfs(buffRoute, trip.Id, null, null, buffCal);
                     }
 
                     tripDico.Add(trip.Id, newTrip);
@@ -138,6 +164,36 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+
+        public static Dictionary<string, TripGtfs> selectAllTripsForGivenDay(Dictionary<string, TripGtfs> tripDico, Dictionary<string, ScheduleGtfs> scheduleDico, int day)
+        {
+            Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
+            var query = from trip in tripDico
+                        where trip.Value.Service.Days[day] == true
+                        select trip;
+            return query.ToDictionary(k => k.Key, v => v.Value);
+        }
+
+        public static Dictionary<string, TripGtfs> selectAllTripsForMondayBetween10and11(Dictionary<string, TripGtfs> tripDico, Dictionary<string, ScheduleGtfs> scheduleDico)
+        {
+            return selectAllTripsForGivenDayAndBetweenGivenHours(tripDico, scheduleDico, new TimeSpan(10, 0, 0), new TimeSpan(11, 0, 0), 6);
+        }
+
+        /**
+         0 for monday, 1 for tuesday, 2 for wednesday, 3 for thursday, 4 for friday, 5 for saturday, 6 for sunday
+        */
+        public static Dictionary<string, TripGtfs> selectAllTripsForGivenDayAndBetweenGivenHours(Dictionary<string, TripGtfs> tripDico, Dictionary<string, ScheduleGtfs> scheduleDico, TimeSpan min, TimeSpan max, int day)
+        {
+            Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
+            var tripsForOneDay = selectAllTripsForGivenDay(tripDico, scheduleDico, day);
+            var tripsForOneDayBetweenHours = from tripu in tripsForOneDay
+                    where tripu.Value.Schedule.Details.First().Value.DepartureTime >= min && tripu.Value.Schedule.Details.First().Value.DepartureTime <= max 
+                    select tripu;
+            return tripsForOneDayBetweenHours.ToDictionary(k=>k.Key,v=>v.Value);
+        }
+
+
+
         public static void printTripDico(Dictionary<string, TripGtfs> tripDico)
         {
             foreach (KeyValuePair<string, TripGtfs> trip in tripDico)
@@ -151,6 +207,21 @@ namespace SytyRouting.Gtfs.GtfsUtils
             foreach (KeyValuePair<string, RouteGtfs> route in routeDico)
             {
                 logger.Info("Key = {0}, Value = {1}", route.Key, route.Value);
+            }
+        }
+
+
+        internal static void printCalendarDico(Dictionary<string, CalendarGtfs> calendarDico)
+        {
+            foreach (KeyValuePair<string, CalendarGtfs> calendar in calendarDico)
+            {
+                var cal = calendar.Value.Days;
+                string myString = "";
+                for (int i = 0; i < cal.Count(); i++)
+                {
+                    myString += cal[i] + " ";
+                }
+                logger.Info("Key = {0}, Value = {1}", calendar.Key, myString);
             }
         }
 
@@ -188,6 +259,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
             }
+        }
+
+        public static void printNumberTripsSunday(Dictionary<string,TripGtfs> tripDico, Dictionary<string,ScheduleGtfs> scheduleDico){
+            
+            var test3 = MethodsGtfs.selectAllTripsForGivenDay(tripDico, scheduleDico,6);
+            logger.Info("Sunday {0}",test3.Count);
+
+            var test = MethodsGtfs.selectAllTripsForGivenDayAndBetweenGivenHours(tripDico,scheduleDico,new TimeSpan(10,0,0), new TimeSpan(11,0,0),6);
+            logger.Info("Sunday between 10:00:00 and 11:00:00 {0} "+ test.Count);
+
+            var test4 = MethodsGtfs.selectAllTripsForGivenDayAndBetweenGivenHours(tripDico,scheduleDico,new TimeSpan(11,0,1), new TimeSpan(23,59,59),6);
+            logger.Info("Sunday between 11:00:01 and 23:59:59 {0} "+ test4.Count);
+
+            var test5 = MethodsGtfs.selectAllTripsForGivenDayAndBetweenGivenHours(tripDico,scheduleDico,new TimeSpan(0,0,0), new TimeSpan(9,59,59),6);
+            logger.Info("Sunday between 00:00:00 and 09:59:59 {0} "+ test5.Count);
+
+            int allIn=test.Count+test4.Count+test5.Count;
+            logger.Info("Sum of 0-10, 10-11, 11-00 {0} ", allIn);
+            logger.Info("Sum of parts equals all {0} ", test3.Count==allIn);   
         }
     }
 }

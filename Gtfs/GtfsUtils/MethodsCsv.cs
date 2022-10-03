@@ -82,6 +82,28 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+        public static List<CalendarCsv> GetAllCalendar(ProviderCsv provider)
+        {
+            // Calendar of chosen society
+            string pathCalendar = $"GtfsData\\{provider}\\gtfs\\calendar.txt";
+            string fullPathCalendar = System.IO.Path.GetFullPath(pathCalendar);
+            try
+            {
+                using (var reader = new StreamReader(fullPathCalendar))
+                {
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    {
+                        return csv.GetRecords<CalendarCsv>().ToList();
+                    }
+                }
+            }
+            catch (DirectoryNotFoundException)
+            {
+                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                throw;
+            }
+        }
+
         public static List<RouteCsv> GetAllRoutes(ProviderCsv provider)
         {
             // routes of chosen society

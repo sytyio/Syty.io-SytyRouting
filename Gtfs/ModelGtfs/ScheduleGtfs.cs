@@ -7,15 +7,18 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public Dictionary<int, StopTimesGtfs> Details { get; set; }
 
+        public bool[] Days { get; set; }
+
         public override string ToString()
         {
             return "Trip = " + Trip + "Nb of stoptimes = " + Details.Count;
         }
 
-        public ScheduleGtfs(string trip, Dictionary<int, StopTimesGtfs> details)
+        public ScheduleGtfs(string trip, Dictionary<int, StopTimesGtfs> details) // bool[] days
         {
             this.Trip = trip;
             this.Details = details;
+         //   this.Days=days;
         }
     }
 }
