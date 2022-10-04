@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using NLog;
+using Npgsql;
 
 namespace SytyRouting
 {
@@ -28,12 +29,13 @@ namespace SytyRouting
 
         // Transport parameters:
         public static string[] TransportModeNames {get;}
-        public static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
-
+        private static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
+        private static TransportSettings transportSettings {get; set;}
+        
 
         static Configuration()
         {
-            // Build a config object, using env vars and JSON providers.
+            // Build a config object, using JSON providers.
             IConfiguration config = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile("appsettings.data.json")
@@ -62,16 +64,49 @@ namespace SytyRouting
             InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
-            TransportSettings transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
-            TransportModeNames= ValidateTransportModeNames(transportSettings.TransportModeNames);
+            transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
+            TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModeNames);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
-        static string[] ValidateTransportModeNames(string[] configTransportModeNames)
+        public static async Task<Dictionary<int,ushort>> CreateMappingTagIdToTransportMode(Dictionary<String,ushort> transportModeMasks)
         {
-            string defaultTransportMode = "None";
+            int[] configTagIds = await Configuration.ValidateOSMTags();
+
+            Dictionary<int,ushort> tagIdToTransportMode = new Dictionary<int,ushort>();
+
+            for(var i = 0; i < configTagIds.Length; i++)
+            {
+                ushort mask = 0; // Default Transport Mode: 0
+
+                var configAllowedTransportModes = ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
+                foreach(var transportName in configAllowedTransportModes)
+                {
+                    if(transportModeMasks.ContainsKey(transportName))
+                    {
+                        mask |= transportModeMasks[transportName];
+                    }
+                    else
+                    {
+                        logger.Info("Transport Mode '{0}' not found.",transportName);
+                    }
+                }
+                if (!tagIdToTransportMode.ContainsKey(configTagIds[i]))
+                {
+                    tagIdToTransportMode.Add(configTagIds[i], mask);
+                }
+                else
+                {
+                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", configTagIds[i]);
+                }
+            }
+            return tagIdToTransportMode;
+        }
+
+        private static string[] ValidateTransportModeNames(string[] configTransportModeNames)
+        {
             string[] validTransportModeNames =  new string[Constants.MaxNumberOfTransportModes+1];
-            validTransportModeNames[0] = defaultTransportMode;
+            validTransportModeNames[0] = Constants.DefaulTransportMode;
             try
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
@@ -96,6 +131,95 @@ namespace SytyRouting
             }
 
             return validTransportModeNames;
+        }
+
+        private static async Task<OSMTagToTransportModes[]> ValidateOSMTagToTransportModes(OSMTagToTransportModes[] osmTagsToTransportModes)
+        {
+            int[] configTagIds = await Configuration.ValidateOSMTags();
+
+            OSMTagToTransportModes[] validOSMTagsToTransportModes = new OSMTagToTransportModes[configTagIds.Length];
+
+            for(int i = 0; i < validOSMTagsToTransportModes.Length; i++)
+            {
+                validOSMTagsToTransportModes[i].AllowedTransportModes = ValidateAllowedTransportModes(osmTagsToTransportModes[i].AllowedTransportModes);
+            }
+
+            return validOSMTagsToTransportModes;
+        }
+
+        public static string[] ValidateAllowedTransportModes(string[] allowedTransportModes)
+        {
+            var validTransportModes = new List<string>(0);
+            foreach(string transportMode in allowedTransportModes)
+            {                
+                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
+                {
+                    validTransportModes.Add(transportMode);
+                }
+                else
+                {
+                    logger.Info("Unable to find '{0}' in the validated list of transport modes. Ignoring transport mode.", transportMode);
+                }
+            }
+            return validTransportModes.ToArray();
+        }
+
+        private static async Task<int[]> ValidateOSMTags()
+        {
+            var connectionString = Configuration.ConnectionString;
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+            
+            var totalDbRows = await Helper.DbTableRowCount(Configuration.ConfigurationTableName, logger);
+            int[] osmTagIds = new int[totalDbRows];
+            // Read the 'configuration' rows and create an array of tag_ids
+            //                      0
+            string queryString = "SELECT tag_id FROM " + Configuration.ConfigurationTableName;
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {    
+                int tagIdIndex = 0;
+                while (await reader.ReadAsync())
+                {
+                    var tagId = Convert.ToInt32(reader.GetValue(0)); // tag_id
+                    try
+                    {
+                        osmTagIds[tagIdIndex] = Convert.ToInt32(tagId);
+                    }
+                    catch (Exception e)
+                    {
+                        logger.Debug("Unable to process tag_id: {0}", e.Message);
+                    }
+                    tagIdIndex++;
+                }
+            }
+            Array.Sort(osmTagIds, 0, osmTagIds.Length);
+
+            int[] configTagIds = new int[transportSettings.OSMTagsToTransportModes.Length];
+            for(int i = 0; i < transportSettings.OSMTagsToTransportModes.Length; i++)
+            {
+                configTagIds[i] = transportSettings.OSMTagsToTransportModes[i].TagId;
+            }
+            Array.Sort(configTagIds, 0, configTagIds.Length);
+
+            if(configTagIds.Length == osmTagIds.Length)
+            {
+                for(int i = 0; i < osmTagIds.Length; i++)
+                {
+                    if(osmTagIds[i] != configTagIds[i])
+                    {
+                        logger.Info("The OSM tag_id {0} does not match database reference.", configTagIds[i]);
+                        throw new Exception("OSM tag_id mismatch error.");
+                    }
+                }
+            }
+            else
+            {
+                logger.Info("Inconsistent number of OSM tag_ids in the configuration file.");
+            }
+
+            return osmTagIds;
         }
     }
 }
