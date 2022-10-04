@@ -15,8 +15,8 @@ namespace SytyRouting
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
-        private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
+        private Dictionary<int,ushort> tagIdToTransportMode = new Dictionary<int,ushort>();
+        private Dictionary<String,ushort> transportModeMasks = new Dictionary<String,ushort>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -37,6 +37,25 @@ namespace SytyRouting
                     edge.WriteToStream(bw);
                 }
                 KDTree?.WriteToStream(bw);
+
+                bw.Write(transportModeMasks.Count);
+                // foreach(KeyValuePair<string, ushort> mask in transportModeMasks)
+                // {
+                //     bw.Write(mask.Key.Length);
+                //     for(int i = 0; i < mask.Key.Length; i++)
+                //     {
+                //         bw.Write((char)mask.Key[i]);
+                //     }
+                //     bw.Write(mask.Value);
+                // }
+                foreach(string transportMode in transportModeMasks.Keys)
+                {
+                    bw.Write(transportMode.Length);
+                    for(int i = 0; i < transportMode.Length; i++)
+                    {
+                        bw.Write((char)transportMode[i]);
+                    }
+                }
             }
             return Task.CompletedTask;
         }
@@ -73,6 +92,21 @@ namespace SytyRouting
                     }
 
                     KDTree = new KDTree(br, NodesArray);
+
+                    length = br.ReadInt32();
+                    string[] transportModes = new string[length];
+                    for(int i = 0; i < transportModes.Length; i++)
+                    {
+                        length = br.ReadInt32();
+                        char[] tmc = new char[length];
+                        for(int j = 0; j < length; j++)
+                        {
+                            tmc[j] =  br.ReadChar();
+                        }
+                        transportModes[i] = new string(tmc);
+                    }
+                    CreateTransportModeMasks(transportModes);
+
                 }
                 logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
                 stopWatch.Stop();
@@ -85,7 +119,6 @@ namespace SytyRouting
                 await FileSaveAsync(path);
             }
             ComputeCost();
-            CreateTransportModeMasks();
         }
 
         private void ComputeCost()
@@ -114,47 +147,19 @@ namespace SytyRouting
             Dictionary<long, Node> nodes = new Dictionary<long, Node>();
 
             var connectionString = Configuration.ConnectionString;
-            string queryString;           
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-            
-            var totalDbRows = await Helper.DbTableRowCount(Configuration.ConfigurationTableName, logger);
-            int[] osmTagIds = new int[totalDbRows];
-            // Read the 'configuration' rows and create an array of tag_ids
-            //                      0
-            queryString = "SELECT tag_id FROM " + Configuration.ConfigurationTableName;
 
-            await using (var command = new NpgsqlCommand(queryString, connection))
-            await using (var reader = await command.ExecuteReaderAsync())
-            {    
-                int tagIdIndex = 0;
-                while (await reader.ReadAsync())
-                {
-                    var tagId = Convert.ToInt32(reader.GetValue(0)); // tag_id
-                    try
-                    {
-                        osmTagIds[tagIdIndex] = Convert.ToInt32(tagId);
-                    }
-                    catch (Exception e)
-                    {
-                        logger.Debug("Unable to process tag_id: {0}", e.Message);
-                    }
-                    tagIdIndex++;
-                }
-            }
-
-            CreateTransportModeMasks();
-            CreateMappingTagIdToTransportMode(osmTagIds);
-
+            CreateTransportModeMasks(Configuration.TransportModeNames);
+            await CreateMappingTagIdToTransportMode();
 
             // Get the total number of rows to estimate the Graph creation time
-            totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
-            //var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            var queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -219,7 +224,6 @@ namespace SytyRouting
             if (KDTree != null)
             {
                 var node = KDTree.GetNearestNeighbor(x, y);
-                // logger.Debug("The closest node  for ({0}, {1}) has OSM ID {2}", x, y, node.OsmID);
                 return node;
             }
             throw new Exception("Impossible to find the nearest node based on the provided coordinates.");
@@ -353,24 +357,17 @@ namespace SytyRouting
             }
         }
 
-        private void CreateTransportModeMasks()
+        private void CreateTransportModeMasks(string[] transportModes)
         {
-            // Create a bitmask for the Transport Modes based on a Dictionary.
+            // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
-                transportModeMasks.Add(Configuration.TransportModeNames[0],0);
-                for(int n = 0; n < Configuration.TransportModeNames.Length-1; n++)
+                transportModeMasks.Add(transportModes[0],0);
+                for(int n = 0; n < transportModes.Length-1; n++)
                 {
                     var twoToTheNth = (byte)Math.Pow(2,n);
-                    var transportName = Configuration.TransportModeNames[n+1];
-                    if(!transportModeMasks.ContainsKey(transportName))
-                    {
-                        transportModeMasks.Add(transportName,twoToTheNth);
-                    }
-                    else
-                    {
-                        logger.Info("Unable to load Transport Mode {0}: {1}",transportName,twoToTheNth);
-                    }
+                    var transportName = transportModes[n+1];
+                    transportModeMasks.Add(transportName,twoToTheNth);
                 }
                 foreach(var tmm in transportModeMasks)
                 {
@@ -409,52 +406,10 @@ namespace SytyRouting
             }
         }
 
-
-        private void CreateMappingTagIdToTransportMode(int[] osmTagIds)
+        private async Task CreateMappingTagIdToTransportMode()
         {
-            foreach (var tagId in osmTagIds)
-            {
-                byte mask = 0; // = TransportMode.Undefined;
+            tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
 
-                int configTagId;
-                for(var i = 0; i < Configuration.OSMTagsToTransportModes.Length; i++)
-                {
-                    var configTagIdString = Configuration.OSMTagsToTransportModes[i].TagId;
-                    if(int.TryParse(configTagIdString, out configTagId))
-                    {
-                        if(tagId == configTagId)
-                        {
-                            var configAllowedTransportModes = Configuration.OSMTagsToTransportModes[i].AllowedTransportModes;
-                            foreach(var transportName in configAllowedTransportModes)
-                            {
-                                if(transportModeMasks.ContainsKey(transportName))
-                                {
-                                    mask |= transportModeMasks[transportName];
-                                }
-                                else
-                                {
-                                    logger.Info("Transport Mode '{0}' not found.",transportName);
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        logger.Debug("Configuration tag_id {0} could not be parsed.", configTagIdString);
-                    }
-                    
-                }
-
-                if (!tagIdToTransportMode.ContainsKey(tagId))
-                {
-                    tagIdToTransportMode.Add(tagId, mask);
-                }
-                else
-                {
-                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagId);
-                }
-            }
             foreach(var ti2tmm in tagIdToTransportMode)
             {
                 Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
