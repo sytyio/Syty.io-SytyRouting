@@ -33,7 +33,7 @@ namespace SytyRouting.Gtfs.ModelCsv
 
         public override string ToString()
         {
-            return "ServiceId: " + ServiceId + "|| M : " + Monday + "|| T : " + Tuesday + "|| W : "+ Wednesday + "|| T : "+ Thursday + "|| F : " + Friday + "|| S : "+ Saturday + "|| S : "+ Sunday;
+            return "ServiceId: " + ServiceId + "|| M : " + Monday + "|| T : " + Tuesday + "|| W : " + Wednesday + "|| T : " + Thursday + "|| F : " + Friday + "|| S : " + Saturday + "|| S : " + Sunday;
         }
     }
 }

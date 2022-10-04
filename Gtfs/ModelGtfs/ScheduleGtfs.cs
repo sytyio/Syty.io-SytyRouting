@@ -1,4 +1,3 @@
-
 namespace SytyRouting.Gtfs.ModelGtfs
 {
     public class ScheduleGtfs
@@ -14,11 +13,10 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Trip = " + Trip + "Nb of stoptimes = " + Details.Count;
         }
 
-        public ScheduleGtfs(string trip, Dictionary<int, StopTimesGtfs> details) // bool[] days
+        public ScheduleGtfs(string trip, Dictionary<int, StopTimesGtfs> details)
         {
-            this.Trip = trip;
-            this.Details = details;
-         //   this.Days=days;
+            Trip = trip;
+            Details = details;
         }
     }
 }

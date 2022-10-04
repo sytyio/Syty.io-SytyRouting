@@ -13,13 +13,13 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public override string ToString()
         {
-            return "Id = " + Id + " Nb points = " + ItineraryPoints.Count; //+" LineString = "+LineString
+            return "Id = " + Id + " Nb points = " + ItineraryPoints.Count;
         }
 
         public ShapeGtfs(string id, Dictionary<int,Point> itineraryPoints, LineString lineString){
-            this.Id=id;
-            this.ItineraryPoints=itineraryPoints;
-            this.LineString=lineString;
+            Id=id;
+            ItineraryPoints=itineraryPoints;
+            LineString=lineString;
         }
     }
 }

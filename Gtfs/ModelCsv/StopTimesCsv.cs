@@ -1,4 +1,3 @@
-using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 
 namespace SytyRouting.Gtfs.ModelCsv
@@ -23,7 +22,7 @@ namespace SytyRouting.Gtfs.ModelCsv
 
         public override string ToString()
         {
-            return "TripId = " + TripId + " ArrivalTime = " + ArrivalTime + " DepartureTime = " + DepartureTime + " StopId = " + StopId + "Stop Sequence = "+ Sequence;
+            return "TripId = " + TripId + " ArrivalTime = " + ArrivalTime + " DepartureTime = " + DepartureTime + " StopId = " + StopId + "Stop Sequence = " + Sequence;
         }
     }
 }

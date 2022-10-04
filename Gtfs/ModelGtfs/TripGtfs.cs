@@ -20,13 +20,11 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         // Add shape if there is one
         public TripGtfs(RouteGtfs route, string id, ShapeGtfs shape, ScheduleGtfs schedule, CalendarGtfs service){
-            this.Route=route;
-            this.Id=id;
-            this.Shape=shape;
-            this.Schedule=schedule;
-            this.Service=service;
+            Route=route;
+            Id=id;
+            Shape=shape;
+            Schedule=schedule;
+            Service=service;
         }
-
-
     }
 }

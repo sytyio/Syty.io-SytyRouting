@@ -1,5 +1,5 @@
-namespace SytyRouting.Gtfs.ModelGtfs
 
+namespace SytyRouting.Gtfs.ModelGtfs
 {
     public class StopGtfs
     {
@@ -18,10 +18,10 @@ namespace SytyRouting.Gtfs.ModelGtfs
         }
 
         public StopGtfs(string id, string name, double lat, double lon){
-            this.Id=id;
-            this.Name=name;
-            this.Lat=lat;
-            this.Lon=lon;
+            Id=id;
+            Name=name;
+            Lat=lat;
+            Lon=lon;
         }
     }
 }

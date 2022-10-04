@@ -1,13 +1,12 @@
-﻿using NLog;
+using NLog;
 using Npgsql;
 using NetTopologySuite.Geometries;
 
 
 namespace SytyRouting
 {
-    using Gtfs.ModelCsv;
-    using Gtfs.ModelGtfs;
     using Gtfs.GtfsUtils;
+    using Gtfs.ModelGtfs;
 
     class Program
     {
@@ -19,50 +18,16 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-            await MethodsSetUp.DownloadsGtfs();
 
-            // The chosen provider
-            ProviderCsv choice = ProviderCsv.stib;
+                Tests tests  = new Tests();
 
-
-            // Data of the provider
-            List<StopCsv> recordsStop = MethodsCsv.GetAllStops(choice);
-            List<RouteCsv> recordsRoute = MethodsCsv.GetAllRoutes(choice);
-            List<TripCsv> recordsTrip = MethodsCsv.GetAllTrips(choice);
-            List<ShapeCsv> recordsShape = MethodsCsv.GetAllShapes(choice);
-            List<StopTimesCsv> recordStopTime = MethodsCsv.GetAllStopTimes(choice);
-            List<CalendarCsv> recordsCalendar = MethodsCsv.GetAllCalendar(choice);
-
-
-            // Create the Gtfs objects
-            var stopDico = MethodsGtfs.createStopGtfsDictionary(recordsStop);
-            var routeDico = MethodsGtfs.createRouteGtfsDictionary(recordsRoute);
-            var shapeDico = MethodsGtfs.createShapeGtfsDictionary(recordsShape);
-            var calendarDico = MethodsGtfs.createCalendarGtfsDictionary(recordsCalendar);
-            var tripDico = MethodsGtfs.createTripGtfsDictionary(recordsTrip, shapeDico, routeDico, calendarDico);
-            MethodsGtfs.addTripsToRoute(tripDico);
-            var scheduleDico = MethodsGtfs.createScheduleGtfsDictionary(recordStopTime, stopDico, tripDico);
-            MethodsGtfs.addScheduleToTrip(scheduleDico,tripDico);
-            
-
-
-
-
-
-
-
-            MethodsGtfs.printNumberTripsSunday(tripDico,scheduleDico);
-
-            
-            MethodsSetUp.CleanGtfs();
-
+                tests.PrintAllEdges();
+                logger.Info("Nb edge = "+tests.CtrlGtfs.EdgeDico.Count());
+                logger.Info("Nb stops = "+tests.CtrlGtfs.StopDico.Count());
 
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
             // NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
-
-
-
 
             // logger.Info("syty.io routing engine for large scale datasets");
 
@@ -71,7 +36,6 @@ namespace SytyRouting
             // await graph.FileLoadAsync("graph.dat");
 
             // // graph.TraceNodes();
-
 
             // // // Benchmarking.PointLocationTest(graph);
 
@@ -106,6 +70,4 @@ namespace SytyRouting
             LogManager.Shutdown();
         }
     }
-
-
 }

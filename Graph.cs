@@ -80,6 +80,7 @@ namespace SytyRouting
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
+                // add gtfs
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }

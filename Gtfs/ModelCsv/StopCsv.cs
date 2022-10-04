@@ -1,4 +1,3 @@
-using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
 namespace SytyRouting.Gtfs.ModelCsv
 {
@@ -21,6 +20,5 @@ namespace SytyRouting.Gtfs.ModelCsv
         {
             return "Id = " + Id + " Name = " + Name + " Lat = " + Lat + " Lon = " + Lon;
         }
-
     }
 }

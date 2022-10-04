@@ -8,12 +8,13 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public override string ToString()
         {
-            return "ServiceId: " + ServiceId + "Jours " + Days;
+            return "ServiceId: " + ServiceId + "Days " + Days;
         }
 
-            public CalendarGtfs(string serviceId, bool[] days){
-            this.ServiceId=serviceId;
-            this.Days=days;
+        public CalendarGtfs(string serviceId, bool[] days)
+        {
+            ServiceId = serviceId;
+            Days = days;
         }
     }
 }

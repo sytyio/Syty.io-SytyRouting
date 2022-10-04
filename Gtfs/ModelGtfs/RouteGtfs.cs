@@ -8,18 +8,19 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public int Type { get; set; }
 
-        public Dictionary<string,TripGtfs>? Trips;
+        public Dictionary<string, TripGtfs>? Trips;
 
         public override string ToString()
         {
-            return "Id: " + Id +" Name : " + LongName + " Nb trips associés = "+ Trips.Count ;
+            return "Id: " + Id + " Name : " + LongName + " Nb trips associated = " + Trips.Count + "Type route = "+ Type;
         }
 
-        public RouteGtfs(string id, string name, int type, Dictionary<string,TripGtfs>? trips){
-            this.Id=id;
-            this.LongName=name;
-            this.Type=type;
-            this.Trips=trips;
+        public RouteGtfs(string id, string name, int type, Dictionary<string, TripGtfs>? trips)
+        {
+            Id = id;
+            LongName = name;
+            Type = type;
+            Trips = trips;
         }
     }
 }
