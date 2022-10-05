@@ -16,7 +16,7 @@ namespace SytyRouting
         private KDTree? KDTree;
 
         private Dictionary<int,ushort> tagIdToTransportMode = new Dictionary<int,ushort>();
-        private Dictionary<String,ushort> transportModeMasks = new Dictionary<String,ushort>();
+        public Dictionary<String,ushort> transportModeMasks = new Dictionary<String,ushort>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -361,10 +361,6 @@ namespace SytyRouting
                     var transportName = transportModes[n+1];
                     transportModeMasks.Add(transportName,twoToTheNth);
                 }
-                foreach(var tmm in transportModeMasks)
-                {
-                    Console.WriteLine("{0}: {1}", tmm.Key,tmm.Value);
-                }
             }
             catch (Exception e)
             {
@@ -402,11 +398,6 @@ namespace SytyRouting
         private async Task CreateMappingTagIdToTransportMode()
         {
             tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
-
-            foreach(var ti2tmm in tagIdToTransportMode)
-            {
-                Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
-            }
         }
 
         private XYMPoint[]? GetInternalGeometry(LineString geometry, OneWayState oneWayState)

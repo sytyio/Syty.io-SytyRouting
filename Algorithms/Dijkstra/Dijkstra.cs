@@ -19,7 +19,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
         }
 
-        protected override List<Node> RouteSearch(Node originNode, Node destinationNode)
+        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, int transportMode)
         {
             route.Clear();
             routeCost = 0;

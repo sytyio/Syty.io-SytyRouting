@@ -25,7 +25,7 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-            graph.TraceNodes();
+            // graph.TraceNodes();
 
 
             // // Benchmarking.PointLocationTest(graph);

@@ -17,7 +17,7 @@ namespace SytyRouting.Algorithms
             _graph = graph;
         }
 
-        public List<Node> GetRoute(double x1, double y1, double x2, double y2)
+        public List<Node> GetRoute(double x1, double y1, double x2, double y2, int transportMode)
         {
             if (_graph == null)
             {
@@ -26,10 +26,10 @@ namespace SytyRouting.Algorithms
             var originNode = _graph.GetNodeByLongitudeLatitude(x1, y1);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(x2, y2);
             
-            return RouteSearch(originNode, destinationNode);
+            return RouteSearch(originNode, destinationNode, transportMode);
         }
 
-        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId)
+        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, int transportMode)
         {
             if (_graph == null)
             {
@@ -55,7 +55,7 @@ namespace SytyRouting.Algorithms
                 throw new Exception("Unknown value for node osm id.");
             }
 
-            return RouteSearch(originNode, destinationNode);
+            return RouteSearch(originNode, destinationNode, transportMode);
         }
 
         public LineString ConvertRouteFromNodesToLineString(List<Node> nodeRoute, TimeSpan initialTimeStamp)
@@ -120,7 +120,7 @@ namespace SytyRouting.Algorithms
         }
 
         // Routing algorithm implementation
-        protected virtual List<Node> RouteSearch(Node origin, Node destination)
+        protected virtual List<Node> RouteSearch(Node origin, Node destination, int transportMode)
         {
             throw new NotImplementedException();
         }
