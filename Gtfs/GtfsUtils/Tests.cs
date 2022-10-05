@@ -8,7 +8,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 {
     public class Tests
     {
-        public ControllerGtfs CtrlGtfs = new ControllerGtfs();
+        public ControllerGtfs CtrlGtfs = new ControllerGtfs(ProviderCsv.stib);
         private static Logger logger = LogManager.GetCurrentClassLogger();
         public void PrintTripDico()
         {

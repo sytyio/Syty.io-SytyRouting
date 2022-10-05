@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CsvHelper.Configuration.Attributes;
 
 namespace SytyRouting.Gtfs.ModelCsv
@@ -6,6 +7,7 @@ namespace SytyRouting.Gtfs.ModelCsv
     {
 
         [Name("shape_id")]
+        [NotNull]
         public string? Id { get; set; }
 
         [Name("shape_pt_lat")]

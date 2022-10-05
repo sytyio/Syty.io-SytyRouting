@@ -1,4 +1,4 @@
-using NLog;
+﻿using NLog;
 using Npgsql;
 using NetTopologySuite.Geometries;
 
@@ -18,7 +18,8 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-            ControllerGtfs ctrl = new ControllerGtfs();
+            ControllerGtfs ctrl = new ControllerGtfs(Gtfs.ModelCsv.ProviderCsv.stib);
+            await ctrl.InitController();
 
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension

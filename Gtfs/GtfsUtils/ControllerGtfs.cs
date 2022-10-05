@@ -11,38 +11,32 @@ namespace SytyRouting.Gtfs.GtfsUtils
     public class ControllerGtfs
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public ControllerCsv CtrlCsv = new ControllerCsv();
-        public ProviderCsv Choice = ProviderCsv.stib;
-
-        public List<StopCsv> RecordsStop { get; }
-        public List<RouteCsv> RecordsRoute { get; }
-        public List<TripCsv> RecordsTrip { get; }
-        public List<ShapeCsv> RecordsShape { get; }
-        public List<StopTimesCsv> RecordStopTime { get; }
-        public List<CalendarCsv> RecordsCalendar { get; }
-        public List<AgencyCsv> RecordsAgency { get; }
-
-        public Dictionary<string, StopGtfs> StopDico { get; }
-        public Dictionary<string, RouteGtfs> RouteDico { get; }
-        public Dictionary<string, ShapeGtfs> ShapeDico { get; }
-        public Dictionary<string, CalendarGtfs> CalendarDico { get; }
-        public Dictionary<string, TripGtfs> TripDico { get; }
-        public Dictionary<string, AgencyGtfs> AgencyDico { get; }
-        public Dictionary<string, ScheduleGtfs> ScheduleDico { get; }
-        public Dictionary<string, EdgeGtfs> EdgeDico { get; }
+        public ControllerCsv CtrlCsv;
+        private ProviderCsv choice;
 
 
-        public ControllerGtfs()
+
+        public Dictionary<string, StopGtfs> StopDico;
+        public Dictionary<string, RouteGtfs> RouteDico;
+        public Dictionary<string, ShapeGtfs> ShapeDico;
+        public Dictionary<string, CalendarGtfs> CalendarDico;
+        public Dictionary<string, TripGtfs> TripDico;
+        public Dictionary<string, AgencyGtfs> AgencyDico;
+        public Dictionary<string, ScheduleGtfs> ScheduleDico;
+        public Dictionary<string, EdgeGtfs> EdgeDico;
+
+
+        public ControllerGtfs(ProviderCsv provider)
         {
-            Task task = DownloadsGtfs();
-            Task.WaitAny(task);
-            RecordsStop = CtrlCsv.GetAllStops(Choice);
-            RecordsRoute = CtrlCsv.GetAllRoutes(Choice);
-            RecordsTrip = CtrlCsv.GetAllTrips(Choice);
-            RecordsShape = CtrlCsv.GetAllShapes(Choice);
-            RecordStopTime = CtrlCsv.GetAllStopTimes(Choice);
-            RecordsCalendar = CtrlCsv.GetAllCalendars(Choice);
-            RecordsAgency = CtrlCsv.GetAllAgencies(Choice);
+            choice = provider;
+        }
+
+        public async Task InitController()
+        {
+            
+            await DownloadsGtfs();
+            CtrlCsv = new ControllerCsv(choice);
+
             StopDico = CreateStopGtfsDictionary();
             AgencyDico = CreateAgencyGtfsDictionary();
             RouteDico = CreateRouteGtfsDictionary();
@@ -59,7 +53,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
         {
             var agencyDico = new Dictionary<string, AgencyGtfs>();
-            foreach (var agency in RecordsAgency)
+            foreach (var agency in CtrlCsv.RecordsAgency)
             {
                 agencyDico.Add(agency.Id, new AgencyGtfs(agency.Id, agency.Name, agency.Url));
             }
@@ -70,7 +64,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, StopGtfs> CreateStopGtfsDictionary()
         {
             var stopDico = new Dictionary<string, StopGtfs>();
-            foreach (StopCsv stop in RecordsStop)
+            foreach (StopCsv stop in CtrlCsv.RecordsStop)
             {
                 stopDico.Add(stop.Id, new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
 
@@ -82,12 +76,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, RouteGtfs> CreateRouteGtfsDictionary()
         {
             var routeDico = new Dictionary<string, RouteGtfs>();
-            foreach (var route in RecordsRoute)
+            foreach (var route in CtrlCsv.RecordsRoute)
             {
                 AgencyGtfs buffAgency = null;
                 if (route.AgencyId != null)
                 {
-                    AgencyDico.TryGetValue(route.AgencyId, out buffAgency);
+                    //Use same approach everywhere trygetvalue is used
+                    buffAgency = AgencyDico[route.AgencyId];
                 }
                 routeDico.Add(route.Id, new RouteGtfs(route.Id, route.LongName, route.Type, new Dictionary<string, TripGtfs>(), buffAgency));
             }
@@ -98,20 +93,38 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary()
         {
             var shapeDico = new Dictionary<string, ShapeGtfs>();
-            foreach (var shape in RecordsShape)
+            foreach (var shape in CtrlCsv.RecordsShape)
             {
-                ShapeGtfs shapeBuff = null;
-                if (!shapeDico.TryGetValue(shape.Id, out shapeBuff))
+                //Good version to use for all dictionary accesses
+                ShapeGtfs? shapeBuff = ShapeDico?[shape.Id];
+                if(shapeBuff == null)
                 {
-                    shapeDico.Add(shape.Id, new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id)));
-                    shapeDico.TryGetValue(shape.Id, out shapeBuff);
+                    shapeBuff = new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id));
+                    shapeDico.Add(shape.Id, shapeBuff);
                 }
+
                 Point pointBuff = null;
                 if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
                 {
                     shapeBuff.ItineraryPoints.Add(shape.PtSequence, new Point(shape.PtLon, shape.PtLat));
                 }
             }
+
+            CtrlCsv.RecordsShape.ToDictionary(t => t.Id, t => new ShapeGtfs(t.Id, new Dictionary<int, Point>(), CreateLineString(t.Id)));
+
+            foreach (var shape in CtrlCsv.RecordsShape)
+            {
+                //Good version to use for all dictionary accesses
+                
+                shapeDico.Add(shape.Id, new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id)));
+
+                /*Point pointBuff = null;
+                if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
+                {
+                    shapeBuff.ItineraryPoints.Add(shape.PtSequence, new Point(shape.PtLon, shape.PtLat));
+                }*/
+            }
+            
             return shapeDico;
         }
 
@@ -119,7 +132,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             Dictionary<string, CalendarGtfs> days = new Dictionary<string, CalendarGtfs>();
             CalendarGtfs calBuff = null;
-            foreach (var calendar in RecordsCalendar)
+            foreach (var calendar in CtrlCsv.RecordsCalendar)
             {
                 bool[] daysBool = new bool[7];
                 if (!days.TryGetValue(calendar.ServiceId, out calBuff))
@@ -145,7 +158,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             // Create the timeStop with an dico details
             var scheduleDico = new Dictionary<string, ScheduleGtfs>();  // String = id of trip 
-            foreach (var stopTime in RecordStopTime)
+            foreach (var stopTime in CtrlCsv.RecordStopTime)
             {
                 StopDico.TryGetValue(stopTime.StopId, out stopBuff);
                 TimeSpan arrivalTime = ParseMore24Hours(stopTime.ArrivalTime);
@@ -174,7 +187,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             RouteGtfs buffRoute = null;
             ShapeGtfs buffShape = null;
             CalendarGtfs buffCal = null;
-            foreach (TripCsv trip in RecordsTrip)
+            foreach (TripCsv trip in CtrlCsv.RecordsTrip)
             {
                 if (RouteDico.TryGetValue(trip.RouteId, out buffRoute))
                 {
@@ -315,7 +328,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public LineString CreateLineString(string shapeId)
         {
-            var shapeInfos = RecordsShape.FindAll(x => x.Id == shapeId);
+            var shapeInfos = CtrlCsv.RecordsShape.FindAll(x => x.Id == shapeId);
             // CREATION of LINESTRING
             Coordinate[] arrayOfCoordinate = new Coordinate[shapeInfos.Count];
             for (int i = 0; i < shapeInfos.Count; i++)

@@ -8,6 +8,24 @@ namespace SytyRouting.Gtfs.GtfsUtils
     public class ControllerCsv
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
+        public List<StopCsv> RecordsStop { get; }
+        public List<RouteCsv> RecordsRoute { get; }
+        public List<TripCsv> RecordsTrip { get; }
+        public List<ShapeCsv> RecordsShape { get; }
+        public List<StopTimesCsv> RecordStopTime { get; }
+        public List<CalendarCsv> RecordsCalendar { get; }
+        public List<AgencyCsv> RecordsAgency { get; }
+
+        public ControllerCsv(ProviderCsv choice)
+        {
+            RecordsStop = GetAllStops(choice);
+            RecordsRoute = GetAllRoutes(choice);
+            RecordsTrip = GetAllTrips(choice);
+            RecordsShape = GetAllShapes(choice);
+            RecordStopTime = GetAllStopTimes(choice);
+            RecordsCalendar = GetAllCalendars(choice);
+            RecordsAgency = GetAllAgencies(choice);
+        }
 
         public List<StopTimesCsv> GetAllStopTimes(ProviderCsv provider)
         {
@@ -25,7 +43,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
@@ -46,7 +64,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
             catch (FileNotFoundException)
@@ -72,7 +90,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
@@ -94,7 +112,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
@@ -115,7 +133,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
@@ -136,7 +154,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
@@ -157,7 +175,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (DirectoryNotFoundException)
             {
-                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
         }
