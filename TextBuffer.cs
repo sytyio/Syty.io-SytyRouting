@@ -96,3 +96,7 @@
     // 304: 128 :: Undefined, 
     // 305: 128 :: Undefined, 
     // 401: 24  :: Car, Bus,
+
+
+    // https://wiki.openstreetmap.org/wiki/Routing
+    // https://wiki.openstreetmap.org/wiki/Routing_profiles
