@@ -357,7 +357,7 @@ namespace SytyRouting
                 transportModeMasks.Add(transportModes[0],0);
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
-                    var twoToTheNth = (byte)Math.Pow(2,n);
+                    var twoToTheNth = (ushort)Math.Pow(2,n);
                     var transportName = transportModes[n+1];
                     transportModeMasks.Add(transportName,twoToTheNth);
                 }
