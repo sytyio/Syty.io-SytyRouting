@@ -1,4 +1,3 @@
-using NetTopologySuite.Geometries;
 using NLog;
 using CsvHelper;
 using System.Globalization;
@@ -57,6 +56,27 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+        public List<AgencyCsv> GetAllAgencies(ProviderCsv provider)
+        {
+            string pathStop = $"GtfsData\\{provider}\\gtfs\\agency.txt";
+            string fullPathStop = System.IO.Path.GetFullPath(pathStop);
+            try
+            {
+                using (var reader = new StreamReader(fullPathStop))
+                {
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    {
+                        return csv.GetRecords<AgencyCsv>().ToList();
+                    }
+                }
+            }
+            catch (DirectoryNotFoundException)
+            {
+                logger.Info("Something went wrong with de {0} directory (missing gtfs)", provider);
+                throw;
+            }
+        }
+
         public List<StopCsv> GetAllStops(ProviderCsv provider)
         {
             // stops of chosen society
@@ -78,7 +98,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 throw;
             }
         }
-        public List<CalendarCsv> GetAllCalendar(ProviderCsv provider)
+        public List<CalendarCsv> GetAllCalendars(ProviderCsv provider)
         {
             // Calendar of chosen society
             string pathCalendar = $"GtfsData\\{provider}\\gtfs\\calendar.txt";

@@ -5,7 +5,7 @@ namespace SytyRouting.Gtfs.ModelCsv
     {
 
         [Name("stop_id")]
-        public string? Id { get; set; }
+        public string Id { get; set; }
 
         [Name("stop_name")]
         public string? Name { get; set; }

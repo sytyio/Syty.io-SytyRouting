@@ -15,9 +15,13 @@ namespace SytyRouting.Gtfs.ModelCsv
         [Name("route_type")]
         public int Type { get; set; }
 
+        [Name("agency_id")]
+        [Optional]
+        public string? AgencyId{get;set;}
+
         public override string ToString()
         {
-            return "Id: " + Id + " Name : " + LongName + " Type : " + Type;
+            return "Id: " + Id + " Name : " + LongName + " Type : " + Type + "AgencyId = "+ AgencyId;
         }
     }
 }

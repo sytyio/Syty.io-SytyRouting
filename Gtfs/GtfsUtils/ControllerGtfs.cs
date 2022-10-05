@@ -20,27 +20,31 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public List<ShapeCsv> RecordsShape { get; }
         public List<StopTimesCsv> RecordStopTime { get; }
         public List<CalendarCsv> RecordsCalendar { get; }
+        public List<AgencyCsv> RecordsAgency { get; }
 
         public Dictionary<string, StopGtfs> StopDico { get; }
         public Dictionary<string, RouteGtfs> RouteDico { get; }
         public Dictionary<string, ShapeGtfs> ShapeDico { get; }
         public Dictionary<string, CalendarGtfs> CalendarDico { get; }
         public Dictionary<string, TripGtfs> TripDico { get; }
+        public Dictionary<string, AgencyGtfs> AgencyDico { get; }
         public Dictionary<string, ScheduleGtfs> ScheduleDico { get; }
-
         public Dictionary<string, EdgeGtfs> EdgeDico { get; }
+
 
         public ControllerGtfs()
         {
-            //  Task task = DownloadsGtfs();
-            //Task.WaitAny(task);
+            Task task = DownloadsGtfs();
+            Task.WaitAny(task);
             RecordsStop = CtrlCsv.GetAllStops(Choice);
             RecordsRoute = CtrlCsv.GetAllRoutes(Choice);
             RecordsTrip = CtrlCsv.GetAllTrips(Choice);
             RecordsShape = CtrlCsv.GetAllShapes(Choice);
             RecordStopTime = CtrlCsv.GetAllStopTimes(Choice);
-            RecordsCalendar = CtrlCsv.GetAllCalendar(Choice);
+            RecordsCalendar = CtrlCsv.GetAllCalendars(Choice);
+            RecordsAgency = CtrlCsv.GetAllAgencies(Choice);
             StopDico = CreateStopGtfsDictionary();
+            AgencyDico = CreateAgencyGtfsDictionary();
             RouteDico = CreateRouteGtfsDictionary();
             ShapeDico = CreateShapeGtfsDictionary();
             CalendarDico = CreateCalendarGtfsDictionary();
@@ -49,7 +53,17 @@ namespace SytyRouting.Gtfs.GtfsUtils
             ScheduleDico = CreateScheduleGtfsDictionary();
             AddScheduleToTrip();
             EdgeDico = AllTripsToEdgeDictionary();
-            //CleanGtfs();
+            CleanGtfs();
+        }
+
+        private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
+        {
+            var agencyDico = new Dictionary<string, AgencyGtfs>();
+            foreach (var agency in RecordsAgency)
+            {
+                agencyDico.Add(agency.Id, new AgencyGtfs(agency.Id, agency.Name, agency.Url));
+            }
+            return agencyDico;
         }
 
         // Creation of dictionaries
@@ -59,6 +73,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             foreach (StopCsv stop in RecordsStop)
             {
                 stopDico.Add(stop.Id, new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
+
             }
             return stopDico;
         }
@@ -67,9 +82,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, RouteGtfs> CreateRouteGtfsDictionary()
         {
             var routeDico = new Dictionary<string, RouteGtfs>();
-            foreach (RouteCsv route in RecordsRoute)
+            foreach (var route in RecordsRoute)
             {
-                routeDico.Add(route.Id, new RouteGtfs(route.Id, route.LongName, route.Type, new Dictionary<string, TripGtfs>()));
+                AgencyGtfs buffAgency = null;
+                if (route.AgencyId != null)
+                {
+                    AgencyDico.TryGetValue(route.AgencyId, out buffAgency);
+                }
+                routeDico.Add(route.Id, new RouteGtfs(route.Id, route.LongName, route.Type, new Dictionary<string, TripGtfs>(), buffAgency));
             }
             return routeDico;
         }
@@ -77,7 +97,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
         // Create the shapes
         public Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary()
         {
-
             var shapeDico = new Dictionary<string, ShapeGtfs>();
             foreach (var shape in RecordsShape)
             {
@@ -87,7 +106,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     shapeDico.Add(shape.Id, new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id)));
                     shapeDico.TryGetValue(shape.Id, out shapeBuff);
                 }
-
                 Point pointBuff = null;
                 if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
                 {
@@ -126,7 +144,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             StopGtfs stopBuff = null;
 
             // Create the timeStop with an dico details
-            var scheduleDico = new Dictionary<string, ScheduleGtfs>();  // String = l'id du trip
+            var scheduleDico = new Dictionary<string, ScheduleGtfs>();  // String = id of trip 
             foreach (var stopTime in RecordStopTime)
             {
                 StopDico.TryGetValue(stopTime.StopId, out stopBuff);
@@ -170,7 +188,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     {
                         newTrip = new TripGtfs(buffRoute, trip.Id, null, null, buffCal);
                     }
-
                     tripDico.Add(trip.Id, newTrip);
                 }
             }
@@ -214,21 +231,26 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         ShapeGtfs shape = buffTrip.Shape;
                         bool iShapeAvailable;
                         iShapeAvailable = shape == null ? false : true;
+                        EdgeGtfs newEdge = null;
                         if (iShapeAvailable)
                         {
-                            // Point X = 50000 Y=4000
-                            // Stop.Lat = 50000 Stop.Lon = 4000
-                            Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString,new Point(previousStop.Lat,previousStop.Lon))[0]);
-                            Point targetNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString,new Point(currentStop.Lat,currentStop.Lon))[0]);
-                            double walkDistanceSourceM = Helper.GetDistance(sourceNearestLineString.X,sourceNearestLineString.Y,previousStop.Lat,previousStop.Lon);
-                            double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X,targetNearestLineString.Y,currentStop.Lat,currentStop.Lon);
-                            double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X,sourceNearestLineString.Y,targetNearestLineString.X,targetNearestLineString.Y);
-                            edgeDico.Add(newId, new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable,sourceNearestLineString,targetNearestLineString,walkDistanceSourceM,walkDistanceTargetM,distanceNearestPointsM));
+                            Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(previousStop.Lat, previousStop.Lon))[0]);
+                            Point targetNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(currentStop.Lat, currentStop.Lon))[0]);
+                            double walkDistanceSourceM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, previousStop.Lat, previousStop.Lon);
+                            double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X, targetNearestLineString.Y, currentStop.Lat, currentStop.Lon);
+                            double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM, walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration);
+                            edgeDico.Add(newId, newEdge);
                         }
                         else
                         {
-                            edgeDico.Add(newId, new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable, null, null, 0, 0, 0));
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable, null, null, 0, 0, 0, distance / duration);
+                            edgeDico.Add(newId, newEdge);
                         }
+                        previousStop.ValidSource = true;
+                        currentStop.ValidTarget = true;
+                        previousStop.OutwardEdges.Add(newEdge);
+                        currentStop.InwardEdges.Add(newEdge);
                     }
                     previousStop = currentStop;
                     previousStopTime = currentStopTime.Value;
@@ -285,15 +307,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
             var tripsForOneDay = SelectAllTripsForGivenDay(day);
-            var tripsForOneDayBetweenHours = from tripu in tripsForOneDay
-                                             where tripu.Value.Schedule.Details.First().Value.DepartureTime >= min && tripu.Value.Schedule.Details.First().Value.DepartureTime <= max
-                                             select tripu;
+            var tripsForOneDayBetweenHours = from trip in tripsForOneDay
+                                             where trip.Value.Schedule.Details.First().Value.DepartureTime >= min && trip.Value.Schedule.Details.First().Value.DepartureTime <= max
+                                             select trip;
             return tripsForOneDayBetweenHours.ToDictionary(k => k.Key, v => v.Value);
         }
 
         public LineString CreateLineString(string shapeId)
         {
-
             var shapeInfos = RecordsShape.FindAll(x => x.Id == shapeId);
             // CREATION of LINESTRING
             Coordinate[] arrayOfCoordinate = new Coordinate[shapeInfos.Count];
@@ -316,8 +337,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return new TimeSpan(hour % 24, min, seconds);
         }
 
-
-
         ///////////////////
         public static async Task DownloadsGtfs()
         {
@@ -325,9 +344,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             List<Task> listDwnld = new List<Task>();
             foreach (ProviderCsv provider in Enum.GetValues(typeof(ProviderCsv)))
             {
-
                 listDwnld.Add(DownloadGtfs(provider));
-
             }
             if (listDwnld.Count == 0)
             {

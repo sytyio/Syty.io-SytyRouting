@@ -15,6 +15,8 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public RouteGtfs Route {get;}
 
+        public double MaxSpeedMPerS{get;}
+
         public double DistanceSourceToTargetM { get;  }
 
         public bool IsShapeAvailable{get;}
@@ -29,14 +31,13 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public double? DistanceNearestPointsM{get;}
 
-
-
         public override string ToString()
         {
-            return "Id = " + Id + " Target = " + TargetStop + "Target on linestring "+TargetNearestLineString+ " Source = " + SourceStop+ "Source on linestring = "+ SourceNearestLineString + " Distance = " + DistanceSourceToTargetM + " meters, Duration = " + DurationS + " seconds" + " Route = "+ Route +" LineString? = "+IsShapeAvailable + " walkSource = " +WalkDistanceSourceM + " walktarget = "+ WalkDistanceTargetM +" DistanceBetween = "+DistanceNearestPointsM;
+            // + "MaxSpeepMPerS = "+MaxSpeedMPerS+" Target on linestring "+TargetNearestLineString +  " Distance = " + DistanceSourceToTargetM + " meters, Duration = " + DurationS + " seconds" + "Source on linestring = "+ SourceNearestLineString + " walkSource = " +WalkDistanceSourceM + " walktarget = "+ WalkDistanceTargetM +" DistanceBetween = "+DistanceNearestPointsM
+            return "Id = " + Id + " Target = " + TargetStop + " Source = " + SourceStop+ " Route = " + Route +" LineString? = "+IsShapeAvailable;
         }
 
-        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point sourceNearestLineString, Point targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM )
+        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point sourceNearestLineString, Point targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS)
         {
             DistanceSourceToTargetM = distance;
             DurationS = duration;
@@ -50,6 +51,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             WalkDistanceSourceM=walkDistanceSourceM;
             WalkDistanceTargetM=walkDistanceTargetM;
             DistanceNearestPointsM=distanceNearestPointsM;
+            MaxSpeedMPerS=maxSpeedMPerS;
         }
     }
 }

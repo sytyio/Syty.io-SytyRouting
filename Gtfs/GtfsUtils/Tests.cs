@@ -85,7 +85,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var test = CtrlGtfs.SelectAllTripsForGivenDayAndBetweenGivenHours(new TimeSpan(10, 0, 0), new TimeSpan(11, 0, 0), 6);
             logger.Info("Sunday between 10:00:00 and 11:00:00 {0} " + test.Count);
 
-            var test4 = CtrlGtfs.SelectAllTripsForGivenDayAndBetweenGivenHours( new TimeSpan(11, 0, 1), new TimeSpan(23, 59, 59), 6);
+            var test4 = CtrlGtfs.SelectAllTripsForGivenDayAndBetweenGivenHours(new TimeSpan(11, 0, 1), new TimeSpan(23, 59, 59), 6);
             logger.Info("Sunday between 11:00:01 and 23:59:59 {0} " + test4.Count);
 
             var test5 = CtrlGtfs.SelectAllTripsForGivenDayAndBetweenGivenHours(new TimeSpan(0, 0, 0), new TimeSpan(9, 59, 59), 6);
@@ -182,7 +182,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return distances;
         }
 
-
         public double DistanceBetweenTwoPoint(Point point1, Point point2)
         {
             return Helper.GetDistance(point1.X, point1.Y, point2.X, point2.Y);
@@ -245,11 +244,29 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (System.OverflowException)
             {
-                arrivalTimeStop2 =CtrlGtfs.ParseMore24Hours(arrivalStop.ArrivalTime!);
+                arrivalTimeStop2 = CtrlGtfs.ParseMore24Hours(arrivalStop.ArrivalTime!);
             }
             double time = (arrivalTimeStop2 - departureTimeStop1).TotalSeconds;
-              logger.Info("Départure time {0}, Arrival time {1}, DurationS {2}",departureTimeStop1,arrivalTimeStop2, time);
+            logger.Info("Départure time {0}, Arrival time {1}, DurationS {2}", departureTimeStop1, arrivalTimeStop2, time);
             return time;
+        }
+
+        public void printStopsWithEdges()
+        {
+            foreach (var stop in CtrlGtfs.StopDico)
+            {
+                logger.Info(stop.Value);
+                logger.Info("Inwards {0} ", stop.Value.InwardEdges.Count);
+                foreach (var edge in stop.Value.InwardEdges)
+                {
+                    logger.Info("Source = " + edge.SourceStop.Name + " Target = " + edge.TargetStop.Name);
+                }
+                logger.Info("Outwards {0}", stop.Value.OutwardEdges.Count);
+                foreach (var edge in stop.Value.OutwardEdges)
+                {
+                    logger.Info("Source = " + edge.SourceStop.Name + " Target = " + edge.TargetStop.Name);
+                }
+            }
         }
     }
 }

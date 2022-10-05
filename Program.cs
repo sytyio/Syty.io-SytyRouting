@@ -18,12 +18,7 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-
-                Tests tests  = new Tests();
-
-                tests.PrintAllEdges();
-                logger.Info("Nb edge = "+tests.CtrlGtfs.EdgeDico.Count());
-                logger.Info("Nb stops = "+tests.CtrlGtfs.StopDico.Count());
+            ControllerGtfs ctrl = new ControllerGtfs();
 
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
