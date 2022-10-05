@@ -13,6 +13,7 @@ namespace SytyRouting.Model
     public class Edge
     {
         public long OsmID;
+        public int TagId;
         public double Cost;
         public double LengthM;
         public double MaxSpeedMPerS;
@@ -33,6 +34,7 @@ namespace SytyRouting.Model
                 throw new Exception("Invalid data imported");
             }
             bw.Write(OsmID);
+            bw.Write(TagId);
             bw.Write(Cost);
             bw.Write(LengthM);
             bw.Write(MaxSpeedMPerS);
@@ -63,6 +65,7 @@ namespace SytyRouting.Model
             {
                 throw new Exception("Invalid data imported");
             }
+            TagId = br.ReadInt32();
             Cost = br.ReadDouble();
             LengthM = br.ReadDouble();
             MaxSpeedMPerS = br.ReadDouble();
