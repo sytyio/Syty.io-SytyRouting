@@ -275,8 +275,8 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (tag_id: {9}, mask: {10})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModesToString(edge.TransportModes), edge.TagId, edge.TransportModes);
+            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModesToString(edge.TransportModes), edge.TransportModes);
             
             TraceInternalGeometry(edge);
         }
@@ -317,7 +317,7 @@ namespace SytyRouting
                 case OneWayState.Yes: // Only forward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, TagId=tagId, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
@@ -326,7 +326,7 @@ namespace SytyRouting
                 case OneWayState.Reversed: // Only backward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, TagId=tagId, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
+                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
 
@@ -335,12 +335,12 @@ namespace SytyRouting
                 default: // Both ways
                 {
                     var internalGeometry = GetInternalGeometry(geometry, OneWayState.Yes);
-                    var edge = new Edge{OsmID = osmID, TagId=tagId, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
                     internalGeometry = GetInternalGeometry(geometry, OneWayState.Reversed);
-                    edge = new Edge{OsmID = osmID, TagId=tagId, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
+                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
                     
@@ -379,10 +379,11 @@ namespace SytyRouting
             {
                 if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
                 {
-                    result += tmm.Key + ", ";
+                    result += tmm.Key + " ";
                 }
             }
-            return (result == "")? Configuration.TransportModeNames[0]: result;
+                
+            return (result == "")? Constants.DefaulTransportMode : result;
         }
 
         private ushort GetTransportModes(int tagId)
