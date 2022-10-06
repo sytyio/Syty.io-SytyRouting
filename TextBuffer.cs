@@ -100,3 +100,6 @@
 
     // https://wiki.openstreetmap.org/wiki/Routing
     // https://wiki.openstreetmap.org/wiki/Routing_profiles
+
+    // Notes on 'ways' cost calculation:
+    // https://github.com/pgRouting/osm2pgrouting/issues/275
