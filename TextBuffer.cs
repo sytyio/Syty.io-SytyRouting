@@ -103,3 +103,4 @@
 
     // Notes on 'ways' cost calculation:
     // https://github.com/pgRouting/osm2pgrouting/issues/275
+    // https://workshop.pgrouting.org/2.1.0-dev/en/chapters/advanced.html#cost-manipulations
