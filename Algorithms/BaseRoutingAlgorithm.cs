@@ -17,7 +17,7 @@ namespace SytyRouting.Algorithms
             _graph = graph;
         }
 
-        public List<Node> GetRoute(double x1, double y1, double x2, double y2, int transportMode)
+        public List<Node> GetRoute(double x1, double y1, double x2, double y2, ushort transportMode)
         {
             if (_graph == null)
             {
@@ -29,7 +29,7 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportMode);
         }
 
-        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, int transportMode)
+        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, ushort transportMode)
         {
             if (_graph == null)
             {
@@ -120,7 +120,7 @@ namespace SytyRouting.Algorithms
         }
 
         // Routing algorithm implementation
-        protected virtual List<Node> RouteSearch(Node origin, Node destination, int transportMode)
+        protected virtual List<Node> RouteSearch(Node origin, Node destination, ushort transportMode)
         {
             throw new NotImplementedException();
         }

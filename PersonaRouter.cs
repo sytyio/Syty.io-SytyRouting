@@ -40,7 +40,7 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>(ushort transportMode) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -69,7 +69,7 @@ namespace SytyRouting
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportMode));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -148,7 +148,7 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
+        private void CalculateRoutes<T>(int taskIndex, ushort transportMode) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -166,7 +166,7 @@ namespace SytyRouting
                         {
                             logger.Debug("Origin and Destination Nodes are equal");
                         }
-                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
+                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportMode);
                         
                         TimeSpan currentTime = TimeSpan.Zero;
                         persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
@@ -225,8 +225,8 @@ namespace SytyRouting
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
-            // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
-            var connectionString = Configuration.ConnectionString;            
+            var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
+            // var connectionString = Configuration.ConnectionString;            
             
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
@@ -256,8 +256,8 @@ namespace SytyRouting
                 }
                 catch
                 {
-                    logger.Info("Unable to upload route to database");
-                    logger.Debug("> Persona Id{0}");
+                    logger.Info(" ==>> Unable to upload route to database");
+                    logger.Debug("==>> Persona Id{0}", persona.Id);
                     uploadFails++;
                 }
             }

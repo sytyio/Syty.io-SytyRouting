@@ -17,7 +17,7 @@ namespace SytyRouting
             graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
         }
 
-        public static void RoutingAlgorithmBenchmarking<T>(Graph graph) where T: IRoutingAlgorithm, new()
+        public static void RoutingAlgorithmBenchmarking<T>(Graph graph, ushort transportMode) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
@@ -27,15 +27,15 @@ namespace SytyRouting
             logger.Info("Route searching benchmarking using {0}'s algorithm", routingAlgorithm.GetType().Name);
 
             logger.Info("Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
+            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889), transportMode);
             logger.Info("SECOND Route From Synapsis (4.369293555585981, 50.82126481464596) to De Panne Markt, De Panne (2.5919885, 51.0990340)");
-            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889));
+            RoutingAlgorithmRunTime(routingAlgorithm, graph.GetNodeByOsmId(26913024), graph.GetNodeByOsmId(1261889889), transportMode);
 
             logger.Info("Average run time using random origin and destination Nodes in {0} trials:", numberOfRuns);
-            RandomSourceTargetRouting(graph, routingAlgorithm, numberOfNodes, numberOfRuns);
+            RandomSourceTargetRouting(graph, routingAlgorithm, transportMode, numberOfNodes, numberOfRuns);
         }
 
-        public static void MultipleRoutingAlgorithmsBenchmarking<T, U>(Graph graph) where T: IRoutingAlgorithm, new() where U: IRoutingAlgorithm, new()
+        public static void MultipleRoutingAlgorithmsBenchmarking<T, U>(Graph graph, ushort transportMode) where T: IRoutingAlgorithm, new() where U: IRoutingAlgorithm, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
@@ -54,8 +54,8 @@ namespace SytyRouting
             var originNodeOsmId = 26913024;          // Synapsis
             var destinationNodeOsmId = 1261889889;   // De Panne Markt, De Panne
             
-            var route1 = RoutingAlgorithmRunTime(algorithm1, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
-            var route2 = RoutingAlgorithmRunTime(algorithm2, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId));
+            var route1 = RoutingAlgorithmRunTime(algorithm1, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId), transportMode);
+            var route2 = RoutingAlgorithmRunTime(algorithm2, graph.GetNodeByOsmId(originNodeOsmId), graph.GetNodeByOsmId(destinationNodeOsmId), transportMode);
             
             logger.Info("Output comparison of {0} vs. {1}:", algorithm1.GetType().Name, algorithm2.GetType().Name);
             CompareRoutesSideBySide(route1, route2);
@@ -63,21 +63,21 @@ namespace SytyRouting
    
             
             logger.Info("Estimating the average run time using random origin and destination Nodes in {0} trial(s):", numberOfRuns);
-            MultipleRandomSourceTargetRouting(graph, algorithm1, algorithm2, numberOfRuns);
+            MultipleRandomSourceTargetRouting(graph, algorithm1, algorithm2, transportMode, numberOfRuns);
 
             benchmarkStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
             logger.Info("Benchmark performed in {0} (HH:MM:S.mS)", totalTime);
         }
 
-        private static List<Node> RoutingAlgorithmRunTime(IRoutingAlgorithm routingAlgorithm, Node origin, Node destination)
+        private static List<Node> RoutingAlgorithmRunTime(IRoutingAlgorithm routingAlgorithm, Node origin, Node destination, ushort transportMode)
         {
             Stopwatch stopWatch = new Stopwatch();
 
             long nanosecondsPerTick = (1000L*1000L*1000L) / Stopwatch.Frequency;
 
             stopWatch.Start();
-            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID);
+            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportMode);
             var xympRoute = routingAlgorithm.ConvertRouteFromNodesToLineString(route, TimeSpan.Zero);
             stopWatch.Stop();
 
@@ -86,7 +86,7 @@ namespace SytyRouting
             return route;
         }
 
-        private static void RandomSourceTargetRouting(Graph graph, IRoutingAlgorithm routingAlgorithm, int numberOfNodes, int numberOfRuns)
+        private static void RandomSourceTargetRouting(Graph graph, IRoutingAlgorithm routingAlgorithm, ushort transportMode, int numberOfNodes, int numberOfRuns)
         {
             Random randomIndex = new Random();
             
@@ -123,7 +123,7 @@ namespace SytyRouting
                 }
 
                 stopWatch = Stopwatch.StartNew();
-                var route = routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var route = routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID, transportMode);
                 var xympRoute = routingAlgorithm.ConvertRouteFromNodesToLineString(route, TimeSpan.Zero);
                 stopWatch.Stop();
                 
@@ -136,7 +136,7 @@ namespace SytyRouting
             logger.Info("{0,25} average execution time: {1,10:0} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
         }
 
-        private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, int numberOfRuns)
+        private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, ushort transportMode, int numberOfRuns)
         {
             // var seed = 100100;
             // Random randomIndex = new Random(seed);
@@ -176,12 +176,12 @@ namespace SytyRouting
                 }
 
                 var startTicks = stopWatch.ElapsedTicks;
-                var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID, transportMode);
                 var xympRoute1 = algorithm1.ConvertRouteFromNodesToLineString(route1, TimeSpan.Zero);
                 elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks-startTicks;
 
                 startTicks = stopWatch.ElapsedTicks;
-                var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID);
+                var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID, transportMode);
                 var xympRoute2 = algorithm2.ConvertRouteFromNodesToLineString(route2, TimeSpan.Zero);
                 elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks-startTicks;
 

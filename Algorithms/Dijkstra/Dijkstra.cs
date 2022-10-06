@@ -19,7 +19,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
         }
 
-        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, int transportMode)
+        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, ushort transportMode)
         {
             route.Clear();
             routeCost = 0;
@@ -39,7 +39,10 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                        if((outwardEdge.TransportModes & transportMode) == transportMode)
+                        {
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                        }
                     }
                 }
             }
