@@ -119,10 +119,6 @@ namespace SytyRouting
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(TableName, logger);
 
-            int numberOfLengthSTLengthDiscrepancies = 0;
-            int numberOfCostLengthDiscrepancies = 0;
-            int numberOfReverseCostLengthDiscrepancies = 0;
-
             // Read all 'ways' rows and create the corresponding Nodes            
             //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16                             17
             queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
@@ -160,40 +156,9 @@ namespace SytyRouting
                     var length = Convert.ToDouble(reader.GetValue(16)); // length [?]
                     var stLength = Convert.ToDouble(reader.GetValue(17)); // length [?]
 
-                    double diffLengthSTLength = length - stLength;
-                    if(diffLengthSTLength != 0.0)
-                    {
-                        logger.Debug("length {0}:{1} st_length :: diffLengthSTLength {2}", length, stLength, diffLengthSTLength);
-                        numberOfLengthSTLengthDiscrepancies++;
-                    }
-                     
-                    double diffCostLength = double.NaN;
-                    if(edgeOneWay == OneWayState.Yes)
-                    {
-                        diffCostLength = length - edgeCost; // edgeCost > 0
-                    }
-                    else if(edgeOneWay == OneWayState.Reversed)
-                    {
-                        diffCostLength = length - edgeReverseCost;
-                    }
-                    if(diffCostLength != 0.0)
-                    {
-                        logger.Debug("length {0}:{1} cost :: diffCostLength = {2}, one_way: {3}", length, edgeCost, diffCostLength, edgeOneWay);
-                    }
 
-                    double diffReverseCostLength = double.NaN;
-                    if(edgeOneWay == OneWayState.Yes)
-                    {
-                        diffReverseCostLength = length + edgeReverseCost; // edgeReverseCost < 0
-                    }
-                    else if(edgeOneWay == OneWayState.Reversed)
-                    {
-                        diffReverseCostLength = length - edgeReverseCost;
-                    }
-                    if(diffReverseCostLength != 0.0)
-                    {
-                        logger.Debug("length {0}:{1} reverse_cost :: diffReverseCostLength = {2}, one_way: {3}", length, edgeReverseCost, diffReverseCostLength, edgeOneWay);
-                    }
+                    TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
+                    TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
                     
                     
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s);
@@ -208,11 +173,7 @@ namespace SytyRouting
                     }
                 }
 
-                logger.Debug("\n\n");
-                logger.Debug("NumberOfLengthSTLengthDiscrepancies: {0}", numberOfLengthSTLengthDiscrepancies);
-                logger.Debug("NumberOfCostLengthDiscrepancies: {0}", numberOfCostLengthDiscrepancies);
-                logger.Debug("NumberOfReverseCostLengthDiscrepancies: {0}", numberOfReverseCostLengthDiscrepancies);
-                logger.Debug("\n\n");
+                TestBench.DisplayCostCalculationTestResults();
 
                 NodesArray = nodes.Values.ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)

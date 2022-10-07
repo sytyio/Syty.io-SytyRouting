@@ -67,6 +67,93 @@ namespace SytyRouting
             return lineStringRoute;
         }
 
+        // queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length FROM public.ways where length_m is not null";
+        public static int NumberOfLengthSTLengthDiscrepancies {get; set;} = 0;
+        public static int NumberOfCostStCostDiscrepancies {get; set;} = 0;
+        public static int NumberOfReverseCostStReverseCostDiscrepancies {get; set;} = 0;
+        public static void TestOriginalWayCostCalculation(double length, double stLength, double edgeCost, double edgeReverseCost, OneWayState edgeOneWay)
+        {
+            // cost based on ST_Length(the_geom)
+            double stCost = double.NaN;
+            double stReverseCost = double.NaN;
+            double diffLengthSTLength = length - stLength;
+            if(diffLengthSTLength != 0.0)
+            {
+                logger.Debug("length {0}:{1} st_length :: diff {2}", length, stLength, diffLengthSTLength);
+                NumberOfLengthSTLengthDiscrepancies++;
+            }
+                
+            double diffCostStCost = double.NaN;
+            double diffReverseCostStReverseCost = double.NaN;
+            switch(edgeOneWay)
+            {
+                case OneWayState.Reversed:
+                {
+                    stCost = -stLength;
+                    stReverseCost = stLength;
+                    break; 
+                }
+                case OneWayState.Yes:
+                {
+                    stCost = stLength;
+                    stReverseCost = -stLength;
+                    break; 
+                }
+                default:
+                {
+                    stCost = stLength;
+                    stReverseCost = stLength;
+                    break; 
+                }
+            }
+
+            diffCostStCost = edgeCost - stCost;
+            if(diffCostStCost != 0.0)
+            {
+                logger.Debug("cost {0}:{1} st_cost :: diff = {2}, one_way: {3}", length, edgeCost, diffCostStCost, edgeOneWay);
+                NumberOfCostStCostDiscrepancies++;
+            }
+        
+            diffReverseCostStReverseCost = edgeReverseCost - stReverseCost;
+            if(diffReverseCostStReverseCost != 0.0)
+            {
+                logger.Debug("reverse_cost {0}:{1} st_reverse_cost :: diff = {2}, one_way: {3}", length, edgeReverseCost, diffReverseCostStReverseCost, edgeOneWay);
+                NumberOfReverseCostStReverseCostDiscrepancies++;
+            }
+        }
+
+        public static int NumberOfSTLengthTheGeomLengthDiscrepancies {get; set;} = 0;
+        public static void TestOriginalGeomLengthCalculation(double length, double stLength, Geometry theGeom)
+        {
+            // length calculation:
+            double theGeomLength = theGeom.Length;
+            double diffStLengthTheGeomLength = stLength-theGeomLength;
+
+            if(diffStLengthTheGeomLength !=0)
+            {
+                logger.Debug("       length: {0}", length);
+                logger.Debug("    st_length: {0}", stLength);
+                logger.Debug("   difference: {0}\n", length-stLength);
+                logger.Debug("    st_length: {0}", stLength);
+                logger.Debug("theGeomlength: {0}", theGeomLength);
+                logger.Debug("   difference: {0}\n", diffStLengthTheGeomLength);
+                NumberOfSTLengthTheGeomLengthDiscrepancies++;
+            }
+        }
+
+        public static void DisplayCostCalculationTestResults()
+        {
+            logger.Debug("\n\n");
+            logger.Debug("NumberOfLengthSTLengthDiscrepancies: {0}", TestBench.NumberOfLengthSTLengthDiscrepancies);
+            logger.Debug("NumberOfCostLengthDiscrepancies: {0}", TestBench.NumberOfCostStCostDiscrepancies);
+            logger.Debug("NumberOfReverseCostLengthDiscrepancies: {0}", TestBench.NumberOfReverseCostStReverseCostDiscrepancies);
+            logger.Debug("\n\n");
+            logger.Debug("NumberOfSTLengthTheGeomLengthDiscrepancies: {0}", TestBench.NumberOfSTLengthTheGeomLengthDiscrepancies);
+            logger.Debug("\n\n");
+        }
+
+
+
         
     }
 }
