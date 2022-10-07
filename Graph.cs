@@ -159,6 +159,7 @@ namespace SytyRouting
 
                     TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
                     TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
+                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, theGeom);
                     
                     
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s);
