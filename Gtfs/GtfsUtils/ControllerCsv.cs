@@ -93,6 +93,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
             }
+            catch (FileNotFoundException)
+            {
+                logger.Info("No given shapes (file empty or not present)");
+                return new List<AgencyCsv>();
+            }
         }
 
         public List<StopCsv> GetAllStops(ProviderCsv provider)

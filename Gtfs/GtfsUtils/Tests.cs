@@ -8,8 +8,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
 {
     public class Tests
     {
-        public ControllerGtfs CtrlGtfs = new ControllerGtfs(ProviderCsv.stib);
+        public ControllerGtfs CtrlGtfs;
         private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        public Tests(ControllerGtfs gtfs)
+        {
+            CtrlGtfs = gtfs;
+        }
         public void PrintTripDico()
         {
             foreach (KeyValuePair<string, TripGtfs> trip in CtrlGtfs.TripDico)
@@ -26,6 +31,21 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+        internal void PrintRecordsAgency()
+        {
+            foreach (var agency in CtrlGtfs.CtrlCsv.RecordsAgency)
+            {
+                logger.Info(agency);
+            }
+        }
+
+        internal void PrintRecordsRoute()
+        {
+            foreach (var route in CtrlGtfs.CtrlCsv.RecordsRoute)
+            {
+                logger.Info(route);
+            }
+        }
 
         public void PrintCalendarDico()
         {
@@ -57,6 +77,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+        public void PrintAgencyDico()
+        {
+            foreach (var agency in CtrlGtfs.AgencyDico)
+            {
+                logger.Info("Key {0}, Value {1}", agency.Key, agency.Value);
+            }
+        }
+
         public void PrintStopDico()
         {
             foreach (var stop in CtrlGtfs.StopDico)
@@ -67,13 +95,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public void PrintStopTimeForOneTrip(string tripId)
         {
-            TripGtfs targetedTrip = null;
-            CtrlGtfs.TripDico.TryGetValue(tripId, out targetedTrip);
+            TripGtfs targetedTrip = CtrlGtfs.TripDico[tripId];
             logger.Info("My trip {0} ", targetedTrip);
             logger.Info("My schedule for one trip");
-            foreach (KeyValuePair<int, StopTimesGtfs> stopTime in targetedTrip.Schedule.Details)
+            if (targetedTrip.Schedule != null)
             {
-                logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
+                foreach (KeyValuePair<int, StopTimesGtfs> stopTime in targetedTrip.Schedule.Details)
+                {
+                    logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
+                }
             }
         }
 
@@ -106,13 +136,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public void PrintDistinctShapesForOneTrip(RouteCsv chosenRoute)
         {
-            var nbParRoute = CtrlGtfs.RecordsTrip.FindAll(x => x.RouteId == chosenRoute.Id).GroupBy(x => x.ShapeId).Select(x => Tuple.Create(x.Key, x.Count()));
+            var nbParRoute = CtrlGtfs.CtrlCsv.RecordsTrip.FindAll(x => x.RouteId == chosenRoute.Id).GroupBy(x => x.ShapeId).Select(x => Tuple.Create(x.Key, x.Count()));
             foreach (var item in nbParRoute)
             {
                 logger.Info("shape_id {0}, number of use {1}", item.Item1, item.Item2);
             }
 
-            var tripsForChosenRoute = CtrlGtfs.RecordsTrip.FindAll(x => x.RouteId == chosenRoute.Id);
+            var tripsForChosenRoute = CtrlGtfs.CtrlCsv.RecordsTrip.FindAll(x => x.RouteId == chosenRoute.Id);
             logger.Info("Number of distinct trip for one route {0}", tripsForChosenRoute.Count());
             logger.Info("Id of the chosen route {0} and name {1}", chosenRoute.Id, chosenRoute.LongName);
         }
@@ -140,7 +170,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             List<double[]> distancesForOneTrip = new List<double[]>();
             // If there is no given shape, calculate the distance between 2 stops based on their coordinates
-            if (CtrlGtfs.RecordsShape.Count == 0)
+            if (chosenTripForChosenRoute.ShapeId==null)
             {
                 logger.Info("No shapes available");
                 return ListOfPointsToListOfDistance(pointsForOneTrip);

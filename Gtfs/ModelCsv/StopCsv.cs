@@ -1,13 +1,18 @@
 using CsvHelper.Configuration.Attributes;
+using System.Diagnostics.CodeAnalysis;
+
+
 namespace SytyRouting.Gtfs.ModelCsv
 {
     public class StopCsv
     {
 
         [Name("stop_id")]
-        public string Id { get; set; }
+        [NotNull]
+        public string? Id { get; set; }
 
         [Name("stop_name")]
+        [Optional]
         public string? Name { get; set; }
 
         [Name("stop_lat")]

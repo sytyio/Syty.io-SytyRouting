@@ -1,4 +1,6 @@
 using CsvHelper.Configuration.Attributes;
+using System.Diagnostics.CodeAnalysis;
+
 
 namespace SytyRouting.Gtfs.ModelCsv
 {
@@ -6,12 +8,15 @@ namespace SytyRouting.Gtfs.ModelCsv
     {
 
         [Name("route_id")]
+        [NotNull]
         public string? RouteId { get; set; }
 
         [Name("trip_id")]
+        [NotNull]
         public string? Id { get; set; }
 
         [Name("service_id")]
+        [NotNull]
         public string? ServiceId { get; set; }
 
         [Name("shape_id")]

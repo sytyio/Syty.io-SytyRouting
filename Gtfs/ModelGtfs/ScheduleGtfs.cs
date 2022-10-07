@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 namespace SytyRouting.Gtfs.ModelGtfs
 {
     public class ScheduleGtfs
@@ -6,7 +7,8 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public Dictionary<int, StopTimesGtfs> Details { get; set; }
 
-        public bool[] Days { get; set; }
+        [NotNull]
+        public bool[]? Days { get; set; }
 
         public override string ToString()
         {

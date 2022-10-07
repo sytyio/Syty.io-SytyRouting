@@ -18,7 +18,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Trip id: " + Id + " Service Id = "+ Service+ " Route : " + Route + " Shape : " + Shape + "Schedule =" + Schedule;
         }
 
-        public TripGtfs(RouteGtfs route, string id, ShapeGtfs shape, ScheduleGtfs schedule, CalendarGtfs service){
+        public TripGtfs(RouteGtfs route, string id, ShapeGtfs? shape, ScheduleGtfs schedule, CalendarGtfs service){
             Route=route;
             Id=id;
             Shape=shape;

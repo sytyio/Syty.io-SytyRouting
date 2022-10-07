@@ -5,7 +5,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public string Id { get; set; }
 
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public double Lat { get; set; }
 
@@ -22,7 +22,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id  + " Name = " + Name + " Lat = " + Lat + " Lon = " + Lon + " Source?= " + ValidSource + " Target?= "+ValidTarget;
         }
 
-        public StopGtfs(string id, string name, double lat, double lon){
+        public StopGtfs(string id, string? name, double lat, double lon){
             Id=id;
             Name=name;
             Lat=lat;

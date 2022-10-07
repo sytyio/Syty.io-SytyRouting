@@ -5,25 +5,38 @@ using NetTopologySuite.Geometries;
 using System.Net; //download file 
 using System.IO.Compression; //zip
 using NetTopologySuite.Operation.Distance;
+using System.Diagnostics.CodeAnalysis;
+
 
 namespace SytyRouting.Gtfs.GtfsUtils
 {
     public class ControllerGtfs
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public ControllerCsv CtrlCsv;
+
+        [NotNull]
+        public ControllerCsv? CtrlCsv;
         private ProviderCsv choice;
 
+        private static int idGeneratorAgency = int.MaxValue - 10000;
+        private static int idGeneratorEdge = 0;
 
-
-        public Dictionary<string, StopGtfs> StopDico;
-        public Dictionary<string, RouteGtfs> RouteDico;
-        public Dictionary<string, ShapeGtfs> ShapeDico;
-        public Dictionary<string, CalendarGtfs> CalendarDico;
-        public Dictionary<string, TripGtfs> TripDico;
-        public Dictionary<string, AgencyGtfs> AgencyDico;
-        public Dictionary<string, ScheduleGtfs> ScheduleDico;
-        public Dictionary<string, EdgeGtfs> EdgeDico;
+        [NotNull]
+        public Dictionary<string, StopGtfs>? StopDico;
+        [NotNull]
+        public Dictionary<string, RouteGtfs>? RouteDico;
+        [NotNull]
+        public Dictionary<string, ShapeGtfs>? ShapeDico;
+        [NotNull]
+        public Dictionary<string, CalendarGtfs>? CalendarDico;
+        [NotNull]
+        public Dictionary<string, TripGtfs>? TripDico;
+        [NotNull]
+        public Dictionary<string, AgencyGtfs>? AgencyDico;
+        [NotNull]
+        public Dictionary<string, ScheduleGtfs>? ScheduleDico;
+        [NotNull]
+        public Dictionary<string, EdgeGtfs>? EdgeDico;
 
 
         public ControllerGtfs(ProviderCsv provider)
@@ -33,8 +46,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            
-            await DownloadsGtfs();
+
+            // await DownloadsGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             StopDico = CreateStopGtfsDictionary();
@@ -42,169 +55,92 @@ namespace SytyRouting.Gtfs.GtfsUtils
             RouteDico = CreateRouteGtfsDictionary();
             ShapeDico = CreateShapeGtfsDictionary();
             CalendarDico = CreateCalendarGtfsDictionary();
+            ScheduleDico = CreateScheduleGtfsDictionary();
             TripDico = CreateTripGtfsDictionary();
             AddTripsToRoute();
-            ScheduleDico = CreateScheduleGtfsDictionary();
-            AddScheduleToTrip();
             EdgeDico = AllTripsToEdgeDictionary();
-            CleanGtfs();
+            // CleanGtfs();
         }
 
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
         {
-            var agencyDico = new Dictionary<string, AgencyGtfs>();
-            foreach (var agency in CtrlCsv.RecordsAgency)
+            if (CtrlCsv.RecordsAgency.Count == 1 && CtrlCsv.RecordsAgency[0].Id == null)
             {
-                agencyDico.Add(agency.Id, new AgencyGtfs(agency.Id, agency.Name, agency.Url));
+                var newId = idGeneratorAgency.ToString();
+                idGeneratorAgency++;
+                return CtrlCsv.RecordsAgency.ToDictionary(k => newId, k => new AgencyGtfs(newId, k.Name, k.Url));
+                /** Agency id isn't a required field. 
+                 If there is less than one agency per supplier, may not be given
+                if there is no id provided but there is an agency, creation of an id */
             }
-            return agencyDico;
+            return CtrlCsv.RecordsAgency.ToDictionary(k => k.Id, k => new AgencyGtfs(k.Id, k.Name, k.Url));
         }
 
         // Creation of dictionaries
         public Dictionary<string, StopGtfs> CreateStopGtfsDictionary()
         {
-            var stopDico = new Dictionary<string, StopGtfs>();
-            foreach (StopCsv stop in CtrlCsv.RecordsStop)
-            {
-                stopDico.Add(stop.Id, new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
-
-            }
-            return stopDico;
+            return CtrlCsv.RecordsStop.ToDictionary(stop => stop.Id, stop => new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
         }
 
         // Creates the routes but trips are empty
         public Dictionary<string, RouteGtfs> CreateRouteGtfsDictionary()
         {
-            var routeDico = new Dictionary<string, RouteGtfs>();
-            foreach (var route in CtrlCsv.RecordsRoute)
+            //AgencyDico?[x.AgencyId] don"t work
+            if (CtrlCsv.RecordsAgency.Count == 0)
             {
-                AgencyGtfs buffAgency = null;
-                if (route.AgencyId != null)
-                {
-                    //Use same approach everywhere trygetvalue is used
-                    buffAgency = AgencyDico[route.AgencyId];
-                }
-                routeDico.Add(route.Id, new RouteGtfs(route.Id, route.LongName, route.Type, new Dictionary<string, TripGtfs>(), buffAgency));
+                return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), null));
             }
-            return routeDico;
+            else if (CtrlCsv.RecordsAgency.Count == 1)
+            {
+
+            }
+            return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), GetAgencyOrNull(x.AgencyId)));
+        }
+
+        public AgencyGtfs? GetAgencyOrNull(string id)
+        {
+            if (id == null)
+            {
+                var test = AgencyDico.First().Key;
+                return test == null ? null : AgencyDico[test];
+            }
+            return AgencyDico[id];
         }
 
         // Create the shapes
         public Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary()
         {
-            var shapeDico = new Dictionary<string, ShapeGtfs>();
-            foreach (var shape in CtrlCsv.RecordsShape)
-            {
-                //Good version to use for all dictionary accesses
-                ShapeGtfs? shapeBuff = ShapeDico?[shape.Id];
-                if(shapeBuff == null)
-                {
-                    shapeBuff = new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id));
-                    shapeDico.Add(shape.Id, shapeBuff);
-                }
-
-                Point pointBuff = null;
-                if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
-                {
-                    shapeBuff.ItineraryPoints.Add(shape.PtSequence, new Point(shape.PtLon, shape.PtLat));
-                }
-            }
-
-            CtrlCsv.RecordsShape.ToDictionary(t => t.Id, t => new ShapeGtfs(t.Id, new Dictionary<int, Point>(), CreateLineString(t.Id)));
-
-            foreach (var shape in CtrlCsv.RecordsShape)
-            {
-                //Good version to use for all dictionary accesses
-                
-                shapeDico.Add(shape.Id, new ShapeGtfs(shape.Id, new Dictionary<int, Point>(), CreateLineString(shape.Id)));
-
-                /*Point pointBuff = null;
-                if (!shapeBuff.ItineraryPoints.TryGetValue(shape.PtSequence, out pointBuff)) // Adds the point to the itinerary points
-                {
-                    shapeBuff.ItineraryPoints.Add(shape.PtSequence, new Point(shape.PtLon, shape.PtLat));
-                }*/
-            }
-            
-            return shapeDico;
+            // ShapeGtfs? shapeBuff = ShapeDico?[shape.Id];   => Don't work :( 
+            return CtrlCsv.RecordsShape.GroupBy(x => x.Id).ToDictionary(x => x.Key, x => new ShapeGtfs(x.Key, x.ToDictionary(y => y.PtSequence, y => (new Point(y.PtLon, y.PtLat))), CreateLineString(x.Key)));
         }
 
         public Dictionary<string, CalendarGtfs> CreateCalendarGtfsDictionary()
         {
-            Dictionary<string, CalendarGtfs> days = new Dictionary<string, CalendarGtfs>();
-            CalendarGtfs calBuff = null;
-            foreach (var calendar in CtrlCsv.RecordsCalendar)
-            {
-                bool[] daysBool = new bool[7];
-                if (!days.TryGetValue(calendar.ServiceId, out calBuff))
-                {
-                    days.Add(calendar.ServiceId, new CalendarGtfs(calendar.ServiceId, daysBool));
-                    daysBool[0] = Convert.ToBoolean(calendar.Monday);
-                    daysBool[1] = Convert.ToBoolean(calendar.Tuesday);
-                    daysBool[2] = Convert.ToBoolean(calendar.Wednesday);
-                    daysBool[3] = Convert.ToBoolean(calendar.Thursday);
-                    daysBool[4] = Convert.ToBoolean(calendar.Friday);
-                    daysBool[5] = Convert.ToBoolean(calendar.Saturday);
-                    daysBool[6] = Convert.ToBoolean(calendar.Sunday);
-                }
-            }
-            return days;
+            return CtrlCsv.RecordsCalendar.ToDictionary(x => x.ServiceId, x => new CalendarGtfs(x.ServiceId, new bool[]{
+                                                                    Convert.ToBoolean(x.Monday),
+                                                                    Convert.ToBoolean(x.Tuesday),
+                                                                    Convert.ToBoolean(x.Wednesday),
+                                                                    Convert.ToBoolean(x.Thursday),
+                                                                    Convert.ToBoolean(x.Friday),
+                                                                    Convert.ToBoolean(x.Saturday),
+                                                                    Convert.ToBoolean(x.Sunday)}));
         }
 
         public Dictionary<string, ScheduleGtfs> CreateScheduleGtfsDictionary()
         {
-            TripGtfs targetTrip = null;
-            ScheduleGtfs schedule = null;
-            StopGtfs stopBuff = null;
-
-            // Create the timeStop with an dico details
-            var scheduleDico = new Dictionary<string, ScheduleGtfs>();  // String = id of trip 
-            foreach (var stopTime in CtrlCsv.RecordStopTime)
-            {
-                StopDico.TryGetValue(stopTime.StopId, out stopBuff);
-                TimeSpan arrivalTime = ParseMore24Hours(stopTime.ArrivalTime);
-                TimeSpan departureTime = ParseMore24Hours(stopTime.DepartureTime);
-                StopTimesGtfs newStopTime = new StopTimesGtfs(stopBuff, arrivalTime, departureTime, stopTime.Sequence);
-                // If a line already exists
-                if (scheduleDico.TryGetValue(stopTime.TripId, out schedule))
-                {
-                    schedule.Details.Add(stopTime.Sequence, newStopTime);
-                }
-                else
-                {
-                    TripDico.TryGetValue(stopTime.TripId, out targetTrip);
-                    Dictionary<int, StopTimesGtfs> myDico = new Dictionary<int, StopTimesGtfs>();
-                    myDico.Add(stopTime.Sequence, newStopTime);
-                    scheduleDico.Add(stopTime.TripId, new ScheduleGtfs(targetTrip.Id, myDico));
-                }
-            }
-            return scheduleDico;
+            return CtrlCsv.RecordStopTime.GroupBy(x => x.TripId).ToDictionary(x => x.Key, x => new ScheduleGtfs(x.Key, x.ToDictionary(y => y.Sequence,
+                               y => (new StopTimesGtfs(StopDico[y.StopId], ParseMore24Hours(y.ArrivalTime), ParseMore24Hours(y.DepartureTime), y.Sequence)))));
         }
 
         // Create a trip with a shape (if there's an available shape) and with no schedule
         public Dictionary<string, TripGtfs> CreateTripGtfsDictionary()
         {
             var tripDico = new Dictionary<string, TripGtfs>();
-            RouteGtfs buffRoute = null;
-            ShapeGtfs buffShape = null;
-            CalendarGtfs buffCal = null;
-            foreach (TripCsv trip in CtrlCsv.RecordsTrip)
+            if (ShapeDico.Count == 0)
             {
-                if (RouteDico.TryGetValue(trip.RouteId, out buffRoute))
-                {
-                    CalendarDico.TryGetValue(trip.ServiceId, out buffCal);
-                    TripGtfs newTrip;
-                    if (trip.ShapeId != null && ShapeDico.TryGetValue(trip.ShapeId, out buffShape))
-                    {
-                        newTrip = new TripGtfs(buffRoute, trip.Id, buffShape, null, buffCal);
-                    }
-                    else
-                    {
-                        newTrip = new TripGtfs(buffRoute, trip.Id, null, null, buffCal);
-                    }
-                    tripDico.Add(trip.Id, newTrip);
-                }
+                return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(RouteDico[x.RouteId], x.Id, null, ScheduleDico[x.Id], CalendarDico[x.ServiceId]));
             }
-            return tripDico;
+            return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(RouteDico[x.RouteId], x.Id, ShapeDico[x.ShapeId!], ScheduleDico[x.Id], CalendarDico[x.ServiceId]));
         }
 
         public Dictionary<string, EdgeGtfs> AllTripsToEdgeDictionary()
@@ -225,49 +161,45 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, EdgeGtfs> OneTripToEdgeDictionary(string tripId)
         {
             Dictionary<string, EdgeGtfs> edgeDico = new Dictionary<string, EdgeGtfs>();
-            TripGtfs buffTrip = null;
-            if (TripDico.TryGetValue(tripId, out buffTrip))
+            TripGtfs buffTrip = TripDico[tripId];
+            StopGtfs currentStop;
+            StopGtfs previousStop = null;
+            StopTimesGtfs previousStopTime = null;
+            foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
-                StopGtfs currentStop = null;
-                StopGtfs previousStop = null;
-                StopTimesGtfs previousStopTime = null;
-                foreach (var currentStopTime in buffTrip.Schedule.Details)
+                currentStop = currentStopTime.Value.Stop;
+                if (previousStop != null && previousStopTime != null)
                 {
-                    currentStop = currentStopTime.Value.Stop;
-                    if (previousStop != null)
+                    string newId = idGeneratorEdge.ToString();
+                    idGeneratorEdge++;
+                    double distance = Helper.GetDistance(previousStop.Lon, previousStop.Lat, currentStop.Lon, currentStop.Lat);
+                    TimeSpan arrival = currentStopTime.Value.ArrivalTime;
+                    TimeSpan departure = previousStopTime.DepartureTime;
+                    double duration = (arrival - departure).TotalSeconds;
+                    ShapeGtfs? shape = buffTrip.Shape;
+                    EdgeGtfs newEdge;
+                    if (shape != null)
                     {
-                        string newId = previousStop.Id + currentStop.Id + buffTrip.Route.Type;
-                        double distance = Helper.GetDistance(previousStop.Lon, previousStop.Lat, currentStop.Lon, currentStop.Lat);
-                        TimeSpan arrival = currentStopTime.Value.ArrivalTime;
-                        TimeSpan departure = previousStopTime.DepartureTime;
-                        double duration = (arrival - departure).TotalSeconds;
-                        ShapeGtfs shape = buffTrip.Shape;
-                        bool iShapeAvailable;
-                        iShapeAvailable = shape == null ? false : true;
-                        EdgeGtfs newEdge = null;
-                        if (iShapeAvailable)
-                        {
-                            Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(previousStop.Lat, previousStop.Lon))[0]);
-                            Point targetNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(currentStop.Lat, currentStop.Lon))[0]);
-                            double walkDistanceSourceM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, previousStop.Lat, previousStop.Lon);
-                            double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X, targetNearestLineString.Y, currentStop.Lat, currentStop.Lon);
-                            double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM, walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration);
-                            edgeDico.Add(newId, newEdge);
-                        }
-                        else
-                        {
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, iShapeAvailable, null, null, 0, 0, 0, distance / duration);
-                            edgeDico.Add(newId, newEdge);
-                        }
-                        previousStop.ValidSource = true;
-                        currentStop.ValidTarget = true;
-                        previousStop.OutwardEdges.Add(newEdge);
-                        currentStop.InwardEdges.Add(newEdge);
+                        Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(previousStop.Lat, previousStop.Lon))[0]);
+                        Point targetNearestLineString = new Point(DistanceOp.NearestPoints(shape.LineString, new Point(currentStop.Lat, currentStop.Lon))[0]);
+                        double walkDistanceSourceM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, previousStop.Lat, previousStop.Lon);
+                        double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X, targetNearestLineString.Y, currentStop.Lat, currentStop.Lon);
+                        double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
+                        newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM, walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration);
+                        edgeDico.Add(newId, newEdge);
                     }
-                    previousStop = currentStop;
-                    previousStopTime = currentStopTime.Value;
+                    else
+                    {
+                        newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration);
+                        edgeDico.Add(newId, newEdge);
+                    }
+                    previousStop.ValidSource = true;
+                    currentStop.ValidTarget = true;
+                    previousStop.OutwardEdges.Add(newEdge);
+                    currentStop.InwardEdges.Add(newEdge);
                 }
+                previousStop = currentStop;
+                previousStopTime = currentStopTime.Value;
             }
             return edgeDico;
         }
@@ -276,26 +208,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             foreach (KeyValuePair<string, TripGtfs> trip in TripDico)
             {
-                // add the current trip to the route
-                var route = trip.Value.Route;
-                var listTrips = route.Trips;
-                TripGtfs buffTrips = null;
-                if (!listTrips.TryGetValue(trip.Key, out buffTrips))
-                {
-                    listTrips.Add(trip.Key, trip.Value);
-                }
-            }
-        }
-
-        public void AddScheduleToTrip()
-        {
-            TripGtfs tripBuff = null;
-            foreach (var schedule in ScheduleDico)
-            {
-                if (TripDico.TryGetValue(schedule.Key, out tripBuff))
-                {
-                    tripBuff.Schedule = schedule.Value;
-                }
+                trip.Value.Route.Trips.Add(trip.Key, trip.Value);
             }
         }
 

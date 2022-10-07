@@ -7,6 +7,7 @@ namespace SytyRouting
 {
     using Gtfs.GtfsUtils;
     using Gtfs.ModelGtfs;
+    using Gtfs.ModelCsv;
 
     class Program
     {
@@ -18,9 +19,11 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-            ControllerGtfs ctrl = new ControllerGtfs(Gtfs.ModelCsv.ProviderCsv.stib);
-            await ctrl.InitController();
+            ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib);
+            await gtfs.InitController();
 
+            Tests test = new Tests(gtfs);
+           
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
             // NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();

@@ -3,7 +3,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
     public class AgencyGtfs
     {
 
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         public string Name {get;set;}
 

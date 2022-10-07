@@ -12,7 +12,7 @@ namespace SytyRouting.Gtfs.ModelGtfs{
 
         public override string ToString()
         {
-            return "Stop "+ Stop + "Arrival = "+ ArrivalTime + "Departure = " + DepartureTime;
+            return "Stop "+ Stop + " Arrival = "+ ArrivalTime + " Departure = " + DepartureTime;
         }
 
         public StopTimesGtfs(StopGtfs stop, TimeSpan arrivalTime, TimeSpan departureTime, int sequence){
