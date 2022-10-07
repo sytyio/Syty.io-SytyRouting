@@ -15,8 +15,8 @@ namespace SytyRouting
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        private Dictionary<int,ushort> tagIdToTransportMode = new Dictionary<int,ushort>();
-        private Dictionary<String,ushort> transportModeMasks = new Dictionary<String,ushort>();
+        private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
+        private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -311,7 +311,7 @@ namespace SytyRouting
 
         private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
-            ushort transportModes = GetTransportModes(tagId);
+            byte transportModes = GetTransportModes(tagId);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
@@ -357,7 +357,7 @@ namespace SytyRouting
                 transportModeMasks.Add(transportModes[0],0);
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
-                    var twoToTheNth = (ushort)Math.Pow(2,n);
+                    var twoToTheNth = (byte)Math.Pow(2,n);
                     var transportName = transportModes[n+1];
                     transportModeMasks.Add(transportName,twoToTheNth);
                 }
@@ -386,7 +386,7 @@ namespace SytyRouting
             return (result == "")? Constants.DefaulTransportMode : result;
         }
 
-        private ushort GetTransportModes(int tagId)
+        private byte GetTransportModes(int tagId)
         {
             if (tagIdToTransportMode.ContainsKey(tagId))
             {
@@ -395,7 +395,7 @@ namespace SytyRouting
             else
             {
                 logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
-                return (ushort)0; // Default Ttransport Mode: 0 ("None");
+                return (byte)0; // Default Ttransport Mode: 0 ("None");
             }
         }
 
