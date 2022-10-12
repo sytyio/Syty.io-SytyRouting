@@ -1,3 +1,6 @@
+using NetTopologySuite.Geometries;
+using System.Diagnostics.CodeAnalysis;
+
 namespace SytyRouting.Gtfs.ModelGtfs
 {
     public class TripGtfs
@@ -9,8 +12,9 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public ShapeGtfs? Shape { get; set; }
 
+        [NotNull]
         public ScheduleGtfs? Schedule { get; set; }
-
+        
         public CalendarGtfs Service {get;set;}
 
         public override string ToString()

@@ -11,6 +11,10 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public LineString LineString {get;set;}
 
+        public double[]? ArrayDistances; 
+
+        public List<LineString>? SplitLineString;
+
         public override string ToString()
         {
             return "Id = " + Id + " Nb points = " + ItineraryPoints.Count;
