@@ -50,9 +50,9 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetStop + " Source = " + SourceStop + " Route = " + Route + " LineString? = " + IsShapeAvailable;
         }
 
-        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS)
+        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[] internalGeometry)
         {
-            OsmID=long.MaxValue;
+            OsmID = long.MaxValue;
             DistanceSourceToTargetM = distance;
             DurationS = duration;
             Id = id;
@@ -66,6 +66,8 @@ namespace SytyRouting.Gtfs.ModelGtfs
             WalkDistanceTargetM = walkDistanceTargetM;
             DistanceNearestPointsM = distanceNearestPointsM;
             MaxSpeedMPerS = maxSpeedMPerS;
+            InternalGeometry = internalGeometry;
+
         }
     }
 }
