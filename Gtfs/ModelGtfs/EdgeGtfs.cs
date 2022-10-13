@@ -1,23 +1,12 @@
 using NetTopologySuite.Geometries;
+using SytyRouting.Model;
 
 namespace SytyRouting.Gtfs.ModelGtfs
 {
 
-    public struct XYMPoint
+   // If IsShapeAvailable is false => SourceNearestLineString, TargetNearestLineString, WalkDistanceSourceM, WalkDistanceTargetM, DistanceNearestPointsM are irrelevant
+    public class EdgeGtfs: Edge
     {
-        public double X;
-        public double Y;
-        public double M;
-    }
-
-
-    // If IsShapeAvailable is false => SourceNearestLineString, TargetNearestLineString, WalkDistanceSourceM, WalkDistanceTargetM, DistanceNearestPointsM are irrelevant
-    public class EdgeGtfs
-    {
-
-        public long OsmID; //  can be the same for all
-
-        public XYMPoint[]? InternalGeometry;
         public string Id { get; }
 
         public StopGtfs SourceStop { get; }
@@ -27,8 +16,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
         public double DurationS { get; }
 
         public RouteGtfs Route { get; }
-
-        public double MaxSpeedMPerS { get; }
 
         public double DistanceSourceToTargetM { get; }
 
@@ -50,7 +37,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetStop + " Source = " + SourceStop + " Route = " + Route + " LineString? = " + IsShapeAvailable;
         }
 
-        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[] internalGeometry)
+        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[]? internalGeometry)
         {
             OsmID = long.MaxValue;
             DistanceSourceToTargetM = distance;

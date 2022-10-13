@@ -1,5 +1,6 @@
 using NLog;
 using SytyRouting.Gtfs.ModelCsv;
+using SytyRouting.Model;
 using SytyRouting.Gtfs.ModelGtfs;
 using NetTopologySuite.Geometries;
 using System.Net; //download file 
@@ -209,7 +210,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
                         LineString lineString = buffShape.LineString;
                         LineString splitLineString = buffTrip.Shape.SplitLineString[i];
-                        // var internalGeom = Graph.GetInternalGeometry(splitLineString, OneWayState.Yes);
+                        var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
                         newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM, 
                                     walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration,internalGeom);
                         edgeDico.Add(newId, newEdge);
@@ -230,8 +231,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             return edgeDico;
         }
-
-
 
         private List<LineString> SplitLineStringByPoints(LineString ls, Point[] pts)
         {
