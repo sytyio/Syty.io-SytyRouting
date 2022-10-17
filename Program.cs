@@ -19,14 +19,17 @@ namespace SytyRouting
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
 
-            ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib);
-            await gtfs.InitController();
+            // ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib);
+            // await gtfs.InitController();
 
-            Tests test = new Tests(gtfs);
+            // Tests test = new Tests(gtfs);
+
+            // // test.PrintStopDico();
+            //  test.printStopsWithEdges();
            
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
-            // NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
+            NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
 
             // logger.Info("syty.io routing engine for large scale datasets");
 
@@ -34,9 +37,16 @@ namespace SytyRouting
             // var graph = new Graph();
             // await graph.FileLoadAsync("graph.dat");
 
-            // // graph.TraceNodes();
+            // var gtfs = new ControllerGtfs(ProviderCsv.tec);  
+            // await gtfs.InitController();  
+            // Tests tests = new Tests(gtfs);
+            Tests tests = new Tests();
 
-            // // // Benchmarking.PointLocationTest(graph);
+            tests.GraphData();
+            
+            //  graph.TraceNodes();
+            
+
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 

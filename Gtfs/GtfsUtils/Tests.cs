@@ -15,6 +15,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             CtrlGtfs = gtfs;
         }
+
+        public Tests(){
+            
+        }
         public void PrintTripDico()
         {
             foreach (KeyValuePair<string, TripGtfs> trip in CtrlGtfs.TripDico)
@@ -281,21 +285,60 @@ namespace SytyRouting.Gtfs.GtfsUtils
         //     return time;
         // }
 
-        public void printStopsWithEdges()
+        public void PrintStopsWithEdges()
         {
+           
             foreach (var stop in CtrlGtfs.StopDico)
             {
-                logger.Info(stop.Value);
-                logger.Info("Inwards {0} ", stop.Value.InwardEdges.Count);
+                 logger.Info("/////////------------{0}-------------///////",stop);
+                logger.Info("InwardsGtfs {0}, Inwards {1} ", stop.Value.InwardEdgesGtfs.Count,stop.Value.InwardEdges.Count);
+
                 foreach (var edge in stop.Value.InwardEdges)
                 {
-                    logger.Info("Source = " + edge.SourceStop.Name + " Target = " + edge.TargetStop.Name);
+                    logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
                 }
-                logger.Info("Outwards {0}", stop.Value.OutwardEdges.Count);
+                logger.Info("OutwardsGtfs {0}, outwards {1}", stop.Value.OutwardEdgesGtfs.Count,stop.Value.OutwardEdges.Count);
                 foreach (var edge in stop.Value.OutwardEdges)
                 {
-                    logger.Info("Source = " + edge.SourceStop.Name + " Target = " + edge.TargetStop.Name);
+                    logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
                 }
+            }
+        }
+
+        public void GetOneTripFromTec(){
+
+        }
+        public async void GraphData(){
+            var graph = new Graph();
+            await graph.FileLoadAsync("graph.dat");
+
+            //  graph.TraceNodes();
+             logger.Info("Nb nodes {0}",graph.GetNodeCount());
+
+            var listProviders = new List<ProviderCsv>();
+            listProviders.Add(ProviderCsv.stib);
+            listProviders.Add(ProviderCsv.ter);
+            // listProviders.Add(ProviderCsv.tec);
+            graph.GetDataFromGtfs(listProviders);
+            // Benchmarking.PointLocationTest(graph);
+            foreach(var gtfs in graph.gtfsDico){
+                logger.Info("Nb stops {0}",gtfs.Value.GetNumberStops());
+            }
+            // PrintOneShapeTec(graph.gtfsDico[ProviderCsv.tec]);
+            PrintOneShapeStib(graph.gtfsDico[ProviderCsv.stib]);
+        }
+
+                public void  PrintOneShapeStib(ControllerGtfs gtfs){
+            var shape = gtfs.ShapeDico["210b0166"];
+            foreach(var elem2 in shape.SplitLineString){
+                logger.Info(elem2);
+            }
+        }
+
+        public void  PrintOneShapeTec(ControllerGtfs gtfs){
+            var shape = gtfs.ShapeDico["X16220026"];
+            foreach(var elem2 in shape.SplitLineString){
+                logger.Info(elem2);
             }
         }
     }

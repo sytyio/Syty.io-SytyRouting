@@ -1,34 +1,35 @@
+using SytyRouting.Model;
 namespace SytyRouting.Gtfs.ModelGtfs
 {
-    public class StopGtfs
+    public class StopGtfs : Node
     {
 
         public string Id { get; set; }
 
+        public double X;
+        public double Y;
+
+        public bool ValidTarget;
+
+        public bool ValidSource;
+        public Dictionary<string,EdgeGtfs> InwardEdgesGtfs = new Dictionary<string, EdgeGtfs>();
+        public Dictionary<string,EdgeGtfs> OutwardEdgesGtfs = new Dictionary<string,EdgeGtfs>();
+
         public string? Name { get; set; }
-
-        public double Lat { get; set; }
-
-        public double Lon { get; set; }
-
-        public bool ValidTarget {get;set;}
-        public bool ValidSource {get;set;}
-
-        public List<EdgeGtfs> InwardEdges = new List<EdgeGtfs>();
-        public List<EdgeGtfs> OutwardEdges = new List<EdgeGtfs>();
 
         public override string ToString()
         {
-            return "Id = " + Id  + " Name = " + Name + " Lat = " + Lat + " Lon = " + Lon + " Source?= " + ValidSource + " Target?= "+ValidTarget;
+            return "Id = " + Id + " Name = " + Name + " Lat = " + Y + " Lon = " + X + " Source?= " + ValidSource + " Target?= " + ValidTarget;
         }
 
-        public StopGtfs(string id, string? name, double lat, double lon){
-            Id=id;
-            Name=name;
-            Lat=lat;
-            Lon=lon;
-            ValidSource=false;
-            ValidTarget=false;
+        public StopGtfs(string id, string? name, double lat, double lon)
+        {
+            Id = id;
+            Name = name;
+            Y = lat;
+            X = lon;
+            ValidSource = false;
+            ValidTarget = false;
         }
     }
 }
