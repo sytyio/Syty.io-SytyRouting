@@ -305,31 +305,27 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        public void GetOneTripFromTec(){
-
-        }
-        public async void GraphData(){
+        public async Task GraphData(){
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
+            graph.TraceNodes();
+            var personaRouter = new PersonaRouter(graph);
 
-            //  graph.TraceNodes();
-             logger.Info("Nb nodes {0}",graph.GetNodeCount());
+            logger.Info("Nb nodes {0}",graph.GetNodeCount());
 
             var listProviders = new List<ProviderCsv>();
             listProviders.Add(ProviderCsv.stib);
             listProviders.Add(ProviderCsv.ter);
             // listProviders.Add(ProviderCsv.tec);
             graph.GetDataFromGtfs(listProviders);
-            // Benchmarking.PointLocationTest(graph);
             foreach(var gtfs in graph.gtfsDico){
                 logger.Info("Nb stops {0}",gtfs.Value.GetNumberStops());
             }
-            // PrintOneShapeTec(graph.gtfsDico[ProviderCsv.tec]);
             PrintOneShapeStib(graph.gtfsDico[ProviderCsv.stib]);
         }
 
-                public void  PrintOneShapeStib(ControllerGtfs gtfs){
-            var shape = gtfs.ShapeDico["210b0166"];
+        public void  PrintOneShapeStib(ControllerGtfs gtfs){
+            var shape = gtfs.ShapeDico["210b0166"]; 
             foreach(var elem2 in shape.SplitLineString){
                 logger.Info(elem2);
             }

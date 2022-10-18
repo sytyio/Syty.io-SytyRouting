@@ -18,14 +18,6 @@ namespace SytyRouting
             // Logger configuration
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
-
-            // ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib);
-            // await gtfs.InitController();
-
-            // Tests test = new Tests(gtfs);
-
-            // // test.PrintStopDico();
-            //  test.printStopsWithEdges();
            
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
@@ -42,7 +34,7 @@ namespace SytyRouting
             // Tests tests = new Tests(gtfs);
             Tests tests = new Tests();
 
-            tests.GraphData();
+            await tests.GraphData();
             
             //  graph.TraceNodes();
             

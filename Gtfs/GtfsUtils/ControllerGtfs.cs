@@ -79,13 +79,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AddTripsToRoute();
             logger.Info("Trip to route for {0} in {1}", choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-
             AddSplitLineString();
             logger.Info("Add split linestring loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             EdgeDico = AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
-            // EdgeDico = OneTripToEdgeDictionary("32602266-B_2022-BW_A_EX-Sem-N-3-05");
             stopWatch.Stop();
             // CleanGtfs();
         }
@@ -209,8 +207,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             TripGtfs buffTrip = TripDico[tripId];
             ShapeGtfs? buffShape = buffTrip.Shape;
             StopGtfs currentStop;
-            StopGtfs previousStop = null;
-            StopTimesGtfs previousStopTime = null;
+            StopGtfs? previousStop = null;
+            StopTimesGtfs? previousStopTime = null;
             if (buffShape != null)
             {
                 buffShape.ArrayDistances = new double[buffTrip.Schedule.Details.Count()];
@@ -237,7 +235,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X, targetNearestLineString.Y, currentStop.Y, currentStop.X);
                             double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
                             LineString lineString = buffShape.LineString;
-                            LineString splitLineString = null;
+                            LineString? splitLineString = null;
                             if(i>=0){
                                 splitLineString = buffTrip.Shape.SplitLineString[i];
                             }
@@ -286,7 +284,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             LengthIndexedLine lil = new LengthIndexedLine(ls);
             ExtractLineByLocation ell = new ExtractLineByLocation(ls);
             List<LineString> parts = new List<LineString>();
-            LinearLocation ll1 = null;
+            LinearLocation? ll1 = null;
             SortedList<Double, LinearLocation> sll = new SortedList<double, LinearLocation>();
             sll.Add(-1, new LinearLocation(0, 0d));
             foreach (Point pt in pts)
@@ -296,7 +294,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
                 }
             }
-            ll1 = null;
             foreach (LinearLocation ll in sll.Values)
             {
                 if (ll1 != null)
