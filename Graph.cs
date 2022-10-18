@@ -26,7 +26,7 @@ namespace SytyRouting
         public double MaxCostPerDistance { get; private set; }
 
         [NotNull]
-        public Dictionary<ProviderCsv, ControllerGtfs>? gtfsDico;
+        public Dictionary<ProviderCsv, ControllerGtfs>? GtfsDico;
 
         private Task FileSaveAsync(string path)
         {
@@ -88,7 +88,15 @@ namespace SytyRouting
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
-                // add gtfs
+                // ///
+                // AddGtfsData();
+                // logger.Info("Nb nodes = {0}", NodesArray.Count());
+                // foreach(var gtfs in GtfsDico){
+                //     var nodes = gtfs.Value.GetNodes().ToArray();
+                //     NodesArray= (Node[])NodesArray.Union(nodes);
+                //     logger.Info("Nb nodes = {0}", NodesArray.Count());
+                // }
+                // ///
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
@@ -188,18 +196,47 @@ namespace SytyRouting
             }
         }
 
-        public async void GetDataFromGtfs(List<ProviderCsv> providers)
+        public async void GetDataFromGtfs(List<ProviderCsv> providers, int cptNodes)
         {
-            gtfsDico = new Dictionary<ProviderCsv, ControllerGtfs>();
+            GtfsDico = new Dictionary<ProviderCsv, ControllerGtfs>();
             foreach (var provider in providers)
             {
-                gtfsDico.Add(provider, new ControllerGtfs(provider));
+                GtfsDico.Add(provider, new ControllerGtfs(provider, cptNodes));
             }
-            foreach (var gtfs in gtfsDico)
+            foreach (var gtfs in GtfsDico)
             {
                 await gtfs.Value.InitController();
             }
         }
+
+        private void  AddGtfsData(){
+            int cptNodes = GetNodeCount();
+
+            logger.Info("Nb nodes {0}",GetNodeCount());
+
+            var listProviders = new List<ProviderCsv>();
+            // listProviders.Add(ProviderCsv.stib);
+            listProviders.Add(ProviderCsv.ter);
+            GetDataFromGtfs(listProviders, cptNodes);
+            var listsNode = new Dictionary<ProviderCsv,IEnumerable<Node>>();
+            var listsEdge = new Dictionary<ProviderCsv,IEnumerable<Edge>>();
+            foreach(var gtfs in GtfsDico){
+                listsNode.Add(gtfs.Key,gtfs.Value.GetNodes());
+                listsEdge.Add(gtfs.Key,gtfs.Value.GetEdges());
+                
+            }
+            logger.Info("Lists node size {0}", listsNode.Count()); 
+            logger.Info("Lists edge size {0}", listsEdge.Count());
+            // foreach(var item in listsNode){
+            //     logger.Info("///////////////////////");
+            //     foreach (var node in item.Value){
+            //         logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}",node.Idx, node.ValidSource,node.ValidTarget, node.InwardEdges.Count,node.OutwardEdges.Count);
+            //     }
+            // }
+        }
+
+
+
 
         public Node GetNodeByLongitudeLatitude(double x, double y)
         {

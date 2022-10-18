@@ -30,27 +30,30 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
         [NotNull]
-        public Dictionary<string, StopGtfs>? StopDico;
+        private Dictionary<string, StopGtfs>? stopDico;
         [NotNull]
-        public Dictionary<string, RouteGtfs>? RouteDico;
+        private Dictionary<string, RouteGtfs>? routeDico;
         [NotNull]
-        public Dictionary<string, ShapeGtfs>? ShapeDico;
+        private Dictionary<string, ShapeGtfs>? shapeDico;
         [NotNull]
-        public Dictionary<string, CalendarGtfs>? CalendarDico;
+        private Dictionary<string, CalendarGtfs>? calendarDico;
         [NotNull]
-        public Dictionary<string, TripGtfs>? TripDico;
+        private Dictionary<string, TripGtfs>? tripDico;
         [NotNull]
-        public Dictionary<string, AgencyGtfs>? AgencyDico;
+        private Dictionary<string, AgencyGtfs>? agencyDico;
         [NotNull]
-        public Dictionary<string, ScheduleGtfs>? ScheduleDico;
+        private Dictionary<string, ScheduleGtfs>? scheduleDico;
         [NotNull]
-        public Dictionary<string, EdgeGtfs>? EdgeDico;
+        private Dictionary<string, EdgeGtfs>? edgeDico;
+
+        private static int nextNodeIndex;
 
 
 
-        public ControllerGtfs(ProviderCsv provider)
+        public ControllerGtfs(ProviderCsv provider,int cptNodes)
         {
             choice = provider;
+            nextNodeIndex=cptNodes;
         }
 
         public async Task InitController()
@@ -62,26 +65,26 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            StopDico = CreateStopGtfsDictionary();
-            logger.Info("Stop dico nb stops = {0} for {1} in {2}", StopDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            stopDico = CreateStopGtfsDictionary();
+            logger.Info("Stop dico nb stops = {0} for {1} in {2}", stopDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            AgencyDico = CreateAgencyGtfsDictionary();
-            logger.Info("Agency nb {0} for {1} in {2}", AgencyDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            agencyDico = CreateAgencyGtfsDictionary();
+            logger.Info("Agency nb {0} for {1} in {2}", agencyDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            RouteDico = CreateRouteGtfsDictionary();
-            logger.Info("Route nb {0} for {1} in {2}", RouteDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            routeDico = CreateRouteGtfsDictionary();
+            logger.Info("Route nb {0} for {1} in {2}", routeDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            ShapeDico = CreateShapeGtfsDictionary();
-            logger.Info("Shape nb {0} for {1} in {2}", ShapeDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            shapeDico = CreateShapeGtfsDictionary();
+            logger.Info("Shape nb {0} for {1} in {2}", shapeDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            CalendarDico = CreateCalendarGtfsDictionary();
-            logger.Info("Calendar nb {0} for {1} in {2}", CalendarDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            calendarDico = CreateCalendarGtfsDictionary();
+            logger.Info("Calendar nb {0} for {1} in {2}", calendarDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            ScheduleDico = CreateScheduleGtfsDictionary();
-            logger.Info("Schedule nb {0} for {1} in {2}", ScheduleDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            scheduleDico = CreateScheduleGtfsDictionary();
+            logger.Info("Schedule nb {0} for {1} in {2}", scheduleDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            TripDico = CreateTripGtfsDictionary();
-            logger.Info("Trip  nb {0} for {1} in {2}", TripDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            tripDico = CreateTripGtfsDictionary();
+            logger.Info("Trip  nb {0} for {1} in {2}", tripDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             AddTripsToRoute();
             logger.Info("Trip to route for {0} in {1}", choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
@@ -89,10 +92,20 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AddSplitLineString();
             logger.Info("Add split linestring loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
-            EdgeDico = AllTripsToEdgeDictionary();
+            edgeDico = AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
             // CleanGtfs();
+        }
+
+        public IEnumerable<Node> GetNodes()
+        {
+            return stopDico.Values.Cast<Node>();
+        }
+
+        public IEnumerable<Edge> GetEdges()
+        {
+            return edgeDico.Values.Cast<Edge>();
         }
 
 
@@ -114,7 +127,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         // Creation of dictionaries
         private Dictionary<string, StopGtfs> CreateStopGtfsDictionary()
         {
-            return CtrlCsv.RecordsStop.ToDictionary(stop => stop.Id, stop => new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
+            return CtrlCsv.RecordsStop.ToDictionary(stop => stop.Id, stop => new StopGtfs(stop.Id,nextNodeIndex++, stop.Name, stop.Lat, stop.Lon));
         }
 
         // Creates the routes but trips are empty
@@ -131,9 +144,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             if (id == null)
             {
-                return AgencyDico.First().Value;
+                return agencyDico.First().Value;
             }
-            return AgencyDico[id];
+            return agencyDico[id];
         }
 
         // Create the shapes
@@ -157,7 +170,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, ScheduleGtfs> CreateScheduleGtfsDictionary()
         {
             return CtrlCsv.RecordStopTime.GroupBy(x => x.TripId).ToDictionary(x => x.Key, x => new ScheduleGtfs(x.Key, x.ToDictionary(y => y.Sequence,
-                               y => (new StopTimesGtfs(StopDico[y.StopId], ParseMore24Hours(y.ArrivalTime), ParseMore24Hours(y.DepartureTime), y.Sequence)))));
+                               y => (new StopTimesGtfs(stopDico[y.StopId], ParseMore24Hours(y.ArrivalTime), ParseMore24Hours(y.DepartureTime), y.Sequence)))));
         }
 
         // Create a trip with a shape (if there's an available shape) and with no schedule
@@ -165,18 +178,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
 
             var tripDico = new Dictionary<string, TripGtfs>();
-            if (ShapeDico.Count == 0)
+            if (shapeDico.Count == 0)
             {
-                return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(RouteDico[x.RouteId], x.Id, null, ScheduleDico[x.Id], CalendarDico[x.ServiceId]));
+                return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, null, scheduleDico[x.Id], calendarDico[x.ServiceId]));
             }
-            return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(RouteDico[x.RouteId], x.Id, ShapeDico[x.ShapeId!], ScheduleDico[x.Id], CalendarDico[x.ServiceId]));
+            return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, shapeDico[x.ShapeId!], scheduleDico[x.Id], calendarDico[x.ServiceId]));
         }
 
         private Dictionary<string, EdgeGtfs> AllTripsToEdgeDictionary()
         {
             var edgeDico = new Dictionary<string, EdgeGtfs>();
             var edgeDicoOneTrip = new Dictionary<string, EdgeGtfs>();
-            foreach (var trip in TripDico)
+            foreach (var trip in tripDico)
             {
                 edgeDicoOneTrip = OneTripToEdgeDictionary(trip.Key);
                 foreach (var edge in edgeDicoOneTrip)
@@ -189,7 +202,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AddSplitLineString()
         {
-            foreach (var trip in TripDico)
+            foreach (var trip in tripDico)
             {
                 if (trip.Value.Shape != null)
                 {
@@ -210,7 +223,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, EdgeGtfs> OneTripToEdgeDictionary(string tripId)
         {
             Dictionary<string, EdgeGtfs> edgeDico = new Dictionary<string, EdgeGtfs>();
-            TripGtfs buffTrip = TripDico[tripId];
+            TripGtfs buffTrip = tripDico[tripId];
             ShapeGtfs? buffShape = buffTrip.Shape;
             StopGtfs? previousStop = null;
             StopTimesGtfs? previousStopTime = null;
@@ -230,7 +243,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         double distance = Helper.GetDistance(previousStop.X, previousStop.Y, currentStop.X, currentStop.Y);
                         TimeSpan arrival = currentStopTime.Value.ArrivalTime;
                         TimeSpan departure = previousStopTime.DepartureTime;
-                        double duration = (arrival - departure).TotalSeconds;
+                        var watchTime = (previousStopTime.DepartureTime-previousStopTime.ArrivalTime).TotalSeconds;
+                        var duration = (arrival - departure).TotalSeconds+watchTime;
                         EdgeGtfs newEdge;
                         if (buffShape != null)
                         {
@@ -247,12 +261,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             if (splitLineString == null)
                             {
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
+                                edgeDico.Add(newId,newEdge);
                             }
                             else
                             {
                                 var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM,
                                             walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration, internalGeom);
+                                            edgeDico.Add(newId,newEdge);
                                 i++;
                             }
                         }
@@ -312,7 +328,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AddTripsToRoute()
         {
-            foreach (KeyValuePair<string, TripGtfs> trip in TripDico)
+            foreach (KeyValuePair<string, TripGtfs> trip in tripDico)
             {
                 trip.Value.Route.Trips.Add(trip.Key, trip.Value);
             }
@@ -323,7 +339,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Dictionary<string, TripGtfs> SelectAllTripsForGivenDay(int day)
         {
             Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
-            var query = from trip in TripDico
+            var query = from trip in tripDico
                         where trip.Value.Service.Days[day] == true
                         select trip;
             return query.ToDictionary(k => k.Key, v => v.Value);
@@ -331,7 +347,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public int GetNumberStops()
         {
-            return StopDico.Count();
+            return stopDico.Count();
         }
 
         public Dictionary<string, TripGtfs> SelectAllTripsForMondayBetween10and11(Dictionary<string, TripGtfs> tripDico, Dictionary<string, ScheduleGtfs> scheduleDico)
@@ -476,5 +492,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 File.Delete(fullPathDwln); //delete .zip
             }
         }
+
+
     }
 }

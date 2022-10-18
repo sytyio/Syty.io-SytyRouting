@@ -23,20 +23,21 @@ namespace SytyRouting
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
             NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
 
-            // logger.Info("syty.io routing engine for large scale datasets");
+            logger.Info("syty.io routing engine for large scale datasets");
 
-            // logger.Info("Creating syty.io routing graph from dataset");
-            // var graph = new Graph();
-            // await graph.FileLoadAsync("graph.dat");
+            logger.Info("Creating syty.io routing graph from dataset");
+            var graph = new Graph();
+            await graph.FileLoadAsync("graph.dat");
+
 
             // var gtfs = new ControllerGtfs(ProviderCsv.tec);  
             // await gtfs.InitController();  
             // Tests tests = new Tests(gtfs);
-            Tests tests = new Tests();
+            // Tests tests = new Tests();
 
-            await tests.GraphData();
+            // await tests.GraphData();
             
-            //  graph.TraceNodes();
+             graph.TraceNodes();
             
 
 

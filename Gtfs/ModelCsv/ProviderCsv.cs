@@ -6,5 +6,6 @@ namespace SytyRouting.Gtfs.ModelCsv
         ter,
         canada,
         tgv,
+        tur,
     }
 }

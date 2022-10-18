@@ -3,6 +3,7 @@ using SytyRouting.Gtfs.ModelCsv;
 using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Distance;
+using SytyRouting.Model;
 
 namespace SytyRouting.Gtfs.GtfsUtils
 {
@@ -19,21 +20,21 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public Tests(){
             
         }
-        public void PrintTripDico()
-        {
-            foreach (KeyValuePair<string, TripGtfs> trip in CtrlGtfs.TripDico)
-            {
-                logger.Info("Key = {0}, Value = {1}", trip.Key, trip.Value);
-            }
-        }
+        // public void PrintTripDico()
+        // {
+        //     foreach (KeyValuePair<string, TripGtfs> trip in CtrlGtfs.TripDico)
+        //     {
+        //         logger.Info("Key = {0}, Value = {1}", trip.Key, trip.Value);
+        //     }
+        // }
 
-        public void PrintRouteDico()
-        {
-            foreach (KeyValuePair<string, RouteGtfs> route in CtrlGtfs.RouteDico)
-            {
-                logger.Info("Key = {0}, Value = {1}", route.Key, route.Value);
-            }
-        }
+        // public void PrintRouteDico()
+        // {
+        //     foreach (KeyValuePair<string, RouteGtfs> route in CtrlGtfs.RouteDico)
+        //     {
+        //         logger.Info("Key = {0}, Value = {1}", route.Key, route.Value);
+        //     }
+        // }
 
         internal void PrintRecordsAgency()
         {
@@ -51,65 +52,65 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        public void PrintCalendarDico()
-        {
-            foreach (KeyValuePair<string, CalendarGtfs> calendar in CtrlGtfs.CalendarDico)
-            {
-                var cal = calendar.Value.Days;
-                string myString = "";
-                for (int i = 0; i < cal.Count(); i++)
-                {
-                    myString += cal[i] + " ";
-                }
-                logger.Info("Key = {0}, Value = {1}", calendar.Key, myString);
-            }
-        }
+        // public void PrintCalendarDico()
+        // {
+        //     foreach (KeyValuePair<string, CalendarGtfs> calendar in CtrlGtfs.CalendarDico)
+        //     {
+        //         var cal = calendar.Value.Days;
+        //         string myString = "";
+        //         for (int i = 0; i < cal.Count(); i++)
+        //         {
+        //             myString += cal[i] + " ";
+        //         }
+        //         logger.Info("Key = {0}, Value = {1}", calendar.Key, myString);
+        //     }
+        // }
 
-        public void PrintShapeDico()
-        {
-            foreach (var shape in CtrlGtfs.ShapeDico)
-            {
-                logger.Info("Key {0}, Value {1}", shape.Key, shape.Value);
-            }
-        }
+        // public void PrintShapeDico()
+        // {
+        //     foreach (var shape in CtrlGtfs.ShapeDico)
+        //     {
+        //         logger.Info("Key {0}, Value {1}", shape.Key, shape.Value);
+        //     }
+        // }
 
-        public void PrintScheduleDico()
-        {
-            foreach (var schedule in CtrlGtfs.ScheduleDico)
-            {
-                logger.Info("Key {0}, Value {1}", schedule.Key, schedule.Value);
-            }
-        }
+        // public void PrintScheduleDico()
+        // {
+        //     foreach (var schedule in CtrlGtfs.ScheduleDico)
+        //     {
+        //         logger.Info("Key {0}, Value {1}", schedule.Key, schedule.Value);
+        //     }
+        // }
 
-        public void PrintAgencyDico()
-        {
-            foreach (var agency in CtrlGtfs.AgencyDico)
-            {
-                logger.Info("Key {0}, Value {1}", agency.Key, agency.Value);
-            }
-        }
+        // public void PrintAgencyDico()
+        // {
+        //     foreach (var agency in CtrlGtfs.AgencyDico)
+        //     {
+        //         logger.Info("Key {0}, Value {1}", agency.Key, agency.Value);
+        //     }
+        // }
 
-        public void PrintStopDico()
-        {
-            foreach (var stop in CtrlGtfs.StopDico)
-            {
-                logger.Info("Key {0}, Value {1}", stop.Key, stop.Value);
-            }
-        }
+        // public void PrintStopDico()
+        // {
+        //     foreach (var stop in CtrlGtfs.StopDico)
+        //     {
+        //         logger.Info("Key {0}, Value {1}", stop.Key, stop.Value);
+        //     }
+        // }
 
-        public void PrintStopTimeForOneTrip(string tripId)
-        {
-            TripGtfs targetedTrip = CtrlGtfs.TripDico[tripId];
-            logger.Info("My trip {0} ", targetedTrip);
-            logger.Info("My schedule for one trip");
-            if (targetedTrip.Schedule != null)
-            {
-                foreach (KeyValuePair<int, StopTimesGtfs> stopTime in targetedTrip.Schedule.Details)
-                {
-                    logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
-                }
-            }
-        }
+        // public void PrintStopTimeForOneTrip(string tripId)
+        // {
+        //     TripGtfs targetedTrip = CtrlGtfs.TripDico[tripId];
+        //     logger.Info("My trip {0} ", targetedTrip);
+        //     logger.Info("My schedule for one trip");
+        //     if (targetedTrip.Schedule != null)
+        //     {
+        //         foreach (KeyValuePair<int, StopTimesGtfs> stopTime in targetedTrip.Schedule.Details)
+        //         {
+        //             logger.Info("Key {0}, Value {1}", stopTime.Key, stopTime.Value);
+        //         }
+        //     }
+        // }
 
         public void PrintNumberTripsSunday()
         {
@@ -132,9 +133,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public void PrintAllEdges()
         {
-            foreach (var edge in CtrlGtfs.EdgeDico)
+            foreach (var edge in CtrlGtfs.GetEdges())
             {
-                logger.Info("Key {0}    value {1}", edge.Key, edge.Value);
+                logger.Info("Edge {0}", edge);
             }
         }
 
@@ -285,57 +286,73 @@ namespace SytyRouting.Gtfs.GtfsUtils
         //     return time;
         // }
 
-        public void PrintStopsWithEdges()
-        {
+        // public void PrintStopsWithEdges()
+        // {
            
-            foreach (var stop in CtrlGtfs.StopDico)
-            {
-                 logger.Info("/////////------------{0}-------------///////",stop);
-                logger.Info("InwardsGtfs {0}, Inwards {1} ", stop.Value.InwardEdgesGtfs.Count,stop.Value.InwardEdges.Count);
+        //     foreach (var stop in CtrlGtfs.GetNodes())
+        //     {
+        //          logger.Info("/////////------------{0}-------------///////",stop);
+        //         logger.Info("Inwards {0}", stop.InwardEdges.Count);
 
-                foreach (var edge in stop.Value.InwardEdges)
-                {
-                    logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
-                }
-                logger.Info("OutwardsGtfs {0}, outwards {1}", stop.Value.OutwardEdgesGtfs.Count,stop.Value.OutwardEdges.Count);
-                foreach (var edge in stop.Value.OutwardEdges)
-                {
-                    logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
-                }
-            }
-        }
-
-        public async Task GraphData(){
+        //         foreach (var edge in stop.InwardEdges)
+        //         {
+        //             logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
+        //         }
+        //         logger.Info("Outwards {0}", stop.OutwardEdges.Count);
+        //         foreach (var edge in stop.OutwardEdges)
+        //         {
+        //             logger.Info("S = {0}, T = {1}",edge.SourceNode, edge.TargetNode);
+        //         }
+        //     }
+        // }
+  public async Task GraphData(){
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
             graph.TraceNodes();
             var personaRouter = new PersonaRouter(graph);
+            int cptNodes = graph.GetNodeCount();
 
             logger.Info("Nb nodes {0}",graph.GetNodeCount());
 
             var listProviders = new List<ProviderCsv>();
             listProviders.Add(ProviderCsv.stib);
             listProviders.Add(ProviderCsv.ter);
+            // listProviders.Add(ProviderCsv.tur);
             // listProviders.Add(ProviderCsv.tec);
-            graph.GetDataFromGtfs(listProviders);
-            foreach(var gtfs in graph.gtfsDico){
-                logger.Info("Nb stops {0}",gtfs.Value.GetNumberStops());
+            graph.GetDataFromGtfs(listProviders, cptNodes);
+            var listsNode = new Dictionary<ProviderCsv,IEnumerable<Node>>();
+            var listsEdge = new Dictionary<ProviderCsv,IEnumerable<Edge>>();
+            foreach(var gtfs in graph.GtfsDico){
+                listsNode.Add(gtfs.Key,gtfs.Value.GetNodes());
+                listsEdge.Add(gtfs.Key,gtfs.Value.GetEdges());
+                
             }
-            PrintOneShapeStib(graph.gtfsDico[ProviderCsv.stib]);
+            logger.Info("Lists node size {0}", listsNode.Count()); 
+            logger.Info("Lists edge size {0}", listsEdge.Count());
+
+            foreach(var item in listsNode){
+                logger.Info("///////////////////////");
+                foreach (var node in item.Value){
+                    logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}",node.Idx, node.ValidSource,node.ValidTarget, node.InwardEdges.Count,node.OutwardEdges.Count);
+                    // foreach(var inEdge in node.InwardEdges){
+                    //     logger.Info("{0} , {1}, {2} ",  inEdge.SourceNode, inEdge.TargetNode, inEdge.MaxSpeedMPerS);
+                    // }
+                }
+            }
         }
 
-        public void  PrintOneShapeStib(ControllerGtfs gtfs){
-            var shape = gtfs.ShapeDico["210b0166"]; 
-            foreach(var elem2 in shape.SplitLineString){
-                logger.Info(elem2);
-            }
-        }
+        // public void  PrintOneShapeStib(ControllerGtfs gtfs){
+        //     var shape = gtfs.ShapeDico["210b0166"]; 
+        //     foreach(var elem2 in shape.SplitLineString){
+        //         logger.Info(elem2);
+        //     }
+        // }
 
-        public void  PrintOneShapeTec(ControllerGtfs gtfs){
-            var shape = gtfs.ShapeDico["X16220026"];
-            foreach(var elem2 in shape.SplitLineString){
-                logger.Info(elem2);
-            }
-        }
+        // public void  PrintOneShapeTec(ControllerGtfs gtfs){
+        //     var shape = gtfs.ShapeDico["X16220026"];
+        //     foreach(var elem2 in shape.SplitLineString){
+        //         logger.Info(elem2);
+        //     }
+        // }
     }
 }
