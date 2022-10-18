@@ -12,7 +12,14 @@ using System.Diagnostics.CodeAnalysis;
 using NetTopologySuite.LinearReferencing;
 namespace SytyRouting.Gtfs.GtfsUtils
 {
-    public class ControllerGtfs
+    interface ControllerExternalSource
+    {
+        Task InitController();
+        IEnumerable<Node> GetNodes(); //  return StopDico.Values.Cast<Node>()
+        IEnumerable<Edge> GetEdges();
+    }
+
+    public class ControllerGtfs : ControllerExternalSource
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -117,15 +124,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), null));
             }
-            return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), GetAgencyOrNull(x.AgencyId)));
+            return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), GetAgency(x.AgencyId)));
         }
 
-        private AgencyGtfs? GetAgencyOrNull(string id)
+        private AgencyGtfs? GetAgency(string id)
         {
             if (id == null)
             {
-                var test = AgencyDico.First().Key;
-                return test == null ? null : AgencyDico[test];
+                return AgencyDico.First().Value;
             }
             return AgencyDico[id];
         }
@@ -206,7 +212,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             Dictionary<string, EdgeGtfs> edgeDico = new Dictionary<string, EdgeGtfs>();
             TripGtfs buffTrip = TripDico[tripId];
             ShapeGtfs? buffShape = buffTrip.Shape;
-            StopGtfs currentStop;
             StopGtfs? previousStop = null;
             StopTimesGtfs? previousStopTime = null;
             if (buffShape != null)
@@ -216,7 +221,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int i = -1;
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
-                currentStop = currentStopTime.Value.Stop;
+               var currentStop = currentStopTime.Value.Stop;
                 if (previousStop != null && previousStopTime != null)
                 {
                     string newId = currentStop.Id + "TO" + previousStop.Id + "IN" + buffTrip.Route.Id;
