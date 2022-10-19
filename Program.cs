@@ -45,13 +45,14 @@ namespace SytyRouting
 
             //graph.TraceNodes();
 
-            // graph.TraceOneNode(graph.GetNodes()[0]);
-            //  graph.TraceOneNode(graph.GetNodes()[1558438]);
+             graph.TraceOneNode(graph.GetNodes()[0]);
+              graph.TraceOneNode(graph.GetNodes()[1558438]);
              graph.TraceOneNode(graph.GetNodes()[1558439]);
-             graph.TraceOneNode(graph.GetNodes()[1559000]);
-             graph.TraceOneNode(graph.GetNodes()[1559700]);
-             graph.TraceOneNode(graph.GetNodes()[1560000]);
-             graph.TraceOneNode(graph.GetNodes()[1561286]);
+             graph.TraceOneNode(graph.GetNodes()[1558449]);
+            //  graph.TraceOneNode(graph.GetNodes()[1559000]);
+            //  graph.TraceOneNode(graph.GetNodes()[1559700]);
+            //  graph.TraceOneNode(graph.GetNodes()[1560000]);
+            //  graph.TraceOneNode(graph.GetNodes()[1561286]);
             //  graph.TraceOneNode(graph.GetNodes()[1561287]);
             //  graph.TraceOneNode(graph.GetNodes()[1561306]);
 

@@ -88,7 +88,7 @@ namespace SytyRouting
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
-                ///
+                KDTree = new KDTree(NodesArray);
                 var listProviders = new List<ProviderCsv>();
                 listProviders.Add(ProviderCsv.stib);
                 listProviders.Add(ProviderCsv.ter);
@@ -193,12 +193,12 @@ namespace SytyRouting
             }
         }
 
-        public async void GetDataFromGtfs(List<ProviderCsv> providers, int cptNodes)
+        public async void GetDataFromGtfs(List<ProviderCsv> providers)
         {
             GtfsDico = new Dictionary<ProviderCsv, ControllerGtfs>();
             foreach (var provider in providers)
             {
-                GtfsDico.Add(provider, new ControllerGtfs(provider, cptNodes));
+                GtfsDico.Add(provider, new ControllerGtfs(provider));
             }
             foreach (var gtfs in GtfsDico)
             {
@@ -208,12 +208,26 @@ namespace SytyRouting
 
         private void AddGtfsData(List<ProviderCsv> providers)
         {
-            int cptNodes = GetNodeCount();
-            GetDataFromGtfs(providers, cptNodes);
+           
+            GetDataFromGtfs(providers);
             var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
             var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
             foreach (var gtfs in GtfsDico)
             {
+                foreach (var node in gtfs.Value.GetNodes()){
+                    var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
+                    logger.Info("X = {0}, Y = {1}",nearest.X,nearest.Y);
+                    // Cost : foot 
+                    var newEdgOut = new Edge{ OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node,nearest)};
+                    var newEdgeIn = new Edge{ OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node,nearest)};
+                    node.ValidSource=true;
+                    node.ValidTarget=true;
+                    node.InwardEdges.Add(newEdgeIn);
+                    node.OutwardEdges.Add(newEdgOut);
+                    nearest.InwardEdges.Add(newEdgOut);
+                    nearest.OutwardEdges.Add(newEdgeIn);
+
+                }
                 listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
                 listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
             }
@@ -222,8 +236,11 @@ namespace SytyRouting
             {
                 var nodes = gtfs.Value.GetNodes().ToArray();
                 NodesArray = NodesArray.Union(nodes).ToArray();
+                
                 logger.Info("Nb nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
             }
+            int i =0;
+            NodesArray.ToList().ForEach(x=>x.Idx=i++);
         }
 
 
@@ -268,9 +285,9 @@ namespace SytyRouting
         }
 
         public void TraceOneNode(Node node){
-            logger.Trace("OsmId =  {0}, nb in {1}, nb out {2}, idx {3}, coord = {4};{5}, T = {6}, s = {7}",
+            logger.Info("OsmId =  {0}, nb in {1}, nb out {2}, idx {3}, coord = {4};{5}, T = {6}, s = {7}",
             node.OsmID,node.InwardEdges.Count,node.OutwardEdges.Count,node.Idx,node.X, node.Y, node.ValidTarget, node.ValidSource);
-            TraceEdges(node);
+            // TraceEdges(node);
         }
 
         public void TraceNodes()

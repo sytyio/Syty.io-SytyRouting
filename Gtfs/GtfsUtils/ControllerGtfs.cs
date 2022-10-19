@@ -46,14 +46,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
         [NotNull]
         private Dictionary<string, EdgeGtfs>? edgeDico;
 
-        private static int nextNodeIndex;
 
-
-
-        public ControllerGtfs(ProviderCsv provider,int cptNodes)
+        public ControllerGtfs(ProviderCsv provider)
         {
             choice = provider;
-            nextNodeIndex=cptNodes;
         }
 
         public async Task InitController()
@@ -125,7 +121,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         // Creation of dictionaries
         private Dictionary<string, StopGtfs> CreateStopGtfsDictionary()
         {
-            return CtrlCsv.RecordsStop.ToDictionary(stop => stop.Id, stop => new StopGtfs(stop.Id,nextNodeIndex++, stop.Name, stop.Lat, stop.Lon));
+            return CtrlCsv.RecordsStop.ToDictionary(stop => stop.Id, stop => new StopGtfs(stop.Id, stop.Name, stop.Lat, stop.Lon));
         }
 
         // Creates the routes but trips are empty
@@ -279,13 +275,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         {
 
                             previousStop.OutwardEdgesGtfs.Add(newEdge.Id, newEdge);
-                            previousStop.OutwardEdges.Add(newEdge);
+                            previousStop.OutwardEdges.Add((Edge)newEdge);
                         }
                         if (!currentStop.InwardEdgesGtfs.ContainsKey(newEdge.Id))
                         {
 
                             currentStop.InwardEdgesGtfs.Add(newEdge.Id, newEdge);
-                            currentStop.InwardEdges.Add(newEdge);
+                            currentStop.InwardEdges.Add((Edge)newEdge);
                         }
                     }
                 }

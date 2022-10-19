@@ -327,7 +327,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             listProviders.Add(ProviderCsv.ter);
             // listProviders.Add(ProviderCsv.tur);
             // listProviders.Add(ProviderCsv.tec);
-            graph.GetDataFromGtfs(listProviders, cptNodes);
+            graph.GetDataFromGtfs(listProviders);
             var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
             var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
             foreach (var gtfs in graph.GtfsDico)

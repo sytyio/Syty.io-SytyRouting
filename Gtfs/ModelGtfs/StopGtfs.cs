@@ -8,6 +8,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
         public Dictionary<string,EdgeGtfs> InwardEdgesGtfs = new Dictionary<string, EdgeGtfs>();
         public Dictionary<string,EdgeGtfs> OutwardEdgesGtfs = new Dictionary<string,EdgeGtfs>();
 
+
         public string? Name { get; set; }
 
         public override string ToString()
@@ -15,16 +16,15 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "IdX= "+ Idx + " Internal Id = " + Id + " Name = " + Name + " Lat = " + Y + " Lon = " + X + " Source?= " + ValidSource + " Target?= " + ValidTarget;
         }
 
-        public StopGtfs(string id, int idx, string? name, double lat, double lon)
+        public StopGtfs(string id, string? name, double lat, double lon)
         {
-            Idx = idx;
             Id = id;
             Name = name;
             Y = lat;
             X = lon;
             ValidSource = false;
             ValidTarget = false;
-            OsmID=333;
+            OsmID=long.MaxValue;
         }
     }
 }
