@@ -108,8 +108,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return edgeDico.Values.Cast<Edge>();
         }
 
-
-
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
         {
             if (CtrlCsv.RecordsAgency.Count == 1 && CtrlCsv.RecordsAgency[0].Id == null)
@@ -231,7 +229,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 buffShape.ArrayDistances = new double[buffTrip.Schedule.Details.Count()];
             }
-            int i = -1;
+            int i = 0;
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
                var currentStop = currentStopTime.Value.Stop;
@@ -255,16 +253,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
                             LineString lineString = buffShape.LineString;
                             LineString? splitLineString = null;
-                            if(i>=0){
-                                splitLineString = buffTrip.Shape.SplitLineString[i];
-                            }
+                            splitLineString = buffTrip.Shape.SplitLineString[i];
                             if (splitLineString == null)
                             {
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
                                 edgeDico.Add(newId,newEdge);
                             }
                             else
-                            {
+                            {            
                                 var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM,
                                             walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration, internalGeom);

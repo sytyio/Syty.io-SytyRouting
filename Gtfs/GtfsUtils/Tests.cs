@@ -17,8 +17,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
             CtrlGtfs = gtfs;
         }
 
-        public Tests(){
-            
+        public Tests()
+        {
+
         }
         // public void PrintTripDico()
         // {
@@ -133,9 +134,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public void PrintAllEdges()
         {
-            foreach (var edge in CtrlGtfs.GetEdges())
+            foreach (Edge edge in CtrlGtfs.GetEdges())
             {
-                logger.Info("Edge {0}", edge);
+                if (edge.InternalGeometry is not null)
+                {
+                    foreach (var pt in edge.InternalGeometry)
+                    {
+                        logger.Info("X = {0}, Y=  {1}, M= {2}", pt.X, pt.Y, pt.M);
+                    }
+                }
             }
         }
 
@@ -288,7 +295,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         // public void PrintStopsWithEdges()
         // {
-           
+
         //     foreach (var stop in CtrlGtfs.GetNodes())
         //     {
         //          logger.Info("/////////------------{0}-------------///////",stop);
@@ -305,14 +312,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
         //         }
         //     }
         // }
-  public async Task GraphData(){
+        public async Task GraphData()
+        {
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
             graph.TraceNodes();
             var personaRouter = new PersonaRouter(graph);
             int cptNodes = graph.GetNodeCount();
 
-            logger.Info("Nb nodes {0}",graph.GetNodeCount());
+            logger.Info("Nb nodes {0}", graph.GetNodeCount());
 
             var listProviders = new List<ProviderCsv>();
             listProviders.Add(ProviderCsv.stib);
@@ -320,20 +328,23 @@ namespace SytyRouting.Gtfs.GtfsUtils
             // listProviders.Add(ProviderCsv.tur);
             // listProviders.Add(ProviderCsv.tec);
             graph.GetDataFromGtfs(listProviders, cptNodes);
-            var listsNode = new Dictionary<ProviderCsv,IEnumerable<Node>>();
-            var listsEdge = new Dictionary<ProviderCsv,IEnumerable<Edge>>();
-            foreach(var gtfs in graph.GtfsDico){
-                listsNode.Add(gtfs.Key,gtfs.Value.GetNodes());
-                listsEdge.Add(gtfs.Key,gtfs.Value.GetEdges());
-                
+            var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
+            var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
+            foreach (var gtfs in graph.GtfsDico)
+            {
+                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
+                listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
+
             }
-            logger.Info("Lists node size {0}", listsNode.Count()); 
+            logger.Info("Lists node size {0}", listsNode.Count());
             logger.Info("Lists edge size {0}", listsEdge.Count());
 
-            foreach(var item in listsNode){
+            foreach (var item in listsNode)
+            {
                 logger.Info("///////////////////////");
-                foreach (var node in item.Value){
-                    logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}",node.Idx, node.ValidSource,node.ValidTarget, node.InwardEdges.Count,node.OutwardEdges.Count);
+                foreach (var node in item.Value)
+                {
+                    logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}", node.Idx, node.ValidSource, node.ValidTarget, node.InwardEdges.Count, node.OutwardEdges.Count);
                     // foreach(var inEdge in node.InwardEdges){
                     //     logger.Info("{0} , {1}, {2} ",  inEdge.SourceNode, inEdge.TargetNode, inEdge.MaxSpeedMPerS);
                     // }
@@ -354,5 +365,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
         //         logger.Info(elem2);
         //     }
         // }
+
+
+
     }
+
+
+
+
 }

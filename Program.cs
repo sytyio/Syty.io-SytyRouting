@@ -1,6 +1,7 @@
 ﻿using NLog;
 using Npgsql;
 using NetTopologySuite.Geometries;
+using SytyRouting.Model;
 
 
 namespace SytyRouting
@@ -18,7 +19,7 @@ namespace SytyRouting
             // Logger configuration
             NLog.Common.InternalLogger.LogLevel = NLog.LogLevel.Debug;
             NLog.Common.InternalLogger.LogToConsole = false;
-           
+
             // ========================================
             // // Npgsql plugin to interact with spatial data provided by the PostgreSQL PostGIS extension
             NpgsqlConnection.GlobalTypeMapper.UseNetTopologySuite();
@@ -29,6 +30,11 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
 
+            // ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib,0);
+            // await gtfs.InitController();
+            // Tests tests = new Tests(gtfs);
+
+            // tests.PrintAllEdges();
 
             // var gtfs = new ControllerGtfs(ProviderCsv.tec);  
             // await gtfs.InitController();  
@@ -36,10 +42,18 @@ namespace SytyRouting
             // Tests tests = new Tests();
 
             // await tests.GraphData();
-            
-             graph.TraceNodes();
-            
 
+            //graph.TraceNodes();
+
+            // graph.TraceOneNode(graph.GetNodes()[0]);
+            //  graph.TraceOneNode(graph.GetNodes()[1558438]);
+             graph.TraceOneNode(graph.GetNodes()[1558439]);
+             graph.TraceOneNode(graph.GetNodes()[1559000]);
+             graph.TraceOneNode(graph.GetNodes()[1559700]);
+             graph.TraceOneNode(graph.GetNodes()[1560000]);
+             graph.TraceOneNode(graph.GetNodes()[1561286]);
+            //  graph.TraceOneNode(graph.GetNodes()[1561287]);
+            //  graph.TraceOneNode(graph.GetNodes()[1561306]);
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -71,5 +85,7 @@ namespace SytyRouting
             // Logger flushing
             LogManager.Shutdown();
         }
+
+
     }
 }

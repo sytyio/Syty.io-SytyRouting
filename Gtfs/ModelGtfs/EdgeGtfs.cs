@@ -39,55 +39,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetStop + " Source = " + SourceStop + " Route = " + Route + " LineString? = " + IsShapeAvailable;
         }
 
-        // public override bool Equals(object? obj)
-        // {
-        //     return obj is EdgeGtfs gtfs &&
-        //            OsmID == gtfs.OsmID &&
-        //            Cost == gtfs.Cost &&
-        //            LengthM == gtfs.LengthM &&
-        //            MaxSpeedMPerS == gtfs.MaxSpeedMPerS &&
-        //            EqualityComparer<Node?>.Default.Equals(SourceNode, gtfs.SourceNode) &&
-        //            EqualityComparer<Node?>.Default.Equals(TargetNode, gtfs.TargetNode) &&
-        //            EqualityComparer<XYMPoint[]?>.Default.Equals(InternalGeometry, gtfs.InternalGeometry) &&
-        //            Id == gtfs.Id &&
-        //            EqualityComparer<StopGtfs>.Default.Equals(SourceStop, gtfs.SourceStop) &&
-        //            EqualityComparer<StopGtfs>.Default.Equals(TargetStop, gtfs.TargetStop) &&
-        //            DurationS == gtfs.DurationS &&
-        //            EqualityComparer<RouteGtfs>.Default.Equals(Route, gtfs.Route) &&
-        //            DistanceSourceToTargetM == gtfs.DistanceSourceToTargetM &&
-        //            IsShapeAvailable == gtfs.IsShapeAvailable &&
-        //            EqualityComparer<Point?>.Default.Equals(SourceNearestLineString, gtfs.SourceNearestLineString) &&
-        //            EqualityComparer<Point?>.Default.Equals(TargetNearestLineString, gtfs.TargetNearestLineString) &&
-        //            WalkDistanceSourceM == gtfs.WalkDistanceSourceM &&
-        //            WalkDistanceTargetM == gtfs.WalkDistanceTargetM &&
-        //            DistanceNearestPointsM == gtfs.DistanceNearestPointsM;
-        // }
-
-        // public override int GetHashCode()
-        // {
-        //     HashCode hash = new HashCode();
-        //     hash.Add(OsmID);
-        //     hash.Add(Cost);
-        //     hash.Add(LengthM);
-        //     hash.Add(MaxSpeedMPerS);
-        //     hash.Add(SourceNode);
-        //     hash.Add(TargetNode);
-        //     hash.Add(InternalGeometry);
-        //     hash.Add(Id);
-        //     hash.Add(SourceStop);
-        //     hash.Add(TargetStop);
-        //     hash.Add(DurationS);
-        //     hash.Add(Route);
-        //     hash.Add(DistanceSourceToTargetM);
-        //     hash.Add(IsShapeAvailable);
-        //     hash.Add(SourceNearestLineString);
-        //     hash.Add(TargetNearestLineString);
-        //     hash.Add(WalkDistanceSourceM);
-        //     hash.Add(WalkDistanceTargetM);
-        //     hash.Add(DistanceNearestPointsM);
-        //     return hash.ToHashCode();
-        // }
-
         public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[]? internalGeometry)
         {
             OsmID = long.MaxValue;
@@ -107,7 +58,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
             DistanceNearestPointsM = distanceNearestPointsM;
             MaxSpeedMPerS = maxSpeedMPerS;
             InternalGeometry = internalGeometry;
-
         }
     }
 }

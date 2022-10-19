@@ -24,6 +24,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             X = lon;
             ValidSource = false;
             ValidTarget = false;
+            OsmID=333;
         }
     }
 }

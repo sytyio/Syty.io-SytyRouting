@@ -88,15 +88,12 @@ namespace SytyRouting
             {
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
-                // ///
-                // AddGtfsData();
-                // logger.Info("Nb nodes = {0}", NodesArray.Count());
-                // foreach(var gtfs in GtfsDico){
-                //     var nodes = gtfs.Value.GetNodes().ToArray();
-                //     NodesArray= (Node[])NodesArray.Union(nodes);
-                //     logger.Info("Nb nodes = {0}", NodesArray.Count());
-                // }
-                // ///
+                ///
+                var listProviders = new List<ProviderCsv>();
+                listProviders.Add(ProviderCsv.stib);
+                listProviders.Add(ProviderCsv.ter);
+                AddGtfsData(listProviders);
+                ///
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
@@ -209,30 +206,24 @@ namespace SytyRouting
             }
         }
 
-        private void  AddGtfsData(){
+        private void AddGtfsData(List<ProviderCsv> providers)
+        {
             int cptNodes = GetNodeCount();
-
-            logger.Info("Nb nodes {0}",GetNodeCount());
-
-            var listProviders = new List<ProviderCsv>();
-            // listProviders.Add(ProviderCsv.stib);
-            listProviders.Add(ProviderCsv.ter);
-            GetDataFromGtfs(listProviders, cptNodes);
-            var listsNode = new Dictionary<ProviderCsv,IEnumerable<Node>>();
-            var listsEdge = new Dictionary<ProviderCsv,IEnumerable<Edge>>();
-            foreach(var gtfs in GtfsDico){
-                listsNode.Add(gtfs.Key,gtfs.Value.GetNodes());
-                listsEdge.Add(gtfs.Key,gtfs.Value.GetEdges());
-                
+            GetDataFromGtfs(providers, cptNodes);
+            var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
+            var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
+            foreach (var gtfs in GtfsDico)
+            {
+                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
+                listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
             }
-            logger.Info("Lists node size {0}", listsNode.Count()); 
-            logger.Info("Lists edge size {0}", listsEdge.Count());
-            // foreach(var item in listsNode){
-            //     logger.Info("///////////////////////");
-            //     foreach (var node in item.Value){
-            //         logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}",node.Idx, node.ValidSource,node.ValidTarget, node.InwardEdges.Count,node.OutwardEdges.Count);
-            //     }
-            // }
+            logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
+            foreach (var gtfs in GtfsDico)
+            {
+                var nodes = gtfs.Value.GetNodes().ToArray();
+                NodesArray = NodesArray.Union(nodes).ToArray();
+                logger.Info("Nb nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
+            }
         }
 
 
@@ -276,6 +267,12 @@ namespace SytyRouting
             return NodesArray;
         }
 
+        public void TraceOneNode(Node node){
+            logger.Trace("OsmId =  {0}, nb in {1}, nb out {2}, idx {3}, coord = {4};{5}, T = {6}, s = {7}",
+            node.OsmID,node.InwardEdges.Count,node.OutwardEdges.Count,node.Idx,node.X, node.Y, node.ValidTarget, node.ValidSource);
+            TraceEdges(node);
+        }
+
         public void TraceNodes()
         {
             foreach (var node in NodesArray)
@@ -288,13 +285,13 @@ namespace SytyRouting
 
         private void TraceEdges(Node node)
         {
-            logger.Trace("\tInward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tInward Edges in Node {0}:", node.Idx);
             foreach (var edge in node.InwardEdges)
             {
                 TraceEdge(edge);
             }
 
-            logger.Trace("\tOutward Edges in Node {0}:", node.OsmID);
+            logger.Trace("\tOutward Edges in Node {0}:", node.Idx);
             foreach (var edge in node.OutwardEdges)
             {
                 TraceEdge(edge);
@@ -304,7 +301,7 @@ namespace SytyRouting
         private void TraceEdge(Edge edge)
         {
             logger.Trace("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.Idx, edge.TargetNode?.X, edge.TargetNode?.Y);
 
             TraceInternalGeometry(edge);
         }
