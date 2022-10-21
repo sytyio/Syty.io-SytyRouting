@@ -4,6 +4,7 @@ using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Operation.Distance;
 using SytyRouting.Model;
+using System.Diagnostics.CodeAnalysis;
 
 namespace SytyRouting.Gtfs.GtfsUtils
 {
@@ -324,10 +325,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             var listProviders = new List<ProviderCsv>();
             listProviders.Add(ProviderCsv.stib);
-            listProviders.Add(ProviderCsv.ter);
-            // listProviders.Add(ProviderCsv.tur);
-            // listProviders.Add(ProviderCsv.tec);
-            graph.GetDataFromGtfs(listProviders);
+            // listProviders.Add(ProviderCsv.ter);
+            await graph.GetDataFromGtfs(listProviders);
             var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
             var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
             foreach (var gtfs in graph.GtfsDico)

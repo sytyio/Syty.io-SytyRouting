@@ -69,7 +69,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch (FileNotFoundException)
             {
-                logger.Info("No given shapes (file empty or not present)");
+                logger.Info("No given shapes for {0} (file empty or not present)", provider);
                 return new List<ShapeCsv>();
             }
         }
@@ -92,11 +92,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
-            }
-            catch (FileNotFoundException)
-            {
-                logger.Info("No given shapes (file empty or not present)");
-                return new List<AgencyCsv>();
             }
         }
 
@@ -121,7 +116,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 throw;
             }
         }
-        
+
         private List<CalendarCsv> GetAllCalendars(ProviderCsv provider)
         {
             // Calendar of chosen society
@@ -141,6 +136,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
                 throw;
+            }
+            catch (FileNotFoundException)
+            {
+                logger.Info("No given calendar for {0} (file empty or not present)", provider);
+                return new List<CalendarCsv>();
             }
         }
 

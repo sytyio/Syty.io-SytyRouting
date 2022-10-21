@@ -25,7 +25,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv;
-        private ProviderCsv choice;
+        public  ProviderCsv choice;
 
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
@@ -49,15 +49,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public ControllerGtfs(ProviderCsv provider)
         {
-            choice = provider;
+            choice = provider;          
         }
 
         public async Task InitController()
         {
-
-            // await DownloadsGtfs();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
-
+            
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
@@ -91,7 +90,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             edgeDico = AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
-            // CleanGtfs();
         }
 
         public IEnumerable<Node> GetNodes()
@@ -248,8 +246,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             double walkDistanceTargetM = Helper.GetDistance(targetNearestLineString.X, targetNearestLineString.Y, currentStop.Y, currentStop.X);
                             double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
                             LineString lineString = buffShape.LineString;
-                            LineString? splitLineString = null;
-                            splitLineString = buffTrip.Shape.SplitLineString[i];
+                            LineString? splitLineString = buffTrip.Shape.SplitLineString[i];
                             if (splitLineString == null)
                             {
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
@@ -384,38 +381,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return new TimeSpan(hour % 24, min, seconds);
         }
 
-        private static async Task DownloadsGtfs()
-        {
-            CleanGtfs();
-            List<Task> listDwnld = new List<Task>();
-            foreach (ProviderCsv provider in Enum.GetValues(typeof(ProviderCsv)))
-            {
-                listDwnld.Add(DownloadGtfs(provider));
-            }
-            if (listDwnld.Count == 0)
-            {
-                logger.Info("Nothing to download");
-            }
-            try
-            {
-                await Task.WhenAll(listDwnld);
-            }
-            catch (AggregateException e)
-            {
-                var collectedExceptions = e.InnerExceptions;
-                logger.Info("Error with the download of {0} provider(s)", collectedExceptions.Count);
-                foreach (var inEx in collectedExceptions)
-                {
-                    logger.Info(inEx.Message);
-                }
-            }
-            catch (Exception)
-            {
-                // Case when there is no provider.
-            }
-        }
-
-        private static void CleanGtfs()
+        public static void CleanGtfs()
         {
             if (Directory.Exists("GtfsData"))
             {
@@ -428,32 +394,20 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private static async Task DownloadGtfs(ProviderCsv provider)
+        private  async Task DownloadGtfs()
         {
             string path = System.IO.Path.GetFullPath("GtfsData");
 
-            logger.Info("Start download {0}", provider);
-            string fullPathDwln = path + $"\\{provider}\\gtfs.zip";
-            string fullPathExtract = path + $"\\{provider}\\gtfs";
+            logger.Info("Start download {0}", choice);
+            string fullPathDwln = path + $"\\{choice}\\gtfs.zip";
+            string fullPathExtract = path + $"\\{choice}\\gtfs";
             Uri linkOfGtfs = new Uri("https://huhu");
             Directory.CreateDirectory(path);
-            Directory.CreateDirectory(path + $"\\{provider}");
-            switch (provider)
+            Directory.CreateDirectory(path + $"\\{choice}");
+            switch (choice)
             {
                 case ProviderCsv.stib:
                     linkOfGtfs = new Uri("https://stibmivb.opendatasoft.com/api/datasets/1.0/gtfs-files-production/alternative_exports/gtfszip/");
-                    break;
-                case ProviderCsv.tec:
-                    linkOfGtfs = new Uri("https://gtfs.irail.be/tec/tec-gtfs.zip");
-                    break;
-                case ProviderCsv.ter:
-                    linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export-ter-gtfs-last.zip");
-                    break;
-                case ProviderCsv.tgv:
-                    linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export_gtfs_voyages.zip");
-                    break;
-                case ProviderCsv.canada:
-                    linkOfGtfs = new Uri("https://transitfeeds.com/p/calgary-transit/238/latest/download");
                     break;
             }
             Task dwnldAsync;
@@ -465,7 +419,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     linkOfGtfs,
                     // Param2 = Path to save
                     fullPathDwln);
-                logger.Info("downloaded directory for {0}", provider);
+                logger.Info("downloaded directory for {0}", choice);
             }
             try
             {
@@ -473,18 +427,16 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch
             {
-                logger.Info("Error with the provider {0}", provider);
+                logger.Info("Error with the provider {0}", choice);
                 throw;
             }
             await Task.Run(() => ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract));
-            logger.Info("{0} done", provider);
+            logger.Info("{0} done", choice);
 
             if (Directory.Exists(fullPathExtract))
             {
                 File.Delete(fullPathDwln); //delete .zip
             }
         }
-
-
     }
 }

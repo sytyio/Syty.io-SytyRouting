@@ -30,22 +30,11 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync("graph.dat");
 
-            // ControllerGtfs gtfs = new ControllerGtfs(ProviderCsv.stib,0);
-            // await gtfs.InitController();
-            // Tests tests = new Tests(gtfs);
-
-            // tests.PrintAllEdges();
-
-            // var gtfs = new ControllerGtfs(ProviderCsv.tec);  
-            // await gtfs.InitController();  
-            // Tests tests = new Tests(gtfs);
-            // Tests tests = new Tests();
-
-            // await tests.GraphData();
 
             //graph.TraceNodes();
 
              graph.TraceOneNode(graph.GetNodes()[0]);
+             graph.TraceOneNode(graph.GetNodes()[1]);
               graph.TraceOneNode(graph.GetNodes()[1558438]);
              graph.TraceOneNode(graph.GetNodes()[1558439]);
              graph.TraceOneNode(graph.GetNodes()[1558449]);
