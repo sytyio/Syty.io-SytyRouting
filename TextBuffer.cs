@@ -4,12 +4,12 @@
     //     None =        0,
     //     Foot =        1,
     //     Bicycle =     2,
-    //     Horse =       4,
-    //     Car =         8,
-    //     Bus =        16,
-    //     Tram =       32,
-    //     Train =      64,
-    //     Undefined = 128,
+    //     Car =         4,
+    //     Bus =         8,
+    //     Tram =        16,
+    //     Metro =       32,
+    //     Train =       64,
+    //     Undefined =  128,
     // }
 
     // Database: compute.syty.io
