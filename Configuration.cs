@@ -100,6 +100,7 @@ namespace SytyRouting
                     logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", configTagIds[i]);
                 }
             }
+            
             return tagIdToTransportMode;
         }
 
@@ -111,7 +112,7 @@ namespace SytyRouting
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
                 
-                if(transportModeNames.Length < Constants.MaxNumberOfTransportModes)
+                if(transportModeNames.Length <= Constants.MaxNumberOfTransportModes)
                 {
                     Array.Resize(ref validTransportModeNames, transportModeNames.Length + 1);
                 }

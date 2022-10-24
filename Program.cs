@@ -52,10 +52,14 @@ namespace SytyRouting
 
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
-            // var transportModeName = Configuration.TransportModeNames[0];
-            ushort transportMode = 16;
 
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportMode);
+            string transportModeName = "Carrito";
+            byte transportMode = graph.GetTransportMode(transportModeName);
+
+            if(transportMode != 0)
+                await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportMode);
+            else
+                logger.Info("Unable to compute route for the {0} tranport mode", transportModeName);
             // personaRouter.TracePersonas();
             // personaRouter.TracePersonasRouteResult();
            

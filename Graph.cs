@@ -381,6 +381,19 @@ namespace SytyRouting
                 
             return (result == "")? Constants.DefaulTransportMode : result;
         }
+        
+        public byte GetTransportMode(string transportModeName)
+        {
+            if(transportModeMasks.ContainsKey(transportModeName))
+            {
+                return transportModeMasks[transportModeName];
+            }
+            else
+            {
+                logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
+                return 0;
+            }
+        }
 
         private byte GetTransportModes(int tagId)
         {
