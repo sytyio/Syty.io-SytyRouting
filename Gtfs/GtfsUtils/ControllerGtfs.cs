@@ -323,8 +323,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-
-
         public Dictionary<string, TripGtfs> SelectAllTripsForGivenDay(int day)
         {
             Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
@@ -408,6 +406,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 case ProviderCsv.stib:
                     linkOfGtfs = new Uri("https://stibmivb.opendatasoft.com/api/datasets/1.0/gtfs-files-production/alternative_exports/gtfszip/");
+                    break;
+                    case ProviderCsv.ter:
+                    linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export-ter-gtfs-last.zip");
+                    break;
+                    case ProviderCsv.tec:
+                    linkOfGtfs = new Uri("https://gtfs.irail.be/tec/tec-gtfs.zip");
                     break;
             }
             Task dwnldAsync;

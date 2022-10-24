@@ -91,6 +91,8 @@ namespace SytyRouting
                 KDTree = new KDTree(NodesArray);
                 var listProviders = new List<ProviderCsv>();
                 listProviders.Add(ProviderCsv.stib);
+                // listProviders.Add(ProviderCsv.ter);
+                // listProviders.Add(ProviderCsv.tec);
                 await AddGtfsData(listProviders);
                 KDTree = new KDTree(NodesArray);
                 ControllerGtfs.CleanGtfs();

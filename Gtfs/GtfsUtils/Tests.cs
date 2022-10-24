@@ -168,6 +168,19 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
+        public void GetNbForEachType(Dictionary<string, RouteGtfs> routes){
+            var query = from route in routes
+            orderby route.Value.Type
+            group route by route.Value.Type into r
+            select new {key = r.Key, cnt = r.Count()};
+            foreach(var item in query){
+                logger.Info("Type route = {0}, nb Route = {1}",item.key,item.cnt);
+            }
+        }
+
+
+
+
         /**Returns a list of arrays of 1 or 2 double
     If there is a shape:
         - the first double is the distance between the two points nearest on the linestring for the two stops
