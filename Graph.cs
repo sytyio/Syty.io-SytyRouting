@@ -171,7 +171,7 @@ namespace SytyRouting
                     }
                 }
 
-                NodesArray = nodes.Values.ToArray();
+                NodesArray = nodes.Values.OrderBy(t => Guid.NewGuid()).ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)
                 {
                     NodesArray[i].Idx = i;

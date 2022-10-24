@@ -23,26 +23,10 @@ namespace SytyRouting
             //Benchmarking.PointLocationTest(graph);
 
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
-
-            // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
-
-           // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                   SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.ContractionDijkstra.ContractionDijkstra>(graph);
 
             Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-                                                               SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
-                                                               
-            Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra,
-                                                               SytyRouting.Algorithms.LiveContractionDijkstra.LiveContractionDijkstra>(graph);
-
-            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-                                                               //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
-
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+                                                               SytyRouting.Algorithms.ContractionDijkstra.ContractionDijkstra>(graph);
 
             // Logger flushing
             LogManager.Shutdown();

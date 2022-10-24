@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using SytyRouting.Model;
 
-namespace SytyRouting.Algorithms.LiveContractionDijkstra
+namespace SytyRouting.Algorithms.ContractionDijkstra
 {
     public class DijkstraStep
     {
@@ -9,6 +9,6 @@ namespace SytyRouting.Algorithms.LiveContractionDijkstra
         [NotNull]
         public Node? ActiveNode;
         public double CumulatedCost;
-        public StepDirection Direction;       
+        public StepDirection Direction;
     }
 }
