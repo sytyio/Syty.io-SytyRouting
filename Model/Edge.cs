@@ -16,7 +16,7 @@ namespace SytyRouting.Model
         public double Cost;
         public double LengthM;
         public double MaxSpeedMPerS;
-        public ushort TransportModes;
+        public byte TransportModes;
 
         [NotNull]
         public Node? SourceNode;
@@ -66,7 +66,7 @@ namespace SytyRouting.Model
             Cost = br.ReadDouble();
             LengthM = br.ReadDouble();
             MaxSpeedMPerS = br.ReadDouble();
-            TransportModes = br.ReadUInt16();
+            TransportModes = br.ReadByte();
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             

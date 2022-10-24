@@ -69,15 +69,15 @@ namespace SytyRouting
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
-        public static async Task<Dictionary<int,ushort>> CreateMappingTagIdToTransportMode(Dictionary<String,ushort> transportModeMasks)
+        public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
 
-            Dictionary<int,ushort> tagIdToTransportMode = new Dictionary<int,ushort>();
+            Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
 
             for(var i = 0; i < configTagIds.Length; i++)
             {
-                ushort mask = 0; // Default Transport Mode: 0
+                byte mask = 0; // Default Transport Mode: 0
 
                 var configAllowedTransportModes = ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
                 foreach(var transportName in configAllowedTransportModes)
