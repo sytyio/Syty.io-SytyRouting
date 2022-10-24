@@ -382,7 +382,7 @@ namespace SytyRouting
             return (result == "")? Constants.DefaulTransportMode : result;
         }
         
-        public byte GetTransportMode(string transportModeName)
+        public byte GetTransportModeMask(string transportModeName)
         {
             if(transportModeMasks.ContainsKey(transportModeName))
             {
