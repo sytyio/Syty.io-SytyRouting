@@ -1,3 +1,4 @@
+using NetTopologySuite.Geometries;
 using NLog;
 using Npgsql;
 using System.Globalization;
@@ -102,7 +103,74 @@ namespace SytyRouting
 			dist = dist * 110574.2727;
 			return (dist);
 		}
-        
+
+        public static XYMPoint[]? GetInternalGeometry(LineString geometry, OneWayState oneWayState)
+        {
+            if(geometry.Count > 2)
+            {
+                Coordinate[] coordinates = geometry.Coordinates;
+                            
+                if(oneWayState == OneWayState.Reversed)
+                    coordinates = coordinates.Reverse().ToArray();
+                
+                var fullGeometry = new XYMPoint[coordinates.Length];
+                
+                for(int c = 0; c < coordinates.Length; c++)
+                {
+                    XYMPoint xYMPoint;
+
+                    xYMPoint.X = coordinates[c].X;
+                    xYMPoint.Y = coordinates[c].Y;
+                    xYMPoint.M = 0;
+
+                    fullGeometry[c] = xYMPoint;
+                }
+
+                CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
+                NormalizeGeometry(fullGeometry);
+
+                var internalGeometry = new XYMPoint[coordinates.Length-2];
+                for(var i = 0; i < internalGeometry.Length; i++)
+                {
+                    internalGeometry[i] = fullGeometry[i+1];
+                }
+                
+                return internalGeometry;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        private static double CalculateCumulativeDistance(XYMPoint[] internalGeometry, int index)
+        {
+            while(index > 0 && index < internalGeometry.Length)
+            {
+                var x1 = internalGeometry[index].X;
+                var y1 = internalGeometry[index].Y;
+                var x2 = internalGeometry[index-1].X;
+                var y2 = internalGeometry[index-1].Y;
+                var distance = Helper.GetDistance(x1, y1, x2, y2);
+
+                var cumulativeDistance = distance + CalculateCumulativeDistance(internalGeometry, index-1);
+
+                internalGeometry[index].M = cumulativeDistance;
+
+                return cumulativeDistance;
+            }
+            return 0;
+        }
+
+        private static void NormalizeGeometry(XYMPoint[] geometry)
+        {
+            double normalizationParameter = geometry.Last().M;
+            for(int g = 0; g < geometry.Length; g++)
+            {
+                geometry[g].M = geometry[g].M / normalizationParameter;
+            }
+        }
+
 		private static double deg2rad(double deg) {
 			return (deg * Math.PI / 180.0);
 		}
