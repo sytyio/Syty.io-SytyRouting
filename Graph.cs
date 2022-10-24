@@ -156,10 +156,11 @@ namespace SytyRouting
                     var length = Convert.ToDouble(reader.GetValue(16)); // length [?]
                     var stLength = Convert.ToDouble(reader.GetValue(17)); // length [?]
 
-
+                    // //////////////////////////////////////////////////////////////////////////////////////////// //
                     TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
                     TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
-                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, theGeom);
+                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, stLength, theGeom);
+                    // //////////////////////////////////////////////////////////////////////////////////////////// //
                     
                     
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s);
@@ -174,7 +175,9 @@ namespace SytyRouting
                     }
                 }
 
+                // //////////////////////////////////////// //
                 TestBench.DisplayCostCalculationTestResults();
+                // //////////////////////////////////////// //
 
                 NodesArray = nodes.Values.ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)

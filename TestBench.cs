@@ -9,8 +9,9 @@ namespace SytyRouting
     public class TestBench
     {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        private static Logger logger = LogManager.GetCurrentClassLogger();   
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public static void TestLineStringConversion<T>(Graph graph) where T: IRoutingAlgorithm, new()
         {
             var lineStringRoute = TestConvertRouteFromNodesToLineString<T>(graph);
@@ -68,7 +69,7 @@ namespace SytyRouting
             return lineStringRoute;
         }
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length FROM public.ways where length_m is not null";
         public static int NumberOfLengthSTLengthDiscrepancies {get; set;} = 0;
         public static int NumberOfCostStCostDiscrepancies {get; set;} = 0;
@@ -157,11 +158,14 @@ namespace SytyRouting
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public static int NumberOfLengthMTheGeomLengthMDiscrepancies {get; set;} = 0;
-        public static void TestOriginalGeomLengthCalculationMeters(double length_m, Geometry theGeom)
+        public static void TestOriginalGeomLengthCalculationMeters(double length_m, double stLength, Geometry theGeom)
         {
             // length calculation:
-            double theGeomLengthM =HaversineDistance(theGeom); // (LineString length in meters)
+            //double theGeomLengthM =HaversineDistance(theGeom); // (LineString length in meters)
+            double theGeomLengthM =stLength; // (LineString length in meters)
+            
             double diffLengthMTheGeomLengthM = length_m-theGeomLengthM;
+            
             if(diffLengthMTheGeomLengthM !=0)
             {
                 logger.Debug("      length_m: {0}", length_m);
@@ -249,10 +253,10 @@ namespace SytyRouting
         
         public static double HaversineDistance(Geometry g)
         {
-            LineString s = (LineString)g;
+            LineString ls = (LineString)g;
 
             // optimized for processing CoordinateSequences
-            var cs = s.CoordinateSequence;
+            var cs = ls.CoordinateSequence;
             int n = cs.Count;
             if (n <= 1)
                 return 0.0;
@@ -293,14 +297,29 @@ namespace SytyRouting
         public static void DisplayCostCalculationTestResults()
         {
             logger.Debug("\n\n");
-            logger.Debug("NumberOfLengthSTLengthDiscrepancies: {0}", TestBench.NumberOfLengthSTLengthDiscrepancies);
+            if(NumberOfCostStCostDiscrepancies != 0 || NumberOfReverseCostStReverseCostDiscrepancies != 0)
+                logger.Debug("> Test of original Ways cost calculation failed.");
+            else
+                logger.Debug("> Test of original Ways cost calculation succeeded.");
             logger.Debug("NumberOfCostLengthDiscrepancies: {0}", TestBench.NumberOfCostStCostDiscrepancies);
             logger.Debug("NumberOfReverseCostLengthDiscrepancies: {0}", TestBench.NumberOfReverseCostStReverseCostDiscrepancies);
+            
             logger.Debug("\n\n");
+            logger.Debug("NumberOfLengthSTLengthDiscrepancies: {0}", TestBench.NumberOfLengthSTLengthDiscrepancies);
             logger.Debug("NumberOfSTLengthTheGeomLengthDiscrepancies: {0}", TestBench.NumberOfSTLengthTheGeomLengthDiscrepancies);
+            
             logger.Debug("\n\n");
+            if(NumberOfSTLengthTheGeomLengthDiscrepancies != 0 || NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies != 0)
+                logger.Debug("> Test of the geom vs. the geom coord sequence calculation failed.");
+            else
+                logger.Debug("> Test of the geom vs. the geom coord sequencelength calculation succeeded.");
             logger.Debug("NumberOfTheGeomLengthTheGeomCoordinateSequenceLengthDiscrepancies: {0}", TestBench.NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies);
             logger.Debug("\n\n");
+
+            if(NumberOfLengthMTheGeomLengthMDiscrepancies != 0)
+                logger.Debug("> Test of the length (m) vs. the geom length (m) calculation failed.");
+            else
+                logger.Debug("> Test of the length (m) vs. the geom length (m) calculation succeeded.");
             logger.Debug("NumberLengthMTheGeomLengthMDiscrepancies: {0}", TestBench.NumberOfLengthMTheGeomLengthMDiscrepancies);
             logger.Debug("\n\n");
         }
