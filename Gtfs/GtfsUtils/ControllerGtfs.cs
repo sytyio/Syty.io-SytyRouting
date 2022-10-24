@@ -397,11 +397,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
             string path = System.IO.Path.GetFullPath("GtfsData");
 
             logger.Info("Start download {0}", choice);
-            string fullPathDwln = path + $"\\{choice}\\gtfs.zip";
-            string fullPathExtract = path + $"\\{choice}\\gtfs";
+            string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs.zip";
+            string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs";
             Uri linkOfGtfs = new Uri("https://huhu");
             Directory.CreateDirectory(path);
-            Directory.CreateDirectory(path + $"\\{choice}");
+            Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{choice}");
             switch (choice)
             {
                 case ProviderCsv.stib:
