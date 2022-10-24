@@ -316,7 +316,7 @@ namespace SytyRouting
             {
                 case OneWayState.Yes: // Only forward direction
                 {
-                    var internalGeometry = GetInternalGeometry(geometry, oneWayState);
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
                     var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
@@ -325,7 +325,7 @@ namespace SytyRouting
                 }
                 case OneWayState.Reversed: // Only backward direction
                 {
-                    var internalGeometry = GetInternalGeometry(geometry, oneWayState);
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
                     var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
@@ -334,12 +334,12 @@ namespace SytyRouting
                 }
                 default: // Both ways
                 {
-                    var internalGeometry = GetInternalGeometry(geometry, OneWayState.Yes);
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
                     var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 
-                    internalGeometry = GetInternalGeometry(geometry, OneWayState.Reversed);
+                    internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
                     edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
                     source.InwardEdges.Add(edge);
                     target.OutwardEdges.Add(edge);
@@ -406,73 +406,6 @@ namespace SytyRouting
             foreach(var ti2tmm in tagIdToTransportMode)
             {
                 Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
-            }
-        }
-
-        private XYMPoint[]? GetInternalGeometry(LineString geometry, OneWayState oneWayState)
-        {
-            if(geometry.Count > 2)
-            {
-                Coordinate[] coordinates = geometry.Coordinates;
-                            
-                if(oneWayState == OneWayState.Reversed)
-                    coordinates = coordinates.Reverse().ToArray();
-                
-                var fullGeometry = new XYMPoint[coordinates.Length];
-                
-                for(int c = 0; c < coordinates.Length; c++)
-                {
-                    XYMPoint xYMPoint;
-
-                    xYMPoint.X = coordinates[c].X;
-                    xYMPoint.Y = coordinates[c].Y;
-                    xYMPoint.M = 0;
-
-                    fullGeometry[c] = xYMPoint;
-                }
-
-                CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
-                NormalizeGeometry(fullGeometry);
-
-                var internalGeometry = new XYMPoint[coordinates.Length-2];
-                for(var i = 0; i < internalGeometry.Length; i++)
-                {
-                    internalGeometry[i] = fullGeometry[i+1];
-                }
-                
-                return internalGeometry;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        private double CalculateCumulativeDistance(XYMPoint[] internalGeometry, int index)
-        {
-            while(index > 0 && index < internalGeometry.Length)
-            {
-                var x1 = internalGeometry[index].X;
-                var y1 = internalGeometry[index].Y;
-                var x2 = internalGeometry[index-1].X;
-                var y2 = internalGeometry[index-1].Y;
-                var distance = Helper.GetDistance(x1, y1, x2, y2);
-
-                var cumulativeDistance = distance + CalculateCumulativeDistance(internalGeometry, index-1);
-
-                internalGeometry[index].M = cumulativeDistance;
-
-                return cumulativeDistance;
-            }
-            return 0;
-        }
-
-        private void NormalizeGeometry(XYMPoint[] geometry)
-        {
-            double normalizationParameter = geometry.Last().M;
-            for(int g = 0; g < geometry.Length; g++)
-            {
-                geometry[g].M = geometry[g].M / normalizationParameter;
             }
         }
 
