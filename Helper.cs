@@ -102,6 +102,7 @@ namespace SytyRouting
 			dist = dist * 110574.2727;
 			return (dist);
 		}
+        
 		private static double deg2rad(double deg) {
 			return (deg * Math.PI / 180.0);
 		}

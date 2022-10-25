@@ -158,21 +158,32 @@ namespace SytyRouting
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         public static int NumberOfLengthMTheGeomLengthMDiscrepancies {get; set;} = 0;
-        public static void TestOriginalGeomLengthCalculationMeters(double length_m, double stLength, Geometry theGeom)
+        public static void TestOriginalGeomLengthCalculationMeters(double length_m, double stLengthSpheroid, Geometry theGeom)
         {
             // length calculation:
             //double theGeomLengthM =HaversineDistance(theGeom); // (LineString length in meters)
-            double theGeomLengthM =stLength; // (LineString length in meters)
+            double theGeomLengthM =stLengthSpheroid; // (LineString length in meters based on a spheroid)
+            double theGeomLengthMHelperGetDistance = GeometryLengthM(theGeom);
             
             double diffLengthMTheGeomLengthM = length_m-theGeomLengthM;
+            double diffLengthMTheGeomLengthMHelperGetDistance = length_m-theGeomLengthMHelperGetDistance;
             
-            if(diffLengthMTheGeomLengthM !=0)
+            if(diffLengthMTheGeomLengthM != 0)
             {
                 logger.Debug("      length_m: {0}", length_m);
                 logger.Debug("theGeomlengthM: {0}", theGeomLengthM);
                 logger.Debug("   difference: {0}\n", diffLengthMTheGeomLengthM);
+
                 NumberOfLengthMTheGeomLengthMDiscrepancies++;
             }
+
+            // if(diffLengthMTheGeomLengthMHelperGetDistance != 0)
+            // {
+            //     logger.Debug("                       length_m: {0}", length_m);
+            //     logger.Debug("theGeomlengthMHelperGetDistance: {0}", theGeomLengthMHelperGetDistance);
+            //     logger.Debug("                     difference: {0}\n", diffLengthMTheGeomLengthMHelperGetDistance);            
+                // NumberOfLengthMTheGeomLengthMDiscrepancies++;
+            // }
         }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,6 +248,39 @@ namespace SytyRouting
                 double dy = y1 - y0;
 
                 len += Math.Sqrt(dx * dx + dy * dy);
+
+                x0 = x1;
+                y0 = y1;
+            }
+            return len;
+        }
+
+        public static double GeometryLengthM(Geometry geometry)
+        {
+            LineString linestring = (LineString)geometry;
+            var pts = linestring.CoordinateSequence;
+
+            // optimized for processing CoordinateSequences
+            int n = pts.Count;
+            if (n <= 1)
+                return 0.0;
+
+            double len = 0.0;
+
+            var p = pts.GetCoordinateCopy(0);
+            double x0 = p.X;
+            double y0 = p.Y;
+
+            for (int i = 1; i < n; i++)
+            {
+                pts.GetCoordinate(i, p);
+                double x1 = p.X;
+                double y1 = p.Y;
+                // double dx = x1 - x0;
+                // double dy = y1 - y0;
+
+                //len += Math.Sqrt(dx * dx + dy * dy);
+                len += Helper.GetDistance(x0,y0,x1,y1);
 
                 x0 = x1;
                 y0 = y1;

@@ -120,8 +120,8 @@ namespace SytyRouting
             var totalDbRows = await Helper.DbTableRowCount(TableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16                             17
-            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16                             17                                       18                                                    19     
+            queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length, ST_Length(the_geom,true) as st_length_spheroid, ST_Length(the_geom,false) as st_length_sphere FROM public.ways where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -156,10 +156,13 @@ namespace SytyRouting
                     var length = Convert.ToDouble(reader.GetValue(16)); // length [?]
                     var stLength = Convert.ToDouble(reader.GetValue(17)); // length [?]
 
+                    var stLengthSpheroid = Convert.ToDouble(reader.GetValue(18)); // length [?]
+                    var stLengthSphere = Convert.ToDouble(reader.GetValue(19)); // length [?]
+
                     // //////////////////////////////////////////////////////////////////////////////////////////// //
                     TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
                     TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
-                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, stLength, theGeom);
+                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, stLengthSpheroid, theGeom);
                     // //////////////////////////////////////////////////////////////////////////////////////////// //
                     
                     

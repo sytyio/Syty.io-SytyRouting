@@ -8,6 +8,7 @@
 // https://postgis.net/docs/ST_Length.html
 // https://postgis.net/docs/ST_SRID.html
 // 
+//
 // https://postgis.net/workshops/postgis-intro/projection.html
 // The most common SRID for geographic coordinates is 4326, which corresponds to “longitude/latitude on the WGS84 spheroid”. You can see the definition here:
 // https://epsg.io/4326
@@ -64,6 +65,16 @@
 //
 // SELECT the_geom, ST_SRID(the_geom) as srid FROM public.ways LIMIT 100;
 // SELECT the_geom, ST_SRID(the_geom) as srid FROM public.ways WHERE ST_SRID(the_geom)!=4326 LIMIT 100;
+//
+// -- the default calculation uses a spheroid
+// SELECT ST_Length(the_geog) As length_spheroid,  ST_Length(the_geog,false) As length_sphere
+// FROM (SELECT ST_GeographyFromText('SRID=4326;LINESTRING(-72.1260 42.45, -72.1240 42.45666, -72.123 42.1546)') As the_geog)
+//  As foo;
+//
+// SELECT osm_id, source, target, cost, reverse_cost, one_way,
+//   x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward,
+//   length, ST_Length(the_geom) as st_length, ST_Length(the_geom,true) as st_length_spheroid, ST_Length(the_geom,false) as st_length_sphere
+//   FROM public.ways where length_m is not null
 
 //////////////////////////
 // Observations:        //
@@ -82,5 +93,9 @@
 //
 // length = the_geom.Length (using NTS)
 //
-// geometry.Length = Cartesian 2D distance of the geometry CoordinateSequence
+// (geometry.Length = Cartesian 2D distance of the geometry CoordinateSequence)
 //
+//
+// length_m = ST_Length(the_geom,true)
+//
+// ST_Length(the_geom,true) is length in meters calculatated using a spheroid (POSTGIS). For geography types computation is performed using the inverse geodesic calculation. Units of length are in meters.
