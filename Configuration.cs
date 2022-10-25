@@ -21,6 +21,11 @@ namespace SytyRouting
         public static string ComputedRouteTableName {get;}
         public static string EdgeTableName {get;}
 
+        // Gtfs settings : 
+
+        public static DataGtfsSettings DataGtfsSettings{get;set;}
+        public static Dictionary<String, Uri> ProvidersInfo{get;set;}
+
         // Routing parameters:
         public static int MonitorSleepMilliseconds {get;}
         public static int DBPersonaLoadAsyncSleepMilliseconds {get;}
@@ -58,6 +63,9 @@ namespace SytyRouting
             ComputedRouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
 
+            DataGtfsSettings dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
+            CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+
             RoutingSettings routingSettings = config.GetRequiredSection("RoutingSettings").Get<RoutingSettings>();
             MonitorSleepMilliseconds = routingSettings.MonitorSleepMilliseconds;
             DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
@@ -67,6 +75,10 @@ namespace SytyRouting
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModeNames);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
+
+
+           
+            
         }
 
         public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
@@ -221,6 +233,21 @@ namespace SytyRouting
             }
 
             return osmTagIds;
+        }
+
+        private static void CreateDictionaryProviderUri(string [] providers, Uri [] uris){
+            ProvidersInfo = new Dictionary<string, Uri>();
+            if(providers.Count()!=uris.Count()){
+                logger.Info("Problem with the providers data, not the same number of uris and providers");
+            }else{
+                for(int i=0;i<providers.Count();i++){
+                    try{
+                    ProvidersInfo.Add(providers[i],uris[i]);
+                    }catch(ArgumentException){
+                        logger.Info("Provider already there");
+                    }
+                }
+            }
         }
     }
 }

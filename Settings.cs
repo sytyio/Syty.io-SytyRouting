@@ -15,6 +15,13 @@ namespace SytyRouting
         public string EdgeTableName {get; set;} = null!;
     }
 
+    public sealed class DataGtfsSettings
+    {
+        public string [] GtfsProviders {get;set;}=null!;
+        public Uri [] GtfsUris {get;set;}=null!;
+    }
+
+
     public sealed class TransportSettings
     {
         public string[] TransportModeNames {get; set;} = null!;

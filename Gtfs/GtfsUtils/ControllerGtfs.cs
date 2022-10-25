@@ -25,7 +25,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv;
-        public  ProviderCsv choice;
+        public  string choice;
 
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
@@ -47,7 +47,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, EdgeGtfs>? edgeDico;
 
 
-        public ControllerGtfs(ProviderCsv provider)
+        public ControllerGtfs(string provider)
         {
             choice = provider;          
         }
@@ -399,21 +399,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
             logger.Info("Start download {0}", choice);
             string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs.zip";
             string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs";
-            Uri linkOfGtfs = new Uri("https://huhu");
+            Uri linkOfGtfs = Configuration.ProvidersInfo[choice];
             Directory.CreateDirectory(path);
             Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{choice}");
-            switch (choice)
-            {
-                case ProviderCsv.stib:
-                    linkOfGtfs = new Uri("https://stibmivb.opendatasoft.com/api/datasets/1.0/gtfs-files-production/alternative_exports/gtfszip/");
-                    break;
-                    case ProviderCsv.ter:
-                    linkOfGtfs = new Uri("https://eu.ftp.opendatasoft.com/sncf/gtfs/export-ter-gtfs-last.zip");
-                    break;
-                    case ProviderCsv.tec:
-                    linkOfGtfs = new Uri("https://gtfs.irail.be/tec/tec-gtfs.zip");
-                    break;
-            }
+
             Task dwnldAsync;
 
             using (WebClient wc = new WebClient())

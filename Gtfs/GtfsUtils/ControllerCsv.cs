@@ -16,7 +16,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public List<CalendarCsv> RecordsCalendar { get; }
         public List<AgencyCsv> RecordsAgency { get; }
 
-        public ControllerCsv(ProviderCsv choice)
+        public ControllerCsv(string choice)
         {
             RecordsStop = GetAllStops(choice);
             RecordsRoute = GetAllRoutes(choice);
@@ -27,7 +27,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             RecordsAgency = GetAllAgencies(choice);
         }
 
-        private List<StopTimesCsv> GetAllStopTimes(ProviderCsv provider)
+        private List<StopTimesCsv> GetAllStopTimes(string provider)
         {
             // stop times of chosen society 
             string fullPathTimes = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}stop_times.txt");
@@ -48,7 +48,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<ShapeCsv> GetAllShapes(ProviderCsv provider)
+        private List<ShapeCsv> GetAllShapes(string provider)
         {
             try
             {
@@ -74,7 +74,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<AgencyCsv> GetAllAgencies(ProviderCsv provider)
+        private List<AgencyCsv> GetAllAgencies(string provider)
         {
             string fullPathStop = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}agency.txt");
             try
@@ -94,7 +94,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<StopCsv> GetAllStops(ProviderCsv provider){
+        private List<StopCsv> GetAllStops(string provider){
             string fullPathStop = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}stops.txt");
             try
             {
@@ -113,7 +113,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<CalendarCsv> GetAllCalendars(ProviderCsv provider)
+        private List<CalendarCsv> GetAllCalendars(string provider)
         {
             // Calendar of chosen society
             string fullPathCalendar = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}calendar.txt");
@@ -139,7 +139,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<RouteCsv> GetAllRoutes(ProviderCsv provider)
+        private List<RouteCsv> GetAllRoutes(string provider)
         {
             // routes of chosen society
             string fullPathRoute = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}routes.txt");
@@ -160,7 +160,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<TripCsv> GetAllTrips(ProviderCsv provider)
+        private List<TripCsv> GetAllTrips(string provider)
         {
             // Trips of chosen society
             string fullPathTrip = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar }trips.txt");

@@ -27,7 +27,7 @@ namespace SytyRouting
         public double MaxCostPerDistance { get; private set; }
 
         [NotNull]
-        public Dictionary<ProviderCsv, ControllerGtfs>? GtfsDico;
+        public Dictionary<string, ControllerGtfs>? GtfsDico;
 
         private Task FileSaveAsync(string path)
         {
@@ -116,11 +116,8 @@ namespace SytyRouting
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
                 KDTree = new KDTree(NodesArray);
-                var listProviders = new List<ProviderCsv>();
-                listProviders.Add(ProviderCsv.stib);
-                // listProviders.Add(ProviderCsv.ter);
-                // listProviders.Add(ProviderCsv.tec);
-                await AddGtfsData(listProviders);
+                ControllerGtfs.CleanGtfs();
+                await AddGtfsData();
                 KDTree = new KDTree(NodesArray);
                 ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
@@ -226,10 +223,10 @@ namespace SytyRouting
             }
         }
 
-        public async Task GetDataFromGtfs(List<ProviderCsv> providers)
+        public async Task GetDataFromGtfs()
         {
-            GtfsDico = new Dictionary<ProviderCsv, ControllerGtfs>();
-            foreach (var provider in providers)
+            GtfsDico = new Dictionary<string, ControllerGtfs>();
+            foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
                 GtfsDico.Add(provider, new ControllerGtfs(provider));
             }
@@ -241,11 +238,12 @@ namespace SytyRouting
             await Task.WhenAll(listDwnld);
         }
 
-        private async Task AddGtfsData(List<ProviderCsv> providers)
+        // private async Task AddGtfsData(List<string> providers)
+        private async Task AddGtfsData()
         {
-            await GetDataFromGtfs(providers);
-            var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
-            var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
+            await GetDataFromGtfs();
+            var listsNode = new Dictionary<string, IEnumerable<Node>>();
+            var listsEdge = new Dictionary<string, IEnumerable<Edge>>();
             foreach (var gtfs in GtfsDico)
             {
                 foreach (var node in gtfs.Value.GetNodes()){
