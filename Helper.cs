@@ -4,8 +4,6 @@ using Npgsql;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using SytyRouting.Model;
-using NetTopologySuite.Geometries;
-
 
 namespace SytyRouting
 {
@@ -172,6 +170,7 @@ namespace SytyRouting
                 geometry[g].M = geometry[g].M / normalizationParameter;
             }
         }
+
 		private static double deg2rad(double deg) {
 			return (deg * Math.PI / 180.0);
 		}

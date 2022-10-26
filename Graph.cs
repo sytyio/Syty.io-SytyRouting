@@ -4,7 +4,6 @@ using System.Diagnostics;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using System.Globalization;
 using SytyRouting.Gtfs.GtfsUtils;
 using SytyRouting.Gtfs.ModelCsv;
 using System.Diagnostics.CodeAnalysis;
@@ -105,7 +104,6 @@ namespace SytyRouting
                         transportModes[i] = new string(tmc);
                     }
                     CreateTransportModeMasks(transportModes);
-
                 }
                 
                 logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
@@ -481,11 +479,6 @@ namespace SytyRouting
         private async Task CreateMappingTagIdToTransportMode()
         {
             tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
-
-            foreach(var ti2tmm in tagIdToTransportMode)
-            {
-                Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
-            }
         }
 
         private void CleanGraph()
