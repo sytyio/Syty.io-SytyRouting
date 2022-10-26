@@ -39,6 +39,9 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
+                        // outwardEdge.SetCost(CostCriteria.MinimalTravelTime);
+                        // outwardEdge.SetCost(CostCriteria.MinimalTravelDistance);
+                        outwardEdge.SetCost(CostCriteria.MaximalTravelTime);
                         AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
                     }
                 }

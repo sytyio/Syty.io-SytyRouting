@@ -52,7 +52,7 @@ namespace SytyRouting
             stopWatch.Start();
 
             // elementsToProcess = await Helper.DbTableRowCount(TableName, logger);
-            elementsToProcess = 1000; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -225,8 +225,8 @@ namespace SytyRouting
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
-            // var connectionString = Constants.LocalConnectionString; // Local DB for testing
-            var connectionString = Constants.ConnectionString;
+            var connectionString = Constants.LocalConnectionString; // Local DB for testing
+            // var connectionString = Constants.ConnectionString;
             
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();

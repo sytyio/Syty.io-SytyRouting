@@ -79,5 +79,32 @@ namespace SytyRouting.Model
                 }
             }
         }
+
+        public void SetCost(CostCriteria costCriteria)
+        {
+            switch(costCriteria)
+            {
+                case CostCriteria.MinimalTravelTime:
+                {
+                    Cost =  LengthM / MaxSpeedMPerS;
+                    break;
+                }
+                case CostCriteria.MaximalTravelTime:
+                {
+                    Cost = MaxSpeedMPerS / LengthM;
+                    break;
+                }
+                case CostCriteria.MinimalTravelDistance:
+                {
+                    Cost = LengthM;
+                    break;
+                }
+                default:
+                {
+                    break;
+                }
+            }
+            
+        }
     }
 }
