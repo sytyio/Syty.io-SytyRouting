@@ -12,12 +12,6 @@ using System.Diagnostics.CodeAnalysis;
 using NetTopologySuite.LinearReferencing;
 namespace SytyRouting.Gtfs.GtfsUtils
 {
-    interface ControllerExternalSource
-    {
-        Task InitController();
-        IEnumerable<Node> GetNodes(); //  return StopDico.Values.Cast<Node>()
-        IEnumerable<Edge> GetEdges();
-    }
 
     public class ControllerGtfs : ControllerExternalSource
     {
@@ -25,7 +19,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv;
-        public  string choice;
+        public string choice;
 
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
@@ -46,17 +40,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
         [NotNull]
         private Dictionary<string, EdgeGtfs>? edgeDico;
 
+        //Masks
+        private Dictionary<int, byte> routeTypeToTransportMode = new Dictionary<int, byte>();
+        private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
+
+
 
         public ControllerGtfs(string provider)
         {
-            choice = provider;          
+            choice = provider;
         }
 
         public async Task InitController()
         {
             await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
-            
+
+            transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
+            routeTypeToTransportMode = Helper.CreateMappingRouteTypeToTransportMode(transportModeMasks);
+
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
@@ -226,7 +228,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int i = 0;
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
-               var currentStop = currentStopTime.Value.Stop;
+                var currentStop = currentStopTime.Value.Stop;
                 if (previousStop != null && previousStopTime != null)
                 {
                     string newId = currentStop.Id + "TO" + previousStop.Id + "IN" + buffTrip.Route.Id;
@@ -235,11 +237,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         double distance = Helper.GetDistance(previousStop.X, previousStop.Y, currentStop.X, currentStop.Y);
                         TimeSpan arrival = currentStopTime.Value.ArrivalTime;
                         TimeSpan departure = previousStopTime.DepartureTime;
-                        var watchTime = (previousStopTime.DepartureTime-previousStopTime.ArrivalTime).TotalSeconds;
-                        var duration = (arrival - departure).TotalSeconds+watchTime;
+                        var watchTime = (previousStopTime.DepartureTime - previousStopTime.ArrivalTime).TotalSeconds;
+                        var duration = (arrival - departure).TotalSeconds + watchTime;
                         EdgeGtfs newEdge;
-                        // var transportModes =Configuration.GtfsTypeToTransportModes[buffTrip.Route.Type].AllowedTransportModes[0];
-                        // logger.Info("Mooooooooooooooooooooooooooooooood {0}, {1}",buffTrip.Route.Type,transportModes);
+                        var routeType = buffTrip.Route.Type;
                         if (buffShape != null)
                         {
                             Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(buffShape.LineString, new Point(previousStop.Y, previousStop.X))[0]);
@@ -249,24 +250,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             double distanceNearestPointsM = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, targetNearestLineString.X, targetNearestLineString.Y);
                             LineString lineString = buffShape.LineString;
                             LineString? splitLineString = buffTrip.Shape.SplitLineString[i];
+
                             if (splitLineString == null)
                             {
-                                
-                                newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
-                                edgeDico.Add(newId,newEdge);
+
+                                newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null, routeTypeToTransportMode[routeType]);
+                                edgeDico.Add(newId, newEdge);
                             }
                             else
-                            {            
+                            {
                                 var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, sourceNearestLineString, targetNearestLineString, walkDistanceSourceM,
-                                            walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration, internalGeom);
-                                            edgeDico.Add(newId,newEdge);
+                                            walkDistanceTargetM, distanceNearestPointsM, distanceNearestPointsM / duration, internalGeom, routeTypeToTransportMode[routeType]);
+                                edgeDico.Add(newId, newEdge);
                                 i++;
                             }
                         }
                         else
                         {
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null, routeTypeToTransportMode[routeType]);
                             edgeDico.Add(newId, newEdge);
                         }
                         previousStop.ValidSource = true;
@@ -285,6 +287,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         }
                     }
                 }
+
                 previousStop = currentStop;
                 previousStopTime = currentStopTime.Value;
             }
@@ -303,7 +306,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             foreach (Point pt in pts)
             {
                 Double distanceOnLinearString = lil.Project(pt.Coordinate);
-                if (sll.ContainsKey(distanceOnLinearString)==false){
+                if (sll.ContainsKey(distanceOnLinearString) == false)
+                {
                     sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
                 }
             }
@@ -395,7 +399,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private  async Task DownloadGtfs()
+        private async Task DownloadGtfs()
         {
             string path = System.IO.Path.GetFullPath("GtfsData");
 

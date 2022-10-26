@@ -21,7 +21,6 @@ namespace SytyRouting
         private KDTree? KDTree;
 
         private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
-        private Dictionary<int,byte> routeTypeToTransportMode = new Dictionary<int,byte>();
         private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
 
         public double MinCostPerDistance { get; private set; }
@@ -105,7 +104,7 @@ namespace SytyRouting
                         }
                         transportModes[i] = new string(tmc);
                     }
-                    CreateTransportModeMasks(transportModes);
+                    transportModeMasks = Helper.CreateTransportModeMasks(transportModes);
 
                 }
                 
@@ -156,10 +155,9 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
-            CreateTransportModeMasks(Configuration.TransportModeNames);
-            await CreateMappingTagIdToTransportMode();
-            CreateMappingRouteTypeToTransportMode();
-
+            transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
+            tagIdToTransportMode = await Helper.CreateMappingTagIdToTransportMode(transportModeMasks);
+            
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
@@ -251,8 +249,8 @@ namespace SytyRouting
                 foreach (var node in gtfs.Value.GetNodes()){
                     var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
                     // Cost : foot 
-                    var newEdgOut = new Edge{ OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node,nearest)};
-                    var newEdgeIn = new Edge{ OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node,nearest)};
+                    var newEdgOut = new Edge{ OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node,nearest), TransportModes=Helper.GetTransportModeMask("Foot")};
+                    var newEdgeIn = new Edge{ OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node,nearest), TransportModes=Helper.GetTransportModeMask("Foot")};
                     node.ValidSource=true;
                     node.ValidTarget=true;
                     node.InwardEdges.Add(newEdgeIn);
@@ -346,7 +344,7 @@ namespace SytyRouting
         private void TraceEdge(Edge edge)
         {
             logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModesToString(edge.TransportModes), edge.TransportModes);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes);
             
             TraceInternalGeometry(edge);
         }
@@ -381,7 +379,7 @@ namespace SytyRouting
 
         private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
-            byte transportModes = GetTransportModes(tagId);
+            byte transportModes = Helper.GetTransportModes(tagId,tagIdToTransportMode);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
@@ -416,83 +414,6 @@ namespace SytyRouting
                     
                     break;
                 }
-            }
-        }
-
-        private void CreateTransportModeMasks(string[] transportModes)
-        {
-            // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
-            try
-            {
-                transportModeMasks.Add(transportModes[0],0);
-                for(int n = 0; n < transportModes.Length-1; n++)
-                {
-                    var twoToTheNth = (byte)Math.Pow(2,n);
-                    var transportName = transportModes[n+1];
-                    transportModeMasks.Add(transportName,twoToTheNth);
-                }
-            }
-            catch (Exception e)
-            {
-                logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
-            }
-        }
-
-        private string TransportModesToString(int transportModes)
-        {
-            string result = "";
-            foreach(var tmm in transportModeMasks)
-            {
-                if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
-                {
-                    result += tmm.Key + " ";
-                }
-            }
-                
-            return (result == "")? Constants.DefaulTransportMode : result;
-        }
-        
-        public byte GetTransportModeMask(string transportModeName)
-        {
-            if(transportModeMasks.ContainsKey(transportModeName))
-            {
-                return transportModeMasks[transportModeName];
-            }
-            else
-            {
-                logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
-                return 0;
-            }
-        }
-
-        private byte GetTransportModes(int tagId)
-        {
-            if (tagIdToTransportMode.ContainsKey(tagId))
-            {
-                return tagIdToTransportMode[tagId];
-            }
-            else
-            {
-                logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
-                return (byte)0; // Default Ttransport Mode: 0 ("None");
-            }
-        }
-
-        private async Task CreateMappingTagIdToTransportMode()
-        {
-            tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
-
-            foreach(var ti2tmm in tagIdToTransportMode)
-            {
-                Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
-            }
-        }
-
-        private void CreateMappingRouteTypeToTransportMode(){
-            routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
-                        foreach(var rt2tmm in routeTypeToTransportMode)
-            {
-                Console.WriteLine("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
             }
         }
 
