@@ -101,6 +101,7 @@ namespace SytyRouting.Model
                 }
                 default:
                 {
+                    Cost = LengthM;
                     break;
                 }
             }
