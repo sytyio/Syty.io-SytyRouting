@@ -74,7 +74,7 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            string transportModeName = "Car";
+            string transportModeName = "Tram";
             byte transportMode = graph.GetTransportModeMask(transportModeName);
 
             if(transportMode != 0)

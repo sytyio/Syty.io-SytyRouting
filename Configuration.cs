@@ -35,6 +35,8 @@ namespace SytyRouting
         // Transport parameters:
         public static string[] TransportModeNames {get;}
         private static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
+
+         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
         
 
@@ -75,14 +77,42 @@ namespace SytyRouting
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModeNames);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
-
-
-           
+            GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
             
+        }
+
+        public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<String,byte> transportModeMasks){
+                int [] tagsGtfs = Configuration.GtfsTags();
+                Dictionary<int,byte> routeTypeToTransportMode= new Dictionary<int, byte>();
+                for (var i=0;i<tagsGtfs.Length;i++){
+                    byte mask = 0;
+                    var configAllowedTransportModes=Configuration.GtfsTypeToTransportModes[i].AllowedTransportModes;
+                    foreach(var transportName in configAllowedTransportModes)
+                {
+                    if(transportModeMasks.ContainsKey(transportName))
+                    {
+                        mask |= transportModeMasks[transportName];
+                    }
+                    else
+                    {
+                        logger.Info("Transport Mode '{0}' not found.",transportName);
+                    }
+                }
+                if (!routeTypeToTransportMode.ContainsKey(tagsGtfs[i]))
+                {
+                    routeTypeToTransportMode.Add(tagsGtfs[i], mask);
+                }
+                else
+                {
+                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagsGtfs[i]);
+                }
+                }
+                return routeTypeToTransportMode;
         }
 
         public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
         {
+            
             int[] configTagIds = await Configuration.ValidateOSMTags();
 
             Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
@@ -90,7 +120,6 @@ namespace SytyRouting
             for(var i = 0; i < configTagIds.Length; i++)
             {
                 byte mask = 0; // Default Transport Mode: 0
-
                 var configAllowedTransportModes = ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
                 foreach(var transportName in configAllowedTransportModes)
                 {
@@ -175,6 +204,14 @@ namespace SytyRouting
                 }
             }
             return validTransportModes.ToArray();
+        }
+
+        private static int[] GtfsTags(){
+            int [] gtfsTagsId = new int [GtfsTypeToTransportModes.Count()];
+            for(int i=0;i<GtfsTypeToTransportModes.Count();i++){
+                gtfsTagsId[i]=GtfsTypeToTransportModes[i].RouteType;
+            }
+            return gtfsTagsId;
         }
 
         private static async Task<int[]> ValidateOSMTags()

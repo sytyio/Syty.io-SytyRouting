@@ -238,6 +238,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         var watchTime = (previousStopTime.DepartureTime-previousStopTime.ArrivalTime).TotalSeconds;
                         var duration = (arrival - departure).TotalSeconds+watchTime;
                         EdgeGtfs newEdge;
+                        // var transportModes =Configuration.GtfsTypeToTransportModes[buffTrip.Route.Type].AllowedTransportModes[0];
+                        // logger.Info("Mooooooooooooooooooooooooooooooood {0}, {1}",buffTrip.Route.Type,transportModes);
                         if (buffShape != null)
                         {
                             Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(buffShape.LineString, new Point(previousStop.Y, previousStop.X))[0]);
@@ -249,6 +251,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             LineString? splitLineString = buffTrip.Shape.SplitLineString[i];
                             if (splitLineString == null)
                             {
+                                
                                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, 0, 0, 0, distance / duration, null);
                                 edgeDico.Add(newId,newEdge);
                             }

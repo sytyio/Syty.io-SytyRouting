@@ -21,6 +21,7 @@ namespace SytyRouting
         private KDTree? KDTree;
 
         private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
+        private Dictionary<int,byte> routeTypeToTransportMode = new Dictionary<int,byte>();
         private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
 
         public double MinCostPerDistance { get; private set; }
@@ -157,6 +158,7 @@ namespace SytyRouting
 
             CreateTransportModeMasks(Configuration.TransportModeNames);
             await CreateMappingTagIdToTransportMode();
+            CreateMappingRouteTypeToTransportMode();
 
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
@@ -483,6 +485,14 @@ namespace SytyRouting
             foreach(var ti2tmm in tagIdToTransportMode)
             {
                 Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
+            }
+        }
+
+        private void CreateMappingRouteTypeToTransportMode(){
+            routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
+                        foreach(var rt2tmm in routeTypeToTransportMode)
+            {
+                Console.WriteLine("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
             }
         }
 
