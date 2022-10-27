@@ -40,7 +40,7 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>(byte transportMode) where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>(byte transportModes) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -69,7 +69,7 @@ namespace SytyRouting
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportMode));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportModes));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -148,7 +148,7 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex, ushort transportMode) where T: IRoutingAlgorithm, new()
+        private void CalculateRoutes<T>(int taskIndex, byte requestedTransportModes) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -160,24 +160,52 @@ namespace SytyRouting
                     var persona = personaArray[i];
                     try
                     {
-                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
-                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
-                        if(origin.Idx == destination.Idx)
-                        {
-                            logger.Debug("Origin and Destination Nodes are equal");
-                        }
-                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportMode);
-                        
-                        TimeSpan currentTime = TimeSpan.Zero;
-                        persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                        persona.SuccessfulRouteComputation = true;
+                        Node? origin = null;
+                        Node? destination = null;
 
-                        Interlocked.Increment(ref computedRoutes);
+                        var personaOrigin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
+                        var personaDestination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+
+                        if(personaOrigin.IsAValidRouteStart(requestedTransportModes))
+                            origin = personaOrigin;
+                        if(personaDestination.IsAValidRouteEnd(requestedTransportModes))
+                            destination = personaDestination;
+
+                        //DEBUG:
+                        if(persona.Id == 53)
+                        {
+                            Console.WriteLine("Problem");
+                        }
+
+                        if(origin != null && destination != null)
+                        {
+                            if(origin.Idx != destination.Idx)
+                            {   
+                                
+                                var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+                                if(route.Count > 0)
+                                {
+                                    TimeSpan currentTime = TimeSpan.Zero;
+                                    persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
+                                    persona.SuccessfulRouteComputation = true;
+
+                                    Interlocked.Increment(ref computedRoutes);
+                                }
+                                else
+                                {
+                                    logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                                }
+                            }
+                            else
+                            {
+                                logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", persona.Id);
+                            }
+                        }
                     }
-                    catch
+                    catch (Exception e)
                     {
                         persona.SuccessfulRouteComputation = false;
-                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}", persona.Id);
+                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
                     }
                 }
             }
@@ -256,8 +284,7 @@ namespace SytyRouting
                 }
                 catch
                 {
-                    logger.Debug(" ==>> Unable to upload route to database");
-                    logger.Debug(" ==>> Persona Id{0}", persona.Id);
+                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
                     uploadFails++;
                 }
             }

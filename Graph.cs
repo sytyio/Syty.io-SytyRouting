@@ -274,14 +274,14 @@ namespace SytyRouting
             NodesArray.ToList().ForEach(x=>x.Idx=i++);
         }
 
-        public Node GetNodeByLongitudeLatitude(double x, double y)
+        public Node GetNodeByLongitudeLatitude(double x, double y, bool isTarget = false, bool isSource = false)
         {
             if (KDTree != null)
             {
-                var node = KDTree.GetNearestNeighbor(x, y);
+                var node = KDTree.GetNearestNeighbor(x, y, isTarget, isSource);
                 return node;
             }
-            throw new Exception("Impossible to find the nearest node based on the provided coordinates.");
+            throw new Exception(String.Format("Impossible to find the nearest node based on the provided coordinates ({0},{1}). Optional parameters: isTarget = {2},  isSource = {3}", x, y, isTarget, isSource));
         }
 
         public Node GetNodeByOsmId(long osmId)
