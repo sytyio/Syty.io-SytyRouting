@@ -176,12 +176,12 @@ namespace SytyRouting
                         }
                         else
                         {
-                            logger.Debug("The average speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
+                            logger.Info("The average speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
                         }
                     }
                     else
                     {
-                        logger.Debug("The average speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
+                        logger.Info("The average speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
                     }
                 }
                 else
@@ -189,11 +189,6 @@ namespace SytyRouting
                     logger.Info("Unable to find '{0}' in the validated list of transport modes. Ignoring transport mode.", transportModeSpeed.TransportMode);
                 }
             }
-
-            // foreach( KeyValuePair<string,int> kvp in validTransportModeSpeeds)
-            // {
-            //     Console.WriteLine("Transport Mode {0} : Speed {1}", kvp.Key, kvp.Value);
-            // }
 
             return validTransportModeSpeeds;
         }

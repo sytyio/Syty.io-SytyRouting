@@ -177,7 +177,7 @@ namespace SytyRouting
                     catch
                     {
                         persona.SuccessfulRouteComputation = false;
-                        logger.Info(" ==>> Unable to compute route: Persona Id {0}", persona.Id);
+                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}", persona.Id);
                     }
                 }
             }
@@ -256,7 +256,7 @@ namespace SytyRouting
                 }
                 catch
                 {
-                    logger.Info(" ==>> Unable to upload route to database");
+                    logger.Debug(" ==>> Unable to upload route to database");
                     logger.Debug(" ==>> Persona Id{0}", persona.Id);
                     uploadFails++;
                 }

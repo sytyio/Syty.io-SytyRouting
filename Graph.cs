@@ -380,7 +380,7 @@ namespace SytyRouting
 
         private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
-            byte transportModes = GetTransportModes(tagId);
+            byte transportModes = GetTransportModesForTagId(tagId);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
@@ -464,7 +464,7 @@ namespace SytyRouting
             }
         }
 
-        private byte GetTransportModes(int tagId)
+        private byte GetTransportModesForTagId(int tagId)
         {
             if (tagIdToTransportModes.ContainsKey(tagId))
             {
