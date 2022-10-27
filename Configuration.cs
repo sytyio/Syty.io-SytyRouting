@@ -174,10 +174,10 @@ namespace SytyRouting
                 }
             }
 
-            foreach( KeyValuePair<string,int> kvp in validTransportModeSpeeds)
-            {
-                Console.WriteLine("Transport Mode {0} : Speed {1}", kvp.Key, kvp.Value);
-            }
+            // foreach( KeyValuePair<string,int> kvp in validTransportModeSpeeds)
+            // {
+            //     Console.WriteLine("Transport Mode {0} : Speed {1}", kvp.Key, kvp.Value);
+            // }
 
             return validTransportModeSpeeds;
         }
