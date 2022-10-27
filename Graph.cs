@@ -258,7 +258,7 @@ namespace SytyRouting
                     nearest.InwardEdges.Add(newEdgOut);
                     nearest.OutwardEdges.Add(newEdgeIn);
                 }
-                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
+                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes()); // revoir ici 
                 listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
             }
             logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
