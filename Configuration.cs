@@ -71,11 +71,11 @@ namespace SytyRouting
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
-        public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
+        public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
 
-            Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
+            Dictionary<int,byte> tagIdToTransportModes = new Dictionary<int,byte>();
 
             for(var i = 0; i < configTagIds.Length; i++)
             {
@@ -84,18 +84,19 @@ namespace SytyRouting
                 var configAllowedTransportModes = ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
                 foreach(var transportName in configAllowedTransportModes)
                 {
-                    if(transportModeMasks.ContainsKey(transportName))
+                    int transportModeIndex = Configuration.GetTransportModeIndex(transportName);
+                    if(transportModeMasks.ContainsKey(transportModeIndex))
                     {
-                        mask |= transportModeMasks[transportName];
+                        mask |= transportModeMasks[transportModeIndex];
                     }
                     else
                     {
                         logger.Info("Transport Mode '{0}' not found.",transportName);
                     }
                 }
-                if (!tagIdToTransportMode.ContainsKey(configTagIds[i]))
+                if (!tagIdToTransportModes.ContainsKey(configTagIds[i]))
                 {
-                    tagIdToTransportMode.Add(configTagIds[i], mask);
+                    tagIdToTransportModes.Add(configTagIds[i], mask);
                 }
                 else
                 {
@@ -103,7 +104,22 @@ namespace SytyRouting
                 }
             }
             
-            return tagIdToTransportMode;
+            return tagIdToTransportModes;
+        }
+
+        public static int GetTransportModeIndex(string transportModeName)
+        {
+            int index = 0;
+            for(int i = 1; i < Configuration.TransportModes.Length; i++)
+            {
+                if(Configuration.TransportModes[i].Equals(transportModeName))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            return index;
         }
 
         private static string[] ValidateTransportModeNames(string[] configTransportModeNames)

@@ -40,7 +40,7 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>(ushort transportMode) where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>(byte transportMode) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 

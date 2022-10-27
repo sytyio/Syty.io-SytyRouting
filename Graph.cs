@@ -19,8 +19,10 @@ namespace SytyRouting
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
-        private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
+        private Dictionary<int,byte> tagIdToTransportModes = new Dictionary<int,byte>();
+
+        // private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
+        private Dictionary<int,byte> transportModeMasks = new Dictionary<int,byte>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -46,12 +48,13 @@ namespace SytyRouting
                 KDTree?.WriteToStream(bw);
 
                 bw.Write(transportModeMasks.Count);
-                foreach(string transportMode in transportModeMasks.Keys)
+                foreach(int transportModeIndex in transportModeMasks.Keys)
                 {
-                    bw.Write(transportMode.Length);
-                    for(int i = 0; i < transportMode.Length; i++)
+                    string transportModeName = Configuration.TransportModes[transportModeIndex];
+                    bw.Write(transportModeName.Length);
+                    for(int i = 0; i < transportModeName.Length; i++)
                     {
-                        bw.Write((char)transportMode[i]);
+                        bw.Write((char)transportModeName[i]);
                     }
                 }
             }
@@ -157,7 +160,7 @@ namespace SytyRouting
             await connection.OpenAsync();
 
             CreateTransportModeMasks(Configuration.TransportModes);
-            await CreateMappingTagIdToTransportMode();
+            await CreateMappingTagIdToTransportModes();
 
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
@@ -422,12 +425,14 @@ namespace SytyRouting
             // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
-                transportModeMasks.Add(transportModes[0],0);
+                // transportModeMasks.Add(transportModes[0],0);
+                transportModeMasks.Add(0,0);
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
                     var twoToTheNth = (byte)Math.Pow(2,n);
-                    var transportName = transportModes[n+1];
-                    transportModeMasks.Add(transportName,twoToTheNth);
+                    //var transportName = transportModes[n+1];
+                    //transportModeMasks.Add(transportName,twoToTheNth);
+                    transportModeMasks.Add(n+1,twoToTheNth);
                 }
             }
             catch (Exception e)
@@ -436,14 +441,14 @@ namespace SytyRouting
             }
         }
 
-        private string TransportModesToString(int transportModes)
+        private string TransportModesToString(byte transportModes)
         {
             string result = "";
-            foreach(var tmm in transportModeMasks)
+            foreach(var transportModeMask in transportModeMasks)
             {
-                if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
+                if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
-                    result += tmm.Key + " ";
+                    result += Configuration.TransportModes[transportModeMask.Key] + ", ";
                 }
             }
                 
@@ -452,10 +457,11 @@ namespace SytyRouting
         
         public byte GetTransportModeMask(string transportModeName)
         {
-            if(transportModeMasks.ContainsKey(transportModeName))
+            int transportModeIndex = Configuration.GetTransportModeIndex(transportModeName);
+            if(transportModeIndex != 0)
             {
-                return transportModeMasks[transportModeName];
-            }
+                return transportModeMasks[transportModeIndex];
+            }   
             else
             {
                 logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
@@ -465,9 +471,9 @@ namespace SytyRouting
 
         private byte GetTransportModes(int tagId)
         {
-            if (tagIdToTransportMode.ContainsKey(tagId))
+            if (tagIdToTransportModes.ContainsKey(tagId))
             {
-                return tagIdToTransportMode[tagId];
+                return tagIdToTransportModes[tagId];
             }
             else
             {
@@ -476,9 +482,9 @@ namespace SytyRouting
             }
         }
 
-        private async Task CreateMappingTagIdToTransportMode()
+        private async Task CreateMappingTagIdToTransportModes()
         {
-            tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
+            tagIdToTransportModes = await Configuration.CreateMappingTagIdToTransportModes(transportModeMasks);
         }
 
         private void CleanGraph()
