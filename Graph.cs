@@ -20,8 +20,6 @@ namespace SytyRouting
         private KDTree? KDTree;
 
         private Dictionary<int,byte> tagIdToTransportModes = new Dictionary<int,byte>();
-
-        // private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
         private Dictionary<int,byte> transportModeMasks = new Dictionary<int,byte>();
 
         public double MinCostPerDistance { get; private set; }
@@ -425,13 +423,10 @@ namespace SytyRouting
             // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
-                // transportModeMasks.Add(transportModes[0],0);
                 transportModeMasks.Add(0,0);
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
                     var twoToTheNth = (byte)Math.Pow(2,n);
-                    //var transportName = transportModes[n+1];
-                    //transportModeMasks.Add(transportName,twoToTheNth);
                     transportModeMasks.Add(n+1,twoToTheNth);
                 }
             }
