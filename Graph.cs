@@ -156,7 +156,7 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
-            CreateTransportModeMasks(Configuration.TransportModeNames);
+            CreateTransportModeMasks(Configuration.TransportModes);
             await CreateMappingTagIdToTransportMode();
 
             // Get the total number of rows to estimate the Graph creation time

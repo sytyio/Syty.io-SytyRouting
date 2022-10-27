@@ -28,7 +28,8 @@ namespace SytyRouting
         public static int RegularRoutingTaskBatchSize {get;}
 
         // Transport parameters:
-        public static string[] TransportModeNames {get;}
+        public static string[] TransportModes {get;}
+        public static Dictionary<string,int> TransportModeSpeeds {get;}
         private static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
         private static TransportSettings transportSettings {get; set;}
         
@@ -65,7 +66,8 @@ namespace SytyRouting
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
-            TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModeNames);
+            TransportModes = ValidateTransportModeNames(transportSettings.TransportModes);
+            TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
@@ -131,7 +133,53 @@ namespace SytyRouting
                 logger.Debug("Configuration error. Transport mode names: {0}", e.Message);
             }
 
+            string transportModesString = "";
+            for(int i = 1; i < validTransportModeNames.Length-1; i++)
+            {
+                transportModesString += validTransportModeNames[i] + ", ";
+            }
+            transportModesString += validTransportModeNames[validTransportModeNames.Length-1] + ".";
+            logger.Info("Transport Modes: {0}", transportModesString);
+
             return validTransportModeNames;
+        }
+
+        private static Dictionary<string,int> ValidateTransportModeSpeeds(TransportModeSpeed[] transportModeSpeeds)
+        {
+            Dictionary<string,int> validTransportModeSpeeds = new Dictionary<string,int>(TransportModes.Length);
+
+            foreach(var transportModeSpeed in transportModeSpeeds)
+            {
+                if(Array.Exists(TransportModes, validatedTransportModeName => validatedTransportModeName.Equals(transportModeSpeed.TransportMode)))
+                {
+                    if(!validTransportModeSpeeds.ContainsKey(transportModeSpeed.TransportMode))
+                    {
+                        if(transportModeSpeed.AverageSpeedKmPerH>0)
+                        {
+                            validTransportModeSpeeds.Add(transportModeSpeed.TransportMode, transportModeSpeed.AverageSpeedKmPerH);
+                        }
+                        else
+                        {
+                            logger.Debug("The average speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
+                        }
+                    }
+                    else
+                    {
+                        logger.Debug("The average speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
+                    }
+                }
+                else
+                {
+                    logger.Info("Unable to find '{0}' in the validated list of transport modes. Ignoring transport mode.", transportModeSpeed.TransportMode);
+                }
+            }
+
+            foreach( KeyValuePair<string,int> kvp in validTransportModeSpeeds)
+            {
+                Console.WriteLine("Transport Mode {0} : Speed {1}", kvp.Key, kvp.Value);
+            }
+
+            return validTransportModeSpeeds;
         }
 
         private static async Task<OSMTagToTransportModes[]> ValidateOSMTagToTransportModes(OSMTagToTransportModes[] osmTagsToTransportModes)
@@ -153,7 +201,7 @@ namespace SytyRouting
             var validTransportModes = new List<string>(0);
             foreach(string transportMode in allowedTransportModes)
             {                
-                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
+                if(Array.Exists(TransportModes, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
                 {
                     validTransportModes.Add(transportMode);
                 }
