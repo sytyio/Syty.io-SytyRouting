@@ -13,21 +13,37 @@ namespace SytyRouting
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
 
         
-        public static byte GetTransportModeMask(string transportModeName)
+        public static byte GetTransportModesMask(string[] transportModeNames)
         {
-            int transportModeIndex = TransportModes.GetTransportModeIndex(transportModeName);
-            if(transportModeIndex != 0)
+            byte transportModesMask = 0;
+            for(int i = 0; i < transportModeNames.Length; i++)
             {
-                return TransportModeMasks[transportModeIndex];
-            }   
-            else
-            {
-                logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
-                return 0;
+                int transportModeIndex = TransportModes.GetTransportModeIndex(transportModeNames[i]);
+                if(transportModeIndex != 0)
+                {
+                    transportModesMask |= TransportModeMasks[transportModeIndex];
+                }   
+                else
+                {
+                    logger.Info("Transport mode name '{0}' not found in the validated list of transport modes.", transportModeNames[i]);
+                }
             }
+            return transportModesMask;
         }
 
-        public static string TransportModesToString(byte transportModes)
+        public static string NamesToString(string[] transportModeNames)
+        {
+            string transportModeNamesString = "";
+            for(int i = 0; i < transportModeNames.Length-1; i++)
+            {
+                transportModeNamesString += transportModeNames[i] + ", ";
+            }
+            transportModeNamesString += transportModeNames[transportModeNames.Length-1];
+            
+            return transportModeNamesString;
+        }
+
+        public static string MaskToString(byte transportModes)
         {
             string result = "";
             foreach(var transportModeMask in TransportModeMasks)

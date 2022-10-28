@@ -98,13 +98,8 @@ namespace SytyRouting
                 logger.Debug("Configuration error. Transport mode names: {0}", e.Message);
             }
 
-            string transportModesString = "";
-            for(int i = 1; i < validTransportModeNames.Length-1; i++)
-            {
-                transportModesString += validTransportModeNames[i] + ", ";
-            }
-            transportModesString += validTransportModeNames[validTransportModeNames.Length-1] + ".";
-            logger.Info("Transport Modes: {0}", transportModesString);
+            string transportModesString = TransportModes.NamesToString(validTransportModeNames[1..]);
+            logger.Info("Transport Modes: {0}.", transportModesString);
 
             return validTransportModeNames;
         }

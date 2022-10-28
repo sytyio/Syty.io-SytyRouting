@@ -316,8 +316,11 @@ namespace SytyRouting
             node.OsmID,node.InwardEdges.Count,node.OutwardEdges.Count,node.Idx,node.X, node.Y, node.ValidTarget, node.ValidSource);
             TraceEdges(node);
 
-            node.GetAvailableOutboundTransportModes();
-            node.GetAvailableInboundTransportModes();
+            var availableInboundTransportModes = TransportModes.MaskToString(node.GetAvailableInboundTransportModes());
+            var availableOutboundTransportModes = TransportModes.MaskToString(node.GetAvailableOutboundTransportModes());
+            logger.Debug("Available Inbound Transport Modes for Node {0}: {1}", node.OsmID, availableInboundTransportModes);
+            logger.Debug("Available Outbound Transport Modes for Node {0}: {1}", node.OsmID, availableOutboundTransportModes);
+            logger.Debug("\n");
         }
 
         public void TraceNodes()
@@ -347,8 +350,8 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.TransportModesToString(edge.TransportModes), edge.TransportModes);
+            logger.Debug("\t\t > Edge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes);
             
             TraceInternalGeometry(edge);
         }
@@ -357,7 +360,7 @@ namespace SytyRouting
         {
             if (edge.InternalGeometry is not null)
             {
-                logger.Debug("\t\tInternal geometry in Edge {0}:", edge.OsmID);
+                logger.Debug("\t\t   Internal geometry in Edge {0}:", edge.OsmID);
                 foreach(var xymPoint in edge.InternalGeometry)
                 {
                     logger.Debug("\t\t\tX: {0},\tY: {1},\tM: {2};",
@@ -366,7 +369,7 @@ namespace SytyRouting
             }
             else
             {
-                logger.Debug("\t\tNo Internal geometry in Edge {0}:", edge.OsmID);
+                logger.Debug("\t\t   No Internal geometry in Edge {0}:", edge.OsmID);
             }
         }
 
