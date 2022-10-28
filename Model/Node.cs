@@ -61,8 +61,24 @@ namespace SytyRouting.Model
             return false;
         }
 
-        // public byte GetAvailableTransportModes()
-        // {
-        // }
+        public byte GetAvailableOutboundTransportModes()
+        {
+            byte transportModes = 0;
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                transportModes |= outwardEdge.TransportModes; 
+            }
+            return transportModes;
+        }
+
+        public byte GetAvailableInboundTransportModes()
+        {
+            byte transportModes = 0;
+            foreach(var inwardEdge in InwardEdges)
+            {
+                transportModes |= inwardEdge.TransportModes; 
+            }
+            return transportModes;
+        }
     }
 }
