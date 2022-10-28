@@ -28,9 +28,9 @@ namespace SytyRouting
         public static int RegularRoutingTaskBatchSize {get;}
 
         // Transport parameters:
-        public static string[] TransportModes {get;}
+        public static string[] TransportModeNames {get;}
         public static Dictionary<string,int> TransportModeSpeeds {get;}
-        private static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
+        public static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
         private static TransportSettings transportSettings {get; set;}
         
 
@@ -66,77 +66,26 @@ namespace SytyRouting
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
-            TransportModes = ValidateTransportModeNames(transportSettings.TransportModes);
+            TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
-        public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)
-        {
-            int[] configTagIds = await Configuration.ValidateOSMTags();
-
-            Dictionary<int,byte> tagIdToTransportModes = new Dictionary<int,byte>();
-
-            for(var i = 0; i < configTagIds.Length; i++)
-            {
-                byte mask = 0; // Default Transport Mode: 0
-
-                var configAllowedTransportModes = ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
-                foreach(var transportName in configAllowedTransportModes)
-                {
-                    int transportModeIndex = Configuration.GetTransportModeIndex(transportName);
-                    if(transportModeMasks.ContainsKey(transportModeIndex))
-                    {
-                        mask |= transportModeMasks[transportModeIndex];
-                    }
-                    else
-                    {
-                        logger.Info("Transport Mode '{0}' not found.",transportName);
-                    }
-                }
-                if (!tagIdToTransportModes.ContainsKey(configTagIds[i]))
-                {
-                    tagIdToTransportModes.Add(configTagIds[i], mask);
-                }
-                else
-                {
-                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", configTagIds[i]);
-                }
-            }
-            
-            return tagIdToTransportModes;
-        }
-
-        public static int GetTransportModeIndex(string transportModeName)
-        {
-            int index = 0;
-            for(int i = 1; i < Configuration.TransportModes.Length; i++)
-            {
-                if(Configuration.TransportModes[i].Equals(transportModeName))
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            return index;
-        }
-
         private static string[] ValidateTransportModeNames(string[] configTransportModeNames)
         {
-            string[] validTransportModeNames =  new string[Constants.MaxNumberOfTransportModes+1];
-            validTransportModeNames[0] = Constants.DefaulTransportMode;
+            string[] validTransportModeNames =  new string[TransportModes.MaxNumberOfTransportModes+1];
+            validTransportModeNames[0] = TransportModes.DefaulTransportMode;
             try
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
                 
-                if(transportModeNames.Length <= Constants.MaxNumberOfTransportModes)
+                if(transportModeNames.Length <= TransportModes.MaxNumberOfTransportModes)
                 {
                     Array.Resize(ref validTransportModeNames, transportModeNames.Length + 1);
                 }
                 else
                 {
-                    logger.Info("The number of transport modes in the config file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", Constants.MaxNumberOfTransportModes, configTransportModeNames.Length - Constants.MaxNumberOfTransportModes);
+                    logger.Info("The number of transport modes in the config file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes);
                 }
 
                 for(int i = 1; i < validTransportModeNames.Length; i++)
@@ -162,11 +111,11 @@ namespace SytyRouting
 
         private static Dictionary<string,int> ValidateTransportModeSpeeds(TransportModeSpeed[] transportModeSpeeds)
         {
-            Dictionary<string,int> validTransportModeSpeeds = new Dictionary<string,int>(TransportModes.Length);
+            Dictionary<string,int> validTransportModeSpeeds = new Dictionary<string,int>(TransportModeNames.Length);
 
             foreach(var transportModeSpeed in transportModeSpeeds)
             {
-                if(Array.Exists(TransportModes, validatedTransportModeName => validatedTransportModeName.Equals(transportModeSpeed.TransportMode)))
+                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportModeSpeed.TransportMode)))
                 {
                     if(!validTransportModeSpeeds.ContainsKey(transportModeSpeed.TransportMode))
                     {
@@ -212,7 +161,7 @@ namespace SytyRouting
             var validTransportModes = new List<string>(0);
             foreach(string transportMode in allowedTransportModes)
             {                
-                if(Array.Exists(TransportModes, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
+                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
                 {
                     validTransportModes.Add(transportMode);
                 }
@@ -224,7 +173,7 @@ namespace SytyRouting
             return validTransportModes.ToArray();
         }
 
-        private static async Task<int[]> ValidateOSMTags()
+        public static async Task<int[]> ValidateOSMTags()
         {
             var connectionString = Configuration.ConnectionString;
             await using var connection = new NpgsqlConnection(connectionString);

@@ -75,7 +75,7 @@ namespace SytyRouting
             var personaRouter = new PersonaRouter(graph);
 
             string transportModeName = "Car";
-            byte transportMode = graph.GetTransportModeMask(transportModeName);
+            byte transportMode = TransportModes.GetTransportModeMask(transportModeName);
 
             if(transportMode != 0)
                 await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportMode);
