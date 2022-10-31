@@ -104,7 +104,15 @@ namespace SytyRouting
                         }
                         transportModes[i] = new string(tmc);
                     }
-                    transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
+                    if(Configuration.VerifyTransportListFromFile(transportModes))
+                    {
+                        transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
+                    }
+                    else
+                    {
+                        throw new Exception("Transport Mode list from file differs from configuration.");
+                    }
+                    
                 }
                 
                 logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
