@@ -57,6 +57,20 @@ namespace SytyRouting
             return (result == "")? TransportModes.DefaulTransportMode : result;
         }
 
+        public static byte[] MaskToArray(byte transportModes)
+        {
+            List<byte> result = new List<byte>(0);
+            foreach(var transportModeMask in TransportModeMasks)
+            {
+                if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
+                {
+                    result.Add(transportModeMask.Value);
+                }
+            }
+                
+            return result.ToArray(); // == "")? TransportModes.DefaulTransportMode : result;
+        }
+
         public static byte GetTransportModesForTagId(int tagId)
         {
             if (OSMTagIdToTransportModes.ContainsKey(tagId))
@@ -95,21 +109,6 @@ namespace SytyRouting
             OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
         }
 
-        private static int GetTransportModeIndex(string transportModeName)
-        {
-            int index = 0;
-            for(int i = 1; i < Configuration.TransportModeNames.Length; i++)
-            {
-                if(Configuration.TransportModeNames[i].Equals(transportModeName))
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            return index;
-        }
-
         private static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
@@ -144,6 +143,21 @@ namespace SytyRouting
             }
             
             return tagIdToTransportModes;
+        }
+
+        private static int GetTransportModeIndex(string transportModeName)
+        {
+            int index = 0;
+            for(int i = 1; i < Configuration.TransportModeNames.Length; i++)
+            {
+                if(Configuration.TransportModeNames[i].Equals(transportModeName))
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            return index;
         }
     }
 }
