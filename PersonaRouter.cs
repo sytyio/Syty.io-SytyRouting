@@ -167,14 +167,21 @@ namespace SytyRouting
                         var personaDestination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         if(personaOrigin.IsAValidRouteStart(requestedTransportModes))
+                        {
                             origin = personaOrigin;
+                        }
+                        else if(personaOrigin.GetAvailableOutboundTransportModes() != 0)
+                        {
+                            var availableOutboundTransportModesArray = TransportModes.MaskToArray(personaOrigin.GetAvailableOutboundTransportModes());
+                        }
                         if(personaDestination.IsAValidRouteEnd(requestedTransportModes))
                             destination = personaDestination;
 
                         //DEBUG:
                         if(persona.Id == 53)
                         {
-                            Console.WriteLine("Problem");
+                            Console.WriteLine("<<<< Problem >>>>");
+                            TracePersonaDetails(persona);
                         }
 
                         if(origin != null && destination != null)
@@ -200,6 +207,10 @@ namespace SytyRouting
                             {
                                 logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", persona.Id);
                             }
+                        }
+                        else
+                        {
+                            logger.Debug(" ==>> Unable to compute route: Persona Id {0}: oring and/or destination nodes are invalid", persona.Id);
                         }
                     }
                     catch (Exception e)
@@ -303,8 +314,12 @@ namespace SytyRouting
             var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
             logger.Debug("Persona details:");
             logger.Debug("Id {0}", persona.Id);
-            logger.Debug("Home location: ({0,18},{1,18})\t : Origin OsmID      {2}", persona.HomeLocation!.X, persona.HomeLocation!.Y, origin.OsmID);
-            logger.Debug("Work location: ({0,18},{1,18})\t : Destination OsmID {2}", persona.WorkLocation!.X, persona.WorkLocation!.Y, origin.OsmID);
+            logger.Debug("Home location: ({0,18},{1,18})\t :: OSM Coordinates: {2,18},{3,18}\t : Origin OsmID      {4}", persona.HomeLocation!.X, persona.HomeLocation!.Y, persona.HomeLocation!.Y, persona.HomeLocation!.X, origin.OsmID);
+            var originTransportModes = origin.GetAvailableOutboundTransportModes();
+            logger.Debug("Avilable Outbound Transport modes for Node {0}: {1}", origin.OsmID, TransportModes.MaskToString(originTransportModes));
+            logger.Debug("Work location: ({0,18},{1,18})\t :: OSM Coordinates: {2,18},{3,18}\t : Destination OsmID {4}", persona.WorkLocation!.X, persona.WorkLocation!.Y, persona.WorkLocation!.Y, persona.WorkLocation!.X, destination.OsmID);
+            var destinationTransportModes = origin.GetAvailableInboundTransportModes();
+            logger.Debug("Avilable Inbound Transport modes for Node {0}: {1}", destination.OsmID, TransportModes.MaskToString(originTransportModes));
         }
 
         public void TracePersonas()
