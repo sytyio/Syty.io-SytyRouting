@@ -99,7 +99,7 @@ namespace SytyRouting
             }
 
             string transportModesString = TransportModes.NamesToString(validTransportModeNames[1..]);
-            logger.Info("Transport Modes: {0}.", transportModesString);
+            logger.Info("Transport Modes ordered by routing priority: {0}.", transportModesString);
 
             return validTransportModeNames;
         }
