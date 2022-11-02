@@ -160,29 +160,8 @@ namespace SytyRouting
                     var persona = personaArray[i];
                     try
                     {
-                        Node? origin = null;
-                        Node? destination = null;
-
-                        var personaOrigin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
-                        var personaDestination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
-
-                        if(personaOrigin.IsAValidRouteStart(requestedTransportModes))
-                        {
-                            origin = personaOrigin;
-                        }
-                        else if(personaOrigin.GetAvailableOutboundTransportModes() != 0)
-                        {
-                            var availableOutboundTransportModesArray = TransportModes.MaskToArray(personaOrigin.GetAvailableOutboundTransportModes());
-                        }
-                        if(personaDestination.IsAValidRouteEnd(requestedTransportModes))
-                            destination = personaDestination;
-
-                        //DEBUG:
-                        if(persona.Id == 53)
-                        {
-                            Console.WriteLine("<<<< Problem >>>>");
-                            TracePersonaDetails(persona);
-                        }
+                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
+                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         if(origin != null && destination != null)
                         {

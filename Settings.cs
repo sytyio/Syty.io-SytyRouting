@@ -25,7 +25,7 @@ namespace SytyRouting
     public sealed class TransportModeSpeed
     {
         public string TransportMode {get; set;} = null!;
-        public int AverageSpeedKmPerH {get; set;}
+        public int MaxSpeedKmPerH {get; set;}
     }
 
     public sealed class OSMTagToTransportModes

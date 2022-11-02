@@ -128,18 +128,18 @@ namespace SytyRouting
                 {
                     if(!validTransportModeSpeeds.ContainsKey(transportModeSpeed.TransportMode))
                     {
-                        if(transportModeSpeed.AverageSpeedKmPerH>0)
+                        if(transportModeSpeed.MaxSpeedKmPerH>0)
                         {
-                            validTransportModeSpeeds.Add(transportModeSpeed.TransportMode, transportModeSpeed.AverageSpeedKmPerH);
+                            validTransportModeSpeeds.Add(transportModeSpeed.TransportMode, transportModeSpeed.MaxSpeedKmPerH);
                         }
                         else
                         {
-                            logger.Info("The average speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
+                            logger.Info("The maximum speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
                         }
                     }
                     else
                     {
-                        logger.Info("The average speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
+                        logger.Info("The maximum speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
                     }
                 }
                 else
