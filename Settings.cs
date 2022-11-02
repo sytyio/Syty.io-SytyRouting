@@ -17,8 +17,15 @@ namespace SytyRouting
 
     public sealed class TransportSettings
     {
-        public string[] TransportModeNames {get; set;} = null!;
+        public string[] TransportModes {get; set;} = null!;
+        public TransportModeSpeed[] TransportModeSpeeds  {get; set;} = null!;
         public OSMTagToTransportModes[] OSMTagsToTransportModes  {get; set;} = null!;
+    }
+
+    public sealed class TransportModeSpeed
+    {
+        public string TransportMode {get; set;} = null!;
+        public int MaxSpeedKmPerH {get; set;}
     }
 
     public sealed class OSMTagToTransportModes

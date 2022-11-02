@@ -10,8 +10,8 @@ namespace SytyRouting.Model
         public double Y;
 
         public bool ValidTarget;
-
         public bool ValidSource;
+
         public List<Edge> InwardEdges = new List<Edge>(4);
         public List<Edge> OutwardEdges = new List<Edge>(4);
 
@@ -39,6 +39,46 @@ namespace SytyRouting.Model
             Y = br.ReadDouble();
             ValidTarget = br.ReadBoolean();
             ValidSource = br.ReadBoolean();
+        }
+
+        public bool IsAValidRouteStart(byte requestedTransportModes)
+        {
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                if((outwardEdge.TransportModes & requestedTransportModes) != 0)
+                    return true; 
+            }
+            return false;
+        }
+
+        public bool IsAValidRouteEnd(byte requestedTransportModes)
+        {
+            foreach(var inwardEdge in InwardEdges)
+            {
+                if((inwardEdge.TransportModes & requestedTransportModes) != 0)
+                    return true; 
+            }
+            return false;
+        }
+
+        public byte GetAvailableOutboundTransportModes()
+        {
+            byte transportModes = 0;
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                transportModes |= outwardEdge.TransportModes; 
+            }
+            return transportModes;
+        }
+
+        public byte GetAvailableInboundTransportModes()
+        {
+            byte transportModes = 0;
+            foreach(var inwardEdge in InwardEdges)
+            {
+                transportModes |= inwardEdge.TransportModes; 
+            }
+            return transportModes;
         }
     }
 }

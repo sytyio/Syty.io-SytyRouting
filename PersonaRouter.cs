@@ -40,7 +40,7 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>(ushort transportMode) where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>(byte transportModes) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -69,7 +69,7 @@ namespace SytyRouting
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportMode));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportModes));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -148,7 +148,7 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex, ushort transportMode) where T: IRoutingAlgorithm, new()
+        private void CalculateRoutes<T>(int taskIndex, byte requestedTransportModes) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -160,24 +160,42 @@ namespace SytyRouting
                     var persona = personaArray[i];
                     try
                     {
-                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
-                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
-                        if(origin.Idx == destination.Idx)
-                        {
-                            logger.Debug("Origin and Destination Nodes are equal");
-                        }
-                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportMode);
-                        
-                        TimeSpan currentTime = TimeSpan.Zero;
-                        persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                        persona.SuccessfulRouteComputation = true;
+                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
+                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
-                        Interlocked.Increment(ref computedRoutes);
+                        if(origin != null && destination != null)
+                        {
+                            if(origin.Idx != destination.Idx)
+                            {   
+                                
+                                var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+                                if(route.Count > 0)
+                                {
+                                    TimeSpan currentTime = TimeSpan.Zero;
+                                    persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
+                                    persona.SuccessfulRouteComputation = true;
+
+                                    Interlocked.Increment(ref computedRoutes);
+                                }
+                                else
+                                {
+                                    logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                                }
+                            }
+                            else
+                            {
+                                logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", persona.Id);
+                            }
+                        }
+                        else
+                        {
+                            logger.Debug(" ==>> Unable to compute route: Persona Id {0}: oring and/or destination nodes are invalid", persona.Id);
+                        }
                     }
-                    catch
+                    catch (Exception e)
                     {
                         persona.SuccessfulRouteComputation = false;
-                        logger.Info(" ==>> Unable to compute route: Persona Id {0}", persona.Id);
+                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
                     }
                 }
             }
@@ -256,8 +274,7 @@ namespace SytyRouting
                 }
                 catch
                 {
-                    logger.Info(" ==>> Unable to upload route to database");
-                    logger.Debug(" ==>> Persona Id{0}", persona.Id);
+                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
                     uploadFails++;
                 }
             }
@@ -276,8 +293,12 @@ namespace SytyRouting
             var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
             logger.Debug("Persona details:");
             logger.Debug("Id {0}", persona.Id);
-            logger.Debug("Home location: ({0,18},{1,18})\t : Origin OsmID      {2}", persona.HomeLocation!.X, persona.HomeLocation!.Y, origin.OsmID);
-            logger.Debug("Work location: ({0,18},{1,18})\t : Destination OsmID {2}", persona.WorkLocation!.X, persona.WorkLocation!.Y, origin.OsmID);
+            logger.Debug("Home location: ({0,18},{1,18})\t :: OSM Coordinates: {2,18},{3,18}\t : Origin OsmID      {4}", persona.HomeLocation!.X, persona.HomeLocation!.Y, persona.HomeLocation!.Y, persona.HomeLocation!.X, origin.OsmID);
+            var originTransportModes = origin.GetAvailableOutboundTransportModes();
+            logger.Debug("Avilable Outbound Transport modes for Node {0}: {1}", origin.OsmID, TransportModes.MaskToString(originTransportModes));
+            logger.Debug("Work location: ({0,18},{1,18})\t :: OSM Coordinates: {2,18},{3,18}\t : Destination OsmID {4}", persona.WorkLocation!.X, persona.WorkLocation!.Y, persona.WorkLocation!.Y, persona.WorkLocation!.X, destination.OsmID);
+            var destinationTransportModes = origin.GetAvailableInboundTransportModes();
+            logger.Debug("Avilable Inbound Transport modes for Node {0}: {1}", destination.OsmID, TransportModes.MaskToString(originTransportModes));
         }
 
         public void TracePersonas()

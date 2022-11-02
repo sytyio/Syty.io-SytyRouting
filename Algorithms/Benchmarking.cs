@@ -17,7 +17,7 @@ namespace SytyRouting
             graph.TestClosestNode("Robinson", 4.3809799, 50.8045279);       
         }
 
-        public static void RoutingAlgorithmBenchmarking<T>(Graph graph, ushort transportMode) where T: IRoutingAlgorithm, new()
+        public static void RoutingAlgorithmBenchmarking<T>(Graph graph, byte transportMode) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(graph);
@@ -35,7 +35,7 @@ namespace SytyRouting
             RandomSourceTargetRouting(graph, routingAlgorithm, transportMode, numberOfNodes, numberOfRuns);
         }
 
-        public static void MultipleRoutingAlgorithmsBenchmarking<T, U>(Graph graph, ushort transportMode) where T: IRoutingAlgorithm, new() where U: IRoutingAlgorithm, new()
+        public static void MultipleRoutingAlgorithmsBenchmarking<T, U>(Graph graph, byte transportMode) where T: IRoutingAlgorithm, new() where U: IRoutingAlgorithm, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
@@ -70,7 +70,7 @@ namespace SytyRouting
             logger.Info("Benchmark performed in {0} (HH:MM:S.mS)", totalTime);
         }
 
-        private static List<Node> RoutingAlgorithmRunTime(IRoutingAlgorithm routingAlgorithm, Node origin, Node destination, ushort transportMode)
+        private static List<Node> RoutingAlgorithmRunTime(IRoutingAlgorithm routingAlgorithm, Node origin, Node destination, byte transportMode)
         {
             Stopwatch stopWatch = new Stopwatch();
 
@@ -86,7 +86,7 @@ namespace SytyRouting
             return route;
         }
 
-        private static void RandomSourceTargetRouting(Graph graph, IRoutingAlgorithm routingAlgorithm, ushort transportMode, int numberOfNodes, int numberOfRuns)
+        private static void RandomSourceTargetRouting(Graph graph, IRoutingAlgorithm routingAlgorithm, byte transportMode, int numberOfNodes, int numberOfRuns)
         {
             Random randomIndex = new Random();
             
@@ -136,7 +136,7 @@ namespace SytyRouting
             logger.Info("{0,25} average execution time: {1,10:0} (ms / route) over {2} trial(s)", routingAlgorithm.GetType().Name, averageTicks * nanosecondsPerTick / 1000000.0, numberOfRuns);
         }
 
-        private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, ushort transportMode, int numberOfRuns)
+        private static void MultipleRandomSourceTargetRouting(Graph graph, IRoutingAlgorithm algorithm1, IRoutingAlgorithm algorithm2, byte transportMode, int numberOfRuns)
         {
             // var seed = 100100;
             // Random randomIndex = new Random(seed);

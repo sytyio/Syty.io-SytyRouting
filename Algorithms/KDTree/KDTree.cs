@@ -114,6 +114,7 @@ namespace SytyRouting.Algorithms.KDTree
             {
                 return (null, Double.MaxValue);
             }
+
             var lower = IsLower(x, y, currentNode);
             if (lower)
             {
@@ -129,6 +130,7 @@ namespace SytyRouting.Algorithms.KDTree
             {
                 maxDist = distanceCurrent;
             }
+
             var candidateBest = GetNearestNeighbor(x, y, lower ? currentNode.Low : currentNode.High, maxDist, isTarget, isSource);
             if(distanceCurrent < candidateBest.Item2  && (currentNode.Item.ValidSource || !isSource) && (currentNode.Item.ValidTarget || !isTarget))
             {
@@ -139,6 +141,7 @@ namespace SytyRouting.Algorithms.KDTree
             {
                 maxDist = candidateBest.Item2;
             }
+
             var bestOtherSub = GetSquaredDistanceToHalfPlane(currentNode, x, y);
             if(bestOtherSub < maxDist)
             {
@@ -148,10 +151,12 @@ namespace SytyRouting.Algorithms.KDTree
                     candidateBest = candidateOtherSub;
                 }
             }
+
             if(candidateBest.Item1 != null)
               logger.Trace("  Current best is x: {0} y: {1} at distance {2}", candidateBest.Item1.X, candidateBest.Item1.Y, candidateBest.Item2);
             else
                 logger.Trace("  No best found");
+                
             return candidateBest;
         }
 
