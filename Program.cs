@@ -31,19 +31,13 @@ namespace SytyRouting
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
 
-            //graph.TraceNodes();
-
-             graph.TraceOneNode(graph.GetNodes()[0]);
-             graph.TraceOneNode(graph.GetNodes()[1]);
-              graph.TraceOneNode(graph.GetNodes()[1558438]);
-             graph.TraceOneNode(graph.GetNodes()[1558439]);
-             graph.TraceOneNode(graph.GetNodes()[1558449]);
-            //  graph.TraceOneNode(graph.GetNodes()[1559000]);
-            //  graph.TraceOneNode(graph.GetNodes()[1559700]);
-            //  graph.TraceOneNode(graph.GetNodes()[1560000]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561286]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561287]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561306]);
+            for (int i = 1558439 ; i < graph.GetNodes().Count(); i++)
+            {
+                var node = graph.GetNodes()[i];
+                // if(node.InwardEdges.Count()>7||node.OutwardEdges.Count()>7){
+                    graph.TraceOneNode(graph.GetNodes()[i]);
+                // }
+            }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -71,24 +65,22 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            // Persona spatial data generation
-            var personaRouter = new PersonaRouter(graph);
+            // // Persona spatial data generation
+            // var personaRouter = new PersonaRouter(graph);
 
-            string transportModeName = "Car";
-            byte transportMode = Helper.GetTransportModeMask(transportModeName);
+            // string transportModeName = "Train";
+            // byte transportMode = Helper.GetTransportModeMask(transportModeName);
 
-            if(transportMode != 0)
-                await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportMode);
-            else
-                logger.Info("Unable to compute route for the {0} tranport mode", transportModeName);
-            personaRouter.TracePersonas();
-            personaRouter.TracePersonasRouteResult();
-           
+            // if(transportMode != 0)
+            //     await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportMode);
+            // else
+            //     logger.Info("Unable to compute route for the {0} tranport mode", transportModeName);
+            // personaRouter.TracePersonas();
+            // personaRouter.TracePersonasRouteResult();
+
 
             // Logger flushing
             LogManager.Shutdown();
         }
-
-
     }
 }

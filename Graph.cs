@@ -20,8 +20,8 @@ namespace SytyRouting
         private Node[] NodesArray = new Node[0];
         private KDTree? KDTree;
 
-        private Dictionary<int,byte> tagIdToTransportMode = new Dictionary<int,byte>();
-        private Dictionary<String,byte> transportModeMasks = new Dictionary<String,byte>();
+        private Dictionary<int, byte> tagIdToTransportMode = new Dictionary<int, byte>();
+        private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
 
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
@@ -47,10 +47,10 @@ namespace SytyRouting
                 KDTree?.WriteToStream(bw);
 
                 bw.Write(transportModeMasks.Count);
-                foreach(string transportMode in transportModeMasks.Keys)
+                foreach (string transportMode in transportModeMasks.Keys)
                 {
                     bw.Write(transportMode.Length);
-                    for(int i = 0; i < transportMode.Length; i++)
+                    for (int i = 0; i < transportMode.Length; i++)
                     {
                         bw.Write((char)transportMode[i]);
                     }
@@ -94,20 +94,20 @@ namespace SytyRouting
 
                     length = br.ReadInt32();
                     string[] transportModes = new string[length];
-                    for(int i = 0; i < transportModes.Length; i++)
+                    for (int i = 0; i < transportModes.Length; i++)
                     {
                         length = br.ReadInt32();
                         char[] tmc = new char[length];
-                        for(int j = 0; j < length; j++)
+                        for (int j = 0; j < length; j++)
                         {
-                            tmc[j] =  br.ReadChar();
+                            tmc[j] = br.ReadChar();
                         }
                         transportModes[i] = new string(tmc);
                     }
                     transportModeMasks = Helper.CreateTransportModeMasks(transportModes);
 
                 }
-                
+
                 logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
                 stopWatch.Stop();
             }
@@ -116,10 +116,10 @@ namespace SytyRouting
                 logger.Info("Could not load from file, loading from DB instead.");
                 await DBLoadAsync();
                 KDTree = new KDTree(NodesArray);
-                ControllerGtfs.CleanGtfs();
+                // ControllerGtfs.CleanGtfs();
                 await AddGtfsData();
                 KDTree = new KDTree(NodesArray);
-                ControllerGtfs.CleanGtfs();
+                // ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
             }
             ComputeCost();
@@ -157,7 +157,7 @@ namespace SytyRouting
 
             transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
             tagIdToTransportMode = await Helper.CreateMappingTagIdToTransportMode(transportModeMasks);
-            
+
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
@@ -196,7 +196,7 @@ namespace SytyRouting
                     var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
 
                     var tagId = Convert.ToInt32(reader.GetValue(16)); // tag_id
-                    
+
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s, tagId);
 
                     dbRowsProcessed++;
@@ -242,35 +242,37 @@ namespace SytyRouting
         private async Task AddGtfsData()
         {
             await GetDataFromGtfs();
-            var listsNode = new Dictionary<string, IEnumerable<Node>>();
-            var listsEdge = new Dictionary<string, IEnumerable<Edge>>();
             foreach (var gtfs in GtfsDico)
             {
-                foreach (var node in gtfs.Value.GetNodes()){
-                    var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
+                foreach (var node in gtfs.Value.GetNodes())
+                {
+                    var nearest = KDTree.GetNearestNeighbor(node.Y,node.X); // something weird here
                     // Cost : foot 
-                    var newEdgOut = new Edge{ OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node,nearest), TransportModes=Helper.GetTransportModeMask("Foot")};
-                    var newEdgeIn = new Edge{ OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node,nearest), TransportModes=Helper.GetTransportModeMask("Foot")};
-                    node.ValidSource=true;
-                    node.ValidTarget=true;
+                    logger.Info("Coord node X = {0}, Y={1}",node.X,node.Y);
+                    logger.Info("Coord nearest X = {0}, Y={1}",nearest.X,nearest.Y);
+                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") }; // ici = ok relie noeuds stib à graph existant 
+                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") };
+                    node.ValidSource = true;
+                    node.ValidTarget = true;
                     node.InwardEdges.Add(newEdgeIn);
                     node.OutwardEdges.Add(newEdgOut);
                     nearest.InwardEdges.Add(newEdgOut);
                     nearest.OutwardEdges.Add(newEdgeIn);
                 }
-                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes()); // revoir ici 
-                listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
             }
             logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
             foreach (var gtfs in GtfsDico)
             {
-                var nodes = gtfs.Value.GetNodes().ToArray();
+                var nodes = gtfs.Value.GetNodes().Union(gtfs.Value.GetInternalNodes()).ToArray();
+                var testNode = gtfs.Value.GetNodes();
+                var testInternNode = gtfs.Value.GetInternalNodes();
                 NodesArray = NodesArray.Union(nodes).ToArray();
-                
                 logger.Info("Nb nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
+
+                logger.Info("Nb stop nodes = {0}, Nb internal nodes = {1}, Nb new nodes total = {2}", testNode.Count(), testInternNode.Count(), testNode.Count() + testInternNode.Count());
             }
-            int i =0;
-            NodesArray.ToList().ForEach(x=>x.Idx=i++);
+            int i = 0;
+            NodesArray.ToList().ForEach(x => x.Idx = i++);
         }
 
         public Node GetNodeByLongitudeLatitude(double x, double y)
@@ -310,9 +312,10 @@ namespace SytyRouting
             return NodesArray;
         }
 
-        public void TraceOneNode(Node node){
-            logger.Info("OsmId =  {0}, nb in {1}, nb out {2}, idx {3}, coord = {4};{5}, T = {6}, s = {7}",
-            node.OsmID,node.InwardEdges.Count,node.OutwardEdges.Count,node.Idx,node.X, node.Y, node.ValidTarget, node.ValidSource);
+        public void TraceOneNode(Node node)
+        {
+            logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}",node.Idx,
+            node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.X, node.Y, node.ValidTarget, node.ValidSource);
             TraceEdges(node);
         }
 
@@ -322,20 +325,20 @@ namespace SytyRouting
             {
                 logger.Debug("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
                     node.Idx, node.OsmID, node.X, node.Y);
-                TraceEdges(node);
+                 TraceEdges(node);
             }
         }
 
         private void TraceEdges(Node node)
         {
             logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
-            foreach(var edge in node.InwardEdges)
+            foreach (var edge in node.InwardEdges)
             {
                 TraceEdge(edge);
             }
-            
+
             logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
-            foreach(var edge in node.OutwardEdges)
+            foreach (var edge in node.OutwardEdges)
             {
                 TraceEdge(edge);
             }
@@ -343,9 +346,9 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes);
-            
+            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}, length = {10})",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.Idx, edge.TargetNode?.X, edge.TargetNode?.Y, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
+
             TraceInternalGeometry(edge);
         }
 
@@ -354,7 +357,7 @@ namespace SytyRouting
             if (edge.InternalGeometry is not null)
             {
                 logger.Debug("\t\tInternal geometry in Edge {0}:", edge.OsmID);
-                foreach(var xymPoint in edge.InternalGeometry)
+                foreach (var xymPoint in edge.InternalGeometry)
                 {
                     logger.Debug("\t\t\tX: {0},\tY: {1},\tM: {2};",
                         xymPoint.X, xymPoint.Y, xymPoint.M);
@@ -379,41 +382,41 @@ namespace SytyRouting
 
         private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
-            byte transportModes = Helper.GetTransportModes(tagId,tagIdToTransportMode);
+            byte transportModes = Helper.GetTransportModes(tagId, tagIdToTransportMode);
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
-                {
-                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
-                    source.OutwardEdges.Add(edge);
-                    target.InwardEdges.Add(edge);
+                    {
+                        var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
+                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
+                        source.OutwardEdges.Add(edge);
+                        target.InwardEdges.Add(edge);
 
                         break;
                     }
                 case OneWayState.Reversed: // Only backward direction
-                {
-                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
-                    source.InwardEdges.Add(edge);
-                    target.OutwardEdges.Add(edge);
+                    {
+                        var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
+                        var edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes };
+                        source.InwardEdges.Add(edge);
+                        target.OutwardEdges.Add(edge);
 
                         break;
                     }
                 default: // Both ways
-                {
-                    var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes};
-                    source.OutwardEdges.Add(edge);
-                    target.InwardEdges.Add(edge);
+                    {
+                        var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
+                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
+                        source.OutwardEdges.Add(edge);
+                        target.InwardEdges.Add(edge);
 
-                    internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
-                    edge = new Edge{OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes};
-                    source.InwardEdges.Add(edge);
-                    target.OutwardEdges.Add(edge);
-                    
-                    break;
-                }
+                        internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
+                        edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes };
+                        source.InwardEdges.Add(edge);
+                        target.OutwardEdges.Add(edge);
+
+                        break;
+                    }
             }
         }
 

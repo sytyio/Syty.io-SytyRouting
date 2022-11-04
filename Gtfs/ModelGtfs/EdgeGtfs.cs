@@ -23,12 +23,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
         public StopGtfs? InitialStopSource { get; }
         public StopGtfs? InitialStopTarget { get; }
 
-        public double? WalkDistanceSourceM { get; }
-
-        public double? WalkDistanceTargetM { get; }
-
-        public double? DistanceNearestPointsM { get; }
-
         
 
         public override string ToString()
@@ -37,7 +31,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetNode + " Source = " + SourceNode + " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes) //byte transportModes
+        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes) //byte transportModes
         {
             OsmID = long.MaxValue;
             DistanceSourceToTargetM = distance;
@@ -51,9 +45,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
             IsShapeAvailable = iShapeAvailable;
             InitialStopSource = initialStopSource;
             InitialStopTarget = initialStopTarget;
-            WalkDistanceSourceM = walkDistanceSourceM;
-            WalkDistanceTargetM = walkDistanceTargetM;
-            DistanceNearestPointsM = distanceNearestPointsM;
             MaxSpeedMPerS = maxSpeedMPerS;
             InternalGeometry = internalGeometry;
             TransportModes = transportModes;
