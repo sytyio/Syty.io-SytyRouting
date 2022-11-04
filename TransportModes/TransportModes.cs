@@ -4,21 +4,23 @@ namespace SytyRouting
 {
     public static class TransportModes
     {
-        public const string DefaulTransportMode = "None";
+        public const string NoTransportMode = "None";
         public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used in the TransportModes masks
 
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-
+        private static string[] TransportModeNames = new string[1] {NoTransportMode};
         private static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
 
         
-        public static byte GetTransportModesMask(string[] transportModeNames)
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+        
+
+        public static byte GetMaskFromNames(string[] transportModeNames)
         {
             byte transportModesMask = 0;
             for(int i = 0; i < transportModeNames.Length; i++)
             {
-                int transportModeIndex = TransportModes.GetTransportModeIndex(transportModeNames[i]);
+                int transportModeIndex = TransportModes.GetTransportModeNameIndex(transportModeNames[i]);
                 if(transportModeIndex != 0)
                 {
                     transportModesMask |= TransportModeMasks[transportModeIndex];
@@ -50,11 +52,11 @@ namespace SytyRouting
             {
                 if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
-                    result += Configuration.TransportModeNames[transportModeMask.Key] + ", ";
+                    result += TransportModeNames[transportModeMask.Key] + " ";
                 }
             }
                 
-            return (result == "")? TransportModes.DefaulTransportMode : result;
+            return (result == "")? TransportModes.NoTransportMode : result;
         }
 
         public static byte[] MaskToArray(byte transportModes)
@@ -68,7 +70,62 @@ namespace SytyRouting
                 }
             }
                 
-            return result.ToArray(); // == "")? TransportModes.DefaulTransportMode : result;
+            return result.ToArray();
+        }
+
+        public static byte ArrayToMask(byte[] transportModes)
+        {
+            byte result = 0;
+            for(int i = 0; i < transportModes.Length; i++)
+            {
+                foreach(var transportModeMask in TransportModeMasks)
+                {
+                    if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
+                    {
+                        result |= transportModeMask.Value;
+                    }
+                }
+            }                
+                
+            return result;
+        }
+
+        public static byte[] NameSequenceToMasksArray(string[] transportModesSequence)
+        {
+            List<byte> masksList = new List<byte>(0);
+
+            for(int i = 0; i < transportModesSequence.Length; i++)
+            {
+                bool nameFound=false;
+                for(int j = 0; j < TransportModeNames.Length; j++)
+                {
+                    if(transportModesSequence[i].Equals(TransportModeNames[j]))
+                    {
+                        masksList.Add(TransportModeMasks[j]);
+                        nameFound=true;
+                        break;
+                    }
+                }
+                if(!nameFound)
+                    logger.Info("Transport Mode Sequence: Transport Mode '{0}' not found.", transportModesSequence[i]);
+            }
+                
+            return masksList.ToArray();
+        }
+
+        public static byte FirstTransportModeFromMask(byte transportModes)
+        {
+            byte result = 0;
+            foreach(var transportModeMask in TransportModeMasks)
+            {
+                if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
+                {
+                    result = transportModeMask.Value;
+                    break;
+                }
+            }
+                
+            return result;
         }
 
         public static byte GetTransportModesForTagId(int tagId)
@@ -80,12 +137,14 @@ namespace SytyRouting
             else
             {
                 logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
-                return (byte)0; // Default Ttransport Mode: 0 ("None");
+                return (byte)0; // Transport Mode: 0 ("None");
             }
         }
 
         public static Dictionary<int,byte> CreateTransportModeMasks(string[] transportModes)
         {
+            SetTransportModeNames(transportModes);
+
             // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
@@ -109,6 +168,22 @@ namespace SytyRouting
             OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
         }
 
+        private static void SetTransportModeNames(string[] transportModes)
+        {
+            try
+            {
+                Array.Resize(ref TransportModeNames, transportModes.Length);
+                for(int i = 0; i < transportModes.Length; i++)
+                {
+                    TransportModeNames[i] = transportModes[i];
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Info("Initialization error in the creation of the Transport Mode List: {0}", e.Message);
+            }
+        }
+
         private static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
@@ -122,7 +197,7 @@ namespace SytyRouting
                 var configAllowedTransportModes = Configuration.ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
                 foreach(var transportName in configAllowedTransportModes)
                 {
-                    int transportModeIndex = GetTransportModeIndex(transportName);
+                    int transportModeIndex = GetTransportModeNameIndex(transportName);
                     if(transportModeMasks.ContainsKey(transportModeIndex))
                     {
                         mask |= transportModeMasks[transportModeIndex];
@@ -145,12 +220,12 @@ namespace SytyRouting
             return tagIdToTransportModes;
         }
 
-        private static int GetTransportModeIndex(string transportModeName)
+        private static int GetTransportModeNameIndex(string transportModeName)
         {
             int index = 0;
-            for(int i = 1; i < Configuration.TransportModeNames.Length; i++)
+            for(int i = 1; i < TransportModeNames.Length; i++)
             {
-                if(Configuration.TransportModeNames[i].Equals(transportModeName))
+                if(TransportModeNames[i].Equals(transportModeName))
                 {
                     index = i;
                     break;
