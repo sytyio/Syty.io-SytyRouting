@@ -9,6 +9,7 @@ namespace SytyRouting.Algorithms.Dijkstra
         [NotNull]
         public Node? ActiveNode;
         public double CumulatedCost;
-        public StepDirection Direction;       
+        public StepDirection Direction;
+        public byte TransportMode;  
     }
 }

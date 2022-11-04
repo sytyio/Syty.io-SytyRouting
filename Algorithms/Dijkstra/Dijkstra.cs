@@ -19,12 +19,15 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
         }
 
-        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte transportMode)
+        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte[] transportModesSequence)
         {
             route.Clear();
+            transportModeTransitions.Clear();
             routeCost = 0;
 
-            AddStep(null, originNode, 0);
+            var transportMode = transportModesSequence[0];
+
+            AddStep(null, originNode, 0, transportMode);
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
@@ -33,6 +36,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     ReconstructRoute(currentStep);
                     routeCost = currentStep.CumulatedCost;
+                    
                     break;
                 }
                 if(priority <= bestScoreForNode[activeNode!.Idx])
@@ -41,7 +45,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         if((outwardEdge.TransportModes & transportMode) == transportMode)
                         {
-                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, transportMode);
                         }
                     }
                 }
@@ -53,12 +57,12 @@ namespace SytyRouting.Algorithms.Dijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, byte transportMode)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportMode = transportMode };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -76,6 +80,15 @@ namespace SytyRouting.Algorithms.Dijkstra
         {
             if (currentStep != null)
             {
+                if(currentStep.PreviousStep != null)
+                {
+                    if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
+                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                }
+                else
+                {
+                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                }
                 ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);
             }

@@ -41,21 +41,23 @@ namespace SytyRouting.Model
             ValidSource = br.ReadBoolean();
         }
 
-        public bool IsAValidRouteStart(byte requestedTransportModes)
+        public bool IsAValidRouteStart(byte[] requestedTransportModes)
         {
+            byte requestedTransportModesMask = TransportModes.ArrayToMask(requestedTransportModes);
             foreach(var outwardEdge in OutwardEdges)
             {
-                if((outwardEdge.TransportModes & requestedTransportModes) != 0)
+                if((outwardEdge.TransportModes & requestedTransportModesMask) != 0)
                     return true; 
             }
             return false;
         }
 
-        public bool IsAValidRouteEnd(byte requestedTransportModes)
+        public bool IsAValidRouteEnd(byte[] requestedTransportModes)
         {
+            byte requestedTransportModesMask = TransportModes.ArrayToMask(requestedTransportModes);
             foreach(var inwardEdge in InwardEdges)
             {
-                if((inwardEdge.TransportModes & requestedTransportModes) != 0)
+                if((inwardEdge.TransportModes & requestedTransportModesMask) != 0)
                     return true; 
             }
             return false;

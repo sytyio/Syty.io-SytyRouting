@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1; // Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -40,14 +40,14 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>(byte transportModes) where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>(byte[] transportModes) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -148,7 +148,7 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex, byte requestedTransportModes) where T: IRoutingAlgorithm, new()
+        private void CalculateRoutes<T>(int taskIndex, byte[] requestedTransportModes) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -162,34 +162,25 @@ namespace SytyRouting
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
-
-                        if(origin != null && destination != null)
+                        
+                        byte[] transportModesSequence = CreateTransportModeSequence(origin, destination, requestedTransportModes);
+                        
+                        if(OriginAndDestinationAreValid(origin, destination, persona.Id))
                         {
-                            if(origin.Idx != destination.Idx)
-                            {   
-                                
-                                var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
-                                if(route.Count > 0)
-                                {
-                                    TimeSpan currentTime = TimeSpan.Zero;
-                                    persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                                    persona.SuccessfulRouteComputation = true;
+                            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportModesSequence);
+                            if(route.Count > 0)
+                            {
+                                TimeSpan currentTime = TimeSpan.Zero;
+                                persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
+                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+                                persona.SuccessfulRouteComputation = true;
 
-                                    Interlocked.Increment(ref computedRoutes);
-                                }
-                                else
-                                {
-                                    logger.Debug("Route is empty for Persona Id {0}", persona.Id);
-                                }
+                                Interlocked.Increment(ref computedRoutes);
                             }
                             else
                             {
-                                logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", persona.Id);
+                                logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                             }
-                        }
-                        else
-                        {
-                            logger.Debug(" ==>> Unable to compute route: Persona Id {0}: oring and/or destination nodes are invalid", persona.Id);
                         }
                     }
                     catch (Exception e)
@@ -199,6 +190,61 @@ namespace SytyRouting
                     }
                 }
             }
+        }
+
+        private byte[] CreateTransportModeSequence(Node origin, Node destination, byte[] requestedTransportModes)
+        {
+            bool theOriginIsValid = origin.IsAValidRouteStart(requestedTransportModes);
+            bool theDestinationIsValid = destination.IsAValidRouteEnd(requestedTransportModes);
+
+            if(theOriginIsValid && theDestinationIsValid)
+            {
+                return requestedTransportModes;
+            }
+
+            byte[] transportModesSequence = new byte[requestedTransportModes.Length];
+            int transportModesSequenceIndex=0;
+            if(!theOriginIsValid)
+            {
+                // Take the FIRST available Transport Mode at the Origin.
+                byte initialTransportMode = TransportModes.FirstTransportModeFromMask(origin.GetAvailableOutboundTransportModes());
+                Array.Resize(ref transportModesSequence, transportModesSequence.Length+1);
+                transportModesSequence[transportModesSequenceIndex]=initialTransportMode;
+                transportModesSequenceIndex++;
+            }
+            for(int j = 0; j < requestedTransportModes.Length; j++)
+            {
+                transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
+            }
+            if(!theDestinationIsValid)
+            {
+                // Take ALL the available Transport Modes at the Destination.
+                var additionalTransportModes = TransportModes.MaskToArray(destination.GetAvailableOutboundTransportModes());
+                transportModesSequenceIndex = transportModesSequence.Length;
+                Array.Resize(ref transportModesSequence, transportModesSequence.Length+additionalTransportModes.Length);
+                for(int j = 0; j < additionalTransportModes.Length; j++)
+                {
+                    transportModesSequence[j+transportModesSequenceIndex] = additionalTransportModes[j];
+                }
+            }
+
+            return transportModesSequence;
+        }
+
+        private bool OriginAndDestinationAreValid(Node origin, Node destination, int personaId)
+        {
+            if(origin == null || destination == null)
+            {
+                logger.Debug(" ==>> Unable to compute route: Persona Id {0}: origin and/or destination nodes are invalid", personaId);
+                return false;
+            }
+            else if(origin.Idx == destination.Idx)
+            {
+                logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", personaId);
+                return false;
+            }
+
+            return true;
         }
 
         private void MonitorRouteCalculation()
@@ -308,6 +354,7 @@ namespace SytyRouting
             {
                 var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
                 var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
+                logger.Debug("");
                 logger.Debug("Id {0}:\t HomeLocation = {1}:({2}, {3}),\t WorkLocation = {4}:({5}, {6})",
                     persona.Id, origin.OsmID, persona.HomeLocation?.X, persona.HomeLocation?.Y,
                                 destination.OsmID, persona.WorkLocation?.X, persona.WorkLocation?.Y);
@@ -319,7 +366,8 @@ namespace SytyRouting
         {
             if(persona.Route is not null)
             {
-                TraceRoute(persona.Route);
+                //TraceRoute(persona.Route);
+                TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
             }
         }
 
@@ -350,6 +398,72 @@ namespace SytyRouting
             routeTimeStampString += String.Format(" ..., {0,14} ", timeStamp);
             logger.Debug(routeNodeString);
             logger.Debug(routeTimeStampString);
+        }
+
+        public void TraceRouteDetails(LineString route, Dictionary<int, byte>? transportModeTransitions)
+        {
+            var routeCoordinates = route.Coordinates;
+
+            Node node;
+            string timeStamp;
+
+
+            // DEBUG
+            if(transportModeTransitions!=null)
+            {
+                foreach(var transportModeTransition in transportModeTransitions)
+                {
+                    logger.Debug("Transport Mode transitions :: {0}:{1}", transportModeTransition.Key, transportModeTransition.Value);
+                }
+            
+
+                logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
+                string routeNodeString          = String.Format(" {0,14}","Node OSM Id");
+                string routeTimeStampString     = String.Format(" {0,14}","Time stamp");
+                string routeCoordinateXString   = String.Format(" {0,14}","Coordinate X");
+                string routeCoordinateYString   = String.Format(" {0,14}","Coordinate Y");
+                string routeTransportModeString = String.Format(" {0,14}","Transport Mode");
+                string routeNodeIdxString       = String.Format(" {0,14}","Node Idx");
+                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
+                logger.Debug("=======================================================================================================");
+                
+                int previousNodeIdx = 0;
+                for(var n = 0; n < routeCoordinates.Length; n++)
+                {
+                    node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
+                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                    routeNodeString        = String.Format(" {0,14}", node.OsmID);
+                    routeTimeStampString   = String.Format(" {0,14}", timeStamp);
+                    routeCoordinateXString = String.Format(" {0,14}", routeCoordinates[n].X);
+                    routeCoordinateYString = String.Format(" {0,14}", routeCoordinates[n].Y);
+                    routeNodeIdxString     = String.Format(" {0,14}", node.Idx);
+                    if(previousNodeIdx!=node.Idx && transportModeTransitions.ContainsKey(node.Idx))
+                        routeTransportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
+                    else
+                        routeTransportModeString = String.Format("{0,14}",".");
+                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
+                    if(n>5)
+                    {
+                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
+                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
+                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
+                        break;
+                    }
+                    previousNodeIdx = node.Idx;
+                }
+                node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
+                timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
+                routeNodeString          = String.Format(" {0,14}", node.OsmID);
+                routeTimeStampString     = String.Format(" {0,14}", timeStamp);
+                routeCoordinateXString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].X);
+                routeCoordinateYString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].Y);
+                if(transportModeTransitions.ContainsKey(node.Idx))
+                    routeTransportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
+                else
+                    routeTransportModeString = String.Format("{0,14}",".");
+                routeNodeIdxString       = String.Format(" {0,14}", node.Idx);
+                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
+            }
         }
 
         public void TracePersonasRouteResult()

@@ -26,7 +26,7 @@ namespace SytyRouting.Algorithms.ArrayDijkstra
             }
         }
 
-        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte transportMode)
+        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte[] transportModesSequence)
         {
             route.Clear();
             routeCost = 0;

@@ -20,7 +20,7 @@ namespace SytyRouting.Algorithms.BackwardDijkstra
             }
         }
 
-        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte transportMode)
+        protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte[] transportModesSequence)
         {
             route.Clear();
 

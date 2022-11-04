@@ -10,6 +10,7 @@ namespace SytyRouting.Algorithms
         [NotNull]
         protected Graph? _graph;
         protected List<Node> route = new List<Node>();
+        protected Dictionary<int, byte> transportModeTransitions = new Dictionary<int, byte>(1);
         protected double routeCost;
 
         public virtual void Initialize(Graph graph)
@@ -17,7 +18,7 @@ namespace SytyRouting.Algorithms
             _graph = graph;
         }
 
-        public List<Node> GetRoute(double x1, double y1, double x2, double y2, byte transportMode)
+        public List<Node> GetRoute(double x1, double y1, double x2, double y2, byte[] transportModesSequence)
         {
             if (_graph == null)
             {
@@ -26,10 +27,10 @@ namespace SytyRouting.Algorithms
             var originNode = _graph.GetNodeByLongitudeLatitude(x1, y1);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(x2, y2);
             
-            return RouteSearch(originNode, destinationNode, transportMode);
+            return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
-        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, byte transportMode)
+        public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, byte[] transportModesSequence)
         {
             if (_graph == null)
             {
@@ -55,7 +56,7 @@ namespace SytyRouting.Algorithms
                 throw new Exception("Unknown value for node osm id.");
             }
 
-            return RouteSearch(originNode, destinationNode, transportMode);
+            return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
         public LineString ConvertRouteFromNodesToLineString(List<Node> nodeRoute, TimeSpan initialTimeStamp)
@@ -119,8 +120,22 @@ namespace SytyRouting.Algorithms
             return routeCost;
         }
 
+        public Dictionary<int,byte> GetTransportModeTransitions()
+        {
+            Dictionary<int,byte> tmTransitions =  new Dictionary<int, byte>(transportModeTransitions.Count);
+            var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
+            var tmTransitionsValues = transportModeTransitions.Values.ToArray();
+
+            for(int i = 0; i < tmTransitionsKeys.Length; i++)
+            {
+                tmTransitions.Add(tmTransitionsKeys[i],tmTransitionsValues[i]);
+            }
+
+            return tmTransitions;
+        }
+
         // Routing algorithm implementation
-        protected virtual List<Node> RouteSearch(Node origin, Node destination, byte transportMode)
+        protected virtual List<Node> RouteSearch(Node origin, Node destination, byte[] transportModesSequence)
         {
             throw new NotImplementedException();
         }
