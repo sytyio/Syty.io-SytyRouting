@@ -104,7 +104,8 @@ namespace SytyRouting
                         }
                         transportModes[i] = new string(tmc);
                     }
-                    if(Configuration.VerifyTransportListFromFile(transportModes))
+
+                    if(Configuration.VerifyTransportListFromGraphFile(transportModes))
                     {
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
                     }

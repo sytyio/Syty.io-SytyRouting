@@ -71,24 +71,25 @@ namespace SytyRouting
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
 
-        public static bool VerifyTransportListFromFile(string[] transportModes)
+        public static bool VerifyTransportListFromGraphFile(string[] transportModes)
         {
             if(transportModes.Length == TransportModeNames.Length)
             {
                 for(int i = 0; i < TransportModeNames.Length; i++)
                 {
                     if(!transportModes[i].Equals(TransportModeNames[i]))
-                        break;
+                        return false;
                 }
-                return true;
+                return true;     
             }
-            return false;
+
+            return false;            
         }
 
         private static string[] ValidateTransportModeNames(string[] configTransportModeNames)
         {
             string[] validTransportModeNames =  new string[TransportModes.MaxNumberOfTransportModes+1];
-            validTransportModeNames[0] = TransportModes.DefaulTransportMode;
+            validTransportModeNames[0] = TransportModes.NoTransportMode;
             try
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
