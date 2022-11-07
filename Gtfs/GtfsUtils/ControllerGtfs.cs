@@ -447,7 +447,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             for (int i = 0; i < shapeInfos.Count; i++)
             {
                 ShapeCsv shape = shapeInfos[i];
-                Coordinate coordinate = new Coordinate(shape.PtLat, shape.PtLon);
+                Coordinate coordinate = new Coordinate(shape.PtLon, shape.PtLat); // here 
                 arrayOfCoordinate[i] = coordinate;
             }
             LineString lineString = new LineString(arrayOfCoordinate);
@@ -515,7 +515,5 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 File.Delete(fullPathDwln); //delete .zip
             }
         }
-
-
     }
 }

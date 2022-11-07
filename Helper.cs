@@ -4,8 +4,6 @@ using Npgsql;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using SytyRouting.Model;
-using NetTopologySuite.Geometries;
-
 
 namespace SytyRouting
 {

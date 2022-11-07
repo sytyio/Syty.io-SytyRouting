@@ -31,16 +31,14 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetNode + " Source = " + SourceNode + " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes) //byte transportModes
+        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
         {
             OsmID = long.MaxValue;
             DistanceSourceToTargetM = distance;
             DurationS = duration;
             Id = id;
             TargetNode = target;
-            base.TargetNode= target;
             SourceNode = source;
-            base.SourceNode= source;
             Route = route;
             IsShapeAvailable = iShapeAvailable;
             InitialStopSource = initialStopSource;

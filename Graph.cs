@@ -26,8 +26,7 @@ namespace SytyRouting
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
 
-        [NotNull]
-        public Dictionary<string, ControllerGtfs>? GtfsDico;
+        public Dictionary<string, ControllerGtfs> GtfsDico= new Dictionary<string, ControllerGtfs>();
 
         private Task FileSaveAsync(string path)
         {
@@ -225,7 +224,6 @@ namespace SytyRouting
 
         public async Task GetDataFromGtfs()
         {
-            GtfsDico = new Dictionary<string, ControllerGtfs>();
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
                 GtfsDico.Add(provider, new ControllerGtfs(provider));
@@ -246,7 +244,7 @@ namespace SytyRouting
             {
                 foreach (var node in gtfs.Value.GetNodes())
                 {
-                    var nearest = KDTree.GetNearestNeighbor(node.Y,node.X); // something weird here
+                    var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
                     // Cost : foot 
                     logger.Info("Coord node X = {0}, Y={1}",node.X,node.Y);
                     logger.Info("Coord nearest X = {0}, Y={1}",nearest.X,nearest.Y);
