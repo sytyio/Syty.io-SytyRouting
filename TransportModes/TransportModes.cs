@@ -1,4 +1,5 @@
 using NLog;
+using SytyRouting.Model;
 
 namespace SytyRouting
 {
@@ -13,7 +14,48 @@ namespace SytyRouting
 
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        
+
+
+        public static byte[] CreateTransportModeSequence(Node origin, Node destination, byte[] requestedTransportModes)
+        {
+            bool theOriginIsValid = origin.IsAValidRouteStart(requestedTransportModes);
+            bool theDestinationIsValid = destination.IsAValidRouteEnd(requestedTransportModes);
+
+            byte[] transportModesSequence = new byte[requestedTransportModes.Length];
+
+            if(theOriginIsValid && theDestinationIsValid)
+            {
+                transportModesSequence = requestedTransportModes;
+                return transportModesSequence;
+            }
+            
+            int transportModesSequenceIndex=0;
+            if(!theOriginIsValid)
+            {
+                // Take the FIRST available Transport Mode at the Origin.
+                byte initialTransportMode = TransportModes.FirstTransportModeFromMask(origin.GetAvailableOutboundTransportModes());
+                Array.Resize(ref transportModesSequence, transportModesSequence.Length+1);
+                transportModesSequence[transportModesSequenceIndex]=initialTransportMode;
+                transportModesSequenceIndex++;
+            }
+            for(int j = 0; j < requestedTransportModes.Length; j++)
+            {
+                transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
+            }
+            if(!theDestinationIsValid)
+            {
+                // Take ALL the available Transport Modes at the Destination.
+                var additionalTransportModes = TransportModes.MaskToArray(destination.GetAvailableOutboundTransportModes());
+                transportModesSequenceIndex = transportModesSequence.Length;
+                Array.Resize(ref transportModesSequence, transportModesSequence.Length+additionalTransportModes.Length);
+                for(int j = 0; j < additionalTransportModes.Length; j++)
+                {
+                    transportModesSequence[j+transportModesSequenceIndex] = additionalTransportModes[j];
+                }
+            }
+
+            return transportModesSequence;
+        }
 
         public static byte GetMaskFromNames(string[] transportModeNames)
         {

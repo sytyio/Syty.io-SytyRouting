@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = 1; // Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -163,7 +163,7 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
                         
-                        byte[] transportModesSequence = CreateTransportModeSequence(origin, destination, requestedTransportModes);
+                        byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(origin, destination, requestedTransportModes);
                         
                         if(OriginAndDestinationAreValid(origin, destination, persona.Id))
                         {
@@ -172,7 +172,7 @@ namespace SytyRouting
                             {
                                 TimeSpan currentTime = TimeSpan.Zero;
                                 persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();                                
                                 persona.SuccessfulRouteComputation = true;
 
                                 Interlocked.Increment(ref computedRoutes);
@@ -190,45 +190,6 @@ namespace SytyRouting
                     }
                 }
             }
-        }
-
-        private byte[] CreateTransportModeSequence(Node origin, Node destination, byte[] requestedTransportModes)
-        {
-            bool theOriginIsValid = origin.IsAValidRouteStart(requestedTransportModes);
-            bool theDestinationIsValid = destination.IsAValidRouteEnd(requestedTransportModes);
-
-            if(theOriginIsValid && theDestinationIsValid)
-            {
-                return requestedTransportModes;
-            }
-
-            byte[] transportModesSequence = new byte[requestedTransportModes.Length];
-            int transportModesSequenceIndex=0;
-            if(!theOriginIsValid)
-            {
-                // Take the FIRST available Transport Mode at the Origin.
-                byte initialTransportMode = TransportModes.FirstTransportModeFromMask(origin.GetAvailableOutboundTransportModes());
-                Array.Resize(ref transportModesSequence, transportModesSequence.Length+1);
-                transportModesSequence[transportModesSequenceIndex]=initialTransportMode;
-                transportModesSequenceIndex++;
-            }
-            for(int j = 0; j < requestedTransportModes.Length; j++)
-            {
-                transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
-            }
-            if(!theDestinationIsValid)
-            {
-                // Take ALL the available Transport Modes at the Destination.
-                var additionalTransportModes = TransportModes.MaskToArray(destination.GetAvailableOutboundTransportModes());
-                transportModesSequenceIndex = transportModesSequence.Length;
-                Array.Resize(ref transportModesSequence, transportModesSequence.Length+additionalTransportModes.Length);
-                for(int j = 0; j < additionalTransportModes.Length; j++)
-                {
-                    transportModesSequence[j+transportModesSequenceIndex] = additionalTransportModes[j];
-                }
-            }
-
-            return transportModesSequence;
         }
 
         private bool OriginAndDestinationAreValid(Node origin, Node destination, int personaId)
@@ -413,36 +374,38 @@ namespace SytyRouting
             {
                 foreach(var transportModeTransition in transportModeTransitions)
                 {
-                    logger.Debug("Transport Mode transitions :: {0}:{1}", transportModeTransition.Key, transportModeTransition.Value);
+                    logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value));
                 }
             
 
                 logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
-                string routeNodeString          = String.Format(" {0,14}","Node OSM Id");
-                string routeTimeStampString     = String.Format(" {0,14}","Time stamp");
-                string routeCoordinateXString   = String.Format(" {0,14}","Coordinate X");
-                string routeCoordinateYString   = String.Format(" {0,14}","Coordinate Y");
-                string routeTransportModeString = String.Format(" {0,14}","Transport Mode");
-                string routeNodeIdxString       = String.Format(" {0,14}","Node Idx");
-                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
-                logger.Debug("=======================================================================================================");
+                string vertexString        = String.Format(" {0,14}","Vertex");
+                string nodeString          = String.Format(" {0,14}","Node OSM Id");
+                string timeStampString     = String.Format(" {0,14}","Time stamp");
+                string coordinateXString   = String.Format(" {0,14}","Coordinate X");
+                string coordinateYString   = String.Format(" {0,14}","Coordinate Y");
+                string transportModeString = String.Format(" {0,14}","Transport Mode");
+                string nodeIdxString       = String.Format(" {0,14}","Node Idx");
+                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
+                logger.Debug("==================================================================================================================");
                 
                 int previousNodeIdx = 0;
                 for(var n = 0; n < routeCoordinates.Length; n++)
                 {
                     node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
                     timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
-                    routeNodeString        = String.Format(" {0,14}", node.OsmID);
-                    routeTimeStampString   = String.Format(" {0,14}", timeStamp);
-                    routeCoordinateXString = String.Format(" {0,14}", routeCoordinates[n].X);
-                    routeCoordinateYString = String.Format(" {0,14}", routeCoordinates[n].Y);
-                    routeNodeIdxString     = String.Format(" {0,14}", node.Idx);
+                    vertexString      = String.Format(" {0,14}", n+1);
+                    nodeString        = String.Format(" {0,14}", node.OsmID);
+                    timeStampString   = String.Format(" {0,14}", timeStamp);
+                    coordinateXString = String.Format(" {0,14}", routeCoordinates[n].X);
+                    coordinateYString = String.Format(" {0,14}", routeCoordinates[n].Y);
+                    nodeIdxString     = String.Format(" {0,14}", node.Idx);
                     if(previousNodeIdx!=node.Idx && transportModeTransitions.ContainsKey(node.Idx))
-                        routeTransportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
+                        transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
                     else
-                        routeTransportModeString = String.Format("{0,14}",".");
-                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
-                    if(n>5)
+                        transportModeString = String.Format("{0,14}",".");
+                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
+                    if(n>10)
                     {
                         logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
                         logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
@@ -453,16 +416,17 @@ namespace SytyRouting
                 }
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
                 timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
-                routeNodeString          = String.Format(" {0,14}", node.OsmID);
-                routeTimeStampString     = String.Format(" {0,14}", timeStamp);
-                routeCoordinateXString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].X);
-                routeCoordinateYString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].Y);
+                vertexString      = String.Format(" {0,14}", routeCoordinates.Length);
+                nodeString          = String.Format(" {0,14}", node.OsmID);
+                timeStampString     = String.Format(" {0,14}", timeStamp);
+                coordinateXString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].X);
+                coordinateYString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].Y);
                 if(transportModeTransitions.ContainsKey(node.Idx))
-                    routeTransportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
+                    transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
                 else
-                    routeTransportModeString = String.Format("{0,14}",".");
-                routeNodeIdxString       = String.Format(" {0,14}", node.Idx);
-                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}", routeCoordinateXString, routeCoordinateYString, routeTimeStampString, routeTransportModeString, routeNodeIdxString, routeNodeString);
+                    transportModeString = String.Format("{0,14}",".");
+                nodeIdxString       = String.Format(" {0,14}", node.Idx);
+                logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
             }
         }
 

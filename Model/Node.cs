@@ -49,6 +49,7 @@ namespace SytyRouting.Model
                 if((outwardEdge.TransportModes & requestedTransportModesMask) != 0)
                     return true; 
             }
+
             return false;
         }
 
@@ -60,6 +61,7 @@ namespace SytyRouting.Model
                 if((inwardEdge.TransportModes & requestedTransportModesMask) != 0)
                     return true; 
             }
+
             return false;
         }
 
@@ -70,6 +72,7 @@ namespace SytyRouting.Model
             {
                 transportModes |= outwardEdge.TransportModes; 
             }
+
             return transportModes;
         }
 
@@ -80,6 +83,7 @@ namespace SytyRouting.Model
             {
                 transportModes |= inwardEdge.TransportModes; 
             }
+            
             return transportModes;
         }
     }

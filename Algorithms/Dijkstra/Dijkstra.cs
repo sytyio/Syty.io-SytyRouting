@@ -47,6 +47,10 @@ namespace SytyRouting.Algorithms.Dijkstra
                         {
                             AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, transportMode);
                         }
+                        else if((transportModesSequence.Length > 1 && (outwardEdge.TransportModes & transportModesSequence[1]) == transportModesSequence[1]))
+                        {
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, transportModesSequence[1]);
+                        }
                     }
                 }
             }
