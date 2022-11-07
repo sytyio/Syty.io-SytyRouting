@@ -25,13 +25,36 @@ namespace SytyRouting.Algorithms.Dijkstra
             transportModeTransitions.Clear();
             routeCost = 0;
 
-            var transportMode = transportModesSequence[0];
+            //DEBUG:
+            if(originNode.OsmID==9118117)
+            {
+                Console.WriteLine("Problem");
+            }
 
-            AddStep(null, originNode, 0, transportMode);
+
+            var transportModeQueue = new Queue<byte>(transportModesSequence.Length);
+            for(int i = 0; i < transportModesSequence.Length; i++)
+            {
+                transportModeQueue.Enqueue(transportModesSequence[i]);
+            }
+
+            
+            if(transportModeQueue.TryDequeue(out byte initialTransportMode))
+            {
+                AddStep(null, originNode, 0, initialTransportMode);
+            }
+            else
+            {
+                logger.Debug("Error retrieving initial Transport Mode from queue.");
+            }
+            
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
                 var activeNode = currentStep!.ActiveNode;
+
+                byte currentTransportMode = currentStep.TransportMode;
+
                 if(activeNode == destinationNode)
                 {
                     ReconstructRoute(currentStep);
@@ -43,13 +66,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        if((outwardEdge.TransportModes & transportMode) == transportMode)
+                        if((outwardEdge.TransportModes & currentTransportMode) == currentTransportMode)
                         {
-                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, transportMode);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportMode);
+                            if((transportModeQueue.TryPeek(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
+                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
                         }
-                        else if((transportModesSequence.Length > 1 && (outwardEdge.TransportModes & transportModesSequence[1]) == transportModesSequence[1]))
+                        else if((transportModeQueue.TryDequeue(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
                         {
-                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, transportModesSequence[1]);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
                         }
                     }
                 }

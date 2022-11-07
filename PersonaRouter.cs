@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1; // Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 20; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -163,7 +163,9 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
                         
+                        persona.requestedTransportSequence = requestedTransportModes;                        
                         byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(origin, destination, requestedTransportModes);
+                        persona.definiteTransportSequence = transportModesSequence;
                         
                         if(OriginAndDestinationAreValid(origin, destination, persona.Id))
                         {
@@ -310,6 +312,7 @@ namespace SytyRouting
 
         public void TracePersonas()
         {
+            logger.Debug("");
             logger.Debug("Personas:");
             foreach (var persona in personas)
             {
@@ -319,6 +322,10 @@ namespace SytyRouting
                 logger.Debug("Id {0}:\t HomeLocation = {1}:({2}, {3}),\t WorkLocation = {4}:({5}, {6})",
                     persona.Id, origin.OsmID, persona.HomeLocation?.X, persona.HomeLocation?.Y,
                                 destination.OsmID, persona.WorkLocation?.X, persona.WorkLocation?.Y);
+                if(persona.requestedTransportSequence is not null)
+                    logger.Debug("Requested Transport Mode sequence: {0}", TransportModes.MaskToString(TransportModes.ArrayToMask(persona.requestedTransportSequence)));
+                if(persona.definiteTransportSequence is not null)
+                    logger.Debug("Definite Transport Mode sequence: {0}", TransportModes.MaskToString(TransportModes.ArrayToMask(persona.definiteTransportSequence)));
                 TraceRoute(persona);
             }
         }
