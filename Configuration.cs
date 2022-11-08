@@ -29,9 +29,13 @@ namespace SytyRouting
 
         // Transport parameters:
         public static string[] TransportModeNames {get;}
+        public static string[] PublicTransportModeNames {get;}
         public static Dictionary<string,int> TransportModeSpeeds {get;}
-        public static OSMTagToTransportModes[] OSMTagsToTransportModes {get;} = null!;
+        public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
         private static TransportSettings transportSettings {get; set;}
+
+        // Transport Modes routing rules:
+        public static TransportModeRoutingRule[] TransportModeRoutingRules {get;} = null!;
         
 
         static Configuration()
@@ -67,6 +71,8 @@ namespace SytyRouting
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
+            PublicTransportModeNames = transportSettings.PublicTransportModes;
+            TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
         }
@@ -152,11 +158,11 @@ namespace SytyRouting
             return validTransportModeSpeeds;
         }
 
-        private static async Task<OSMTagToTransportModes[]> ValidateOSMTagToTransportModes(OSMTagToTransportModes[] osmTagsToTransportModes)
+        private static async Task<OSMTagToTransportMode[]> ValidateOSMTagToTransportModes(OSMTagToTransportMode[] osmTagsToTransportModes)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
 
-            OSMTagToTransportModes[] validOSMTagsToTransportModes = new OSMTagToTransportModes[configTagIds.Length];
+            OSMTagToTransportMode[] validOSMTagsToTransportModes = new OSMTagToTransportMode[configTagIds.Length];
 
             for(int i = 0; i < validOSMTagsToTransportModes.Length; i++)
             {

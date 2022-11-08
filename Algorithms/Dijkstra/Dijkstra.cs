@@ -69,10 +69,10 @@ namespace SytyRouting.Algorithms.Dijkstra
                         if((outwardEdge.TransportModes & currentTransportMode) == currentTransportMode)
                         {
                             AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportMode);
-                            if((transportModeQueue.TryPeek(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
+                            //if((transportModeQueue.TryPeek(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
+                            //    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
                         }
-                        else if((transportModeQueue.TryDequeue(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
+                        if((transportModeQueue.TryDequeue(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
                         {
                             AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
                         }

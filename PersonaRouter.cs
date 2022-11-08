@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 20; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 200; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -323,9 +323,9 @@ namespace SytyRouting
                     persona.Id, origin.OsmID, persona.HomeLocation?.X, persona.HomeLocation?.Y,
                                 destination.OsmID, persona.WorkLocation?.X, persona.WorkLocation?.Y);
                 if(persona.requestedTransportSequence is not null)
-                    logger.Debug("Requested Transport Mode sequence: {0}", TransportModes.MaskToString(TransportModes.ArrayToMask(persona.requestedTransportSequence)));
+                    logger.Debug("Requested Transport Mode sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.requestedTransportSequence)));
                 if(persona.definiteTransportSequence is not null)
-                    logger.Debug("Definite Transport Mode sequence: {0}", TransportModes.MaskToString(TransportModes.ArrayToMask(persona.definiteTransportSequence)));
+                    logger.Debug("Definite Transport Mode sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.definiteTransportSequence)));
                 TraceRoute(persona);
             }
         }

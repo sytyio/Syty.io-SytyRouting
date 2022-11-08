@@ -168,6 +168,7 @@ namespace SytyRouting
 
             transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames);
             await TransportModes.CreateMappingTagIdToTransportModes();
+            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
 
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);

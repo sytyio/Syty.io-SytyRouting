@@ -7,6 +7,7 @@ namespace SytyRouting
     {
         public const string NoTransportMode = "None";
         public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used in the TransportModes masks
+        public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();
 
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
         private static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
@@ -21,11 +22,11 @@ namespace SytyRouting
             bool theOriginIsValid = origin.IsAValidRouteStart(requestedTransportModes);
             bool theDestinationIsValid = destination.IsAValidRouteEnd(requestedTransportModes);
 
-            byte[] transportModesSequence = new byte[requestedTransportModes.Length];
+            byte[] transportModesSequence = ValidateTransportModeSequence(requestedTransportModes);
 
             if(theOriginIsValid && theDestinationIsValid)
             {
-                transportModesSequence = requestedTransportModes;
+                // transportModesSequence = requestedTransportModes;
                 return transportModesSequence;
             }
             
@@ -37,10 +38,10 @@ namespace SytyRouting
                 Array.Resize(ref transportModesSequence, transportModesSequence.Length+1);
                 transportModesSequence[transportModesSequenceIndex]=initialTransportMode;
                 transportModesSequenceIndex++;
-            }
-            for(int j = 0; j < requestedTransportModes.Length; j++)
-            {
-                transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
+                for(int j = 0; j < requestedTransportModes.Length; j++)
+                {
+                    transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
+                }
             }
             if(!theDestinationIsValid)
             {
@@ -55,6 +56,31 @@ namespace SytyRouting
             }
 
             return transportModesSequence;
+        }
+
+        private static byte[] ValidateTransportModeSequence(byte[] requestedTransportModes)
+        {
+            List<byte> transportModeSequence = new List<byte>(0);
+            transportModeSequence.Add(requestedTransportModes[0]);
+            for(int i = 0; i < requestedTransportModes.Length-1; i++)
+            {
+                byte currentTransportMode = requestedTransportModes[i];
+                byte nextTransportMode = requestedTransportModes[i+1];
+                if(RoutingRules.ContainsKey(currentTransportMode))
+                {
+                    byte alternativeTransportModes = RoutingRules[currentTransportMode];
+                    if((nextTransportMode & alternativeTransportModes) == nextTransportMode)
+                    {
+                        transportModeSequence.Add(nextTransportMode);
+                    }
+                    else
+                    {
+                        logger.Debug("Invalid Transport Mode Sequence: '{0}'---> '{1}'. Skipping '{0}'", MaskToString(currentTransportMode), MaskToString(nextTransportMode));
+                    }
+                }
+            }
+
+            return transportModeSequence.ToArray();
         }
 
         public static byte GetMaskFromNames(string[] transportModeNames)
@@ -78,12 +104,14 @@ namespace SytyRouting
         public static string NamesToString(string[] transportModeNames)
         {
             string transportModeNamesString = "";
-            for(int i = 0; i < transportModeNames.Length-1; i++)
+            if(transportModeNames.Length>=1)
             {
-                transportModeNamesString += transportModeNames[i] + ", ";
+                for(int i = 0; i < transportModeNames.Length-1; i++)
+                {
+                    transportModeNamesString += transportModeNames[i] + ", ";
+                }
+                transportModeNamesString += transportModeNames[transportModeNames.Length-1];
             }
-            transportModeNamesString += transportModeNames[transportModeNames.Length-1];
-            
             return transportModeNamesString;
         }
 
@@ -132,6 +160,23 @@ namespace SytyRouting
             return result;
         }
 
+        public static string[] ArrayToNames(byte[] transportModes)
+        {
+            string[] result = new string[transportModes.Length];
+            for(int i = 0; i < transportModes.Length; i++)
+            {
+                foreach(var transportModeMask in TransportModeMasks)
+                {
+                    if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
+                    {
+                        result[i] = TransportModeNames[transportModeMask.Key];
+                    }
+                }
+            }                
+                
+            return result;
+        }
+
         public static byte[] NameSequenceToMasksArray(string[] transportModesSequence)
         {
             List<byte> masksList = new List<byte>(0);
@@ -149,7 +194,7 @@ namespace SytyRouting
                     }
                 }
                 if(!nameFound)
-                    logger.Info("Transport Mode Sequence: Transport Mode '{0}' not found.", transportModesSequence[i]);
+                    logger.Info("Transport Mode Sequence: Transport mode '{0}' not found. Ignoring trasport mode.", transportModesSequence[i]);
             }
                 
             return masksList.ToArray();
@@ -205,11 +250,6 @@ namespace SytyRouting
             return TransportModeMasks;
         }
 
-        public static async Task CreateMappingTagIdToTransportModes()
-        {
-            OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
-        }
-
         private static void SetTransportModeNames(string[] transportModes)
         {
             try
@@ -224,6 +264,39 @@ namespace SytyRouting
             {
                 logger.Info("Initialization error in the creation of the Transport Mode List: {0}", e.Message);
             }
+        }
+
+        public static void LoadTransportModeRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)
+        {
+            RoutingRules = TransportModes.CreateTransportModeRoutingRules(transportModeRoutingRules);
+        }
+
+        private static Dictionary<byte,byte> CreateTransportModeRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)
+        {
+            Dictionary<byte,byte> transportModeRoutingRoules = new Dictionary<byte,byte>();
+
+            for(var i = 0; i < transportModeRoutingRules .Length; i++)
+            {
+                byte currentTransportMode = GetMaskFromNames(new string[1] {(transportModeRoutingRules[i].CurrentTransportMode)});
+                byte[] alternativeTransportModes = NameSequenceToMasksArray(transportModeRoutingRules[i].AlternativeTransportModes);
+                byte alternativeTransportModesMask = ArrayToMask(alternativeTransportModes);
+                
+                if (!transportModeRoutingRoules.ContainsKey(currentTransportMode))
+                {
+                    transportModeRoutingRoules.Add(currentTransportMode, alternativeTransportModesMask);
+                }
+                else
+                {
+                    logger.Debug("Unable to add Transport Mode routing rule. Transport Mode: {0}", transportModeRoutingRules[i].CurrentTransportMode);
+                }
+            }
+            
+            return transportModeRoutingRoules;
+        }
+
+        public static async Task CreateMappingTagIdToTransportModes()
+        {
+            OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
         }
 
         private static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)

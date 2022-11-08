@@ -71,10 +71,12 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
+            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            string[] transportModeNamesSequence = new string[] {"Fot","Car"};
+            string[] transportModeNamesSequence = new string[] {"Car", "Bus"};
             byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(transportModeNamesSequence);
 
             if(transportModesSequence.Length > 0)
