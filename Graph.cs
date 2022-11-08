@@ -236,18 +236,16 @@ namespace SytyRouting
             await Task.WhenAll(listDwnld);
         }
 
-        // private async Task AddGtfsData(List<string> providers)
         private async Task AddGtfsData()
         {
             await GetDataFromGtfs();
             foreach (var gtfs in GtfsDico)
             {
+                // Connecting gtfs nodes to graph nodes
                 foreach (var node in gtfs.Value.GetNodes())
                 {
                     var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
                     // Cost : foot 
-                    logger.Info("Coord node X = {0}, Y={1}",node.X,node.Y);
-                    logger.Info("Coord nearest X = {0}, Y={1}",nearest.X,nearest.Y);
                     var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") }; // ici = ok relie noeuds stib à graph existant 
                     var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") };
                     node.ValidSource = true;
@@ -313,7 +311,7 @@ namespace SytyRouting
         public void TraceOneNode(Node node)
         {
             logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}",node.Idx,
-            node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.X, node.Y, node.ValidTarget, node.ValidSource);
+            node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.Y, node.X, node.ValidTarget, node.ValidSource);
             TraceEdges(node);
         }
 
@@ -344,8 +342,8 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}, length = {10})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.Idx, edge.TargetNode?.X, edge.TargetNode?.Y, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
+            logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3} {4});\ttarget Node Id: {5} ({6} {7});\tTransport Modes: {8} (mask: {9}, length = {10})",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.Y, edge.SourceNode?.X, edge.TargetNode?.Idx, edge.TargetNode?.Y, edge.TargetNode?.X, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
 
             TraceInternalGeometry(edge);
         }

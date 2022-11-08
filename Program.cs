@@ -34,9 +34,7 @@ namespace SytyRouting
             for (int i = 1558439 ; i < graph.GetNodes().Count(); i++)
             {
                 var node = graph.GetNodes()[i];
-                // if(node.InwardEdges.Count()>7||node.OutwardEdges.Count()>7){
                     graph.TraceOneNode(graph.GetNodes()[i]);
-                // }
             }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
