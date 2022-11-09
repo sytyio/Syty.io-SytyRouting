@@ -158,11 +158,18 @@ namespace SytyRouting
                 for(var i = 0; i < personaArray.Length; i++)
                 {
                     var persona = personaArray[i];
+
                     try
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
-                        
+
+                        // DEBUG
+                        if(persona.Id == 147)
+                        {
+                            Console.WriteLine("Problemo");
+                        }
+
                         persona.requestedTransportSequence = requestedTransportModes;                        
                         byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(origin, destination, requestedTransportModes);
                         persona.definiteTransportSequence = transportModesSequence;
