@@ -7,6 +7,9 @@ namespace SytyRouting
     {
         public const string NoTransportMode = "None";
         public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used in the TransportModes masks
+
+        public static byte Default;
+
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();
 
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
@@ -19,43 +22,143 @@ namespace SytyRouting
 
         public static byte[] CreateTransportModeSequence(Node origin, Node destination, byte[] requestedTransportModes)
         {
-            bool theOriginIsValid = origin.IsAValidRouteStart(requestedTransportModes);
-            bool theDestinationIsValid = destination.IsAValidRouteEnd(requestedTransportModes);
-
             byte[] transportModesSequence = ValidateTransportModeSequence(requestedTransportModes);
+
+            bool theOriginIsValid = origin.IsAValidRouteStart(transportModesSequence);
+            bool theDestinationIsValid = destination.IsAValidRouteEnd(transportModesSequence);
 
             if(theOriginIsValid && theDestinationIsValid)
             {
-                // transportModesSequence = requestedTransportModes;
                 return transportModesSequence;
             }
             
-            int transportModesSequenceIndex=0;
+            // int transportModesSequenceIndex=0;
             if(!theOriginIsValid)
             {
-                // Take the FIRST available Transport Mode at the Origin.
-                byte initialTransportMode = TransportModes.FirstTransportModeFromMask(origin.GetAvailableOutboundTransportModes());
-                Array.Resize(ref transportModesSequence, transportModesSequence.Length+1);
-                transportModesSequence[transportModesSequenceIndex]=initialTransportMode;
-                transportModesSequenceIndex++;
-                for(int j = 0; j < requestedTransportModes.Length; j++)
+                // Take all the available Transport Modes at the Origin and try to make a valid start sequence
+                // with the requested modes.
+                byte availableTransportModesMask = origin.GetAvailableOutboundTransportModes();
+                byte[] availableTransportModes = TransportModes.MaskToArray(availableTransportModesMask);
+                // byte[] startSequenceCandidate = new byte[2];
+                (byte firstCandidate, byte secondCandidate, int index) = GetTwoTransportModeSequence(availableTransportModes,transportModesSequence);
+                // bool startSequenceFound = false;
+                // if((availableTransportModesMask & TransportModes.Default) == Default)
+                // {
+                //     startSequenceCandidate[0] = TransportModes.Default;
+                //     startSequenceCandidate[1] = transportModesSequence[0];
+                //     startSequenceFound = true;
+                // }
+                // else
+                // {
+                //     for(int i = 0; i < availableTransportModes.Length; i++)
+                //     {
+                //         for(int j = transportModesSequenceIndex; j < transportModesSequence.Length; j++)
+                //         {
+                //             startSequenceCandidate[0] = availableTransportModes[i];
+                //             startSequenceCandidate[1] = transportModesSequence[j];
+                //             var verifiedCandidate = ValidateTransportModeSequence(startSequenceCandidate);
+                //             if(verifiedCandidate.Length > 1 && startSequenceCandidate[1] == verifiedCandidate[1])
+                //             {
+                //                 startSequenceFound = true;
+                //                 transportModesSequenceIndex = j;
+                //                 i = availableTransportModes.Length;
+                //                 break;
+                //             }
+                //         }
+                //     }
+                // }
+                if(firstCandidate==0 || secondCandidate==0)
                 {
-                    transportModesSequence[j+transportModesSequenceIndex]=requestedTransportModes[j];
+                    Array.Resize(ref transportModesSequence, 1);
+                    transportModesSequence[0] = availableTransportModes[0];
+                    theDestinationIsValid = destination.IsAValidRouteEnd(transportModesSequence);
+                }
+                else
+                {
+                    byte[] previousSequence = transportModesSequence;
+                    int previousSequenceIndex = index;
+
+                    int newSize = transportModesSequence.Length+1-index;
+                    Array.Resize(ref transportModesSequence, newSize);
+                    transportModesSequence[0]=firstCandidate;
+                    transportModesSequence[1]=secondCandidate;
+                    index = 2;
+                    for(int j = previousSequenceIndex+1; j < previousSequence.Length; j++)
+                    {
+                        transportModesSequence[index]=previousSequence[j];
+                        index++;
+                    }
                 }
             }
             if(!theDestinationIsValid)
             {
                 // Take ALL the available Transport Modes at the Destination.
                 var additionalTransportModes = TransportModes.MaskToArray(destination.GetAvailableOutboundTransportModes());
-                transportModesSequenceIndex = transportModesSequence.Length;
-                Array.Resize(ref transportModesSequence, transportModesSequence.Length+additionalTransportModes.Length);
-                for(int j = 0; j < additionalTransportModes.Length; j++)
-                {
-                    transportModesSequence[j+transportModesSequenceIndex] = additionalTransportModes[j];
-                }
+                (byte previousCandidate, byte lastCandidate, int index) = GetReverseTwoTransportModeSequence(additionalTransportModes,transportModesSequence);
+                
+                //int index = transportModesSequence.Length;
+
+                int newSize = transportModesSequence.Length+1-index;
+                Array.Resize(ref transportModesSequence, newSize);
+                
             }
 
             return transportModesSequence;
+        }
+
+        private static (byte,byte,int) GetTwoTransportModeSequence(byte[] availableTransportModes, byte[] transportModesSequence)
+        {
+            byte[] sequenceCandidate = new byte[2] {0,0};
+            if((ArrayToMask(availableTransportModes) & TransportModes.Default) == Default)
+            {
+                return (TransportModes.Default,transportModesSequence[0],0);
+            }
+            else
+            {
+                for(int i = 0; i < availableTransportModes.Length; i++)
+                {
+                    for(int j = 0; j < transportModesSequence.Length; j++)
+                    {
+                        sequenceCandidate[0] = availableTransportModes[i];
+                        sequenceCandidate[1] = transportModesSequence[j];
+                        var verifiedCandidate = ValidateTransportModeSequence(sequenceCandidate);
+                        if(verifiedCandidate.Length > 1 && sequenceCandidate[1] == verifiedCandidate[1])
+                        {
+                            return (sequenceCandidate[0],sequenceCandidate[1],j);
+                        }
+                    }
+                }
+            }
+
+            return (0,0,0);
+        }
+
+        private static (byte,byte,int) GetReverseTwoTransportModeSequence(byte[] additionalTransportModes, byte[] transportModesSequence)
+        {
+            byte[] sequenceCandidate = new byte[2] {0,0};
+            if((ArrayToMask(additionalTransportModes) & TransportModes.Default) == Default)
+            {
+                int index = transportModesSequence.Length-1;
+                return (transportModesSequence[index],TransportModes.Default,index);
+            }
+            else
+            {
+                for(int i = 0; i < additionalTransportModes.Length; i++)
+                {
+                    for(int j = 0; j < transportModesSequence.Length; j++)
+                    {
+                        sequenceCandidate[0] = transportModesSequence[j];
+                        sequenceCandidate[1] = additionalTransportModes[i];
+                        var verifiedCandidate = ValidateTransportModeSequence(sequenceCandidate);
+                        if(verifiedCandidate.Length > 1 && sequenceCandidate[1] == verifiedCandidate[1])
+                        {
+                            return (sequenceCandidate[0],sequenceCandidate[1],j);
+                        }
+                    }
+                }
+            }
+
+            return (0,0,0);
         }
 
         private static byte[] ValidateTransportModeSequence(byte[] requestedTransportModes)
@@ -75,7 +178,7 @@ namespace SytyRouting
                     }
                     else
                     {
-                        logger.Debug("Invalid Transport Mode Sequence: '{0}'---> '{1}'. Skipping '{0}'", MaskToString(currentTransportMode), MaskToString(nextTransportMode));
+                        logger.Debug("Invalid Transport Mode Sequence: {0}---> {1}. Skipping {1}", MaskToString(currentTransportMode), MaskToString(nextTransportMode));
                     }
                 }
             }
@@ -246,6 +349,9 @@ namespace SytyRouting
             {
                 logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
             }
+
+            TransportModes.Default = TransportModeMasks[1];
+            logger.Info("Default Transport Mode: {0}", MaskToString(TransportModes.Default));
 
             return TransportModeMasks;
         }
