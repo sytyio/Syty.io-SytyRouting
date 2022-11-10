@@ -165,7 +165,7 @@ namespace SytyRouting
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         // DEBUG
-                        if(persona.Id == 147)
+                        if(persona.Id == 6)
                         {
                             Console.WriteLine("Problemo");
                         }

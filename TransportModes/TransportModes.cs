@@ -32,41 +32,12 @@ namespace SytyRouting
                 return transportModesSequence;
             }
             
-            // int transportModesSequenceIndex=0;
             if(!theOriginIsValid)
             {
-                // Take all the available Transport Modes at the Origin and try to make a valid start sequence
-                // with the requested modes.
                 byte availableTransportModesMask = origin.GetAvailableOutboundTransportModes();
                 byte[] availableTransportModes = TransportModes.MaskToArray(availableTransportModesMask);
-                // byte[] startSequenceCandidate = new byte[2];
                 (byte firstCandidate, byte secondCandidate, int index) = GetTwoTransportModeSequence(availableTransportModes,transportModesSequence);
-                // bool startSequenceFound = false;
-                // if((availableTransportModesMask & TransportModes.Default) == Default)
-                // {
-                //     startSequenceCandidate[0] = TransportModes.Default;
-                //     startSequenceCandidate[1] = transportModesSequence[0];
-                //     startSequenceFound = true;
-                // }
-                // else
-                // {
-                //     for(int i = 0; i < availableTransportModes.Length; i++)
-                //     {
-                //         for(int j = transportModesSequenceIndex; j < transportModesSequence.Length; j++)
-                //         {
-                //             startSequenceCandidate[0] = availableTransportModes[i];
-                //             startSequenceCandidate[1] = transportModesSequence[j];
-                //             var verifiedCandidate = ValidateTransportModeSequence(startSequenceCandidate);
-                //             if(verifiedCandidate.Length > 1 && startSequenceCandidate[1] == verifiedCandidate[1])
-                //             {
-                //                 startSequenceFound = true;
-                //                 transportModesSequenceIndex = j;
-                //                 i = availableTransportModes.Length;
-                //                 break;
-                //             }
-                //         }
-                //     }
-                // }
+                
                 if(firstCandidate==0 || secondCandidate==0)
                 {
                     Array.Resize(ref transportModesSequence, 1);
@@ -92,15 +63,21 @@ namespace SytyRouting
             }
             if(!theDestinationIsValid)
             {
-                // Take ALL the available Transport Modes at the Destination.
                 var additionalTransportModes = TransportModes.MaskToArray(destination.GetAvailableOutboundTransportModes());
                 (byte previousCandidate, byte lastCandidate, int index) = GetReverseTwoTransportModeSequence(additionalTransportModes,transportModesSequence);
                 
-                //int index = transportModesSequence.Length;
-
-                int newSize = transportModesSequence.Length+1-index;
-                Array.Resize(ref transportModesSequence, newSize);
-                
+                if(previousCandidate==0 || lastCandidate==0)
+                {
+                    Array.Resize(ref transportModesSequence, 1);
+                    transportModesSequence[0] = 0;
+                    logger.Debug("Unable to complete the Transport Mode Sequence.");                    
+                }
+                else
+                {
+                    int newSize = index+2;
+                    Array.Resize(ref transportModesSequence, newSize);
+                    transportModesSequence[index+1]=lastCandidate;
+                }
             }
 
             return transportModesSequence;
