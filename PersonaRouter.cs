@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 200; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 20; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -165,7 +165,7 @@ namespace SytyRouting
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         // DEBUG
-                        if(persona.Id == 6)
+                        if(persona.Id == 2)
                         {
                             Console.WriteLine("Problemo");
                         }
@@ -174,7 +174,7 @@ namespace SytyRouting
                         byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(origin, destination, requestedTransportModes);
                         persona.definiteTransportSequence = transportModesSequence;
                         
-                        if(OriginAndDestinationAreValid(origin, destination, persona.Id))
+                        if(TransportModes.ArrayToMask(transportModesSequence) !=0 && OriginAndDestinationAreValid(origin, destination, persona.Id))
                         {
                             var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportModesSequence);
                             if(route.Count > 0)
@@ -190,6 +190,10 @@ namespace SytyRouting
                             {
                                 logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                             }
+                        }
+                        else
+                        {
+                            logger.Debug("Invalid transport sequence or invalid origin/destination data.");
                         }
                     }
                     catch (Exception e)
