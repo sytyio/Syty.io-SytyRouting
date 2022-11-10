@@ -16,6 +16,8 @@ namespace SytyRouting.Algorithms.ContractionDijkstra
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
         private ShortcutEdge[][] outgoingShortcuts;
         private ShortcutEdge[][] incomingShortcuts;
+
+
         public void TraceRoute()
         {
             logger.Debug("Displaying {0} route Nodes (OsmId):", route.Count);
@@ -39,7 +41,7 @@ namespace SytyRouting.Algorithms.ContractionDijkstra
             incomingShortcuts = new ShortcutEdge[nodes.Length][];
             var shortcuts = new List<ShortcutEdge>();
 
-            foreach (var direction in Enum.GetValues(typeof(StepDirection)))
+            foreach (StepDirection direction in Enum.GetValues(typeof(StepDirection)))
             {
                 for (int i = 0; i < nodes.Length; i++)
                 {
@@ -61,30 +63,56 @@ namespace SytyRouting.Algorithms.ContractionDijkstra
                                     new ShortcutEdge()
                                     {
                                         Cost = currentStep.CumulatedCost,
-                                        SourceNode = nodes[i],
-                                        TargetNode = activeNode,
+                                        SourceNode = direction == StepDirection.Forward ? nodes[i] : activeNode,
+                                        TargetNode = direction == StepDirection.Forward ? activeNode : nodes[i],
                                         Steps = currentStep
                                     }
                                 );
                             }
 
-                            IEnumerable<Edge> outwardEdges = activeNode.OutwardEdges;
-                            if (outgoingShortcuts[activeNode.Idx] != null)
+                            if (direction == StepDirection.Forward)
                             {
-                                outwardEdges = outwardEdges.Union(outgoingShortcuts[activeNode.Idx]);
-                            }
-                            foreach (var outwardEdge in outwardEdges)
-                            {
-                                if (outwardEdge.TargetNode.Idx > activeNode.Idx || activeNode.Idx == i)
+                                IEnumerable<Edge> edgesToFollow = activeNode.OutwardEdges;
+                                if (outgoingShortcuts[activeNode.Idx] != null)
                                 {
-                                    if (AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost) && outwardEdge.TargetNode.Idx < i)
-                                        smallerThanI++;
+                                    edgesToFollow = edgesToFollow.Union(outgoingShortcuts[activeNode.Idx]);
+                                }
+                                foreach (var edge in edgesToFollow)
+                                {
+                                    if (edge.TargetNode.Idx > activeNode.Idx || activeNode.Idx == i)
+                                    {
+                                        if (AddStep(currentStep, edge.TargetNode, currentStep.CumulatedCost + edge.Cost) && edge.TargetNode.Idx < i)
+                                            smallerThanI++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                IEnumerable<Edge> edgesToFollow = activeNode.InwardEdges;
+                                if (incomingShortcuts[activeNode.Idx] != null)
+                                {
+                                    edgesToFollow = edgesToFollow.Union(incomingShortcuts[activeNode.Idx]);
+                                }
+                                foreach (var edge in edgesToFollow)
+                                {
+                                    if (edge.SourceNode.Idx > activeNode.Idx || activeNode.Idx == i)
+                                    {
+                                        if (AddStep(currentStep, edge.SourceNode, currentStep.CumulatedCost + edge.Cost) && edge.SourceNode.Idx < i)
+                                            smallerThanI++;
+                                    }
                                 }
                             }
                         }
                     }
 
-                    outgoingShortcuts[i] = shortcuts.Count > 0 ? shortcuts.ToArray() : null;
+                    if (direction == StepDirection.Forward)
+                    {
+                        outgoingShortcuts[i] = shortcuts.Count > 0 ? shortcuts.ToArray() : null;
+                    }
+                    else
+                    {
+                        incomingShortcuts[i] = shortcuts.Count > 0 ? shortcuts.ToArray() : null;
+                    }
                     shortcuts.Clear();
                     dijkstraStepsQueue.Clear();
                     bestScoreForNode.Clear();
