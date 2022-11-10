@@ -41,16 +41,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
         [NotNull]
         private Dictionary<string, Edge>? edgeDico;
 
-        // Nearest nodes and associated edges
-
+        // Nearest nodes
         private Dictionary<string, Node> nearestNodeDico = new Dictionary<string, Node>();
-        private List<Edge> nearestEdgeList = new List<Edge>();
-
 
         //Masks
         private Dictionary<int, byte> routeTypeToTransportMode = new Dictionary<int, byte>();
         private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
-
 
 
         public ControllerGtfs(string provider)
@@ -115,11 +111,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public IEnumerable<Edge> GetEdges()
         {
             return edgeDico.Values.Cast<Edge>();
-        }
-
-        public IEnumerable<Edge> GetInternalEdges()
-        {
-            return nearestEdgeList;
         }
 
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
@@ -288,27 +279,31 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             distance = GetDistanceWithLineString(splitLineString, sourceNearestLineString, targetNearestLineString);
 
                             var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
-
-                            newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
-                                          distance / duration, internalGeom, routeTypeToTransportMode[routeType]);
                             
                             if (AreNodesAtSamePosition(previousStop, previousNearestOnLineString) && AreNodesAtSamePosition(currentStop, currentNearestNodeOnLineString))
                             {
-                                AddEdgeToNodesLineString(previousStop, currentStop, newEdge); // différencier les cas ou les noeuds sont les mêmes 
+                                newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
+                                          distance / duration, internalGeom, routeTypeToTransportMode[routeType]);
+                                AddEdgeToNodesLineString2(previousStop, currentStop, newEdge); 
                             }
                             else if (AreNodesAtSamePosition(previousStop, previousNearestOnLineString))
                             {
+                                newEdge = new EdgeGtfs(newId, previousStop, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
+                                          distance / duration, internalGeom, routeTypeToTransportMode[routeType]);
                                 AddEdgeToNodesLineString(previousStop, currentNearestNodeOnLineString, newEdge);
                             }
                             else if (AreNodesAtSamePosition(currentNearestNodeOnLineString,currentStop))
                             {
+                                newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
+                                          distance / duration, internalGeom, routeTypeToTransportMode[routeType]);
                                 AddEdgeToNodesLineString(previousNearestOnLineString, currentStop, newEdge);
                             }
                             else
                             {
+                                newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
+                                          distance / duration, internalGeom, routeTypeToTransportMode[routeType]);
                                 AddEdgeToNodesLineString(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
                             }
-                            
                             
                             edgeDicoOneTrip.Add(newId, newEdge);
                             i++;
@@ -349,11 +344,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return a.X == b.X && a.Y == b.Y;
         }
 
-
         private void AddEdgeToNodesNoLineString(StopGtfs previousStop, StopGtfs currentStop, EdgeGtfs newEdge)
         {
-            previousStop.ValidSource = true; //here
-            currentStop.ValidTarget = true; //here
             if (!previousStop.OutwardEdgesGtfs.ContainsKey(newEdge.Id))
             {
                 previousStop.OutwardEdgesGtfs.Add(newEdge.Id, newEdge);
@@ -368,8 +360,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AddEdgeToNodesLineString(Node previousStop, Node currentStop, EdgeGtfs newEdge)
         {
-            previousStop.ValidSource = true; //here
-            currentStop.ValidTarget = true; //here
+            previousStop.OutwardEdges.Add((Edge)newEdge);
+            currentStop.InwardEdges.Add((Edge)newEdge);
+        }
+
+        private void AddEdgeToNodesLineString2(StopGtfs previousStop, StopGtfs currentStop, EdgeGtfs newEdge)
+        {
             previousStop.OutwardEdges.Add((Edge)newEdge);
             currentStop.InwardEdges.Add((Edge)newEdge);
         }
@@ -381,18 +377,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 logger.Debug("Stop and nearest node are not at the same coordinates. Stop = {0} {1}, Nearest = {2} {3}", currentStop.Y, currentStop.X, currentNearestNodeOnLineString.Y, currentNearestNodeOnLineString.X);
 
-
-
                 nearestNodeDico.Add(id, currentNearestNodeOnLineString);
-
                 var routeType = buffTrip.Route.Type;
 
                 // The edges from stop to nearest node and back
                 var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = routeTypeToTransportMode[routeType], SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString };
                 var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = routeTypeToTransportMode[routeType], SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop };
-                // Add edges to the list 
-                nearestEdgeList.Add(edgeWalkNearestToStop);
-                nearestEdgeList.Add(edgeWalkStopToNearest);
                 // Add the edges to the nodes
                 currentNearestNodeOnLineString.InwardEdges.Add(edgeWalkStopToNearest);
                 currentNearestNodeOnLineString.OutwardEdges.Add(edgeWalkNearestToStop);

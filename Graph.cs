@@ -310,8 +310,10 @@ namespace SytyRouting
 
         public void TraceOneNode(Node node)
         {
+            // if(node.InwardEdges.Count()>4||node.OutwardEdges.Count()>4){
             logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}",node.Idx,
             node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.Y, node.X, node.ValidTarget, node.ValidSource);
+            // }
             TraceEdges(node);
         }
 
@@ -345,7 +347,7 @@ namespace SytyRouting
             logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3} {4});\ttarget Node Id: {5} ({6} {7});\tTransport Modes: {8} (mask: {9}, length = {10})",
                     edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.Y, edge.SourceNode?.X, edge.TargetNode?.Idx, edge.TargetNode?.Y, edge.TargetNode?.X, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
 
-            TraceInternalGeometry(edge);
+            // TraceInternalGeometry(edge);
         }
 
         private void TraceInternalGeometry(Edge edge)

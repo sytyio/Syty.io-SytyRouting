@@ -30,7 +30,7 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-
+            logger.Info("Count = {0}",graph.GetNodes().Count());
             for (int i = 1558439 ; i < graph.GetNodes().Count(); i++)
             {
                 var node = graph.GetNodes()[i];

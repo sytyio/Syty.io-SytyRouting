@@ -8,6 +8,5 @@ namespace SytyRouting.Gtfs.GtfsUtils
         IEnumerable<Edge> GetEdges();
 
         IEnumerable<Node> GetInternalNodes();
-        IEnumerable<Edge> GetInternalEdges();
     }
 }
