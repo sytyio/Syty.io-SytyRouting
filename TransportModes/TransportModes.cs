@@ -38,21 +38,22 @@ namespace SytyRouting
         private static byte[] ValidateTransportModeSequence(byte[] requestedTransportModes)
         {
             List<byte> transportModeSequence = new List<byte>(0);
-            byte[] revisedTransportModes = RemoveDefaultTransportModeFromSequence(requestedTransportModes);
+            byte[] revisedTransportModes = ReviseTransportModeSequence(requestedTransportModes);
             transportModeSequence.Add(revisedTransportModes[0]);
-            for(int i = 0; i < revisedTransportModes.Length-1; i++)
+            int index = 0;
+            while(index < revisedTransportModes.Length)
             {
-                byte currentTransportMode = revisedTransportModes[i];
-                for(int j = i+1; j < revisedTransportModes.Length; j++)
+                byte currentTransportMode = revisedTransportModes[index++];
+                for(int i = index; i < revisedTransportModes.Length; i++)
                 {
-                    byte nextTransportMode = revisedTransportModes[j];
+                    byte nextTransportMode = revisedTransportModes[index++];
                     if(RoutingRules.ContainsKey(currentTransportMode))
                     {
                         byte alternativeTransportModes = RoutingRules[currentTransportMode];
                         if((nextTransportMode & alternativeTransportModes) == nextTransportMode)
                         {
                             transportModeSequence.Add(nextTransportMode);
-                            i = j-1;
+                            index = i;
                             break;
                         }
                         else
@@ -66,12 +67,35 @@ namespace SytyRouting
             return transportModeSequence.ToArray();
         }
 
+        private static byte[] ReviseTransportModeSequence(byte[] requestedTransportModeSequence)
+        {
+            return RemoveConsecutiveDuplicatesFromTransportModeSequence(
+                RemoveDefaultTransportModeFromSequence(
+                    requestedTransportModeSequence)
+                );
+        }
+
         private static byte[] RemoveDefaultTransportModeFromSequence(byte[] transportModeSequence)
         {
             List<byte> newSequence = new List<byte>(0);
             for(int i = 0; i < transportModeSequence.Length; i++)
             {
                 if((transportModeSequence[i] & TransportModes.DefaultMode) != TransportModes.DefaultMode)
+                {
+                    newSequence.Add(transportModeSequence[i]);
+                }
+            }
+
+            return newSequence.ToArray();
+        }
+
+        private static byte[] RemoveConsecutiveDuplicatesFromTransportModeSequence(byte[] transportModeSequence)
+        {
+            List<byte> newSequence = new List<byte>(0);
+            newSequence.Add(transportModeSequence[0]);
+            for(int i = 1; i < transportModeSequence.Length; i++)
+            {
+                if(transportModeSequence[i] != transportModeSequence[i-1])
                 {
                     newSequence.Add(transportModeSequence[i]);
                 }
