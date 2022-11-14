@@ -76,7 +76,7 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            string[] requestedSequence = new string[] {"Foot",  "Foot", "Car", "Foot", "Bicycle", "Foot", "Mass Transit", "Foot", "Car", "Bicycle"};
+            string[] requestedSequence = new string[] {"Car", "Mass Transit"};
             byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
 
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);

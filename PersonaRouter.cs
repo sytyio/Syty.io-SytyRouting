@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 20; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 1; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -380,7 +380,6 @@ namespace SytyRouting
                 {
                     logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value));
                 }
-            
 
                 logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
                 string vertexString        = String.Format(" {0,14}","Vertex");
@@ -393,30 +392,38 @@ namespace SytyRouting
                 logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
                 logger.Debug("==================================================================================================================");
                 
-                int previousNodeIdx = 0;
+                int transportModeRepetitions=0;
+                byte currentTransportMode = 0;
+                byte previousTransportMode = 0;
                 for(var n = 0; n < routeCoordinates.Length; n++)
                 {
                     node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
-                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
-                    vertexString      = String.Format(" {0,14}", n+1);
-                    nodeString        = String.Format(" {0,14}", node.OsmID);
-                    timeStampString   = String.Format(" {0,14}", timeStamp);
-                    coordinateXString = String.Format(" {0,14}", routeCoordinates[n].X);
-                    coordinateYString = String.Format(" {0,14}", routeCoordinates[n].Y);
-                    nodeIdxString     = String.Format(" {0,14}", node.Idx);
-                    if(previousNodeIdx!=node.Idx && transportModeTransitions.ContainsKey(node.Idx))
-                        transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
-                    else
-                        transportModeString = String.Format("{0,14}",".");
-                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
-                    if(n>10)
+
+                    if(transportModeTransitions.ContainsKey(node.Idx))
                     {
-                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
-                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
-                        logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{4,14}",".",".",".",".",".",".");
-                        break;
+                        currentTransportMode = transportModeTransitions[node.Idx];
                     }
-                    previousNodeIdx = node.Idx;
+
+                    if(previousTransportMode!=currentTransportMode)
+                    {
+                        previousTransportMode = currentTransportMode;    
+                        transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(currentTransportMode));
+                        timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                        vertexString      = String.Format(" {0,14}", n+1);
+                        nodeString        = String.Format(" {0,14}", node.OsmID);
+                        timeStampString   = String.Format(" {0,14}", timeStamp);
+                        coordinateXString = String.Format(" {0,14}", routeCoordinates[n].X);
+                        coordinateYString = String.Format(" {0,14}", routeCoordinates[n].Y);
+                        nodeIdxString     = String.Format(" {0,14}", node.Idx);
+                        logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
+                        transportModeRepetitions=0;
+                    }
+                    else
+                    {
+                        if(transportModeRepetitions<1)
+                            logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{5,14}\t{6,14}","...","...","...","...","...","...","...");
+                        transportModeRepetitions++;
+                    }
                 }
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
                 timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
@@ -428,7 +435,7 @@ namespace SytyRouting
                 if(transportModeTransitions.ContainsKey(node.Idx))
                     transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
                 else
-                    transportModeString = String.Format("{0,14}",".");
+                    transportModeString = String.Format("{0,14}","...");
                 nodeIdxString       = String.Format(" {0,14}", node.Idx);
                 logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
             }

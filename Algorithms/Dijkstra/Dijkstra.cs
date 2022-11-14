@@ -10,50 +10,30 @@ namespace SytyRouting.Algorithms.Dijkstra
         private PriorityQueue<DijkstraStep, double> dijkstraStepsQueue = new PriorityQueue<DijkstraStep, double>();
         private Dictionary<int, double> bestScoreForNode = new Dictionary<int, double>();
 
-        public void TraceRoute()
-        {
-            logger.Debug("Displaying {0} route Nodes (OsmId):", route.Count);
-            foreach(Node node in route)
-            {
-                logger.Debug("{0}", node.OsmID);
-            }
-        }
+        byte[] TrasnportModeSequence = null!;
 
         protected override List<Node> RouteSearch(Node originNode, Node destinationNode, byte[] transportModesSequence)
         {
             route.Clear();
             transportModeTransitions.Clear();
             routeCost = 0;
+            TrasnportModeSequence = transportModesSequence;
 
             //DEBUG:
-            if(originNode.OsmID==9118117)
+            if(originNode.OsmID==2595939392)
             {
-                Console.WriteLine("Problem");
-            }
-
-
-            var transportModeQueue = new Queue<byte>(transportModesSequence.Length);
-            for(int i = 0; i < transportModesSequence.Length; i++)
-            {
-                transportModeQueue.Enqueue(transportModesSequence[i]);
-            }
-
-            
-            if(transportModeQueue.TryDequeue(out byte initialTransportMode))
-            {
-                AddStep(null, originNode, 0, initialTransportMode);
-            }
-            else
-            {
-                logger.Debug("Error retrieving initial Transport Mode from queue.");
+                Console.WriteLine("Problemo");
             }
             
+            AddStep(null, originNode, 0, 0);
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
                 var activeNode = currentStep!.ActiveNode;
 
-                byte currentTransportMode = currentStep.TransportMode;
+                int currentTransportModeIndex = currentStep.TransportModeSequenceIndex;
+                byte currentTransportMode = transportModesSequence[currentTransportModeIndex];
+                
 
                 if(activeNode == destinationNode)
                 {
@@ -62,19 +42,20 @@ namespace SytyRouting.Algorithms.Dijkstra
                     
                     break;
                 }
+
                 if(priority <= bestScoreForNode[activeNode!.Idx])
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
                         if((outwardEdge.TransportModes & currentTransportMode) == currentTransportMode)
                         {
-                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportMode);
-                            //if((transportModeQueue.TryPeek(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
-                            //    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportModeIndex);
                         }
-                        if((transportModeQueue.TryDequeue(out byte nextTransportMode) && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode))
+
+                        byte nextTransportMode = transportModesSequence[currentTransportModeIndex+1];
+                        if(currentStep.TransportModeSequenceIndex < transportModesSequence.Length && (outwardEdge.TransportModes & nextTransportMode) == nextTransportMode)
                         {
-                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, nextTransportMode);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportModeIndex+1);
                         }
                     }
                 }
@@ -86,12 +67,12 @@ namespace SytyRouting.Algorithms.Dijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, byte transportMode)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportModeIndex)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportMode = transportMode };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportModeSequenceIndex = transportModeIndex };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -111,12 +92,12 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 if(currentStep.PreviousStep != null)
                 {
-                    if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
-                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                    if(currentStep.PreviousStep.TransportModeSequenceIndex != currentStep.TransportModeSequenceIndex && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
+                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, TrasnportModeSequence[currentStep.TransportModeSequenceIndex]);
                 }
                 else
                 {
-                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, TrasnportModeSequence[currentStep.TransportModeSequenceIndex]);
                 }
                 ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);
