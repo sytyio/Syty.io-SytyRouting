@@ -4,12 +4,7 @@ using System.Diagnostics;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using System.Globalization;
 using SytyRouting.Gtfs.GtfsUtils;
-using SytyRouting.Gtfs.ModelCsv;
-using System.Diagnostics.CodeAnalysis;
-
-
 
 namespace SytyRouting
 {
@@ -26,7 +21,7 @@ namespace SytyRouting
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
 
-        public Dictionary<string, ControllerGtfs> GtfsDico= new Dictionary<string, ControllerGtfs>();
+        public Dictionary<string, ControllerGtfs> GtfsDico = new Dictionary<string, ControllerGtfs>();
 
         private Task FileSaveAsync(string path)
         {
@@ -244,14 +239,18 @@ namespace SytyRouting
                 // Connecting gtfs nodes to graph nodes
                 foreach (var node in gtfs.Value.GetNodes())
                 {
-                    var nearest = KDTree.GetNearestNeighbor(node.X,node.Y);
+                    var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
                     // Cost : foot 
                     var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") }; // ici = ok relie noeuds stib à graph existant 
                     var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") };
-                    node.ValidSource = true;
-                    node.ValidTarget = true;
-                    node.InwardEdges.Add(newEdgeIn);
-                    node.OutwardEdges.Add(newEdgOut);
+                    if (node.ValidSource)
+                    {
+                        node.OutwardEdges.Add(newEdgOut);
+                    }
+                    if (node.ValidTarget)
+                    {
+                        node.InwardEdges.Add(newEdgeIn);
+                    }
                     nearest.InwardEdges.Add(newEdgOut);
                     nearest.OutwardEdges.Add(newEdgeIn);
                 }
@@ -264,7 +263,6 @@ namespace SytyRouting
                 var testInternNode = gtfs.Value.GetInternalNodes();
                 NodesArray = NodesArray.Union(nodes).ToArray();
                 logger.Info("Nb nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
-
                 logger.Info("Nb stop nodes = {0}, Nb internal nodes = {1}, Nb new nodes total = {2}", testNode.Count(), testInternNode.Count(), testNode.Count() + testInternNode.Count());
             }
             int i = 0;
@@ -310,10 +308,8 @@ namespace SytyRouting
 
         public void TraceOneNode(Node node)
         {
-            // if(node.InwardEdges.Count()>4||node.OutwardEdges.Count()>4){
-            logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}",node.Idx,
+            logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}", node.Idx,
             node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.Y, node.X, node.ValidTarget, node.ValidSource);
-            // }
             TraceEdges(node);
         }
 
@@ -323,7 +319,7 @@ namespace SytyRouting
             {
                 logger.Debug("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
                     node.Idx, node.OsmID, node.X, node.Y);
-                 TraceEdges(node);
+                TraceEdges(node);
             }
         }
 
@@ -345,7 +341,7 @@ namespace SytyRouting
         private void TraceEdge(Edge edge)
         {
             logger.Debug("\t\tEdge: {0},\tcost: {1},\tsource Node Id: {2} ({3} {4});\ttarget Node Id: {5} ({6} {7});\tTransport Modes: {8} (mask: {9}, length = {10})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.Y, edge.SourceNode?.X, edge.TargetNode?.Idx, edge.TargetNode?.Y, edge.TargetNode?.X, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
+                    edge.OsmID, edge.Cost, edge.SourceNode?.Idx, edge.SourceNode?.Y, edge.SourceNode?.X, edge.TargetNode?.Idx, edge.TargetNode?.Y, edge.TargetNode?.X, Helper.TransportModesToString(edge.TransportModes), edge.TransportModes, edge.LengthM);
 
             // TraceInternalGeometry(edge);
         }

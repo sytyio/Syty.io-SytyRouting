@@ -1,14 +1,8 @@
 ﻿using NLog;
 using Npgsql;
-using NetTopologySuite.Geometries;
-using SytyRouting.Model;
-
 
 namespace SytyRouting
 {
-    using Gtfs.GtfsUtils;
-    using Gtfs.ModelGtfs;
-    using Gtfs.ModelCsv;
 
     class Program
     {
@@ -30,11 +24,15 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-            logger.Info("Count = {0}",graph.GetNodes().Count());
-            for (int i = 1558439 ; i < graph.GetNodes().Count(); i++)
+            logger.Info("Count = {0}", graph.GetNodes().Count());
+            for (int i = 1558439; i < graph.GetNodes().Count(); i++)
             {
                 var node = graph.GetNodes()[i];
-                    graph.TraceOneNode(graph.GetNodes()[i]);
+                if (node.ValidSource || node.ValidTarget)
+                {
+                    // if(node.Idx==1560000)
+                    graph.TraceOneNode(node);
+                }
             }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -66,7 +64,7 @@ namespace SytyRouting
             // // Persona spatial data generation
             // var personaRouter = new PersonaRouter(graph);
 
-            // string transportModeName = "Train";
+            // string transportModeName = "Tram";
             // byte transportMode = Helper.GetTransportModeMask(transportModeName);
 
             // if(transportMode != 0)

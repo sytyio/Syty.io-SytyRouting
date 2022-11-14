@@ -9,32 +9,28 @@ namespace SytyRouting.Gtfs.ModelGtfs
     {
         public string Id { get; }
 
-
         //  If there is a linestring SourceNode and TargetNode will contain a node, otherwise, will contain the StopGtfs
         public double DurationS { get; }
 
         public RouteGtfs Route { get; }
-
-        public double DistanceSourceToTargetM { get; }
-
         public bool IsShapeAvailable { get; }
 
         // If there is a linestring will contain the initial Stop, otherwise, will be null
         public StopGtfs? InitialStopSource { get; }
         public StopGtfs? InitialStopTarget { get; }
-
+ 
         
 
         public override string ToString()
         {
             // + "MaxSpeepMPerS = "+MaxSpeedMPerS+" Target on linestring "+TargetNearestLineString +  " Distance = " + DistanceSourceToTargetM + " meters, Duration = " + DurationS + " seconds" + "Source on linestring = "+ SourceNearestLineString + " walkSource = " +WalkDistanceSourceM + " walktarget = "+ WalkDistanceTargetM +" DistanceBetween = "+DistanceNearestPointsM
-            return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
+            return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Length ="+LengthM+ " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
         public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
         {
-            OsmID = long.MaxValue;
-            DistanceSourceToTargetM = distance;
+            OsmID = long.MaxValue; 
+            LengthM = distance;
             DurationS = duration;
             Id = id;
             TargetNode = target;
