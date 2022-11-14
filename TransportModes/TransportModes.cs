@@ -20,33 +20,61 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-        public static byte[] CreateTransportModeSequence(Node origin, Node destination, byte[] requestedTransportModes)
+        public static byte[] CreateTransportModeSequence(string[] requestedTransportModes)
         {
-            byte[] transportModesSequence = AddDefaultTransportModeToSequence(ValidateTransportModeSequence(requestedTransportModes));
+            byte[] requestedSequence = TransportModes.NameSequenceToMasksArray(requestedTransportModes);
+            
+            return CreateTransportModeSequence(requestedSequence);
+        }
 
+        public static byte[] CreateTransportModeSequence(byte[] requestedTransportModes)
+        {
+            byte[] revisedTransportModeSequence = ReviseTransportModeSequence(requestedTransportModes);
+            byte[] transportModeSequence = AddDefaultTransportModeToSequenceEnds(revisedTransportModeSequence);
+
+            return transportModeSequence;
+        }
+
+        public static bool ValidateTransportModeSequence(Node origin, Node destination, byte[] transportModeSequence)
+        {
+            bool theRouteEndsAreValid = RouteEndsAreValid(origin, destination, transportModeSequence);
+
+            if(theRouteEndsAreValid)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool RouteEndsAreValid(Node origin, Node destination, byte[] transportModesSequence)
+        {
             bool theOriginIsValid = origin.IsAValidRouteStart(transportModesSequence);
             bool theDestinationIsValid = destination.IsAValidRouteEnd(transportModesSequence);
 
             if(theOriginIsValid && theDestinationIsValid)
             {
-                return transportModesSequence;
+                return true;
             }
 
-            return new byte[] {0};
+            return false;
         }
 
-        private static byte[] ValidateTransportModeSequence(byte[] requestedTransportModes)
+        private static byte[] ReviseTransportModeSequence(byte[] requestedTransportModes)
         {
+            byte[] cleanedSequence = RemoveConsecutiveDuplicatesFromTransportModeSequence(
+                                        RemoveDefaultTransportModeFromSequence(requestedTransportModes));
+
+
             List<byte> transportModeSequence = new List<byte>(0);
-            byte[] revisedTransportModes = ReviseTransportModeSequence(requestedTransportModes);
-            transportModeSequence.Add(revisedTransportModes[0]);
+            transportModeSequence.Add(cleanedSequence[0]);
             int index = 0;
-            while(index < revisedTransportModes.Length)
+            while(index < cleanedSequence.Length)
             {
-                byte currentTransportMode = revisedTransportModes[index++];
-                for(int i = index; i < revisedTransportModes.Length; i++)
+                byte currentTransportMode = cleanedSequence[index++];
+                for(int i = index; i < cleanedSequence.Length; i++)
                 {
-                    byte nextTransportMode = revisedTransportModes[index++];
+                    byte nextTransportMode = cleanedSequence[index++];
                     if(RoutingRules.ContainsKey(currentTransportMode))
                     {
                         byte alternativeTransportModes = RoutingRules[currentTransportMode];
@@ -65,14 +93,6 @@ namespace SytyRouting
             }
 
             return transportModeSequence.ToArray();
-        }
-
-        private static byte[] ReviseTransportModeSequence(byte[] requestedTransportModeSequence)
-        {
-            return RemoveConsecutiveDuplicatesFromTransportModeSequence(
-                RemoveDefaultTransportModeFromSequence(
-                    requestedTransportModeSequence)
-                );
         }
 
         private static byte[] RemoveDefaultTransportModeFromSequence(byte[] transportModeSequence)
@@ -104,7 +124,7 @@ namespace SytyRouting
             return newSequence.ToArray();
         }
 
-        private static byte[] AddDefaultTransportModeToSequence(byte[] transportModeSequence)
+        private static byte[] AddDefaultTransportModeToSequenceEnds(byte[] transportModeSequence)
         {
             byte[] newSequence = new byte[transportModeSequence.Length];
             if(transportModeSequence[0]!=TransportModes.DefaultMode)
@@ -119,10 +139,6 @@ namespace SytyRouting
             if(transportModeSequence.Last()!=TransportModes.DefaultMode)
             {
                 Array.Resize(ref newSequence,newSequence.Length+1);
-                for(int i=0; i<transportModeSequence.Length; i++)
-                {
-                    newSequence[i]=transportModeSequence[i];
-                }
                 newSequence[newSequence.Length-1]=TransportModes.DefaultMode;
             }
 

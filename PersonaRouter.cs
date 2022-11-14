@@ -165,35 +165,24 @@ namespace SytyRouting
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         // DEBUG
-                        if(persona.Id == 2)
+                        if(persona.Id == 1)
                         {
                             Console.WriteLine("Problemo");
                         }
 
-                        persona.requestedTransportSequence = requestedTransportModes;                        
-                        byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(origin, destination, requestedTransportModes);
-                        persona.definiteTransportSequence = transportModesSequence;
-                        
-                        if(TransportModes.ArrayToMask(transportModesSequence) !=0 && OriginAndDestinationAreValid(origin, destination, persona.Id))
+                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+                        if(route.Count > 0)
                         {
-                            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportModesSequence);
-                            if(route.Count > 0)
-                            {
-                                TimeSpan currentTime = TimeSpan.Zero;
-                                persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();                                
-                                persona.SuccessfulRouteComputation = true;
+                            TimeSpan currentTime = TimeSpan.Zero;
+                            persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
+                            persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();                                
+                            persona.SuccessfulRouteComputation = true;
 
-                                Interlocked.Increment(ref computedRoutes);
-                            }
-                            else
-                            {
-                                logger.Debug("Route is empty for Persona Id {0}", persona.Id);
-                            }
+                            Interlocked.Increment(ref computedRoutes);
                         }
                         else
                         {
-                            logger.Debug("Invalid transport sequence or invalid origin/destination data.");
+                            logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                         }
                     }
                     catch (Exception e)
@@ -333,10 +322,7 @@ namespace SytyRouting
                 logger.Debug("Id {0}:\t HomeLocation = {1}:({2}, {3}),\t WorkLocation = {4}:({5}, {6})",
                     persona.Id, origin.OsmID, persona.HomeLocation?.X, persona.HomeLocation?.Y,
                                 destination.OsmID, persona.WorkLocation?.X, persona.WorkLocation?.Y);
-                if(persona.requestedTransportSequence is not null)
-                    logger.Debug("Requested Transport Mode sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.requestedTransportSequence)));
-                if(persona.definiteTransportSequence is not null)
-                    logger.Debug("Definite Transport Mode sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.definiteTransportSequence)));
+                
                 TraceRoute(persona);
             }
         }

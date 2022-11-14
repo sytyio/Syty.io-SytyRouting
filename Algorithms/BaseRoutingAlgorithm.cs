@@ -61,6 +61,14 @@ namespace SytyRouting.Algorithms
 
         public LineString ConvertRouteFromNodesToLineString(List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
+
+            if(nodeRoute.Count < 1)
+            {
+                return new LineString(null, geometryFactory);    
+            }
+            
             List<Coordinate> xyCoordinates = new List<Coordinate>(0);
             List<double> mOrdinates = new List<double>(0);
 
@@ -103,8 +111,6 @@ namespace SytyRouting.Algorithms
                 }
             }
 
-            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-            var geometryFactory = new GeometryFactory(sequenceFactory);
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
             {
