@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 1; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -159,8 +159,8 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
-                    try
-                    {
+                    // try
+                    // {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
@@ -184,12 +184,12 @@ namespace SytyRouting
                         {
                             logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        persona.SuccessfulRouteComputation = false;
-                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
-                    }
+                    // }
+                    // catch (Exception e)
+                    // {
+                    //     persona.SuccessfulRouteComputation = false;
+                    //     logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
+                    // }
                 }
             }
         }
@@ -331,6 +331,9 @@ namespace SytyRouting
         {
             if(persona.Route is not null)
             {
+                // DEBUG:
+                if(persona.Id==4)
+                    Console.WriteLine("Problemo");
                 //TraceRoute(persona.Route);
                 TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
             }
@@ -397,6 +400,7 @@ namespace SytyRouting
                 byte previousTransportMode = 0;
                 for(var n = 0; n < routeCoordinates.Length; n++)
                 {
+                    Console.WriteLine("{0}",n);
                     node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
 
                     if(transportModeTransitions.ContainsKey(node.Idx))
@@ -421,13 +425,13 @@ namespace SytyRouting
                     else
                     {
                         if(transportModeRepetitions<1)
-                            logger.Debug("{0,14}\t{1,14}\t{2,14}\t{3,14}\t{4,14}\t{5,14}\t{6,14}","...","...","...","...","...","...","...");
+                            logger.Debug(" {0,14}\t {1,14}\t {2,14}\t {3,14}\t {4,14}\t {5,14}\t {6,14}","...","...","...","...","...","...","...");
                         transportModeRepetitions++;
                     }
                 }
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
                 timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
-                vertexString      = String.Format(" {0,14}", routeCoordinates.Length);
+                vertexString        = String.Format(" {0,14}", routeCoordinates.Length);
                 nodeString          = String.Format(" {0,14}", node.OsmID);
                 timeStampString     = String.Format(" {0,14}", timeStamp);
                 coordinateXString   = String.Format(" {0,14}", routeCoordinates[route.Count -1].X);
@@ -435,7 +439,7 @@ namespace SytyRouting
                 if(transportModeTransitions.ContainsKey(node.Idx))
                     transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
                 else
-                    transportModeString = String.Format("{0,14}","...");
+                    transportModeString = String.Format(" {0,14}","...");
                 nodeIdxString       = String.Format(" {0,14}", node.Idx);
                 logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, nodeIdxString, nodeString);
             }

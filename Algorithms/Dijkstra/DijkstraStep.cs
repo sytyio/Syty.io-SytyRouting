@@ -7,7 +7,7 @@ namespace SytyRouting.Algorithms.Dijkstra
     {
         public DijkstraStep? PreviousStep;
         [NotNull]
-        public Node? ActiveNode;
+        public Node ActiveNode = null!;
         public double CumulatedCost;
         public StepDirection Direction;
         public int TransportModeSequenceIndex;  

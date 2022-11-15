@@ -64,7 +64,7 @@ namespace SytyRouting.Algorithms
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
 
-            if(nodeRoute.Count < 1)
+            if(nodeRoute.Count <= 1)
             {
                 return new LineString(null, geometryFactory);    
             }

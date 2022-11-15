@@ -67,26 +67,29 @@ namespace SytyRouting
 
 
             List<byte> transportModeSequence = new List<byte>(0);
-            transportModeSequence.Add(cleanedSequence[0]);
-            int index = 0;
-            while(index < cleanedSequence.Length)
+            if(cleanedSequence.Length>0)
             {
-                byte currentTransportMode = cleanedSequence[index++];
-                for(int i = index; i < cleanedSequence.Length; i++)
+                transportModeSequence.Add(cleanedSequence[0]);
+                int index = 0;
+                while(index < cleanedSequence.Length)
                 {
-                    byte nextTransportMode = cleanedSequence[index++];
-                    if(RoutingRules.ContainsKey(currentTransportMode))
+                    byte currentTransportMode = cleanedSequence[index++];
+                    for(int i = index; i < cleanedSequence.Length; i++)
                     {
-                        byte alternativeTransportModes = RoutingRules[currentTransportMode];
-                        if((nextTransportMode & alternativeTransportModes) == nextTransportMode)
+                        byte nextTransportMode = cleanedSequence[index++];
+                        if(RoutingRules.ContainsKey(currentTransportMode))
                         {
-                            transportModeSequence.Add(nextTransportMode);
-                            index = i;
-                            break;
-                        }
-                        else
-                        {
-                            logger.Debug("Invalid Transport Mode Sequence: {0}---> {1}:: Skipping {1}\b", MaskToString(currentTransportMode),MaskToString(nextTransportMode));
+                            byte alternativeTransportModes = RoutingRules[currentTransportMode];
+                            if((nextTransportMode & alternativeTransportModes) == nextTransportMode)
+                            {
+                                transportModeSequence.Add(nextTransportMode);
+                                index = i;
+                                break;
+                            }
+                            else
+                            {
+                                logger.Debug("Invalid Transport Mode Sequence: {0}---> {1}:: Skipping {1}\b", MaskToString(currentTransportMode),MaskToString(nextTransportMode));
+                            }
                         }
                     }
                 }
@@ -112,12 +115,15 @@ namespace SytyRouting
         private static byte[] RemoveConsecutiveDuplicatesFromTransportModeSequence(byte[] transportModeSequence)
         {
             List<byte> newSequence = new List<byte>(0);
-            newSequence.Add(transportModeSequence[0]);
-            for(int i = 1; i < transportModeSequence.Length; i++)
+            if(transportModeSequence.Length>0)
             {
-                if(transportModeSequence[i] != transportModeSequence[i-1])
+                newSequence.Add(transportModeSequence[0]);
+                for(int i = 1; i < transportModeSequence.Length; i++)
                 {
-                    newSequence.Add(transportModeSequence[i]);
+                    if(transportModeSequence[i] != transportModeSequence[i-1])
+                    {
+                        newSequence.Add(transportModeSequence[i]);
+                    }
                 }
             }
 
@@ -127,19 +133,22 @@ namespace SytyRouting
         private static byte[] AddDefaultTransportModeToSequenceEnds(byte[] transportModeSequence)
         {
             byte[] newSequence = new byte[transportModeSequence.Length];
-            if(transportModeSequence[0]!=TransportModes.DefaultMode)
+            if(transportModeSequence.Length>0)
             {
-                Array.Resize(ref newSequence,newSequence.Length+1);
-                newSequence[0]=TransportModes.DefaultMode;
-                for(int i=0; i<transportModeSequence.Length; i++)
+                if(transportModeSequence[0]!=TransportModes.DefaultMode)
                 {
-                    newSequence[i+1]=transportModeSequence[i];
+                    Array.Resize(ref newSequence,newSequence.Length+1);
+                    newSequence[0]=TransportModes.DefaultMode;
+                    for(int i=0; i<transportModeSequence.Length; i++)
+                    {
+                        newSequence[i+1]=transportModeSequence[i];
+                    }
                 }
-            }
-            if(transportModeSequence.Last()!=TransportModes.DefaultMode)
-            {
-                Array.Resize(ref newSequence,newSequence.Length+1);
-                newSequence[newSequence.Length-1]=TransportModes.DefaultMode;
+                if(transportModeSequence.Last()!=TransportModes.DefaultMode)
+                {
+                    Array.Resize(ref newSequence,newSequence.Length+1);
+                    newSequence[newSequence.Length-1]=TransportModes.DefaultMode;
+                }
             }
 
             return newSequence;
@@ -263,7 +272,7 @@ namespace SytyRouting
                     }
                 }
                 if(!nameFound)
-                    logger.Info("Transport Mode Sequence: Transport mode '{0}' not found. Ignoring trasport mode.", transportModesSequence[i]);
+                    logger.Info("Transport Mode Sequence: Transport mode '{0}' not found. Ignoring transport mode.", transportModesSequence[i]);
             }
                 
             return masksList.ToArray();
