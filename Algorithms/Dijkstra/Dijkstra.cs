@@ -18,12 +18,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             transportModeTransitions.Clear();
             routeCost = 0;
             TrasnportModeSequence = transportModesSequence;
-
-            //DEBUG:
-            if(originNode.OsmID==2595939392)
-            {
-                Console.WriteLine("Problemo");
-            }
             
             if(transportModesSequence.Length>0)
             {
@@ -82,9 +76,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                             }
                         }
                         else
-                        {
-                            //Console.WriteLine("Check");
-                    
+                        {                    
                             if(TransportModes.RoutingRules.ContainsKey(currentTransportMode))
                             {
                                 byte[] alternativeTransportModes = TransportModes.MaskToArray(TransportModes.RoutingRules[currentTransportMode]);

@@ -25,7 +25,7 @@ namespace SytyRouting
     public sealed class TransportSettings
     {
         public string[] TransportModes {get; set;} = null!;
-        public string[] PublicTransportModes {get; set;} = null!;
+        public string[] MassTransit {get; set;} = null!;
          public GtfsTypeToTransportModes[]GtfsTypeToTransportModes {get;set;}=null!;
         public TransportModeSpeed[] TransportModeSpeeds  {get; set;} = null!;
         public OSMTagToTransportMode[] OSMTagsToTransportModes  {get; set;} = null!;

@@ -45,8 +45,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, Node> nearestNodeDico = new Dictionary<string, Node>();
 
         //Masks
-        private Dictionary<int, byte> routeTypeToTransportMode = new Dictionary<int, byte>();
-        //private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
+        private Dictionary<int, byte> routeTypeToTransportMode = new Dictionary<int, byte>();        
         private Dictionary<int, byte> transportModeMasks = new Dictionary<int, byte>();
 
 
@@ -57,7 +56,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            // await DownloadGtfs();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames);

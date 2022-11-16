@@ -34,7 +34,7 @@ namespace SytyRouting
 
         // Transport parameters:
         public static string[] TransportModeNames {get;}
-        public static string[] PublicTransportModeNames {get;}
+        public static string[] MassTransitSystem {get;}
         public static Dictionary<string,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
 
@@ -81,7 +81,7 @@ namespace SytyRouting
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
-            PublicTransportModeNames = transportSettings.PublicTransportModes;
+            MassTransitSystem = transportSettings.MassTransit;
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
