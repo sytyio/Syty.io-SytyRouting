@@ -20,8 +20,8 @@ namespace SytyRouting.Gtfs.ModelGtfs
         {
             Id = id;
             Name = name;
-            Y = lat;
             X = lon;
+            Y = lat;
             ValidSource = false;
             ValidTarget = false;
             OsmID=long.MaxValue;

@@ -9,55 +9,39 @@ namespace SytyRouting.Gtfs.ModelGtfs
     {
         public string Id { get; }
 
-        public StopGtfs SourceStop { get; }
-
-        public StopGtfs TargetStop { get; }
-
+        //  If there is a linestring SourceNode and TargetNode will contain a node, otherwise, will contain the StopGtfs
         public double DurationS { get; }
 
         public RouteGtfs Route { get; }
-
-        public double DistanceSourceToTargetM { get; }
-
         public bool IsShapeAvailable { get; }
 
-        public Point? SourceNearestLineString { get; }
-
-        public Point? TargetNearestLineString { get; }
-
-        public double? WalkDistanceSourceM { get; }
-
-        public double? WalkDistanceTargetM { get; }
-
-        public double? DistanceNearestPointsM { get; }
-
+        // If there is a linestring will contain the initial Stop, otherwise, will be null
+        public StopGtfs? InitialStopSource { get; }
+        public StopGtfs? InitialStopTarget { get; }
+ 
         
 
         public override string ToString()
         {
             // + "MaxSpeepMPerS = "+MaxSpeedMPerS+" Target on linestring "+TargetNearestLineString +  " Distance = " + DistanceSourceToTargetM + " meters, Duration = " + DurationS + " seconds" + "Source on linestring = "+ SourceNearestLineString + " walkSource = " +WalkDistanceSourceM + " walktarget = "+ WalkDistanceTargetM +" DistanceBetween = "+DistanceNearestPointsM
-            return "Id = " + Id + " Target = " + TargetStop + " Source = " + SourceStop + " Route = " + Route + " LineString? = " + IsShapeAvailable;
+            return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Length ="+LengthM+ " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, StopGtfs source, StopGtfs target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, Point? sourceNearestLineString, Point? targetNearestLineString, double walkDistanceSourceM, double walkDistanceTargetM, double distanceNearestPointsM, double maxSpeedMPerS, XYMPoint[]? internalGeometry)
+        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
         {
-            OsmID = long.MaxValue;
-            DistanceSourceToTargetM = distance;
+            OsmID = long.MaxValue; 
+            LengthM = distance;
             DurationS = duration;
             Id = id;
-            TargetStop = target;
-            TargetNode=target;
-            SourceStop = source;
-            SourceNode=source;
+            TargetNode = target;
+            SourceNode = source;
             Route = route;
             IsShapeAvailable = iShapeAvailable;
-            SourceNearestLineString = sourceNearestLineString;
-            TargetNearestLineString = targetNearestLineString;
-            WalkDistanceSourceM = walkDistanceSourceM;
-            WalkDistanceTargetM = walkDistanceTargetM;
-            DistanceNearestPointsM = distanceNearestPointsM;
+            InitialStopSource = initialStopSource;
+            InitialStopTarget = initialStopTarget;
             MaxSpeedMPerS = maxSpeedMPerS;
             InternalGeometry = internalGeometry;
+            TransportModes = transportModes;
         }
     }
 }

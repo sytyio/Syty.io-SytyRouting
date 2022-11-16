@@ -21,6 +21,11 @@ namespace SytyRouting
         public static string ComputedRouteTableName {get;}
         public static string EdgeTableName {get;}
 
+        // Gtfs settings : 
+
+        public static DataGtfsSettings DataGtfsSettings {get;set;} = null!;
+        public static Dictionary<String, Uri> ProvidersInfo {get;set;} = null!;
+
         // Routing parameters:
         public static int MonitorSleepMilliseconds {get;}
         public static int DBPersonaLoadAsyncSleepMilliseconds {get;}
@@ -32,6 +37,9 @@ namespace SytyRouting
         public static string[] PublicTransportModeNames {get;}
         public static Dictionary<string,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
+        // private static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
+
+         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
 
         // Transport Modes routing rules:
@@ -63,6 +71,9 @@ namespace SytyRouting
             ComputedRouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
 
+            DataGtfsSettings dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
+            CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+
             RoutingSettings routingSettings = config.GetRequiredSection("RoutingSettings").Get<RoutingSettings>();
             MonitorSleepMilliseconds = routingSettings.MonitorSleepMilliseconds;
             DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
@@ -75,6 +86,38 @@ namespace SytyRouting
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
+            GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
+            
+        }
+
+        public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks){
+                int [] tagsGtfs = Configuration.GtfsTags();
+                Dictionary<int,byte> routeTypeToTransportMode= new Dictionary<int, byte>();
+                for (var i=0;i<tagsGtfs.Length;i++){
+                    byte mask = 0;
+                    var configAllowedTransportModes=Configuration.GtfsTypeToTransportModes[i].AllowedTransportModes;
+                    foreach(var transportName in configAllowedTransportModes)
+                {
+                    var key = TransportModes.GetTransportModeNameIndex(transportName);
+                    if(transportModeMasks.ContainsKey(key))
+                    {
+                        mask |= transportModeMasks[key];
+                    }
+                    else
+                    {
+                        logger.Info("Transport Mode '{0}' not found.",transportName);
+                    }
+                }
+                if (!routeTypeToTransportMode.ContainsKey(tagsGtfs[i]))
+                {
+                    routeTypeToTransportMode.Add(tagsGtfs[i], mask);
+                }
+                else
+                {
+                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagsGtfs[i]);
+                }
+                }
+                return routeTypeToTransportMode;
         }
 
         public static bool VerifyTransportListFromGraphFile(string[] transportModes)
@@ -86,7 +129,7 @@ namespace SytyRouting
                     if(!transportModes[i].Equals(TransportModeNames[i]))
                         return false;
                 }
-                return true;     
+                return true;
             }
 
             return false;            
@@ -189,6 +232,14 @@ namespace SytyRouting
             return validTransportModes.ToArray();
         }
 
+        private static int[] GtfsTags(){
+            int [] gtfsTagsId = new int [GtfsTypeToTransportModes.Count()];
+            for(int i=0;i<GtfsTypeToTransportModes.Count();i++){
+                gtfsTagsId[i]=GtfsTypeToTransportModes[i].RouteType;
+            }
+            return gtfsTagsId;
+        }
+
         public static async Task<int[]> ValidateOSMTags()
         {
             var connectionString = Configuration.ConnectionString;
@@ -245,6 +296,21 @@ namespace SytyRouting
             }
 
             return osmTagIds;
+        }
+
+        private static void CreateDictionaryProviderUri(string [] providers, Uri [] uris){
+            ProvidersInfo = new Dictionary<string, Uri>();
+            if(providers.Count()!=uris.Count()){
+                logger.Info("Problem with the providers data, not the same number of uris and providers");
+            }else{
+                for(int i=0;i<providers.Count();i++){
+                    try{
+                    ProvidersInfo.Add(providers[i],uris[i]);
+                    }catch(ArgumentException){
+                        logger.Info("Provider already there");
+                    }
+                }
+            }
         }
     }
 }

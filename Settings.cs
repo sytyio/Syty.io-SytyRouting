@@ -15,10 +15,18 @@ namespace SytyRouting
         public string EdgeTableName {get; set;} = null!;
     }
 
+    public sealed class DataGtfsSettings
+    {
+        public string [] GtfsProviders {get;set;}=null!;
+        public Uri [] GtfsUris {get;set;}=null!;
+    }
+
+
     public sealed class TransportSettings
     {
         public string[] TransportModes {get; set;} = null!;
         public string[] PublicTransportModes {get; set;} = null!;
+         public GtfsTypeToTransportModes[]GtfsTypeToTransportModes {get;set;}=null!;
         public TransportModeSpeed[] TransportModeSpeeds  {get; set;} = null!;
         public OSMTagToTransportMode[] OSMTagsToTransportModes  {get; set;} = null!;
         public TransportModeRoutingRule[] TransportModeRoutingRules  {get; set;} = null!;
@@ -34,6 +42,12 @@ namespace SytyRouting
     {
         public string CurrentTransportMode {get; set;} = null!;
         public string[] AlternativeTransportModes {get; set;} = null!;
+    }
+
+    public sealed class GtfsTypeToTransportModes
+    {
+        public int RouteType { get; set; }
+        public string[] AllowedTransportModes {get;set;}=null!;
     }
 
     public sealed class OSMTagToTransportMode

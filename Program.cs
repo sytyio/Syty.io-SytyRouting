@@ -1,14 +1,8 @@
 ﻿using NLog;
 using Npgsql;
-using NetTopologySuite.Geometries;
-using SytyRouting.Model;
-
 
 namespace SytyRouting
 {
-    using Gtfs.GtfsUtils;
-    using Gtfs.ModelGtfs;
-    using Gtfs.ModelCsv;
 
     class Program
     {
@@ -30,20 +24,16 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-
-            //graph.TraceNodes();
-
-             graph.TraceOneNode(graph.GetNodes()[0]);
-             graph.TraceOneNode(graph.GetNodes()[1]);
-              graph.TraceOneNode(graph.GetNodes()[1558438]);
-             graph.TraceOneNode(graph.GetNodes()[1558439]);
-             graph.TraceOneNode(graph.GetNodes()[1558449]);
-            //  graph.TraceOneNode(graph.GetNodes()[1559000]);
-            //  graph.TraceOneNode(graph.GetNodes()[1559700]);
-            //  graph.TraceOneNode(graph.GetNodes()[1560000]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561286]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561287]);
-            //  graph.TraceOneNode(graph.GetNodes()[1561306]);
+            logger.Info("Count = {0}", graph.GetNodes().Count());
+            for (int i = 1558439; i < graph.GetNodes().Count(); i++)
+            {
+                var node = graph.GetNodes()[i];
+                if (node.ValidSource || node.ValidTarget)
+                {
+                    // if(node.Idx==1560000)
+                    graph.TraceOneNode(node);
+                }
+            }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -84,12 +74,10 @@ namespace SytyRouting
     
             personaRouter.TracePersonas();
             // personaRouter.TracePersonasRouteResult();
-           
+
 
             // Logger flushing
             LogManager.Shutdown();
         }
-
-
     }
 }

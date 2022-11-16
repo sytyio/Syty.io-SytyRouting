@@ -336,12 +336,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             logger.Info("Nb nodes {0}", graph.GetNodeCount());
 
-            var listProviders = new List<ProviderCsv>();
-            listProviders.Add(ProviderCsv.stib);
+            // var listProviders = new List<string>();
+            // listProviders.Add("stib");
             // listProviders.Add(ProviderCsv.ter);
-            await graph.GetDataFromGtfs(listProviders);
-            var listsNode = new Dictionary<ProviderCsv, IEnumerable<Node>>();
-            var listsEdge = new Dictionary<ProviderCsv, IEnumerable<Edge>>();
+            await graph.GetDataFromGtfs();
+            var listsNode = new Dictionary<string, IEnumerable<Node>>();
+            var listsEdge = new Dictionary<string, IEnumerable<Edge>>();
             foreach (var gtfs in graph.GtfsDico)
             {
                 listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
