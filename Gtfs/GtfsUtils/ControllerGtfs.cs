@@ -473,7 +473,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
             var tripsForOneDay = SelectAllTripsForGivenDay(day);
             var tripsForOneDayBetweenHours = from trip in tripsForOneDay
-                                             where trip.Value.Schedule.Details.First().Value.DepartureTime >= min && trip.Value.Schedule.Details.First().Value.DepartureTime <= max
+                                             where trip.Value.Schedule.Details.First().Value.DepartureTime >= min 
+                                                    && trip.Value.Schedule.Details.First().Value.DepartureTime <= max
                                              select trip;
             return tripsForOneDayBetweenHours.ToDictionary(k => k.Key, v => v.Value);
         }

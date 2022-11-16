@@ -240,8 +240,7 @@ namespace SytyRouting
                 foreach (var node in gtfs.Value.GetNodes())
                 {
                     var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-                    // Cost : foot 
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") }; // ici = ok relie noeuds stib à graph existant 
+                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") };
                     var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = Helper.GetTransportModeMask("Foot") };
                     if (node.ValidSource)
                     {
