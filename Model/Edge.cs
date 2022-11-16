@@ -19,10 +19,10 @@ namespace SytyRouting.Model
         public byte TransportModes;
 
         [NotNull]
-        public Node? SourceNode;
+        public Node? SourceNode = null!;
 
         [NotNull]
-        public Node? TargetNode;
+        public Node? TargetNode = null!;
 
         public XYMPoint[]? InternalGeometry;
 

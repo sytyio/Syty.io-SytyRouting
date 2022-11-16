@@ -46,7 +46,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         //Masks
         private Dictionary<int, byte> routeTypeToTransportMode = new Dictionary<int, byte>();
-        private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
+        //private Dictionary<String, byte> transportModeMasks = new Dictionary<String, byte>();
+        private Dictionary<int, byte> transportModeMasks = new Dictionary<int, byte>();
 
 
         public ControllerGtfs(string provider)
@@ -59,8 +60,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             // await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
-            transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
-            routeTypeToTransportMode = Helper.CreateMappingRouteTypeToTransportMode(transportModeMasks);
+            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames);
+            routeTypeToTransportMode = TransportModes.CreateMappingRouteTypeToTransportMode(transportModeMasks);
 
             var stopWatch = new Stopwatch();
             stopWatch.Start();

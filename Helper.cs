@@ -183,88 +183,88 @@ namespace SytyRouting
 
         // Masks 
 
-        public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
-        {
-            Dictionary<int,byte> tagIdToTransportMode = await Configuration.CreateMappingTagIdToTransportMode(transportModeMasks);
+        // public static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportMode(Dictionary<String,byte> transportModeMasks)
+        // {
+        //     Dictionary<int,byte> tagIdToTransportMode = await TransportModes.CreateMappingTagIdToTransportModes(transportModeMasks);
 
-            foreach(var ti2tmm in tagIdToTransportMode)
-            {
-                Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
-            }
-            return tagIdToTransportMode;
-        }
+        //     foreach(var ti2tmm in tagIdToTransportMode)
+        //     {
+        //         Console.WriteLine("{0}: {1} :: {2}", ti2tmm.Key,ti2tmm.Value,TransportModesToString(ti2tmm.Value));
+        //     }
+        //     return tagIdToTransportMode;
+        // }
 
-        public static Dictionary<int,byte> CreateMappingRouteTypeToTransportMode(Dictionary<String,byte> transportModeMasks){
-            Dictionary<int,byte> routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
-                        foreach(var rt2tmm in routeTypeToTransportMode)
-            {
-                logger.Info("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
-            }
-            return routeTypeToTransportMode;
-        }
+        // public static Dictionary<int,byte> CreateMappingRouteTypeToTransportMode(Dictionary<String,byte> transportModeMasks){
+        //     Dictionary<int,byte> routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
+        //                 foreach(var rt2tmm in routeTypeToTransportMode)
+        //     {
+        //         logger.Info("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
+        //     }
+        //     return routeTypeToTransportMode;
+        // }
 
-        public static Dictionary<String,byte> CreateTransportModeMasks(string[] transportModes)
-        {
-            var transportModeMasks = new Dictionary<string, byte>();
-            // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
-            try
-            {
-                transportModeMasks.Add(transportModes[0],0);
-                for(int n = 0; n < transportModes.Length-1; n++)
-                {
-                    var twoToTheNth = (byte)Math.Pow(2,n);
-                    var transportName = transportModes[n+1];
-                    transportModeMasks.Add(transportName,twoToTheNth);
-                }
-            }
-            catch (Exception e)
-            {
-                logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
-            }
-            return transportModeMasks;
-        }
+        // public static Dictionary<String,byte> CreateTransportModeMasks(string[] transportModes)
+        // {
+        //     var transportModeMasks = new Dictionary<string, byte>();
+        //     // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
+        //     try
+        //     {
+        //         transportModeMasks.Add(transportModes[0],0);
+        //         for(int n = 0; n < transportModes.Length-1; n++)
+        //         {
+        //             var twoToTheNth = (byte)Math.Pow(2,n);
+        //             var transportName = transportModes[n+1];
+        //             transportModeMasks.Add(transportName,twoToTheNth);
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
+        //     }
+        //     return transportModeMasks;
+        // }
 
-        public static string TransportModesToString(int transportModes)
-        {
-            var transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
-            string result = "";
-            foreach(var tmm in transportModeMasks)
-            {
-                if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
-                {
-                    result += tmm.Key + " ";
-                }
-            }
+        // public static string TransportModesToString(int transportModes)
+        // {
+        //     var transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
+        //     string result = "";
+        //     foreach(var tmm in transportModeMasks)
+        //     {
+        //         if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
+        //         {
+        //             result += tmm.Key + " ";
+        //         }
+        //     }
                 
-            return (result == "")? Constants.DefaulTransportMode : result;
-        }
+        //     return (result == "")? TransportModes.NoTransportMode : result;
+        // }
         
-        public static byte GetTransportModeMask(string transportModeName)
-        {
-            var transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
-            if(transportModeMasks.ContainsKey(transportModeName))
-            {
-                return transportModeMasks[transportModeName];
-            }
-            else
-            {
-                logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
-                return 0;
-            }
-        }
+        // public static byte GetTransportModeMask(string transportModeName)
+        // {
+        //     var transportModeMasks = Helper.CreateTransportModeMasks(Configuration.TransportModeNames);
+        //     if(transportModeMasks.ContainsKey(transportModeName))
+        //     {
+        //         return transportModeMasks[transportModeName];
+        //     }
+        //     else
+        //     {
+        //         logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
+        //         return 0;
+        //     }
+        // }
 
-        public static byte GetTransportModes(int tagId,Dictionary<int,byte> tagIdToTransportMode)
-        {
-            if (tagIdToTransportMode.ContainsKey(tagId))
-            {
-                return tagIdToTransportMode[tagId];
-            }
-            else
-            {
-                logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
-                return (byte)0; // Default Ttransport Mode: 0 ("None");
-            }
-        }
+        // public static byte GetTransportModes(int tagId,Dictionary<int,byte> tagIdToTransportMode)
+        // {
+        //     if (tagIdToTransportMode.ContainsKey(tagId))
+        //     {
+        //         return tagIdToTransportMode[tagId];
+        //     }
+        //     else
+        //     {
+        //         logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
+        //         return (byte)0; // Default Ttransport Mode: 0 ("None");
+        //     }
+        // }
 
     }
 }

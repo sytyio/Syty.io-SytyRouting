@@ -8,7 +8,7 @@ namespace SytyRouting.Algorithms
     public abstract class BaseRoutingAlgorithm : IRoutingAlgorithm
     {
         [NotNull]
-        protected Graph? _graph;
+        protected Graph? _graph = null!;
         protected List<Node> route = new List<Node>();
         protected Dictionary<int, byte> transportModeTransitions = new Dictionary<int, byte>(1);
         protected double routeCost;

@@ -172,6 +172,34 @@ namespace SytyRouting
             return transportModesMask;
         }
 
+        public static byte GetTransportModeMask(string transportModeName)
+        {
+            var transportModeMasks = CreateTransportModeMasks(Configuration.TransportModeNames);
+            var key = GetTransportModeNameIndex(transportModeName);
+            if(transportModeMasks.ContainsKey(key))
+            {
+                return transportModeMasks[key];
+            }
+            else
+            {
+                logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
+                return 0;
+            }
+        }
+        
+        public static byte GetTransportModes(int tagId,Dictionary<int,byte> tagIdToTransportMode)
+        {
+            if (tagIdToTransportMode.ContainsKey(tagId))
+            {
+                return tagIdToTransportMode[tagId];
+            }
+            else
+            {
+                logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
+                return (byte)0; // Default Ttransport Mode: 0 ("None");
+            }
+        }
+
         public static string NamesToString(string[] transportModeNames)
         {
             string transportModeNamesString = "";
@@ -306,6 +334,21 @@ namespace SytyRouting
             }
         }
 
+        public static string TransportModesToString(int transportModes)
+        {
+            var transportModeMasks = CreateTransportModeMasks(Configuration.TransportModeNames);
+            string result = "";
+            foreach(var tmm in transportModeMasks)
+            {
+                if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
+                {
+                    result += tmm.Key + " ";
+                }
+            }
+                
+            return (result == "")? TransportModes.NoTransportMode : result;
+        }
+
         public static Dictionary<int,byte> CreateTransportModeMasks(string[] transportModes)
         {
             SetTransportModeNames(transportModes);
@@ -416,7 +459,16 @@ namespace SytyRouting
             return tagIdToTransportModes;
         }
 
-        private static int GetTransportModeNameIndex(string transportModeName)
+        public static Dictionary<int,byte> CreateMappingRouteTypeToTransportMode(Dictionary<int,byte> transportModeMasks){
+            Dictionary<int,byte> routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
+                        foreach(var rt2tmm in routeTypeToTransportMode)
+            {
+                logger.Info("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
+            }
+            return routeTypeToTransportMode;
+        }
+
+        public static int GetTransportModeNameIndex(string transportModeName)
         {
             int index = 0;
             for(int i = 1; i < TransportModeNames.Length; i++)

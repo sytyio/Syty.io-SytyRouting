@@ -37,7 +37,6 @@ namespace SytyRouting
         public static string[] PublicTransportModeNames {get;}
         public static Dictionary<string,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
-        // private static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
 
          public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
