@@ -148,10 +148,10 @@ namespace SytyRouting
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
                 
-                if(transportModeNames.Length >= TransportModes.MaxNumberOfTransportModes)
+                if(transportModeNames.Length > TransportModes.MaxNumberOfTransportModes)
                 {
                     Array.Resize(ref transportModeNames, TransportModes.MaxNumberOfTransportModes);
-                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes-1);
+                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes);
                 }
 
                 for(int i = 1; i <= transportModeNames.Length; i++)

@@ -49,6 +49,7 @@ namespace SytyRouting
                         bw.Write((char)transportModeName[i]);
                     }
                 }
+                bw.Write(TransportModes.PublicTransportModes);
             }
             return Task.CompletedTask;
         }
@@ -98,10 +99,12 @@ namespace SytyRouting
                         }
                         transportModes[i] = new string(tmc);
                     }
+                    byte publicTransportModes = br.ReadByte();
 
                     if(Configuration.VerifyTransportListFromGraphFile(transportModes))
                     {
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
+                        TransportModes.SetPublicTransportModes(publicTransportModes);
                     }
                     else
                     {
@@ -159,6 +162,7 @@ namespace SytyRouting
 
             transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
             await TransportModes.CreateMappingTagIdToTransportModes();
+            TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
             TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
 
             // Get the total number of rows to estimate the Graph creation time

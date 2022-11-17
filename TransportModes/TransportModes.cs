@@ -12,6 +12,7 @@ namespace SytyRouting
 
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
+        public static byte PublicTransportModes;
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
@@ -391,6 +392,16 @@ namespace SytyRouting
             {
                 logger.Info("Initialization error in the creation of the Transport Mode List: {0}", e.Message);
             }
+        }
+
+        public static void SetPublicTransportModes(string[] publicTransportModes)
+        {
+            PublicTransportModes = TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(publicTransportModes));
+        }
+
+        public static void SetPublicTransportModes(byte publicTransportModes)
+        {
+            PublicTransportModes = publicTransportModes;
         }
 
         public static void LoadTransportModeRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)
