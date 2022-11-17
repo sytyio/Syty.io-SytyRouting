@@ -66,7 +66,7 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            logger.Info("Available Mass Transit modes: {0}", TransportModes.NamesToString(Configuration.MassTransitSystem));
+            logger.Info("Available Mass Transit modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
             // string[] requestedSequence = new string[] {"Car", "Mass Transit"};
             string[] requestedSequence = new string[] {""};
