@@ -24,18 +24,17 @@ namespace SytyRouting
 
     public sealed class TransportSettings
     {
-        public string[] TransportModes {get; set;} = null!;
-        public string[] MassTransit {get; set;} = null!;
+        public TransportMode[] TransportModes {get; set;} = null!;
          public GtfsTypeToTransportModes[]GtfsTypeToTransportModes {get;set;}=null!;
-        public TransportModeSpeed[] TransportModeSpeeds  {get; set;} = null!;
         public OSMTagToTransportMode[] OSMTagsToTransportModes  {get; set;} = null!;
         public TransportModeRoutingRule[] TransportModeRoutingRules  {get; set;} = null!;
     }
-
-    public sealed class TransportModeSpeed
+    
+    public sealed class TransportMode
     {
-        public string TransportMode {get; set;} = null!;
+        public string Name {get; set;} = null!;
         public int MaxSpeedKmPerH {get; set;}
+        public bool IsPublic {get; set;}
     }
 
     public sealed class TransportModeRoutingRule

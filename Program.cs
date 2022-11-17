@@ -24,16 +24,16 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-            logger.Info("Count = {0}", graph.GetNodes().Count());
-            for (int i = 1558439; i < graph.GetNodes().Count(); i++)
-            {
-                var node = graph.GetNodes()[i];
-                if (node.ValidSource || node.ValidTarget)
-                {
-                    // if(node.Idx==1560000)
-                    graph.TraceOneNode(node);
-                }
-            }
+            // logger.Info("Count = {0}", graph.GetNodes().Count());
+            // for (int i = 1558439; i < graph.GetNodes().Count(); i++)
+            // {
+            //     var node = graph.GetNodes()[i];
+            //     if (node.ValidSource || node.ValidTarget)
+            //     {
+            //         // if(node.Idx==1560000)
+            //         graph.TraceOneNode(node);
+            //     }
+            // }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -67,7 +67,7 @@ namespace SytyRouting
             var personaRouter = new PersonaRouter(graph);
 
             logger.Info("Available Mass Transit modes: {0}", TransportModes.NamesToString(Configuration.MassTransitSystem));
-            
+
             // string[] requestedSequence = new string[] {"Car", "Mass Transit"};
             string[] requestedSequence = new string[] {""};
             byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);

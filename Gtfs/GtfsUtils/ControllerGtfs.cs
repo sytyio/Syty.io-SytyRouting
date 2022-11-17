@@ -59,7 +59,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
-            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames);
+            transportModeMasks = TransportModes.TransportModeMasks;
             routeTypeToTransportMode = TransportModes.CreateMappingRouteTypeToTransportMode(transportModeMasks);
 
             var stopWatch = new Stopwatch();

@@ -6,15 +6,14 @@ namespace SytyRouting
     public static class TransportModes
     {
         public const string NoTransportMode = "None";
-        public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used in the TransportModes masks
+        public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used to identify the Transport Modes.
 
         public static byte DefaultMode;
 
-        public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();
-
-        private static string[] TransportModeNames = new string[1] {NoTransportMode};
-        private static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
+        public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
+        public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
+        private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -174,11 +173,10 @@ namespace SytyRouting
 
         public static byte GetTransportModeMask(string transportModeName)
         {
-            var transportModeMasks = CreateTransportModeMasks(Configuration.TransportModeNames);
             var key = GetTransportModeNameIndex(transportModeName);
-            if(transportModeMasks.ContainsKey(key))
+            if(TransportModeMasks.ContainsKey(key))
             {
-                return transportModeMasks[key];
+                return TransportModeMasks[key];
             }
             else
             {
@@ -198,6 +196,12 @@ namespace SytyRouting
                 logger.Info("Unable to find OSM tag_id {0} in the tag_id-to-Transport Mode mapping. Transport Mode set to 'None'", tagId);
                 return (byte)0; // Default Ttransport Mode: 0 ("None");
             }
+        }
+
+        public static string NamesToString(Dictionary<int,string> transportModeNames)
+        {
+            var transportModeNamesArray = transportModeNames.Values.ToArray();
+            return NamesToString(transportModeNamesArray);
         }
 
         public static string NamesToString(string[] transportModeNames)
@@ -334,11 +338,10 @@ namespace SytyRouting
             }
         }
 
-        public static string TransportModesToString(int transportModes)
+        public static string TransportModesToString(byte transportModes)
         {
-            var transportModeMasks = CreateTransportModeMasks(Configuration.TransportModeNames);
             string result = "";
-            foreach(var tmm in transportModeMasks)
+            foreach(var tmm in TransportModeMasks)
             {
                 if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
                 {
@@ -470,17 +473,15 @@ namespace SytyRouting
 
         public static int GetTransportModeNameIndex(string transportModeName)
         {
-            int index = 0;
             for(int i = 1; i < TransportModeNames.Length; i++)
             {
                 if(TransportModeNames[i].Equals(transportModeName))
                 {
-                    index = i;
-                    break;
+                    return i;
                 }
             }
 
-            return index;
+            return 0;
         }
     }
 }

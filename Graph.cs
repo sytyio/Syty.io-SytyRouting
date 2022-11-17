@@ -157,7 +157,7 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
-            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames);
+            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
             await TransportModes.CreateMappingTagIdToTransportModes();
             TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
 

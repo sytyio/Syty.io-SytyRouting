@@ -33,9 +33,9 @@ namespace SytyRouting
         public static int RegularRoutingTaskBatchSize {get;}
 
         // Transport parameters:
-        public static string[] TransportModeNames {get;}
+        public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] MassTransitSystem {get;}
-        public static Dictionary<string,int> TransportModeSpeeds {get;}
+        public static Dictionary<int,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
 
          public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
@@ -81,12 +81,11 @@ namespace SytyRouting
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
-            MassTransitSystem = transportSettings.MassTransit;
+            MassTransitSystem = ValidatePublicTransportModes(transportSettings.TransportModes);
+            TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
-            TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModeSpeeds);
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
             GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
-            
         }
 
         public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks){
@@ -121,11 +120,12 @@ namespace SytyRouting
 
         public static bool VerifyTransportListFromGraphFile(string[] transportModes)
         {
-            if(transportModes.Length == TransportModeNames.Length)
+            var transportModeNamesArray = TransportModeNames.Values.ToArray();
+            if(transportModes.Length == transportModeNamesArray.Length)
             {
-                for(int i = 0; i < TransportModeNames.Length; i++)
+                for(int i = 0; i < transportModeNamesArray.Length; i++)
                 {
-                    if(!transportModes[i].Equals(TransportModeNames[i]))
+                    if(!transportModes[i].Equals(transportModeNamesArray[i]))
                         return false;
                 }
                 return true;
@@ -134,24 +134,27 @@ namespace SytyRouting
             return false;            
         }
 
-        private static string[] ValidateTransportModeNames(string[] configTransportModeNames)
+        private static Dictionary<int,string> ValidateTransportModeNames(TransportMode[] configTransportModes)
         {
-            string[] validTransportModeNames =  new string[TransportModes.MaxNumberOfTransportModes+1];
+            string[] configTransportModeNames =  new string[configTransportModes.Length];
+            for(int i=0; i<configTransportModeNames.Length; i++)
+            {
+                configTransportModeNames[i]=configTransportModes[i].Name;
+            }
+
+            Dictionary<int,string> validTransportModeNames =  new Dictionary<int,string>(0);
             validTransportModeNames[0] = TransportModes.NoTransportMode;
             try
             {
                 var transportModeNames = configTransportModeNames.ToList().Distinct().ToArray();
                 
-                if(transportModeNames.Length <= TransportModes.MaxNumberOfTransportModes)
+                if(transportModeNames.Length >= TransportModes.MaxNumberOfTransportModes)
                 {
-                    Array.Resize(ref validTransportModeNames, transportModeNames.Length + 1);
-                }
-                else
-                {
-                    logger.Info("The number of transport modes in the config file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes);
+                    Array.Resize(ref transportModeNames, TransportModes.MaxNumberOfTransportModes);
+                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes-1);
                 }
 
-                for(int i = 1; i < validTransportModeNames.Length; i++)
+                for(int i = 1; i <= transportModeNames.Length; i++)
                 {
                     validTransportModeNames[i] = transportModeNames[i-1]; 
                 }                
@@ -161,39 +164,49 @@ namespace SytyRouting
                 logger.Debug("Configuration error. Transport mode names: {0}", e.Message);
             }
 
-            string transportModesString = TransportModes.NamesToString(validTransportModeNames[1..]);
+            string transportModesString = TransportModes.NamesToString(validTransportModeNames.Values.ToArray()[1..]);
             logger.Info("Transport Modes ordered by routing priority: {0}.", transportModesString);
 
             return validTransportModeNames;
         }
 
-        private static Dictionary<string,int> ValidateTransportModeSpeeds(TransportModeSpeed[] transportModeSpeeds)
+        private static string[] ValidatePublicTransportModes(TransportMode[] transportModes)
         {
-            Dictionary<string,int> validTransportModeSpeeds = new Dictionary<string,int>(TransportModeNames.Length);
-
-            foreach(var transportModeSpeed in transportModeSpeeds)
-            {
-                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportModeSpeed.TransportMode)))
+            var validPublicTransportModes = new List<string>(0);
+            foreach(TransportMode transportMode in transportModes)
+            {                
+                if(TransportModeNames.ContainsValue(transportMode.Name) && transportMode.IsPublic==true)
                 {
-                    if(!validTransportModeSpeeds.ContainsKey(transportModeSpeed.TransportMode))
-                    {
-                        if(transportModeSpeed.MaxSpeedKmPerH>0)
-                        {
-                            validTransportModeSpeeds.Add(transportModeSpeed.TransportMode, transportModeSpeed.MaxSpeedKmPerH);
-                        }
-                        else
-                        {
-                            logger.Info("The maximum speed for Transport Mode '{0}' should be greater than 0.", transportModeSpeed.TransportMode);
-                        }
-                    }
-                    else
-                    {
-                        logger.Info("The maximum speed for Transport Mode '{0}' was already set to {1} [km/h].", transportModeSpeed.TransportMode, validTransportModeSpeeds[transportModeSpeed.TransportMode]);
-                    }
+                    validPublicTransportModes.Add(transportMode.Name);
                 }
-                else
-                {
-                    logger.Info("Unable to find '{0}' in the validated list of transport modes. Ignoring transport mode.", transportModeSpeed.TransportMode);
+            }
+            return validPublicTransportModes.ToArray();
+        }
+
+        private static Dictionary<int,int> ValidateTransportModeSpeeds(TransportMode[] transportModes)
+        {            
+            Dictionary<int,int> validTransportModeSpeeds = new Dictionary<int,int>(TransportModeNames.Count);
+
+            foreach(var transportModeName in TransportModeNames)
+            {
+                for(int i=0; i<transportModes.Length; i++)
+                {                    
+                    if(transportModeName.Value.Equals(transportModes[i].Name))
+                    {
+                        var key = transportModeName.Key;
+                        if(!validTransportModeSpeeds.ContainsKey(key))
+                        {
+                            if(transportModes[i].MaxSpeedKmPerH>0)
+                            {
+                                validTransportModeSpeeds.Add(key, transportModes[i].MaxSpeedKmPerH);
+                                break;
+                            }
+                            else
+                            {
+                                logger.Info("The maximum speed for Transport Mode '{0}' should be greater than 0.", transportModes[i].Name);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -219,7 +232,7 @@ namespace SytyRouting
             var validTransportModes = new List<string>(0);
             foreach(string transportMode in allowedTransportModes)
             {                
-                if(Array.Exists(TransportModeNames, validatedTransportModeName => validatedTransportModeName.Equals(transportMode)))
+                if(TransportModeNames.ContainsValue(transportMode))
                 {
                     validTransportModes.Add(transportMode);
                 }
