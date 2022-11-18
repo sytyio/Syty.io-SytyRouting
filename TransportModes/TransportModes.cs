@@ -12,7 +12,8 @@ namespace SytyRouting
 
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
-        public static byte PublicTransportModes;
+        public static byte PublicTransportModes; // mask of the public modes.
+        public static byte PublicTransportGroup; // Independent of the above mask. Only for reference in transport mode sequences and transport modes routing rules.
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 

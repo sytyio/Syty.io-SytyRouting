@@ -68,15 +68,25 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
-                        if((outwardEdge.TransportModes & currentTransportMode) == currentTransportMode)
+                        var edgeTransportModes = outwardEdge.TransportModes;
+
+                        if((currentTransportMode & TransportModes.PublicTransportModes) == TransportModes.PublicTransportModes)
+                        {
+                            Console.WriteLine("Troublema");
+                        }
+                        
+                        if((edgeTransportModes & currentTransportMode) == currentTransportMode)
                         {
                             AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportModeIndex);
                         }
 
+                        
+
+
                         if(currentTransportModeIndex>=0 && currentTransportModeIndex<transportModesSequence.Length-1)
                         {
                             byte nextTransportMode = transportModesSequence[currentTransportModeIndex+1];
-                            if((outwardEdge.TransportModes & nextTransportMode) == nextTransportMode)
+                            if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                             {
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportModeIndex+1);
                             }
