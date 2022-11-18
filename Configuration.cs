@@ -80,9 +80,9 @@ namespace SytyRouting
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
+            PublicTransportGroup = transportSettings.PublicTransportGroup;
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
             PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
-            PublicTransportGroup = transportSettings.PublicTransportGroup;
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
@@ -156,7 +156,7 @@ namespace SytyRouting
                 }
 
                 int index=1;
-                for(;index < transportModeNames.Length; index++)
+                for(;index <= transportModeNames.Length; index++)
                 {
                     validTransportModeNames[index] = transportModeNames[index-1]; 
                 }

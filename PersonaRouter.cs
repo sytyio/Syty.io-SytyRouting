@@ -47,7 +47,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -159,8 +159,8 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
-                    try
-                    {
+                    // try
+                    // {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
@@ -178,12 +178,12 @@ namespace SytyRouting
                         {
                             logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                         }
-                    }
-                    catch (Exception e)
-                    {
-                        persona.SuccessfulRouteComputation = false;
-                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
-                    }
+                    // }
+                    // catch (Exception e)
+                    // {
+                    //     persona.SuccessfulRouteComputation = false;
+                    //     logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
+                    // }
                 }
             }
         }
