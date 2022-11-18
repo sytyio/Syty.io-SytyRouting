@@ -416,17 +416,17 @@ namespace SytyRouting
 
             for(var i = 0; i < transportModeRoutingRules .Length; i++)
             {
-                byte currentTransportMode = GetMaskFromNames(new string[1] {(transportModeRoutingRules[i].CurrentTransportMode)});
-                byte[] alternativeTransportModes = NameSequenceToMasksArray(transportModeRoutingRules[i].AlternativeTransportModes);
-                byte alternativeTransportModesMask = ArrayToMask(alternativeTransportModes);
-                
-                if (!transportModeRoutingRoules.ContainsKey(currentTransportMode))
+                byte currentTransportModes = GetMaskFromNames((transportModeRoutingRules[i].CurrentTransportModes));
+                //byte[] alternativeTransportModes = NameSequenceToMasksArray(transportModeRoutingRules[i].AlternativeTransportModes);
+                //byte alternativeTransportModesMask = ArrayToMask(alternativeTransportModes);
+                byte alternativeTransportModes = GetMaskFromNames(transportModeRoutingRules[i].AlternativeTransportModes);
+                if (!transportModeRoutingRoules.ContainsKey(currentTransportModes))
                 {
-                    transportModeRoutingRoules.Add(currentTransportMode, alternativeTransportModesMask);
+                    transportModeRoutingRoules.Add(currentTransportModes, alternativeTransportModes);
                 }
                 else
                 {
-                    logger.Debug("Unable to add Transport Mode routing rule. Transport Mode: {0}", transportModeRoutingRules[i].CurrentTransportMode);
+                    logger.Debug("Unable to add Transport Mode routing rule. Current Transport Modes: {0}", NamesToString(transportModeRoutingRules[i].CurrentTransportModes));
                 }
             }
             
