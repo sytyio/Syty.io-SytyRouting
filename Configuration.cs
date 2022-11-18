@@ -35,9 +35,9 @@ namespace SytyRouting
         // Transport parameters:
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
+        public static string PublicTransportGroup {get;}
         public static Dictionary<int,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
-
          public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
 
@@ -82,6 +82,7 @@ namespace SytyRouting
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
             PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
+            PublicTransportGroup = transportSettings.PublicTransportGroup;
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
@@ -151,13 +152,15 @@ namespace SytyRouting
                 if(transportModeNames.Length > TransportModes.MaxNumberOfTransportModes)
                 {
                     Array.Resize(ref transportModeNames, TransportModes.MaxNumberOfTransportModes);
-                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes);
+                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes-1, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes-1);
                 }
 
-                for(int i = 1; i <= transportModeNames.Length; i++)
+                int index=1;
+                for(;index < transportModeNames.Length; index++)
                 {
-                    validTransportModeNames[i] = transportModeNames[i-1]; 
-                }                
+                    validTransportModeNames[index] = transportModeNames[index-1]; 
+                }
+                validTransportModeNames.Add(index,PublicTransportGroup);                
             }
             catch(Exception e)
             {
