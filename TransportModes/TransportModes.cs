@@ -431,7 +431,7 @@ namespace SytyRouting
             
             return transportModeRoutingRoules;
         }
-
+        
         public static async Task CreateMappingTagIdToTransportModes()
         {
             OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);

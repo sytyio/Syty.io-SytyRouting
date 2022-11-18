@@ -40,7 +40,7 @@ namespace SytyRouting
                 KDTree?.WriteToStream(bw);
 
                 bw.Write(transportModeMasks.Count);
-                foreach(int transportModeIndex in transportModeMasks.Keys)
+                foreach (int transportModeIndex in transportModeMasks.Keys)
                 {
                     string transportModeName = Configuration.TransportModeNames[transportModeIndex];
                     bw.Write(transportModeName.Length);
@@ -101,7 +101,7 @@ namespace SytyRouting
                     }
                     byte publicTransportModes = br.ReadByte();
 
-                    if(Configuration.VerifyTransportListFromGraphFile(transportModes))
+                    if (Configuration.VerifyTransportListFromGraphFile(transportModes))
                     {
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
                         TransportModes.SetPublicTransportModes(publicTransportModes);
@@ -110,7 +110,7 @@ namespace SytyRouting
                     {
                         throw new Exception("Transport Mode list from file differs from configuration.");
                     }
-                    
+
                 }
 
                 logger.Info("Loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
@@ -119,6 +119,10 @@ namespace SytyRouting
             catch
             {
                 logger.Info("Could not load from file, loading from DB instead.");
+                // Initialiser masks 
+                await InitialiseMaskModes();
+
+
                 await DBLoadAsync();
                 KDTree = new KDTree(NodesArray);
                 // ControllerGtfs.CleanGtfs();
@@ -148,6 +152,14 @@ namespace SytyRouting
             }
         }
 
+        private async Task InitialiseMaskModes(){
+            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
+                await TransportModes.CreateMappingTagIdToTransportModes();
+                TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
+                TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+
+        }
+
         private async Task DBLoadAsync()
         {
             Stopwatch stopWatch = new Stopwatch();
@@ -159,11 +171,6 @@ namespace SytyRouting
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
-
-            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
-            await TransportModes.CreateMappingTagIdToTransportModes();
-            TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
-            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
 
             // Get the total number of rows to estimate the Graph creation time
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
@@ -358,9 +365,9 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Debug("\t\t > Edge: {0},\tcost: {1},\tsource Node Id: {2} ({3},{4});\ttarget Node Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9})",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes);
-            
+            logger.Info("\t\t > Edge: {0},\tcost: {1},\tSource Id: {2} ({3},{4});\tTarget Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}) length = {10}",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
+
             TraceInternalGeometry(edge);
         }
 
@@ -369,7 +376,7 @@ namespace SytyRouting
             if (edge.InternalGeometry is not null)
             {
                 logger.Debug("\t\t   Internal geometry in Edge {0}:", edge.OsmID);
-                foreach(var xymPoint in edge.InternalGeometry)
+                foreach (var xymPoint in edge.InternalGeometry)
                 {
                     logger.Debug("\t\t\tX: {0},\tY: {1},\tM: {2};",
                         xymPoint.X, xymPoint.Y, xymPoint.M);
