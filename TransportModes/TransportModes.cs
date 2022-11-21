@@ -63,8 +63,9 @@ namespace SytyRouting
 
         private static byte[] ReviseTransportModeSequence(byte[] requestedTransportModes)
         {
-            byte[] cleanedSequence = RemoveConsecutiveDuplicatesFromTransportModeSequence(
-                                        RemoveDefaultTransportModeFromSequence(requestedTransportModes));
+            byte[] cleanedSequence = MergePublicTransportSequences(
+                                        RemoveConsecutiveDuplicatesFromTransportModeSequence(
+                                        RemoveDefaultTransportModeFromSequence(requestedTransportModes)));
 
 
             List<byte> transportModeSequence = new List<byte>(0);
@@ -97,6 +98,37 @@ namespace SytyRouting
             }
 
             return transportModeSequence.ToArray();
+        }
+
+        public static byte[] MergePublicTransportSequences(byte[] transportModeSequence)
+        {
+            List<byte> newSequence = new List<byte>(0);
+
+            for(int i = 0; i < transportModeSequence.Length; i++)
+            {
+                byte currentTransportMask = transportModeSequence[i];
+                if((currentTransportMask & PublicTransportModes) == currentTransportMask)
+                {
+                    currentTransportMask |= DefaultMode;
+                    i++;
+                    for(; i < transportModeSequence.Length; i++)
+                    {
+                        byte nextTransportMask = transportModeSequence[i];
+                        if((nextTransportMask & PublicTransportModes) == nextTransportMask || nextTransportMask == DefaultMode)
+                        {
+                            currentTransportMask |= nextTransportMask;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    i--;
+                }
+                newSequence.Add(currentTransportMask);
+            }
+
+            return newSequence.ToArray();
         }
 
         private static byte[] RemoveDefaultTransportModeFromSequence(byte[] transportModeSequence)
@@ -267,17 +299,19 @@ namespace SytyRouting
 
         public static string[] ArrayToNames(byte[] transportModes)
         {
-            string[] result = new string[transportModes.Length];
+            List<string> listResult = new List<string>(0);
             for(int i = 0; i < transportModes.Length; i++)
             {
                 foreach(var transportModeMask in TransportModeMasks)
                 {
                     if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
                     {
-                        result[i] = TransportModeNames[transportModeMask.Key];
+                        listResult.Add(TransportModeNames[transportModeMask.Key]);
                     }
                 }
             }
+
+            string[] result = listResult.ToArray();
             for(int i = 0; i < result.Length; i++)
             {
                 if(result[i] == null)
