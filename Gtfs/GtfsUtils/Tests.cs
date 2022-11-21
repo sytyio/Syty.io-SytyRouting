@@ -18,10 +18,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             CtrlGtfs = gtfs;
         }
 
-        public Tests()
-        {
-
-        }
         // public void PrintTripDico()
         // {
         //     foreach (KeyValuePair<string, TripGtfs> trip in CtrlGtfs.TripDico)
@@ -363,6 +359,27 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 }
             }
         }
+
+        //  private void PrintTrips(){
+        //     foreach(var trip in CtrlGtfs.tripDico){
+        //         logger.Info("Trip id = {0} = {1}",trip.Key,trip.Value.Id);
+
+        //         logger.Info("Trip route = {0}",trip.Value.Route);
+
+        //         logger.Info("Size of the shape {0}", trip.Value.Shape.ItineraryPoints.Count);
+
+        //         logger.Info("Infos schedule");
+        //         foreach(var detail in trip.Value.Schedule.Details){
+        //             logger.Info("Schedule = {0}",detail.Value);
+        //         }
+
+        //         logger.Info("Calendar détails ");
+
+        //         foreach(var date in trip.Value.Service.Dates){
+        //             logger.Info(date);
+        //         }
+        //     }
+        // }
 
         // public void  PrintOneShapeStib(ControllerGtfs gtfs){
         //     var shape = gtfs.ShapeDico["210b0166"]; 

@@ -16,6 +16,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public List<CalendarCsv> RecordsCalendar { get; }
         public List<AgencyCsv> RecordsAgency { get; }
 
+        public List<CalendarDateCsv> RecordsCalendarDates {get;}
+
         public ControllerCsv(string choice)
         {
             RecordsStop = GetAllStops(choice);
@@ -25,6 +27,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             RecordStopTime = GetAllStopTimes(choice);
             RecordsCalendar = GetAllCalendars(choice);
             RecordsAgency = GetAllAgencies(choice);
+            RecordsCalendarDates = GetAllCalendarDates(choice);
         }
 
         private List<StopTimesCsv> GetAllStopTimes(string provider)
@@ -171,6 +174,27 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                     {
                         return csv.GetRecords<TripCsv>().ToList();
+                    }
+                }
+            }
+            catch (DirectoryNotFoundException)
+            {
+                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
+                throw;
+            }
+        }
+
+        private List<CalendarDateCsv> GetAllCalendarDates(string provider)
+        {
+            // Trips of chosen society
+            string fullPathTrip = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar }calendar_dates.txt");
+            try
+            {
+                using (var reader = new StreamReader(fullPathTrip))
+                {
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    {
+                        return csv.GetRecords<CalendarDateCsv>().ToList();
                     }
                 }
             }

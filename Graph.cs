@@ -119,7 +119,7 @@ namespace SytyRouting
             catch
             {
                 logger.Info("Could not load from file, loading from DB instead.");
-                // Initialiser masks 
+                // Initialise masks 
                 await InitialiseMaskModes();
 
 

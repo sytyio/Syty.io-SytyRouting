@@ -7,9 +7,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public Dictionary<int, StopTimesGtfs> Details { get; set; }
 
-        [NotNull]
-        public bool[]? Days { get; set; }
-
         public override string ToString()
         {
             return "Trip = " + Trip + "Nb of stoptimes = " + Details.Count;

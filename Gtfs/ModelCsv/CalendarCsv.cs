@@ -32,6 +32,14 @@ namespace SytyRouting.Gtfs.ModelCsv
         [Name("sunday")]
         public int Sunday { get; set; }
 
+        [Name("start_date")]
+        [NotNull]
+        public string? DateBegin {get;set;}
+
+        [Name("end_date")]
+        [NotNull]
+        public string? DateEnd {get;set;}
+
 
         public override string ToString()
         {
