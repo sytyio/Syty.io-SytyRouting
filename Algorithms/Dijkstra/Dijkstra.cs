@@ -18,13 +18,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             transportModeTransitions.Clear();
             routeCost = 0;
             TrasnportModeSequence = transportModesSequence;
-
-            // DEBUG:
-            if(originNode.Idx==672467)
-            {
-                Console.WriteLine("Problemo");
-            }
-            
+           
             if(transportModesSequence.Length>0)
             {
                 byte[] transportModes = TransportModes.MaskToArray(transportModesSequence[0]);
@@ -74,8 +68,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         var edgeTransportModes = outwardEdge.TransportModes;
 
-                        // logger.Info("Edge Transport Modes: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(TransportModes.MaskToArray(edgeTransportModes))));
-                        // logger.Info("Current Transport Modes: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(TransportModes.MaskToArray(currentTransportMode))));
                         if(transportModesSequence.Length>0)
                         {
                             var currentMaskArray = TransportModes.MaskToArray(currentTransportMask);
@@ -99,10 +91,12 @@ namespace SytyRouting.Algorithms.Dijkstra
                             }
                         }
                         else
-                        {                    
-                            if(TransportModes.RoutingRules.ContainsKey(currentTransportMask))
+                        {           
+                            var key = TransportModes.RoutingRulesContainKey(currentTransportMask);         
+
+                            if(key!=0)
                             {
-                                byte[] alternativeTransportModes = TransportModes.MaskToArray(TransportModes.RoutingRules[currentTransportMask]);
+                                byte[] alternativeTransportModes = TransportModes.MaskToArray(TransportModes.RoutingRules[key]);
                                 for(int i = 0; i < alternativeTransportModes.Length; i++)
                                 {
                                     var transportMode = alternativeTransportModes[i];

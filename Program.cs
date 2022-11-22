@@ -68,13 +68,16 @@ namespace SytyRouting
 
             logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
-            // string[] requestedSequence = new string[] {"Bus", "Tram", "Car", "Train", "Metro", "Bicycle", "Bus", "Foot"};
-            // string[] requestedSequence = new string[] {"Bus", "Tram", "Metro", "Train"};
+            // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
+            // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
+            string[] requestedSequence = new string[] {"Bus", "Tram", "Metro", "Train"};
+            // string[] requestedSequence = new string[] {"Foot"};
             // string[] requestedSequence = new string[] {"Bus"};
-             string[] requestedSequence = new string[] {"Tram"};
+            // string[] requestedSequence = new string[] {"Tram"};
             // string[] requestedSequence = new string[] {"Metro"};
+            // string[] requestedSequence = new string[] {"Train"};
             // string[] requestedSequence = new string[] {"Bicycle"};
-            // string[] requestedSequence = new string[] {"Car", "Tec-Lijn-STIB-SNCB"};
+            // string[] requestedSequence = new string[] {"Car"};
             // string[] requestedSequence = new string[] {""};
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             // byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
@@ -83,8 +86,9 @@ namespace SytyRouting
             logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
 
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
+            // await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
     
-            personaRouter.TracePersonas();
+            //personaRouter.TracePersonas();
             // personaRouter.TracePersonasRouteResult();
 
 

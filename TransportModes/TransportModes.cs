@@ -13,7 +13,6 @@ namespace SytyRouting
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
         public static byte PublicTransportModes; // mask of the public modes.
-        public static byte PublicTransportGroup; // Independent of the above mask. Only for reference in transport mode sequences and transport modes routing rules.
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
@@ -107,7 +106,7 @@ namespace SytyRouting
             for(int i = 0; i < transportModeSequence.Length; i++)
             {
                 byte currentTransportMask = transportModeSequence[i];
-                if((currentTransportMask & PublicTransportModes) == currentTransportMask)
+                if((currentTransportMask & PublicTransportModes) == currentTransportMask || (currentTransportMask & DefaultMode) == currentTransportMask)
                 {
                     currentTransportMask |= DefaultMode;
                     i++;
@@ -217,6 +216,23 @@ namespace SytyRouting
                 logger.Info("Transport mode name {0} not found in the validated list of transport modes. (Transport configuration file.)", transportModeName);
                 return 0;
             }
+        }
+
+        public static byte RoutingRulesContainKey(byte transportMask)
+        {
+            var rulesKeys = RoutingRules.Keys;
+            foreach(var mask in rulesKeys)
+            {
+                var maskArray = MaskToArray(mask);
+                for(var i = 0; i < maskArray.Length; i++)
+                {
+                    if((maskArray[i] & transportMask) == transportMask)
+                    {
+                        return mask;
+                    }
+                }
+            }
+            return 0;
         }
         
         public static byte GetTransportModes(int tagId,Dictionary<int,byte> tagIdToTransportMode)
@@ -451,8 +467,6 @@ namespace SytyRouting
             for(var i = 0; i < transportModeRoutingRules .Length; i++)
             {
                 byte currentTransportModes = GetMaskFromNames((transportModeRoutingRules[i].CurrentTransportModes));
-                //byte[] alternativeTransportModes = NameSequenceToMasksArray(transportModeRoutingRules[i].AlternativeTransportModes);
-                //byte alternativeTransportModesMask = ArrayToMask(alternativeTransportModes);
                 byte alternativeTransportModes = GetMaskFromNames(transportModeRoutingRules[i].AlternativeTransportModes);
                 if (!transportModeRoutingRoules.ContainsKey(currentTransportModes))
                 {
