@@ -19,7 +19,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv;
-        public string choice;
+        private string choice;
+
+        private string givenDate;
+
+        [NotNull]
+        private Dictionary<string, TripGtfs>? tripDicoForOneDay;
 
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
@@ -51,14 +56,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<int, byte> transportModeMasks = new Dictionary<int, byte>();
 
 
-        public ControllerGtfs(string provider)
+        public ControllerGtfs(string provider, String date)
         {
             choice = provider;
+            givenDate = date;
         }
 
         public async Task InitController()
         {
-            // await DownloadGtfs();
+             await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             transportModeMasks = TransportModes.TransportModeMasks;
@@ -98,9 +104,29 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AddSplitLineString();
             logger.Info("Add split linestring loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
+
+
+            var nbTrips = tripDico.Count();
+            if (givenDate != "")
+            {
+                var givenDateParse = DateTime.ParseExact(givenDate, "yyyyMMdd", CultureInfo.InvariantCulture);
+                logger.Info("Nb trips for all days = {0}", nbTrips);
+                var tripsGivenDay = from trip in tripDico
+                                    where trip.Value.CalendarInfos.Dates.Contains(givenDateParse)
+                                    select trip;
+                tripDicoForOneDay = tripsGivenDay.ToDictionary(x => x.Key, x => x.Value);
+                var nbTripsDays = tripDicoForOneDay.Count();
+                logger.Info("Nb trips for one day = {0}", nbTripsDays);
+            }
+
+                logger.Info("Nb trips for all days = {0}", nbTrips);
+
+
             AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
+
+
         }
 
         public IEnumerable<Node> GetNodes()
@@ -216,20 +242,26 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Sunday));
                 }
 
-                foreach(var item in calendarDateDico){
-                    if(item.Key==buffServiceId){
-                        foreach(var dateInfo in item.Value){
-                            if(dateInfo.Value==1){
+                foreach (var item in calendarDateDico)
+                {
+                    if (item.Key == buffServiceId)
+                    {
+                        foreach (var dateInfo in item.Value)
+                        {
+                            if (dateInfo.Value == 1)
+                            {
                                 // If exceptionType = 1 : the trip is added
                                 datesOfCirculation.Add(dateInfo.Key);
-                            }else{ 
+                            }
+                            else
+                            {
                                 // if exceptionType = 2 : the trip is deleted
                                 datesOfCirculation.Remove(dateInfo.Key);
                             }
                         }
                     }
                 }
-                calendar.Value.Dates=datesOfCirculation;
+                calendar.Value.Dates = datesOfCirculation;
             }
         }
 
@@ -269,9 +301,20 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AllTripsToEdgeDictionary()
         {
-            foreach (var trip in tripDico)
+            if (givenDate == "")
             {
-                OneTripToEdgeDictionary(trip.Key);
+
+                foreach (var trip in tripDico)
+                {
+                    OneTripToEdgeDictionary(trip.Key);
+                }
+            }
+            else
+            {
+                foreach (var trip in tripDicoForOneDay) // trips for one day
+                {
+                    OneTripToEdgeDictionary(trip.Key);
+                }
             }
         }
 
@@ -296,7 +339,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void OneTripToEdgeDictionary(string tripId)
         {
-            TripGtfs buffTrip = tripDico[tripId];
+            TripGtfs buffTrip;
+            if (givenDate == "")
+            {
+                buffTrip = tripDico[tripId]; // All trips
+            }
+            else
+            {
+                buffTrip = tripDicoForOneDay[tripId]; // Trips for one day 
+            }
             ShapeGtfs? buffShape = buffTrip.Shape;
             StopGtfs? previousStop = null;
             StopTimesGtfs? previousStopTime = null;

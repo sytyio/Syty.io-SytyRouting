@@ -126,7 +126,11 @@ namespace SytyRouting
                 await DBLoadAsync();
                 KDTree = new KDTree(NodesArray);
                 // ControllerGtfs.CleanGtfs();
-                await AddGtfsData();
+
+                // string date = "20220531"; // not in boundaries
+                // string date = "20220923"; // in boundaries
+                string date = ""; // empty
+                await AddGtfsData(date);
                 KDTree = new KDTree(NodesArray);
                 // ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
@@ -237,11 +241,11 @@ namespace SytyRouting
             }
         }
 
-        public async Task GetDataFromGtfs()
+        public async Task GetDataFromGtfs(string date)
         {
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
-                GtfsDico.Add(provider, new ControllerGtfs(provider));
+                GtfsDico.Add(provider, new ControllerGtfs(provider,date));
             }
             List<Task> listDwnld = new List<Task>();
             foreach (var gtfs in GtfsDico)
@@ -251,9 +255,9 @@ namespace SytyRouting
             await Task.WhenAll(listDwnld);
         }
 
-        private async Task AddGtfsData()
+        private async Task AddGtfsData(string date="")
         {
-            await GetDataFromGtfs();
+            await GetDataFromGtfs(date);
             foreach (var gtfs in GtfsDico)
             {
                 // Connecting gtfs nodes to graph nodes

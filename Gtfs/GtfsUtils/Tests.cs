@@ -322,43 +322,43 @@ namespace SytyRouting.Gtfs.GtfsUtils
         //         }
         //     }
         // }
-        public async Task GraphData()
-        {
-            var graph = new Graph();
-            await graph.FileLoadAsync("graph.dat");
-            graph.TraceNodes();
-            var personaRouter = new PersonaRouter(graph);
-            int cptNodes = graph.GetNodeCount();
+        // public async Task GraphData()
+        // {
+        //     var graph = new Graph();
+        //     await graph.FileLoadAsync("graph.dat");
+        //     graph.TraceNodes();
+        //     var personaRouter = new PersonaRouter(graph);
+        //     int cptNodes = graph.GetNodeCount();
 
-            logger.Info("Nb nodes {0}", graph.GetNodeCount());
+        //     logger.Info("Nb nodes {0}", graph.GetNodeCount());
 
-            // var listProviders = new List<string>();
-            // listProviders.Add("stib");
-            // listProviders.Add(ProviderCsv.ter);
-            await graph.GetDataFromGtfs();
-            var listsNode = new Dictionary<string, IEnumerable<Node>>();
-            var listsEdge = new Dictionary<string, IEnumerable<Edge>>();
-            foreach (var gtfs in graph.GtfsDico)
-            {
-                listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
-                listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
+        //     // var listProviders = new List<string>();
+        //     // listProviders.Add("stib");
+        //     // listProviders.Add(ProviderCsv.ter);
+        //     await graph.GetDataFromGtfs();
+        //     var listsNode = new Dictionary<string, IEnumerable<Node>>();
+        //     var listsEdge = new Dictionary<string, IEnumerable<Edge>>();
+        //     foreach (var gtfs in graph.GtfsDico)
+        //     {
+        //         listsNode.Add(gtfs.Key, gtfs.Value.GetNodes());
+        //         listsEdge.Add(gtfs.Key, gtfs.Value.GetEdges());
 
-            }
-            logger.Info("Lists node size {0}", listsNode.Count());
-            logger.Info("Lists edge size {0}", listsEdge.Count());
+        //     }
+        //     logger.Info("Lists node size {0}", listsNode.Count());
+        //     logger.Info("Lists edge size {0}", listsEdge.Count());
 
-            foreach (var item in listsNode)
-            {
-                logger.Info("///////////////////////");
-                foreach (var node in item.Value)
-                {
-                    logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}", node.Idx, node.ValidSource, node.ValidTarget, node.InwardEdges.Count, node.OutwardEdges.Count);
-                    // foreach(var inEdge in node.InwardEdges){
-                    //     logger.Info("{0} , {1}, {2} ",  inEdge.SourceNode, inEdge.TargetNode, inEdge.MaxSpeedMPerS);
-                    // }
-                }
-            }
-        }
+        //     foreach (var item in listsNode)
+        //     {
+        //         logger.Info("///////////////////////");
+        //         foreach (var node in item.Value)
+        //         {
+        //             logger.Info("Id node {0}, S= {1}, T= {2}, nb arêtes entrantes = {3}, nb arêtes sortantes {4}", node.Idx, node.ValidSource, node.ValidTarget, node.InwardEdges.Count, node.OutwardEdges.Count);
+        //             // foreach(var inEdge in node.InwardEdges){
+        //             //     logger.Info("{0} , {1}, {2} ",  inEdge.SourceNode, inEdge.TargetNode, inEdge.MaxSpeedMPerS);
+        //             // }
+        //         }
+        //     }
+        // }
 
         //  private void PrintTrips(){
         //     foreach(var trip in CtrlGtfs.tripDico){
