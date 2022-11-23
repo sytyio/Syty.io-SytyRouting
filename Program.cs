@@ -61,8 +61,6 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
-
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
