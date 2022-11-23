@@ -3,10 +3,8 @@ namespace SytyRouting
     [Flags]
     public enum CostCriteria
     {
-        None =        0,
         MinimalTravelDistance =     1,
-        MinimalTravelTime =         2,        
-        MaximalTravelTime =         4,
+        MinimalTravelTime =         2,                
     }
 
     public enum StepDirection
