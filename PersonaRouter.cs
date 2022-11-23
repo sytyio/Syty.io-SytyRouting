@@ -17,8 +17,8 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        //private static int simultaneousRoutingTasks = 1; // For Debugging with only one processor
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1; // For Debugging with only one processor
+        //private static int simultaneousRoutingTasks = Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();

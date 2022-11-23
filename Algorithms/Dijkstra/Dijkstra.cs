@@ -31,10 +31,10 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 foreach(var outwardEdge in originNode.OutwardEdges)
                 {
-                    byte[] availableTransportModes = TransportModes.MaskToArray(outwardEdge.TransportModes);
-                    for(int i = 0; i < availableTransportModes.Length; i++)
+                    var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
+                    foreach(var transportMode in availableTransportModes)
                     {
-                        AddStep(null, originNode, 0, -1, availableTransportModes[i]);
+                        AddStep(null, originNode, 0, -1, transportMode);
                     }
                 }
             }
@@ -70,11 +70,9 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                         if(transportModesSequence.Length>0)
                         {
-                            var currentMaskArray = TransportModes.MaskToArray(currentTransportMask);
-                            for(int i=0; i<currentMaskArray.Length; i++)
-                            {
-                                var transportMode = currentMaskArray[i];
-                                
+                            var currentMaskList = TransportModes.MaskToList(currentTransportMask);
+                            foreach(var transportMode in currentMaskList)
+                            {   
                                 if((edgeTransportModes & transportMode) == transportMode)
                                 {
                                     AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportPlaceholder, transportMode);
@@ -96,10 +94,9 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                             if(key!=0)
                             {
-                                byte[] alternativeTransportModes = TransportModes.MaskToArray(TransportModes.RoutingRules[key]);
-                                for(int i = 0; i < alternativeTransportModes.Length; i++)
+                                var alternativeTransportModes = TransportModes.MaskToList(TransportModes.RoutingRules[key]);
+                                foreach(var transportMode in alternativeTransportModes)
                                 {
-                                    var transportMode = alternativeTransportModes[i];
                                     if((edgeTransportModes & transportMode) == transportMode)
                                     {
                                         AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, -1, transportMode);
@@ -144,21 +141,16 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        AddTransportModeTransition(currentStep.TransportMode, currentStep.ActiveNode.Idx);
+                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
                     }
                 }
                 else
                 {
-                    AddTransportModeTransition(currentStep.TransportMode, currentStep.ActiveNode.Idx);
+                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
                 }
                 ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);
             }
-        }
-
-        private void AddTransportModeTransition(byte transportMode, int nodeIdx)
-        {
-            transportModeTransitions.Add(nodeIdx, transportMode);
         }
     }
 }

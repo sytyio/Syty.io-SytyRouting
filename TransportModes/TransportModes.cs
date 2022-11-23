@@ -283,6 +283,11 @@ namespace SytyRouting
         }
 
         public static byte[] MaskToArray(byte transportModes)
+        {   
+            return MaskToList(transportModes).ToArray();
+        }
+
+        public static List<byte> MaskToList(byte transportModes)
         {
             List<byte> result = new List<byte>(0);
             foreach(var transportModeMask in TransportModeMasks)
@@ -293,7 +298,7 @@ namespace SytyRouting
                 }
             }
                 
-            return result.ToArray();
+            return result;
         }
 
         public static byte ArrayToMask(byte[] transportModes)
