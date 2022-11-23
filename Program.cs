@@ -25,12 +25,12 @@ namespace SytyRouting
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
             logger.Info("Count = {0}", graph.GetNodes().Count()); // 1558439 
-            for (int i = 1558439 ; i < graph.GetNodes().Count(); i++)
+            for (int i = 1558439  ; i < graph.GetNodes().Count(); i++)
             {
                 var node = graph.GetNodes()[i];
-                if (node.ValidSource||node.ValidTarget){
+                // if (node.ValidSource||node.ValidTarget){
                     graph.TraceOneNode(node);
-                }
+                // }
             }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);

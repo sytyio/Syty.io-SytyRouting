@@ -128,7 +128,7 @@ namespace SytyRouting
                 // ControllerGtfs.CleanGtfs();
 
                 // string date = "20220531"; // not in boundaries
-                // string date = "20220923"; // in boundaries
+                // string date = "20221128"; // in boundaries (sunday)
                 string date = ""; // empty
                 await AddGtfsData(date);
                 KDTree = new KDTree(NodesArray);
@@ -258,26 +258,26 @@ namespace SytyRouting
         private async Task AddGtfsData(string date="")
         {
             await GetDataFromGtfs(date);
-            foreach (var gtfs in GtfsDico)
-            {
-                // Connecting gtfs nodes to graph nodes
-                foreach (var node in gtfs.Value.GetNodes())
-                {
-                    var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    if (node.ValidSource)
-                    {
-                        node.OutwardEdges.Add(newEdgOut);
-                    }
-                    if (node.ValidTarget)
-                    {
-                        node.InwardEdges.Add(newEdgeIn);
-                    }
-                    nearest.InwardEdges.Add(newEdgOut);
-                    nearest.OutwardEdges.Add(newEdgeIn);
-                }
-            }
+            // foreach (var gtfs in GtfsDico)
+            // {
+            //     // Connecting gtfs nodes to graph nodes
+            //     foreach (var node in gtfs.Value.GetNodes())
+            //     {
+            //         var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
+            //         var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+            //         var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+            //         if (node.ValidSource)
+            //         {
+            //             node.OutwardEdges.Add(newEdgOut);
+            //         }
+            //         if (node.ValidTarget)
+            //         {
+            //             node.InwardEdges.Add(newEdgeIn);
+            //         }
+            //         nearest.InwardEdges.Add(newEdgOut);
+            //         nearest.OutwardEdges.Add(newEdgeIn);
+            //     }
+            // }
             logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
             foreach (var gtfs in GtfsDico)
             {
@@ -354,13 +354,13 @@ namespace SytyRouting
 
         private void TraceEdges(Node node)
         {
-            logger.Debug("\tInward Edges in Node {0}:", node.OsmID);
+            logger.Info("\tInward Edges in Node {0}:", node.OsmID);
             foreach (var edge in node.InwardEdges)
             {
                 TraceEdge(edge);
             }
 
-            logger.Debug("\tOutward Edges in Node {0}:", node.OsmID);
+            logger.Info("\tOutward Edges in Node {0}:", node.OsmID);
             foreach (var edge in node.OutwardEdges)
             {
                 TraceEdge(edge);
@@ -369,8 +369,8 @@ namespace SytyRouting
 
         private void TraceEdge(Edge edge)
         {
-            logger.Info("\t\t > Edge: {0},\tcost: {1},\tSource Id: {2} ({3},{4});\tTarget Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}) length = {10}",
-                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes,edge.LengthM);
+            logger.Info("\t\t > Edge: {0},\tcost: {1},\tSource Id: {2} ({3},{4});\tTarget Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}) length = {10} speed = {11}",
+                    edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes,edge.LengthM,edge.MaxSpeedMPerS);
 
             TraceInternalGeometry(edge);
         }
