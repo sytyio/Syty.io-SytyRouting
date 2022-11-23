@@ -43,11 +43,11 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 var activeNode = currentStep!.ActiveNode;
 
-                int currentTransportPlaceholder = currentStep.TransportModePlaceholder;
+                int currentTransportIndex = currentStep.TransportSequenceIndex;
                 byte currentTransportMask;
                 if(TrasnportModeSequence.Length>0)
                 {
-                    currentTransportMask = transportModesSequence[currentTransportPlaceholder];
+                    currentTransportMask = transportModesSequence[currentTransportIndex];
                 }
                 else
                 {
@@ -75,15 +75,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                             {   
                                 if((edgeTransportModes & transportMode) == transportMode)
                                 {
-                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportPlaceholder, transportMode);
+                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                                 }
 
-                                if(currentTransportPlaceholder>=0 && currentTransportPlaceholder<transportModesSequence.Length-1)
+                                if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
                                 {
-                                    byte nextTransportMode = transportModesSequence[currentTransportPlaceholder+1];
+                                    byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
                                     if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                     {
-                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportPlaceholder+1, nextTransportMode);
+                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex+1, nextTransportMode);
                                     }
                                 }
                             }
@@ -114,12 +114,12 @@ namespace SytyRouting.Algorithms.Dijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportModePlaceholder, byte transportMode)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportSequenceIndex, byte transportMode)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportModePlaceholder = transportModePlaceholder, TransportMode = transportMode };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)

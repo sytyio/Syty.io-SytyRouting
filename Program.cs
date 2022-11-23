@@ -85,7 +85,7 @@ namespace SytyRouting
 
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
-            personaRouter.TracePersonas();
+            // personaRouter.TracePersonas();
             // personaRouter.TracePersonasRouteResult();
 
 
