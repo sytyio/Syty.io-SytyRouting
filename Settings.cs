@@ -19,6 +19,7 @@ namespace SytyRouting
     {
         public string [] GtfsProviders {get;set;}=null!;
         public Uri [] GtfsUris {get;set;}=null!;
+        public string? SelectedDate {get;set;}=null!;
     }
 
 

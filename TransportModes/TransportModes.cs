@@ -432,7 +432,7 @@ namespace SytyRouting
             
             return transportModeRoutingRoules;
         }
-
+        
         public static async Task CreateMappingTagIdToTransportModes()
         {
             OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
@@ -474,14 +474,14 @@ namespace SytyRouting
             return tagIdToTransportModes;
         }
 
-        public static Dictionary<int,byte> CreateMappingRouteTypeToTransportMode(Dictionary<int,byte> transportModeMasks){
-            Dictionary<int,byte> routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
-                        foreach(var rt2tmm in routeTypeToTransportMode)
-            {
-                logger.Info("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
-            }
-            return routeTypeToTransportMode;
-        }
+        // public static Dictionary<int,byte> CreateMappingRouteTypeToTransportMode(Dictionary<int,byte> transportModeMasks){
+        //     Dictionary<int,byte> routeTypeToTransportMode= Configuration.CreateMappingTypeRouteToTransportMode(transportModeMasks);
+        //                 foreach(var rt2tmm in routeTypeToTransportMode)
+        //     {
+        //         logger.Info("{0}: {1} :: {2}", rt2tmm.Key,rt2tmm.Value,TransportModesToString(rt2tmm.Value));
+        //     }
+        //     return routeTypeToTransportMode;
+        // }
 
         public static int GetTransportModeNameIndex(string transportModeName)
         {

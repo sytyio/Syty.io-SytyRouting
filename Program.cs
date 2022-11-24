@@ -24,15 +24,13 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-            // logger.Info("Count = {0}", graph.GetNodes().Count());
-            // for (int i = 1558439; i < graph.GetNodes().Count(); i++)
+            // logger.Info("Count = {0}", graph.GetNodes().Count()); // 1558439 
+            // for (int i = 1558439  ; i < graph.GetNodes().Count(); i++)
             // {
             //     var node = graph.GetNodes()[i];
-            //     if (node.ValidSource || node.ValidTarget)
-            //     {
-            //         // if(node.Idx==1560000)
+            //     // if (node.ValidSource||node.ValidTarget){
             //         graph.TraceOneNode(node);
-            //     }
+            //     // }
             // }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -61,12 +59,12 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+            // TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
 
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
+            // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
             // string[] requestedSequence = new string[] {"Tec-Lijn-STIB-SNCB"};
             // string[] requestedSequence = new string[] {"Bus"};
@@ -83,7 +81,7 @@ namespace SytyRouting
             // personaRouter.TracePersonasRouteResult();
 
 
-            // Logger flushing
+            // // Logger flushing
             LogManager.Shutdown();
         }
     }

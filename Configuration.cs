@@ -26,6 +26,8 @@ namespace SytyRouting
         public static DataGtfsSettings DataGtfsSettings {get;set;} = null!;
         public static Dictionary<String, Uri> ProvidersInfo {get;set;} = null!;
 
+        public static string SelectedDate {get;set;}=null!;
+
         // Routing parameters:
         public static int MonitorSleepMilliseconds {get;}
         public static int DBPersonaLoadAsyncSleepMilliseconds {get;}
@@ -72,6 +74,8 @@ namespace SytyRouting
 
             DataGtfsSettings dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
             CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+            InitialiseDateGtfs(dataGtfsSettings.SelectedDate);
+
 
             RoutingSettings routingSettings = config.GetRequiredSection("RoutingSettings").Get<RoutingSettings>();
             MonitorSleepMilliseconds = routingSettings.MonitorSleepMilliseconds;
@@ -88,6 +92,8 @@ namespace SytyRouting
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
             GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
         }
+
+
 
         public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks){
                 int [] tagsGtfs = Configuration.GtfsTags();
@@ -325,6 +331,16 @@ namespace SytyRouting
                         logger.Info("Provider already there");
                     }
                 }
+            }
+        }
+
+        private static void InitialiseDateGtfs(string? selectedDate)
+        {
+            logger.Info("Date = {0}",selectedDate);
+            if(selectedDate is null){
+                SelectedDate= "";
+            }else{
+            SelectedDate= selectedDate;
             }
         }
     }
