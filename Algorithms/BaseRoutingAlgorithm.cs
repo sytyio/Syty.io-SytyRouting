@@ -13,6 +13,10 @@ namespace SytyRouting.Algorithms
         protected Dictionary<int, byte> transportModeTransitions = new Dictionary<int, byte>(1);
         protected double routeCost;
 
+        //DEBUG:
+        protected int Steps = 0;
+        protected int Scores = 0;
+
         public virtual void Initialize(Graph graph)
         {
             _graph = graph;
@@ -130,6 +134,18 @@ namespace SytyRouting.Algorithms
         public double GetRouteCost()
         {
             return routeCost;
+        }
+
+        //DEBUG:
+        public int GetSteps()
+        {
+            return Steps;
+        }
+
+        //DEBUG:
+        public int GetScores()
+        {
+            return Scores;
         }
 
         public Dictionary<int,byte> GetTransportModeTransitions()

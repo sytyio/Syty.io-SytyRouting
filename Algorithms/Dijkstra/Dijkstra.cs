@@ -122,9 +122,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
+                //DEBUG:
+                Steps++;
+
                 if(!exist)
                 {
                     bestScoreForNode.Add(nextNode.Idx, cumulatedCost);
+                    
+                    //DEBUG:
+                    Scores++;
                 }
                 else
                 {

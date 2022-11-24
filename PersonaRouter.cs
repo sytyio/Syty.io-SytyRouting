@@ -35,6 +35,12 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
+        //DEBUG:
+        long AverageSteps=0;
+        long Steps=0;
+        long AverageScores=0;
+        long Scores=0;
+
 
         public PersonaRouter(Graph graph)
         {
@@ -77,6 +83,12 @@ namespace SytyRouting
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
+
+            //DEBUG:
+            logger.Debug("Total steps: {0} :: Total scores: {1}",Steps,Scores);
+            AverageSteps=Steps/elementsToProcess;
+            AverageScores=Scores/elementsToProcess;
+            logger.Debug("Average steps: {0} :: Average scores: {1}",AverageSteps,AverageScores);
 
             await DBPersonaRoutesUploadAsync();
 
@@ -166,6 +178,12 @@ namespace SytyRouting
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+
+                        //DEBUG:
+                        logger.Debug("Steps: {0} :: Scores {1}",routingAlgorithm.GetSteps(),routingAlgorithm.GetScores());
+                        Steps+=routingAlgorithm.GetSteps();
+                        Scores+=routingAlgorithm.GetScores();
+                        
 
                         if(route.Count > 0)
                         {
