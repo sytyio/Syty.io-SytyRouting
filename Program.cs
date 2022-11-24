@@ -68,12 +68,12 @@ namespace SytyRouting
 
             logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
-            string[] requestedSequence = new string[] {"Tec-Lijn-STIB-SNCB"};
-            //string[] requestedSequence = new string[] {"Bus"};
-            //string[] requestedSequence = new string[] {"Metro"};
-            //string[] requestedSequence = new string[] {"Bicycle"};
+            // string[] requestedSequence = new string[] {"Tec-Lijn-STIB-SNCB"};
+            // string[] requestedSequence = new string[] {"Bus"};
+            // string[] requestedSequence = new string[] {"Metro"};
+            // string[] requestedSequence = new string[] {"Bicycle"};
             // string[] requestedSequence = new string[] {"Car", "Tec-Lijn-STIB-SNCB"};
-            // string[] requestedSequence = new string[] {""};
+            string[] requestedSequence = new string[] {""};
             //byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
 
