@@ -302,7 +302,7 @@ namespace SytyRouting
                 case OneWayState.Yes: // Only forward direction
                 {
                     var internalGeometry = GetInternalGeometry(geometry, oneWayState);
-                    var edge = new Edge{OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
+                    var edge = new Edge{OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward};
                     source.OutwardEdges.Add(edge);
                     target.InwardEdges.Add(edge);
 

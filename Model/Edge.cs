@@ -14,6 +14,7 @@ namespace SytyRouting.Model
     {
         public long OsmID;
         public double Cost;
+        public OneWayState OneWayState;
         public double LengthM;
         public double MaxSpeedMPerS;
 
@@ -81,7 +82,7 @@ namespace SytyRouting.Model
         }
 
         public void SetCost(CostCriteria costCriteria)
-        {
+        {                               
             switch(costCriteria)
             {
                 case CostCriteria.MinimalTravelTime:
@@ -94,13 +95,12 @@ namespace SytyRouting.Model
                     Cost = LengthM;
                     break;
                 }
-                // default:
-                // {
-                //     Cost = LengthM;
-                //     break;
-                // }
             }
-            
+
+            if(OneWayState == OneWayState.Reversed)
+            {
+                Cost = -1*Cost;                
+            }
         }
     }
 }
