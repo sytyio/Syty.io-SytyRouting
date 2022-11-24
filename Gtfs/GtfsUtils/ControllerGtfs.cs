@@ -21,8 +21,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public ControllerCsv? CtrlCsv;
         private string choice;
 
-        private string givenDate;
-
         private const double checkValue = 0.000000000000001;
 
         [NotNull]
@@ -53,10 +51,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
         // Nearest nodes
         private Dictionary<string, Node> nearestNodeDico = new Dictionary<string, Node>();
 
-        public ControllerGtfs(string provider, String date)
+        public ControllerGtfs(string provider)
         {
             choice = provider;
-            givenDate = date;
         }
 
         public async Task InitController()
@@ -101,15 +98,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
 
             var nbTrips = tripDico.Count();
-            if (givenDate != "")
+            if (Configuration.SelectedDate != "")
             {
-                var givenDateParse = DateTime.ParseExact(givenDate, "yyyyMMdd", CultureInfo.InvariantCulture);
+                var givenDateParse = DateTime.ParseExact(Configuration.SelectedDate, "yyyyMMdd", CultureInfo.InvariantCulture);
                 var tripsGivenDay = from trip in tripDico
                                     where trip.Value.CalendarInfos.Dates.Contains(givenDateParse)
                                     select trip;
                 tripDicoForOneDay = tripsGivenDay.ToDictionary(x => x.Key, x => x.Value);
                 var nbTripsDays = tripDicoForOneDay.Count();
-                logger.Info("Nb trips for one day ( {0} ) = {1}", givenDate, nbTripsDays);
+                logger.Info("Nb trips for one day ( {0} ) = {1}", Configuration.SelectedDate, nbTripsDays);
             }
 
             logger.Info("Nb trips for all days = {0}", nbTrips);
@@ -294,7 +291,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AllTripsToEdgeDictionary()
         {
-            if (givenDate == "")
+            if (Configuration.SelectedDate == "")
             {
 
                 foreach (var trip in tripDico)
@@ -333,7 +330,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private void OneTripToEdgeDictionary(string tripId)
         {
             TripGtfs buffTrip;
-            if (givenDate == "")
+            if (Configuration.SelectedDate == "")
             {
                 buffTrip = tripDico[tripId]; // All trips
             }

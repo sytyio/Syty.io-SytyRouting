@@ -123,15 +123,11 @@ namespace SytyRouting
                 await InitialiseMaskModes();
 
 
-                await DBLoadAsync();
-                KDTree = new KDTree(NodesArray);
+                // await DBLoadAsync();
+                // KDTree = new KDTree(NodesArray);
                 // ControllerGtfs.CleanGtfs();
-
-                // string date = "20220531"; // not in boundaries
-                // string date = "20221128"; // in boundaries (sunday)
-                string date = ""; // empty
-                await AddGtfsData(date);
-                KDTree = new KDTree(NodesArray);
+                await AddGtfsData();
+                // KDTree = new KDTree(NodesArray);
                 // ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
             }
@@ -241,11 +237,11 @@ namespace SytyRouting
             }
         }
 
-        public async Task GetDataFromGtfs(string date)
+        public async Task GetDataFromGtfs()
         {
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
-                GtfsDico.Add(provider, new ControllerGtfs(provider,date));
+                GtfsDico.Add(provider, new ControllerGtfs(provider));
             }
             List<Task> listDwnld = new List<Task>();
             foreach (var gtfs in GtfsDico)
@@ -255,29 +251,29 @@ namespace SytyRouting
             await Task.WhenAll(listDwnld);
         }
 
-        private async Task AddGtfsData(string date="")
+        private async Task AddGtfsData()
         {
-            await GetDataFromGtfs(date);
-            foreach (var gtfs in GtfsDico)
-            {
-                // Connecting gtfs nodes to graph nodes
-                foreach (var node in gtfs.Value.GetNodes())
-                {
-                    var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    if (node.ValidSource)
-                    {
-                        node.OutwardEdges.Add(newEdgOut);
-                    }
-                    if (node.ValidTarget)
-                    {
-                        node.InwardEdges.Add(newEdgeIn);
-                    }
-                    nearest.InwardEdges.Add(newEdgOut);
-                    nearest.OutwardEdges.Add(newEdgeIn);
-                }
-            }
+            await GetDataFromGtfs();
+            // foreach (var gtfs in GtfsDico)
+            // {
+            //     // Connecting gtfs nodes to graph nodes
+            //     foreach (var node in gtfs.Value.GetNodes())
+            //     {
+            //         var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
+            //         var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+            //         var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+            //         if (node.ValidSource)
+            //         {
+            //             node.OutwardEdges.Add(newEdgOut);
+            //         }
+            //         if (node.ValidTarget)
+            //         {
+            //             node.InwardEdges.Add(newEdgeIn);
+            //         }
+            //         nearest.InwardEdges.Add(newEdgOut);
+            //         nearest.OutwardEdges.Add(newEdgeIn);
+            //     }
+            // }
             logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
             foreach (var gtfs in GtfsDico)
             {
