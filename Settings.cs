@@ -41,7 +41,7 @@ namespace SytyRouting
 
     public sealed class TransportModeRoutingRule
     {
-        public string CurrentTransportMode {get; set;} = null!;
+        public string[] CurrentTransportModes {get; set;} = null!;
         public string[] AlternativeTransportModes {get; set;} = null!;
     }
 

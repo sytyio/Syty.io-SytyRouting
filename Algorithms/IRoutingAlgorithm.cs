@@ -11,5 +11,9 @@ namespace SytyRouting.Algorithms
         Dictionary<int,byte> GetTransportModeTransitions();
         LineString ConvertRouteFromNodesToLineString(List<Node> route, TimeSpan initialTimeStamp);
         double GetRouteCost();
+
+        //DEBUG:
+        int GetSteps();
+        int GetScores();
     }
 }

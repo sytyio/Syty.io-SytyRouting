@@ -17,7 +17,8 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = 1; //Environment.ProcessorCount;
+        //private static int simultaneousRoutingTasks = 1; // For Debugging with only one processor
+        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -34,6 +35,12 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
+        //DEBUG:
+        long AverageSteps=0;
+        long Steps=0;
+        long AverageScores=0;
+        long Scores=0;
+
 
         public PersonaRouter(Graph graph)
         {
@@ -47,7 +54,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 100; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -76,6 +83,12 @@ namespace SytyRouting
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
+
+            //DEBUG:
+            logger.Debug("Total steps: {0} :: Total scores: {1}",Steps,Scores);
+            AverageSteps=Steps/elementsToProcess;
+            AverageScores=Scores/elementsToProcess;
+            logger.Debug("Average steps: {0} :: Average scores: {1}",AverageSteps,AverageScores);
 
             await DBPersonaRoutesUploadAsync();
 
@@ -165,6 +178,13 @@ namespace SytyRouting
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+
+                        //DEBUG:
+                        logger.Debug("Steps: {0} :: Scores {1}",routingAlgorithm.GetSteps(),routingAlgorithm.GetScores());
+                        Steps+=routingAlgorithm.GetSteps();
+                        Scores+=routingAlgorithm.GetScores();
+                        
+
                         if(route.Count > 0)
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
@@ -359,6 +379,26 @@ namespace SytyRouting
             logger.Debug(routeTimeStampString);
         }
 
+        public void TraceFullRoute(LineString route)
+        {
+            var routeCoordinates = route.Coordinates;
+
+            Node node;
+            string timeStamp;
+
+            logger.Debug("> Route ({0})", routeCoordinates.Length);
+            logger.Debug(String.Format("Nodes :: Time stamps:"));
+            for(var n = 0; n < routeCoordinates.Length; n++)
+            {
+                node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
+                if(route.Coordinates[n].M<double.MaxValue)
+                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                else
+                    timeStamp = "Inf";
+                logger.Debug(String.Format("{0} : {1,14} :: {2,14},", n+1, node.OsmID, timeStamp));
+            }
+        }
+
         public void TraceRouteDetails(LineString route, Dictionary<int, byte>? transportModeTransitions)
         {
             var routeCoordinates = route.Coordinates;
@@ -375,6 +415,11 @@ namespace SytyRouting
                     }
 
                     logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
+                    if(routeCoordinates.Length<1)
+                    {
+                        logger.Debug("> Empty route");
+                        return;
+                    }
                     string vertexString        = String.Format(" {0,14}","Vertex");
                     string nodeString          = String.Format(" {0,14}","Node OSM Id");
                     string timeStampString     = String.Format(" {0,14}","Time stamp");

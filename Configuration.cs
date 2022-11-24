@@ -158,7 +158,7 @@ namespace SytyRouting
                 if(transportModeNames.Length > TransportModes.MaxNumberOfTransportModes)
                 {
                     Array.Resize(ref transportModeNames, TransportModes.MaxNumberOfTransportModes);
-                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes-1, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes-1);
+                    logger.Info("The number of transport modes in the configuration file should be limited to {0}. Ignoring the last {1} transport mode(s) in the list.", TransportModes.MaxNumberOfTransportModes, configTransportModeNames.Length - TransportModes.MaxNumberOfTransportModes);
                 }
 
                 int index=1;
@@ -166,7 +166,7 @@ namespace SytyRouting
                 {
                     validTransportModeNames[index] = transportModeNames[index-1]; 
                 }
-                validTransportModeNames.Add(index,PublicTransportGroup);                
+                // validTransportModeNames.Add(index,PublicTransportGroup);                
             }
             catch(Exception e)
             {

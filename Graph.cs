@@ -105,6 +105,7 @@ namespace SytyRouting
                     {
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
                         TransportModes.SetPublicTransportModes(publicTransportModes);
+                        TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
                     }
                     else
                     {

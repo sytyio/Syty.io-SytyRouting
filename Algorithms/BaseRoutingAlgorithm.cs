@@ -13,6 +13,10 @@ namespace SytyRouting.Algorithms
         protected Dictionary<int, byte> transportModeTransitions = new Dictionary<int, byte>(1);
         protected double routeCost;
 
+        //DEBUG:
+        protected int Steps = 0;
+        protected int Scores = 0;
+
         public virtual void Initialize(Graph graph)
         {
             _graph = graph;
@@ -66,7 +70,7 @@ namespace SytyRouting.Algorithms
 
             if(nodeRoute.Count <= 1)
             {
-                return new LineString(null, geometryFactory);    
+                return new LineString(null, geometryFactory);
             }
             
             List<Coordinate> xyCoordinates = new List<Coordinate>(0);
@@ -80,11 +84,17 @@ namespace SytyRouting.Algorithms
             mOrdinates.Add(previousTimeInterval);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
-            {                
+            {          
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
                 if(edge is not null)
                 {
+                    if(edge.MaxSpeedMPerS==0)
+                    {
+                        return new LineString(null, geometryFactory);
+                    }
+                    
                     var minTimeIntervalMilliseconds = edge.LengthM / edge.MaxSpeedMPerS * 1000; // [s]*[1000 ms / 1s]
+
                     if(edge.InternalGeometry is not null)
                     {
                         for(var j = 0; j < edge.InternalGeometry.Length; j++)
@@ -107,7 +117,7 @@ namespace SytyRouting.Algorithms
                 }
                 else
                 {
-                    throw new Exception("Impossible to find the corresponding Outward Edge");
+                    return new LineString(null, geometryFactory);
                 }
             }
 
@@ -124,6 +134,18 @@ namespace SytyRouting.Algorithms
         public double GetRouteCost()
         {
             return routeCost;
+        }
+
+        //DEBUG:
+        public int GetSteps()
+        {
+            return Steps;
+        }
+
+        //DEBUG:
+        public int GetScores()
+        {
+            return Scores;
         }
 
         public Dictionary<int,byte> GetTransportModeTransitions()
