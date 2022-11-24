@@ -11,9 +11,14 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public string? Name { get; set; }
 
-        public override string ToString()
+        // public override string ToString()
+        // {
+        //     return "IdX= "+ Idx + " Internal Id = " + Id + " Name = " + Name + " Lat = " + Y + " Lon = " + X + " Source?= " + ValidSource + " Target?= " + ValidTarget;
+        // }
+
+                public override string ToString()
         {
-            return "IdX= "+ Idx + " Internal Id = " + Id + " Name = " + Name + " Lat = " + Y + " Lon = " + X + " Source?= " + ValidSource + " Target?= " + ValidTarget;
+            return "Internal Id = " + Id + " Name = " + Name + " Pos = " + Y.ToString().Replace(",",".")+" "+ X.ToString().Replace(",",".");
         }
 
         public StopGtfs(string id, string? name, double lat, double lon)

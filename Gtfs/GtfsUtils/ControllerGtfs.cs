@@ -404,6 +404,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             edgeDico.Add(newId, newEdge);
                             AddEdgeToNodesNoLineString(previousStop, currentStop, newEdge);
                         }
+                    }else{
+                        i++;
                     }
                 }
                 else
@@ -609,41 +611,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 distance += Helper.GetDistance(coordinates[size].X, coordinates[size].Y, target.X, target.Y);
                 logger.Debug("Distance {0} {1} and {2} {3} {4}", coordinates[size].Y, coordinates[size].X, target.Y, target.X, distance);
             }
-            logger.Info("Distance = {0}",distance);
-            // if (distance > 20000)
-            // {
-            //     logger.Info("Node A {0} {1}   Node B {2} {3}, Distance = {4}",source.Y,source.X,target.Y,target.X,distance);
-            //     logger.Info("Bufftrip = {0}, Route {1}",buffTrip.Id,buffTrip.Route);
-            //     GetDistanceWithLineStringDebug(splitLineString, source, target);
-            // }
-
-            return distance;
-        }
-
-         private double GetDistanceWithLineStringDebug(LineString splitLineString, Node source, Node target)
-        {
-            var coordinates = splitLineString.Coordinates;
-            double distance = 0;
-            logger.Info("Distance 1  = {0}", distance);
-            if (Math.Abs(coordinates[0].X - source.X) > checkValue || Math.Abs(coordinates[0].Y - source.Y) > checkValue)
+            logger.Debug("Distance = {0}",distance);
+            if (Math.Abs(distance - Helper.GetDistance(source,target))>1000)
             {
-                distance += Helper.GetDistance(coordinates[0].X, coordinates[0].Y, source.X, source.Y);
-            }
-            logger.Info("Distance between point {0} {1} and {2} {3} 2 = {4}", coordinates[0].Y, coordinates[0].X, source.Y, source.X, distance);
-            int size = coordinates.Count() - 1;
-            for (int i = 0; i < size; i++)
-            {
-                distance += Helper.GetDistance(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y);
-                logger.Info("Distance between point {0} {1} and {2} {3} {4}  = {5}", coordinates[i].Y, coordinates[i].X, coordinates[i + 1].Y, coordinates[i + 1].X, 3 + i, distance);
-            }
-            if (Math.Abs(coordinates[size].X - target.X) > checkValue || Math.Abs(coordinates[size].Y - target.Y) > checkValue)
-            {  // if the target is in the linestring
-                distance += Helper.GetDistance(coordinates[size].X, coordinates[size].Y, target.X, target.Y);
-                logger.Info("Distance {0} {1} and {2} {3} {4}", coordinates[size].Y, coordinates[size].X, target.Y, target.X, distance);
+                logger.Debug("Delta distance with linestring and without = {0}",Math.Abs(distance - Helper.GetDistance(source,target)));            
             }
             return distance;
         }
-
 
         public Dictionary<string, TripGtfs> SelectAllTripsForMondayBetween10and11(Dictionary<string, TripGtfs> tripDico, Dictionary<string, ScheduleGtfs> scheduleDico)
         {

@@ -258,26 +258,26 @@ namespace SytyRouting
         private async Task AddGtfsData(string date="")
         {
             await GetDataFromGtfs(date);
-            // foreach (var gtfs in GtfsDico)
-            // {
-            //     // Connecting gtfs nodes to graph nodes
-            //     foreach (var node in gtfs.Value.GetNodes())
-            //     {
-            //         var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-            //         var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-            //         var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-            //         if (node.ValidSource)
-            //         {
-            //             node.OutwardEdges.Add(newEdgOut);
-            //         }
-            //         if (node.ValidTarget)
-            //         {
-            //             node.InwardEdges.Add(newEdgeIn);
-            //         }
-            //         nearest.InwardEdges.Add(newEdgOut);
-            //         nearest.OutwardEdges.Add(newEdgeIn);
-            //     }
-            // }
+            foreach (var gtfs in GtfsDico)
+            {
+                // Connecting gtfs nodes to graph nodes
+                foreach (var node in gtfs.Value.GetNodes())
+                {
+                    var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
+                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+                    if (node.ValidSource)
+                    {
+                        node.OutwardEdges.Add(newEdgOut);
+                    }
+                    if (node.ValidTarget)
+                    {
+                        node.InwardEdges.Add(newEdgeIn);
+                    }
+                    nearest.InwardEdges.Add(newEdgOut);
+                    nearest.OutwardEdges.Add(newEdgeIn);
+                }
+            }
             logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
             foreach (var gtfs in GtfsDico)
             {
