@@ -17,7 +17,6 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        //private static int simultaneousRoutingTasks = 1; // For Debugging with only one processor
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
@@ -32,15 +31,7 @@ namespace SytyRouting
     
         private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
 
-
         private Stopwatch stopWatch = new Stopwatch();
-
-        //DEBUG:
-        long AverageSteps=0;
-        long Steps=0;
-        long AverageScores=0;
-        long Scores=0;
-
 
         public PersonaRouter(Graph graph)
         {
@@ -54,7 +45,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 50; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -83,12 +74,6 @@ namespace SytyRouting
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
-
-            //DEBUG:
-            logger.Debug("Total steps: {0} :: Total scores: {1}",Steps,Scores);
-            AverageSteps=Steps/elementsToProcess;
-            AverageScores=Scores/elementsToProcess;
-            logger.Debug("Average steps: {0} :: Average scores: {1}",AverageSteps,AverageScores);
 
             await DBPersonaRoutesUploadAsync();
 
@@ -172,18 +157,12 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
-                    // try
-                    // {
+                    try
+                    {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
-
-                        //DEBUG:
-                        logger.Debug("Steps: {0} :: Scores {1}",routingAlgorithm.GetSteps(),routingAlgorithm.GetScores());
-                        Steps+=routingAlgorithm.GetSteps();
-                        Scores+=routingAlgorithm.GetScores();
-                        
 
                         if(route.Count > 0)
                         {
@@ -198,12 +177,12 @@ namespace SytyRouting
                         {
                             logger.Debug("Route is empty for Persona Id {0}", persona.Id);
                         }
-                    // }
-                    // catch (Exception e)
-                    // {
-                    //     persona.SuccessfulRouteComputation = false;
-                    //     logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
-                    // }
+                    }
+                    catch (Exception e)
+                    {
+                        persona.SuccessfulRouteComputation = false;
+                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
+                    }
                 }
             }
         }

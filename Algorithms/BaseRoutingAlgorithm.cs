@@ -136,18 +136,6 @@ namespace SytyRouting.Algorithms
             return routeCost;
         }
 
-        //DEBUG:
-        public int GetSteps()
-        {
-            return Steps;
-        }
-
-        //DEBUG:
-        public int GetScores()
-        {
-            return Scores;
-        }
-
         public Dictionary<int,byte> GetTransportModeTransitions()
         {
             Dictionary<int,byte> tmTransitions =  new Dictionary<int, byte>(transportModeTransitions.Count);

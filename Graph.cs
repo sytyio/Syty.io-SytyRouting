@@ -177,7 +177,7 @@ namespace SytyRouting
             var totalDbRows = await Helper.DbTableRowCount(Configuration.EdgeTableName, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
-            //                     0        1      2       3         4          5      6   7   8   9       10          11         12        13            14                15            16
+            //                             0       1       2     3             4        5   6   7   8   9          10          11        12        13                14                 15      16
             var queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
@@ -210,19 +210,6 @@ namespace SytyRouting
                     var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
                     var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
 
-                    var length = Convert.ToDouble(reader.GetValue(16)); // length [?]
-                    var stLength = Convert.ToDouble(reader.GetValue(17)); // length [?]
-
-                    var stLengthSpheroid = Convert.ToDouble(reader.GetValue(18)); // length [?]
-                    var stLengthSphere = Convert.ToDouble(reader.GetValue(19)); // length [?]
-
-                    // //////////////////////////////////////////////////////////////////////////////////////////// //
-                    TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
-                    TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
-                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, stLengthSpheroid, theGeom);
-                    // //////////////////////////////////////////////////////////////////////////////////////////// //
-                    
-
                     var tagId = Convert.ToInt32(reader.GetValue(16)); // tag_id
 
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s, tagId);
@@ -236,10 +223,6 @@ namespace SytyRouting
                         Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
                     }
                 }
-
-                // //////////////////////////////////////// //
-                TestBench.DisplayCostCalculationTestResults();
-                // //////////////////////////////////////// //
 
                 NodesArray = nodes.Values.ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)

@@ -40,7 +40,7 @@ namespace SytyRouting
         public static string PublicTransportGroup {get;}
         public static Dictionary<int,int> TransportModeSpeeds {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
-         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
+        public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
 
         // Transport Modes routing rules:

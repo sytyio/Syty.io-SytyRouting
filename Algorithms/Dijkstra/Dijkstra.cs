@@ -76,7 +76,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 if((edgeTransportModes & transportMode) == transportMode)
                                 {
                                     outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
-                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
+                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                                 }
 
                                 if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
@@ -123,15 +123,9 @@ namespace SytyRouting.Algorithms.Dijkstra
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
-                //DEBUG:
-                Steps++;
-
                 if(!exist)
                 {
                     bestScoreForNode.Add(nextNode.Idx, cumulatedCost);
-                    
-                    //DEBUG:
-                    Scores++;
                 }
                 else
                 {
