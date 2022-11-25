@@ -1,0 +1,375 @@
+using System.Diagnostics;
+using NetTopologySuite.Geometries;
+using NLog;
+using SytyRouting.Algorithms;
+using SytyRouting.Model;
+
+namespace SytyRouting
+{
+    public class TestBench
+    {
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public static void TestLineStringConversion<T>(Graph graph) where T: IRoutingAlgorithm, new()
+        {
+            var lineStringRoute = TestConvertRouteFromNodesToLineString<T>(graph);
+            TraceLineStringRoute(lineStringRoute);
+        }
+
+        public static void TraceLineStringRoute(LineString lineStringRoute)
+        {
+            logger.Debug("Route: {0} points", lineStringRoute.Count);
+            for(var i=0; i<lineStringRoute.Count; i++)
+            {
+                logger.Debug("{0}: ({1}, {2}, {3})", i, lineStringRoute.Coordinates[i].X, lineStringRoute.Coordinates[i].Y, lineStringRoute.Coordinates[i].M);
+            }
+        }  
+
+        public static LineString TestConvertRouteFromNodesToLineString<T>(Graph graph) where T: IRoutingAlgorithm, new()
+        {
+            var routingAlgorithm = new T();
+            routingAlgorithm.Initialize(graph);
+
+            var referenceM = new[] {0, 1.25, 2.5, 3.75, 5.0, 5.75, 6.5, 7.25, 8.0, 8.5, 9.0, 9.5, 10.0, 11.75, 13.5, 15.25, 17};
+            var testRoute = new List<Node>(0);
+            for(var i=0; i<5; i++)
+            {
+                var node = new Node {Idx=i,OsmID=i,X=i,Y=i};
+                testRoute.Add(node);
+            }
+
+            int[] lengths = new int[] {5,3,2,7};
+            for(var i=0; i<testRoute.Count-1; i++)
+            {
+                var edge = new Edge {OsmID=i, LengthM=lengths[i], MaxSpeedMPerS=1000.0, SourceNode=testRoute[i], TargetNode=testRoute[i+1]};
+                var internalGeometry = new XYMPoint[] {new XYMPoint{M=0.25}, new XYMPoint{M=0.5}, new XYMPoint{M=0.75}};
+                edge.InternalGeometry = internalGeometry;
+                testRoute[i].OutwardEdges.Add(edge);
+            }
+
+            var lineStringRoute = routingAlgorithm.ConvertRouteFromNodesToLineString(testRoute, TimeSpan.Zero);
+
+            logger.Debug("Test Route comparison of M ordinates: Reference :: ComputedRoute");
+            var lineStringRouteCoordinates = lineStringRoute.Coordinates;
+            if(lineStringRouteCoordinates.Length != referenceM.Length)
+            {
+                logger.Debug("Inconsistent number of elements");
+                return lineStringRoute;
+            }
+            for(var i = 0; i < lineStringRouteCoordinates.Length; i++)
+            {
+                var comparisonMark = "";
+                if(referenceM[i] != lineStringRouteCoordinates[i].M)
+                    comparisonMark = "<<<===";
+                logger.Debug("({0,2}): {1,6}::{2,-6} {3}", i, referenceM[i], lineStringRouteCoordinates[i].M, comparisonMark);
+            }
+
+            return lineStringRoute;
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, length, ST_Length(the_geom) as st_length FROM public.ways where length_m is not null";
+        public static int NumberOfLengthSTLengthDiscrepancies {get; set;} = 0;
+        public static int NumberOfCostStCostDiscrepancies {get; set;} = 0;
+        public static int NumberOfReverseCostStReverseCostDiscrepancies {get; set;} = 0;
+        public static void TestOriginalWayCostCalculation(double length, double stLength, double edgeCost, double edgeReverseCost, OneWayState edgeOneWay)
+        {
+            // cost based on ST_Length(the_geom)
+            double stCost = double.NaN;
+            double stReverseCost = double.NaN;
+            double diffLengthSTLength = length - stLength;
+            if(diffLengthSTLength != 0.0)
+            {
+                logger.Debug("length {0}:{1} st_length :: diff {2}", length, stLength, diffLengthSTLength);
+                NumberOfLengthSTLengthDiscrepancies++;
+            }
+                
+            double diffCostStCost = double.NaN;
+            double diffReverseCostStReverseCost = double.NaN;
+            switch(edgeOneWay)
+            {
+                case OneWayState.Reversed:
+                {
+                    stCost = -stLength;
+                    stReverseCost = stLength;
+                    break; 
+                }
+                case OneWayState.Yes:
+                {
+                    stCost = stLength;
+                    stReverseCost = -stLength;
+                    break; 
+                }
+                default:
+                {
+                    stCost = stLength;
+                    stReverseCost = stLength;
+                    break; 
+                }
+            }
+
+            diffCostStCost = edgeCost - stCost;
+            if(diffCostStCost != 0.0)
+            {
+                logger.Debug("cost {0}:{1} st_cost :: diff = {2}, one_way: {3}", length, edgeCost, diffCostStCost, edgeOneWay);
+                NumberOfCostStCostDiscrepancies++;
+            }
+        
+            diffReverseCostStReverseCost = edgeReverseCost - stReverseCost;
+            if(diffReverseCostStReverseCost != 0.0)
+            {
+                logger.Debug("reverse_cost {0}:{1} st_reverse_cost :: diff = {2}, one_way: {3}", length, edgeReverseCost, diffReverseCostStReverseCost, edgeOneWay);
+                NumberOfReverseCostStReverseCostDiscrepancies++;
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public static int NumberOfSTLengthTheGeomLengthDiscrepancies {get; set;} = 0;
+        public static int NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies {get; set;} = 0;
+        public static void TestOriginalGeomLengthCalculation(double length, double stLength, Geometry theGeom)
+        {
+            // length calculation:
+            double theGeomLength = theGeom.Length; // (LineString length)
+            double diffStLengthTheGeomLength = stLength-theGeomLength;
+            if(diffStLengthTheGeomLength !=0)
+            {
+                logger.Debug("       length: {0}", length);
+                logger.Debug("    st_length: {0}", stLength);
+                logger.Debug("   difference: {0}\n", length-stLength);
+                logger.Debug("    st_length: {0}", stLength);
+                logger.Debug("theGeomlength: {0}", theGeomLength);
+                logger.Debug("   difference: {0}\n", diffStLengthTheGeomLength);
+                NumberOfSTLengthTheGeomLengthDiscrepancies++;
+            }
+
+            // double theGeomCoordinateSequenceLength = GeometryLength(theGeom.Coordinates);
+            double theGeomCoordinateSequenceLength = GeometryLength(theGeom);
+            double diffTheGeomLengthTheGeomCoordinateSequenceLength = theGeomLength-theGeomCoordinateSequenceLength;
+            if(diffTheGeomLengthTheGeomCoordinateSequenceLength !=0)
+            {
+                logger.Debug("                  theGeomLength: {0}", theGeomLength);
+                logger.Debug("theGeomCoordinateSequenceLength: {0}", theGeomCoordinateSequenceLength);
+                logger.Debug("                     difference: {0}\n", diffStLengthTheGeomLength);
+                NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies++;
+            }
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public static int NumberOfLengthMTheGeomLengthMDiscrepancies {get; set;} = 0;
+        public static void TestOriginalGeomLengthCalculationMeters(double length_m, double stLengthSpheroid, Geometry theGeom)
+        {
+            // length calculation:
+            //double theGeomLengthM =HaversineDistance(theGeom); // (LineString length in meters)
+            double theGeomLengthM =stLengthSpheroid; // (LineString length in meters based on a spheroid)
+            double theGeomLengthMHelperGetDistance = GeometryLengthM(theGeom);
+            
+            double diffLengthMTheGeomLengthM = length_m-theGeomLengthM;
+            double diffLengthMTheGeomLengthMHelperGetDistance = length_m-theGeomLengthMHelperGetDistance;
+            
+            if(diffLengthMTheGeomLengthM != 0)
+            {
+                logger.Debug("      length_m: {0}", length_m);
+                logger.Debug("theGeomlengthM: {0}", theGeomLengthM);
+                logger.Debug("   difference: {0}\n", diffLengthMTheGeomLengthM);
+
+                NumberOfLengthMTheGeomLengthMDiscrepancies++;
+            }
+
+            // if(diffLengthMTheGeomLengthMHelperGetDistance != 0)
+            // {
+            //     logger.Debug("                       length_m: {0}", length_m);
+            //     logger.Debug("theGeomlengthMHelperGetDistance: {0}", theGeomLengthMHelperGetDistance);
+            //     logger.Debug("                     difference: {0}\n", diffLengthMTheGeomLengthMHelperGetDistance);            
+                // NumberOfLengthMTheGeomLengthMDiscrepancies++;
+            // }
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        
+
+
+        // From NetTopologySuite/src/NetTopologySuite/Algorithm/Length.cs
+        public static double GeometryLength(Coordinate[] coordinates)
+        {
+            // Cartesian 2D distance
+            int n = coordinates.Length;
+            if (n <= 1)
+                return 0.0;
+
+            double length = 0.0;
+
+            var p = coordinates[0];
+            double x0 = p.X;
+            double y0 = p.Y;
+
+            for (int i = 1; i < n; i++)
+            {
+                p = coordinates[i];
+                double x1 = p.X;
+                double y1 = p.Y;
+                double dx = x1 - x0;
+                double dy = y1 - y0;
+
+                length += Math.Sqrt(dx * dx + dy * dy);
+
+                x0 = x1;
+                y0 = y1;
+            }
+            return length;
+        }
+
+        public static double GeometryLength(Geometry geometry)
+        {
+            LineString linestring = (LineString)geometry;
+            var pts = linestring.CoordinateSequence;
+
+            // optimized for processing CoordinateSequences
+            int n = pts.Count;
+            if (n <= 1)
+                return 0.0;
+
+            double len = 0.0;
+
+            var p = pts.GetCoordinateCopy(0);
+            double x0 = p.X;
+            double y0 = p.Y;
+
+            for (int i = 1; i < n; i++)
+            {
+                pts.GetCoordinate(i, p);
+                double x1 = p.X;
+                double y1 = p.Y;
+                double dx = x1 - x0;
+                double dy = y1 - y0;
+
+                len += Math.Sqrt(dx * dx + dy * dy);
+
+                x0 = x1;
+                y0 = y1;
+            }
+            return len;
+        }
+
+        public static double GeometryLengthM(Geometry geometry)
+        {
+            LineString linestring = (LineString)geometry;
+            var pts = linestring.CoordinateSequence;
+
+            // optimized for processing CoordinateSequences
+            int n = pts.Count;
+            if (n <= 1)
+                return 0.0;
+
+            double len = 0.0;
+
+            var p = pts.GetCoordinateCopy(0);
+            double x0 = p.X;
+            double y0 = p.Y;
+
+            for (int i = 1; i < n; i++)
+            {
+                pts.GetCoordinate(i, p);
+                double x1 = p.X;
+                double y1 = p.Y;
+                // double dx = x1 - x0;
+                // double dy = y1 - y0;
+
+                //len += Math.Sqrt(dx * dx + dy * dy);
+                len += Helper.GetDistance(x0,y0,x1,y1);
+
+                x0 = x1;
+                y0 = y1;
+            }
+            return len;
+        }
+
+        public static double ToRadians(double degrees)
+        {
+            double radians = (Math.PI / 180) * degrees;
+            return (radians);
+        }
+
+        
+        public static double HaversineDistance(Geometry g)
+        {
+            LineString ls = (LineString)g;
+
+            // optimized for processing CoordinateSequences
+            var cs = ls.CoordinateSequence;
+            int n = cs.Count;
+            if (n <= 1)
+                return 0.0;
+
+            double len = 0.0;
+
+            var p = cs.GetCoordinateCopy(0);
+            double x0 = p.X;
+            double y0 = p.Y;
+
+            for (int i = 1; i < n; i++)
+            {
+                cs.GetCoordinate(i, p);
+                double x1 = p.X;
+                double y1 = p.Y;
+                double dx = x1 - x0;
+                double dy = y1 - y0;
+
+                double R = 6371000;
+                var lat = ToRadians(dx);
+                var lng = ToRadians(dy);
+                var h1 = Math.Sin(lat / 2) * Math.Sin(lat / 2) +
+                            Math.Cos(ToRadians(x0)) * Math.Cos(ToRadians(x1)) *
+                            Math.Sin(lng / 2) * Math.Sin(lng / 2);
+                var h2 = 2 * Math.Asin(Math.Min(1, Math.Sqrt(h1)));
+                len += R * h2;
+
+                x0 = x1;
+                y0 = y1;
+            }
+            return len;
+        }
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public static void DisplayCostCalculationTestResults()
+        {
+            logger.Debug("\n\n");
+            if(NumberOfCostStCostDiscrepancies != 0 || NumberOfReverseCostStReverseCostDiscrepancies != 0)
+                logger.Debug("> Test of original Ways cost calculation failed.");
+            else
+                logger.Debug("> Test of original Ways cost calculation succeeded.");
+            logger.Debug("NumberOfCostLengthDiscrepancies: {0}", TestBench.NumberOfCostStCostDiscrepancies);
+            logger.Debug("NumberOfReverseCostLengthDiscrepancies: {0}", TestBench.NumberOfReverseCostStReverseCostDiscrepancies);
+            
+            logger.Debug("\n\n");
+            logger.Debug("NumberOfLengthSTLengthDiscrepancies: {0}", TestBench.NumberOfLengthSTLengthDiscrepancies);
+            logger.Debug("NumberOfSTLengthTheGeomLengthDiscrepancies: {0}", TestBench.NumberOfSTLengthTheGeomLengthDiscrepancies);
+            
+            logger.Debug("\n\n");
+            if(NumberOfSTLengthTheGeomLengthDiscrepancies != 0 || NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies != 0)
+                logger.Debug("> Test of the geom vs. the geom coord sequence calculation failed.");
+            else
+                logger.Debug("> Test of the geom vs. the geom coord sequencelength calculation succeeded.");
+            logger.Debug("NumberOfTheGeomLengthTheGeomCoordinateSequenceLengthDiscrepancies: {0}", TestBench.NumberOfTheGeomLengthTheGeomLengthCoordinateLengthDiscrepancies);
+            logger.Debug("\n\n");
+
+            if(NumberOfLengthMTheGeomLengthMDiscrepancies != 0)
+                logger.Debug("> Test of the length (m) vs. the geom length (m) calculation failed.");
+            else
+                logger.Debug("> Test of the length (m) vs. the geom length (m) calculation succeeded.");
+            logger.Debug("NumberLengthMTheGeomLengthMDiscrepancies: {0}", TestBench.NumberOfLengthMTheGeomLengthMDiscrepancies);
+            logger.Debug("\n\n");
+        }
+
+
+
+        
+    }
+}

@@ -14,6 +14,7 @@ namespace SytyRouting.Model
     {
         public long OsmID;
         public double Cost;
+        public OneWayState OneWayState;
         public double LengthM;
         public double MaxSpeedMPerS;
         public byte TransportModes;
@@ -80,6 +81,28 @@ namespace SytyRouting.Model
                     InternalGeometry[i].Y = br.ReadDouble();
                     InternalGeometry[i].M = br.ReadDouble();
                 }
+            }
+        }
+
+        public void SetCost(CostCriteria costCriteria)
+        {                               
+            switch(costCriteria)
+            {
+                case CostCriteria.MinimalTravelTime:
+                {
+                    Cost =  LengthM / MaxSpeedMPerS;
+                    break;
+                }                
+                case CostCriteria.MinimalTravelDistance:
+                {
+                    Cost = LengthM;
+                    break;
+                }
+            }
+
+            if(OneWayState == OneWayState.Reversed)
+            {
+                Cost = -1*Cost;                
             }
         }
     }

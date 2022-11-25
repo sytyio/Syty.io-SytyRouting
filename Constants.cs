@@ -1,5 +1,12 @@
 namespace SytyRouting
 {
+    [Flags]
+    public enum CostCriteria
+    {
+        MinimalTravelDistance =     1,
+        MinimalTravelTime =         2,                
+    }
+
     public enum StepDirection
     {
         Backward = -1,

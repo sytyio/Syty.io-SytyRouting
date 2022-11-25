@@ -210,6 +210,19 @@ namespace SytyRouting
                     var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
                     var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
 
+                    var length = Convert.ToDouble(reader.GetValue(16)); // length [?]
+                    var stLength = Convert.ToDouble(reader.GetValue(17)); // length [?]
+
+                    var stLengthSpheroid = Convert.ToDouble(reader.GetValue(18)); // length [?]
+                    var stLengthSphere = Convert.ToDouble(reader.GetValue(19)); // length [?]
+
+                    // //////////////////////////////////////////////////////////////////////////////////////////// //
+                    TestBench.TestOriginalWayCostCalculation(length, stLength, edgeCost, edgeReverseCost, edgeOneWay);
+                    TestBench.TestOriginalGeomLengthCalculation(length, stLength, theGeom);
+                    TestBench.TestOriginalGeomLengthCalculationMeters(length_m, stLengthSpheroid, theGeom);
+                    // //////////////////////////////////////////////////////////////////////////////////////////// //
+                    
+
                     var tagId = Convert.ToInt32(reader.GetValue(16)); // tag_id
 
                     CreateEdges(edgeOSMId, edgeCost, edgeReverseCost, edgeOneWay, source, target, length_m, theGeom, maxSpeedForward_m_per_s, maxSpeedBackward_m_per_s, tagId);
@@ -223,6 +236,10 @@ namespace SytyRouting
                         Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
                     }
                 }
+
+                // //////////////////////////////////////// //
+                TestBench.DisplayCostCalculationTestResults();
+                // //////////////////////////////////////// //
 
                 NodesArray = nodes.Values.ToArray();
                 for (int i = 0; i < NodesArray.Length; i++)
@@ -408,7 +425,7 @@ namespace SytyRouting
                 case OneWayState.Yes: // Only forward direction
                     {
                         var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
+                        var edge = new Edge { OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
                         source.OutwardEdges.Add(edge);
                         target.InwardEdges.Add(edge);
 
