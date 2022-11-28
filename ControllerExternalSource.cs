@@ -1,5 +1,4 @@
-using SytyRouting.Model;
-namespace SytyRouting.Gtfs.GtfsUtils
+namespace SytyRouting.Model
 {
     interface ControllerExternalSource
     {
