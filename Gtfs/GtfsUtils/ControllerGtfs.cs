@@ -58,7 +58,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-             await DownloadGtfs();
+            //  await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -508,9 +508,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AddEdgeToNodesLineString(Node previousStop, Node currentStop, EdgeGtfs newEdge)
         {
-            // if(newEdge.MaxSpeedMPerS>40){
-            //     logger.Info("Speed = {0}, Distance = {1}, Node A {2} {3}   Node B {4} {5}",newEdge.MaxSpeedMPerS,newEdge.LengthM,currentStop.Y,currentStop.X,previousStop.Y,previousStop.X);
-            // }
             previousStop.OutwardEdges.Add((Edge)newEdge);
             currentStop.InwardEdges.Add((Edge)newEdge);
         }

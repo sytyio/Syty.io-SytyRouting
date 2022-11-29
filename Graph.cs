@@ -128,13 +128,13 @@ namespace SytyRouting
                 await GetDbData();
                 logger.Info("Nb nodes in graph = {0}",NodesArray.Count()); 
                 CleanGraph();
-
+                
 
                 KDTree = new KDTree(NodesArray);
-                ControllerGtfs.CleanGtfs();
+                // ControllerGtfs.CleanGtfs();
                 await AddGtfsData();
                 KDTree = new KDTree(NodesArray);
-                ControllerGtfs.CleanGtfs();
+                // ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
             }
             ComputeCost();
