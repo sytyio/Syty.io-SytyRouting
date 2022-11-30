@@ -1,10 +1,8 @@
-using Npgsql;
 using NLog;
 using System.Diagnostics;
 using SytyRouting.Algorithms.KDTree;
 using SytyRouting.Model;
 using SytyRouting.DataBase;
-using NetTopologySuite.Geometries;
 using SytyRouting.Gtfs.GtfsUtils;
 
 namespace SytyRouting
@@ -125,16 +123,11 @@ namespace SytyRouting
                 await InitialiseMaskModes();
 
 
-                await GetDbData();
-                logger.Info("Nb nodes in graph = {0}",NodesArray.Count()); 
-                CleanGraph();
-                
+                await GetDbData();            
 
                 KDTree = new KDTree(NodesArray);
-                // ControllerGtfs.CleanGtfs();
                 await AddGtfsData();
                 KDTree = new KDTree(NodesArray);
-                // ControllerGtfs.CleanGtfs();
                 await FileSaveAsync(path);
             }
             ComputeCost();
@@ -170,6 +163,7 @@ namespace SytyRouting
                 DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTableName);
                 await db.InitController();
                 NodesArray=db.GetNodes().ToArray();
+                logger.Info("Nb nodes in graph = {0}",NodesArray.Count()); 
         }
 
         public async Task GetDataFromGtfs()
@@ -321,53 +315,6 @@ namespace SytyRouting
             {
                 logger.Debug("\t\t   No Internal geometry in Edge {0}:", edge.OsmID);
             }
-        }
-
-        
-
-        private void CleanGraph()
-        {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-            logger.Info("Graph cleaning");
-            foreach (var n in NodesArray)
-            {
-                n.ValidSource = false;
-                n.ValidTarget = false;
-            }
-            var toProcess = new Queue<Node>();
-            var root = NodesArray.First();
-            root.ValidSource = true;
-            root.ValidTarget = true;
-            toProcess.Enqueue(root);
-            Node? node;
-            while (toProcess.TryDequeue(out node))
-            {
-                if (node.ValidSource)
-                {
-                    foreach (var neighbor in node.InwardEdges)
-                    {
-                        if (!neighbor.SourceNode.ValidSource)
-                        {
-                            neighbor.SourceNode.ValidSource = true;
-                            toProcess.Enqueue(neighbor.SourceNode);
-                        }
-                    }
-                }
-                if (node.ValidTarget)
-                {
-                    foreach (var neighbor in node.OutwardEdges)
-                    {
-                        if (!neighbor.TargetNode.ValidTarget)
-                        {
-                            neighbor.TargetNode.ValidTarget = true;
-                            toProcess.Enqueue(neighbor.TargetNode);
-                        }
-                    }
-                }
-            }
-            logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
-            stopWatch.Stop();
         }
 
         public void TestClosestNode(string name, double x, double y)

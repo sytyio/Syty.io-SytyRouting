@@ -9,7 +9,6 @@ using System.Net; //download file
 using System.IO.Compression; //zip
 using NetTopologySuite.Operation.Distance;
 using System.Diagnostics.CodeAnalysis;
-using NetTopologySuite.LinearReferencing;
 namespace SytyRouting.Gtfs.GtfsUtils
 {
 
@@ -58,7 +57,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            //  await DownloadGtfs();
+            Clean();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -115,6 +115,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
+            Clean();
 
 
         }
@@ -132,6 +133,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public IEnumerable<Edge> GetEdges()
         {
             return edgeDico.Values.Cast<Edge>();
+        }
+
+        public void Clean(){
+            if (Directory.Exists("GtfsData"))
+            {
+                Directory.Delete("GtfsData", true);
+                logger.Info("Cleaning GtfsData");
+            }
+            else
+            {
+                logger.Info("No data found");
+            }
         }
 
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
@@ -205,31 +218,31 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 var arrayDays = calendar.Value.Days;
                 if (arrayDays[0])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Monday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Monday));
                 }
                 if (arrayDays[1])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Tuesday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Tuesday));
                 }
                 if (arrayDays[2])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Wednesday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Wednesday));
                 }
                 if (arrayDays[3])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Thursday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Thursday));
                 }
                 if (arrayDays[4])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Friday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Friday));
                 }
                 if (arrayDays[5])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Saturday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Saturday));
                 }
                 if (arrayDays[6])
                 {
-                    datesOfCirculation.AddRange(GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Sunday));
+                    datesOfCirculation.AddRange(Helper.GetWeekdayInRange(calendar.Value.DateBegin, calendar.Value.DateEnd, DayOfWeek.Sunday));
                 }
 
                 foreach (var item in calendarDateDico)
@@ -273,21 +286,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, shapeDico[x.ShapeId!], scheduleDico[x.Id], calendarDico[x.ServiceId]));
         }
 
-        public List<DateTime> GetWeekdayInRange(DateTime dateBegin, DateTime dateEnd, DayOfWeek day)
-        {
-            const int daysInWeek = 7;
-            var result = new List<DateTime>();
-            var daysToAdd = ((int)day - (int)dateBegin.DayOfWeek + daysInWeek) % daysInWeek;
 
-            do
-            {
-                dateBegin = dateBegin.AddDays(daysToAdd);
-                result.Add(dateBegin);
-                daysToAdd = daysInWeek;
-            } while (dateBegin < dateEnd);
-
-            return result;
-        }
 
         private void AllTripsToEdgeDictionary()
         {
@@ -322,7 +321,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         i++;
                     }
                     var currentShape = trip.Value.Shape;
-                    currentShape.SplitLineString = SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id);
+                    currentShape.SplitLineString = Helper.SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id);
                 }
             }
         }
@@ -434,21 +433,21 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private EdgeGtfs AddEdge(LineString splitLineString, StopGtfs currentStop, Node currentNearestNodeOnLineString, StopGtfs previousStop, Node previousNearestOnLineString, string newId, double duration, TripGtfs buffTrip, XYMPoint[] internalGeom)
         {
             EdgeGtfs newEdge = null;
-            if (AreNodesAtSamePosition(currentNearestNodeOnLineString, currentStop) && AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Current and previous are on the linestring
+            if (Helper.AreNodesAtSamePosition(currentNearestNodeOnLineString, currentStop) && Helper.AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Current and previous are on the linestring
             {
                 var distance = GetDistanceWithLineString(splitLineString, previousStop, currentStop,buffTrip);
                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                           distance / duration, internalGeom, TransportModes.PublicTransportModes);
                 AddEdgeToNodesLineString(previousStop, currentStop, newEdge);
             }
-            else if (AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Previous is on the linestring
+            else if (Helper.AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Previous is on the linestring
             {
                 var distance = GetDistanceWithLineString(splitLineString, previousStop, currentNearestNodeOnLineString,buffTrip);
                 newEdge = new EdgeGtfs(newId, previousStop, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                           distance / duration, internalGeom, TransportModes.PublicTransportModes);
                 AddEdgeToNodesLineString(previousStop, currentNearestNodeOnLineString, newEdge);
             }
-            else if (AreNodesAtSamePosition(currentNearestNodeOnLineString, currentStop)) // current is on the linestring 
+            else if (Helper.AreNodesAtSamePosition(currentNearestNodeOnLineString, currentStop)) // current is on the linestring 
             {
                 if (previousNearestOnLineString.X == 0 && previousNearestOnLineString.Y == 0)   // no previousnearest use previous
                 {
@@ -483,11 +482,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 }
             }
             return newEdge;
-        }
-
-        private Boolean AreNodesAtSamePosition(Node a, Node b)
-        {
-            return a.X == b.X && a.Y == b.Y;
         }
 
         private void AddEdgeToNodesNoLineString(StopGtfs previousStop, StopGtfs currentStop, EdgeGtfs newEdge)
@@ -539,33 +533,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private List<LineString> SplitLineStringByPoints(LineString ls, Point[] pts, string shapeId)
-        {
-            LengthLocationMap llm = new LengthLocationMap(ls);
-            LengthIndexedLine lil = new LengthIndexedLine(ls);
-            ExtractLineByLocation ell = new ExtractLineByLocation(ls);
-            List<LineString> parts = new List<LineString>();
-            LinearLocation? ll1 = null;
-            SortedList<Double, LinearLocation> sll = new SortedList<double, LinearLocation>();
-            sll.Add(-1, new LinearLocation(0, 0d));
-            foreach (Point pt in pts)
-            {
-                Double distanceOnLinearString = lil.Project(pt.Coordinate);
-                if (sll.ContainsKey(distanceOnLinearString) == false)
-                {
-                    sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
-                }
-            }
-            foreach (LinearLocation ll in sll.Values)
-            {
-                if (ll1 != null)
-                {
-                    parts.Add((LineString)ell.Extract(ll1, ll));
-                }
-                ll1 = ll;
-            }
-            return parts;
-        }
+        
 
         private void AddTripsToRoute()
         {
@@ -657,19 +625,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int min = Int16.Parse(split[1]);
             int seconds = Int16.Parse(split[2]);
             return new TimeSpan(hour % 24, min, seconds);
-        }
-
-        public static void CleanGtfs()
-        {
-            if (Directory.Exists("GtfsData"))
-            {
-                Directory.Delete("GtfsData", true);
-                logger.Info("Cleaning GtfsData");
-            }
-            else
-            {
-                logger.Info("No data found");
-            }
         }
 
         private async Task DownloadGtfs()

@@ -96,7 +96,6 @@ namespace SytyRouting.DataBase
                 var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
-                // CleanGraph();
             }
         }
 
@@ -169,6 +168,51 @@ namespace SytyRouting.DataBase
         public async Task InitController()
         {
             await DBLoadAsync();
+            Clean();
+        }
+
+        public void Clean(){
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            logger.Info("Graph cleaning");
+            foreach (var n in nodesArray)
+            {
+                n.ValidSource = false;
+                n.ValidTarget = false;
+            }
+            var toProcess = new Queue<Node>();
+            var root = nodesArray.First();
+            root.ValidSource = true;
+            root.ValidTarget = true;
+            toProcess.Enqueue(root);
+            Node? node;
+            while (toProcess.TryDequeue(out node))
+            {
+                if (node.ValidSource)
+                {
+                    foreach (var neighbor in node.InwardEdges)
+                    {
+                        if (!neighbor.SourceNode.ValidSource)
+                        {
+                            neighbor.SourceNode.ValidSource = true;
+                            toProcess.Enqueue(neighbor.SourceNode);
+                        }
+                    }
+                }
+                if (node.ValidTarget)
+                {
+                    foreach (var neighbor in node.OutwardEdges)
+                    {
+                        if (!neighbor.TargetNode.ValidTarget)
+                        {
+                            neighbor.TargetNode.ValidTarget = true;
+                            toProcess.Enqueue(neighbor.TargetNode);
+                        }
+                    }
+                }
+            }
+            logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
+            stopWatch.Stop();
+        }
         }
     }
-}
