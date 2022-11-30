@@ -25,7 +25,7 @@ namespace SytyRouting
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
             // logger.Info("Count = {0}", graph.GetNodes().Count()); // 1558439 
-            // for (int i = 1558439  ; i < graph.GetNodes().Count(); i++)
+            // for (int i = 0  ; i < graph.GetNodes().Count(); i++)
             // {
             //     var node = graph.GetNodes()[i];
             //     // if (node.ValidSource||node.ValidTarget){
@@ -62,7 +62,7 @@ namespace SytyRouting
             // Persona spatial data generation
             var personaRouter = new PersonaRouter(graph);
 
-            // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
+            // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
             // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
             // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};

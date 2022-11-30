@@ -209,9 +209,11 @@ namespace SytyRouting
                 var nodes = gtfs.Value.GetNodes().Union(gtfs.Value.GetInternalNodes()).ToArray();
                 var testNode = gtfs.Value.GetNodes();
                 var testInternNode = gtfs.Value.GetInternalNodes();
+                var testEdges = gtfs.Value.GetEdges();
                 NodesArray = NodesArray.Union(nodes).ToArray();
                 logger.Info("Nb nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
                 logger.Info("Nb stop nodes = {0}, Nb internal nodes = {1}, Nb new nodes total = {2}", testNode.Count(), testInternNode.Count(), testNode.Count() + testInternNode.Count());
+                logger.Info(" Nb edges = {0}",testEdges.Count());
             }
             int i = 0;
             NodesArray.ToList().ForEach(x => x.Idx = i++);
