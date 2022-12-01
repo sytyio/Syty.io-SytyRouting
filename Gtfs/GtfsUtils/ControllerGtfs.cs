@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-             Clean();
+            Clean();
             await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
@@ -93,7 +93,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             logger.Info("Trip to route for {0} in {1}", choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             AddSplitLineString();
-            logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed),choice);
+            logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed), choice);
             stopWatch.Restart();
 
 
@@ -109,7 +109,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 logger.Info("Nb trips for one day ( {0} ) = {1}", Configuration.SelectedDate, nbTripsDays);
             }
 
-            logger.Info("Nb trips for all days = {0} for {1}", nbTrips,choice);
+            logger.Info("Nb trips for all days = {0} for {1}", nbTrips, choice);
 
 
             AllTripsToEdgeDictionary();
@@ -134,17 +134,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return edgeDico.Values.Cast<Edge>();
         }
 
-        public void Clean(){
+        public void Clean()
+        {
             var path = $"GtfsData{Path.DirectorySeparatorChar}{choice}";
+            var dir = new DirectoryInfo("GtfsData");
             if (Directory.Exists(path))
             {
                 Directory.Delete(path, true);
-                logger.Info("Cleaning GtfsData for {0}",choice);
+                logger.Info("Cleaning GtfsData for {0}", choice);
+                if (dir.GetFileSystemInfos().Length == 0)
+                {
+                    Directory.Delete("GtfsData");
+                    logger.Info("Cleaning all GtfsData");
+                }
             }
             else
             {
-                logger.Info("No data found for {0}",choice);
+                logger.Info("No data found for {0}", choice);
             }
+
         }
 
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
@@ -286,15 +294,19 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, GetShape(x.ShapeId), scheduleDico[x.Id], GetCalendar(x.ServiceId)));
         }
 
-        private CalendarGtfs? GetCalendar(string serviceId){
-             if(calendarDico.ContainsKey(serviceId)){
+        private CalendarGtfs? GetCalendar(string serviceId)
+        {
+            if (calendarDico.ContainsKey(serviceId))
+            {
                 return calendarDico[serviceId];
             }
             return null;
         }
 
-        private ShapeGtfs? GetShape(string? shapeId){
-            if(shapeDico.ContainsKey(shapeId)){
+        private ShapeGtfs? GetShape(string? shapeId)
+        {
+            if (shapeDico.ContainsKey(shapeId))
+            {
                 return shapeDico[shapeId];
             }
             return null;
@@ -385,7 +397,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 if (previousStop != null && previousStopTime != null && previousNearestOnLineString != null)
                 {
                     currentStop.ValidSource = true;
-                    string newId ="FROM"+previousStop.Id + "TO" + currentStop.Id;
+                    string newId = "FROM" + previousStop.Id + "TO" + currentStop.Id;
                     if (!edgeDico.ContainsKey(newId))
                     {
                         double distance = Helper.GetDistance(previousStop.X, previousStop.Y, currentStop.X, currentStop.Y); // Replace by distance with de splitLineString 
@@ -417,7 +429,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             }
                             LineString lineString = buffShape.LineString;
 
-                           LineString splitLineString = buffShape.SplitLineString[i];
+                            LineString splitLineString = buffShape.SplitLineString[i];
                             var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
 
                             newEdge = AddEdge(splitLineString, currentStop, currentNearestNodeOnLineString, previousStop, previousNearestOnLineString, newId, duration, buffTrip, internalGeom);
@@ -431,7 +443,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             edgeDico.Add(newId, newEdge);
                             AddEdgeToNodes(previousStop, currentStop, newEdge);
                         }
-                    }else{
+                    }
+                    else
+                    {
                         i++;
                     }
                 }
@@ -466,14 +480,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
             EdgeGtfs newEdge = null;
             if (Helper.AreNodesAtSamePosition(currentNearestNodeOnLineString, currentStop) && Helper.AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Current and previous are on the linestring
             {
-                var distance = GetDistanceWithLineString(splitLineString, previousStop, currentStop,buffTrip);
+                var distance = GetDistanceWithLineString(splitLineString, previousStop, currentStop, buffTrip);
                 newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                           distance / duration, internalGeom, TransportModes.PublicTransportModes);
                 AddEdgeToNodes(previousStop, currentStop, newEdge);
             }
             else if (Helper.AreNodesAtSamePosition(previousNearestOnLineString, previousStop)) // Previous is on the linestring
             {
-                var distance = GetDistanceWithLineString(splitLineString, previousStop, currentNearestNodeOnLineString,buffTrip);
+                var distance = GetDistanceWithLineString(splitLineString, previousStop, currentNearestNodeOnLineString, buffTrip);
                 newEdge = new EdgeGtfs(newId, previousStop, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                           distance / duration, internalGeom, TransportModes.PublicTransportModes);
                 AddEdgeToNodes(previousStop, currentNearestNodeOnLineString, newEdge);
@@ -482,14 +496,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 if (previousNearestOnLineString.X == 0 && previousNearestOnLineString.Y == 0)   // no previousnearest use previous
                 {
-                    var distance = GetDistanceWithLineString(splitLineString, previousStop, currentStop,buffTrip);
+                    var distance = GetDistanceWithLineString(splitLineString, previousStop, currentStop, buffTrip);
                     newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                        distance / duration, internalGeom, TransportModes.PublicTransportModes);
                     AddEdgeToNodes(previousStop, currentStop, newEdge);
                 }
                 else
                 {
-                    var distance = GetDistanceWithLineString(splitLineString, previousNearestOnLineString, currentStop,buffTrip);
+                    var distance = GetDistanceWithLineString(splitLineString, previousNearestOnLineString, currentStop, buffTrip);
                     newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentStop, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                              distance / duration, internalGeom, TransportModes.PublicTransportModes);
                     AddEdgeToNodes(previousNearestOnLineString, currentStop, newEdge);
@@ -499,14 +513,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 if (previousNearestOnLineString.X == 0 && previousNearestOnLineString.Y == 0)
                 {
-                    var distance = GetDistanceWithLineString(splitLineString, previousStop, currentNearestNodeOnLineString,buffTrip);
+                    var distance = GetDistanceWithLineString(splitLineString, previousStop, currentNearestNodeOnLineString, buffTrip);
                     newEdge = new EdgeGtfs(newId, previousStop, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                       distance / duration, internalGeom, TransportModes.PublicTransportModes);
                     AddEdgeToNodes(previousStop, currentNearestNodeOnLineString, newEdge);
                 }
                 else
                 {
-                    var distance = GetDistanceWithLineString(splitLineString, previousNearestOnLineString, currentNearestNodeOnLineString,buffTrip);
+                    var distance = GetDistanceWithLineString(splitLineString, previousNearestOnLineString, currentNearestNodeOnLineString, buffTrip);
                     newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true, previousStop, currentStop,
                                               distance / duration, internalGeom, TransportModes.PublicTransportModes);
                     AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
@@ -550,7 +564,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        
+
 
         private void AddTripsToRoute()
         {
@@ -590,10 +604,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 distance += Helper.GetDistance(coordinates[size].X, coordinates[size].Y, target.X, target.Y);
                 logger.Debug("Distance {0} {1} and {2} {3} {4}", coordinates[size].Y, coordinates[size].X, target.Y, target.X, distance);
             }
-            logger.Debug("Distance = {0}",distance);
-            if (Math.Abs(distance - Helper.GetDistance(source,target))>1000)
+            logger.Debug("Distance = {0}", distance);
+            if (Math.Abs(distance - Helper.GetDistance(source, target)) > 1000)
             {
-                logger.Debug("Delta distance with linestring and without = {0}",Math.Abs(distance - Helper.GetDistance(source,target)));            
+                logger.Debug("Delta distance with linestring and without = {0}", Math.Abs(distance - Helper.GetDistance(source, target)));
             }
             return distance;
         }
@@ -631,7 +645,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     coordinatesList.Add(coordinate);
                 }
             }
-            if (coordinatesList.Count()<2){
+            if (coordinatesList.Count() < 2)
+            {
                 return null;
             }
             LineString lineString = new LineString(coordinatesList.ToArray());
