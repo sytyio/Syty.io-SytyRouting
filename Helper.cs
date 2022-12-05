@@ -231,6 +231,37 @@ namespace SytyRouting
 
             return result;
         }
+
+        public static double ComputeEdgeCost(CostCriteria costCriteria, Edge edge, byte transportMode)
+        {              
+            double cost = 0;                 
+            switch(costCriteria)
+            {
+                case CostCriteria.MinimalTravelTime:
+                {
+                    cost =  edge.LengthM / edge.MaxSpeedMPerS;
+                    break;
+                }                
+                case CostCriteria.MinimalTravelDistance:
+                {
+                    cost = edge.LengthM;
+                    break;
+                }
+            }
+
+            if(edge.OneWayState == OneWayState.Reversed)
+            {
+                cost = -1*cost;                
+            }
+
+            if(TransportModes.TagIdRouteTypeToRoutingPenalty.ContainsKey(edge.TagIdRouteType))
+            {
+                var routingPenalty = TransportModes.TagIdRouteTypeToRoutingPenalty[edge.TagIdRouteType];
+                cost = cost * routingPenalty;
+            }
+
+            return cost;
+        }
     }
 }
 
