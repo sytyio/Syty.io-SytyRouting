@@ -57,8 +57,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            Clean();
-            await DownloadGtfs();
+            // Clean();
+            // await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -115,7 +115,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
-            Clean();
+            // Clean();
 
         }
 
@@ -397,7 +397,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 if (previousStop != null && previousStopTime != null && previousNearestOnLineString != null)
                 {
                     currentStop.ValidSource = true;
-                    string newId = "FROM" + previousStop.Id + "TO" + currentStop.Id;
+                    string newId = "FROM" + previousStop.Id + "TO" + currentStop.Id + "IN" + buffTrip.Route.Id;
                     if (!edgeDico.ContainsKey(newId))
                     {
                         double distance = Helper.GetDistance(previousStop.X, previousStop.Y, currentStop.X, currentStop.Y); // Replace by distance with de splitLineString 
@@ -425,7 +425,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             var idForNearestNode = newId + "N";
                             if (!nearestNodeDico.ContainsKey(idForNearestNode))
                             {
-                                AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt, sourceNearestLineString);
+                                AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt);
                             }
                             LineString lineString = buffShape.LineString;
 
@@ -439,9 +439,17 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         }
                         else // if there is no linestring
                         {
+                            currentNearestNodeOnLineString.X = currentStop.X;
+                            currentNearestNodeOnLineString.Y = currentStop.Y;
+
+                            var idForNearestNode = newId + "N";
+                            if (!nearestNodeDico.ContainsKey(idForNearestNode))
+                            {
+                                AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt); // if there is no lineString nearest and stop are at the same coordinates
+                            }
                             newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, null, null, distance / duration, null, TransportModes.PublicTransportModes);
                             edgeDico.Add(newId, newEdge);
-                            AddEdgeToNodes(previousStop, currentStop, newEdge);
+                            AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
                         }
                     }
                     else
@@ -460,7 +468,17 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             currentNearestNodeOnLineString.X = sourceNearestLineString.X;
                             currentNearestNodeOnLineString.Y = sourceNearestLineString.Y;
                             var length = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, currentStop.X, currentStop.Y);
-                            AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt, sourceNearestLineString);
+                            AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt);
+                        }
+                    }
+                    else
+                    {
+                        var idForNearestNode = currentStop.Id + "IN" + buffTrip.Route.Id + "N";
+                        if (!nearestNodeDico.ContainsKey(idForNearestNode))
+                        {
+                            currentNearestNodeOnLineString.X = currentStop.X;
+                            currentNearestNodeOnLineString.Y = currentStop.Y;
+                            AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt);
                         }
                     }
                 }
@@ -538,29 +556,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
         }
 
 
-        private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt, Point sourceNearestLineString)
+        private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
-
-            if (!(currentStop.X == currentNearestNodeOnLineString.X && currentStop.Y == currentNearestNodeOnLineString.Y))
+            logger.Debug("Ade nearest node. Stop = {0} {1}, Nearest = {2} {3}", currentStop.Y, currentStop.X, currentNearestNodeOnLineString.Y, currentNearestNodeOnLineString.X);
+            nearestNodeDico.Add(id, currentNearestNodeOnLineString);
+            // The edges from stop to nearest node and back
+            //Temporary : use of Bicyclette type for the walk between de stop and the nearest point on the linestring
+            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString };
+            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop };
+            // Add the edges to the nodes
+            if (cpt != 0)
             {
-                logger.Debug("Stop and nearest node are not at the same coordinates. Stop = {0} {1}, Nearest = {2} {3}", currentStop.Y, currentStop.X, currentNearestNodeOnLineString.Y, currentNearestNodeOnLineString.X);
-                nearestNodeDico.Add(id, currentNearestNodeOnLineString);
-                // The edges from stop to nearest node and back
-                //Temporary : use of Bicyclette type for the walk between de stop and the nearest point on the linestring
-                var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString };
-                var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop };
-                // Add the edges to the nodes
                 currentNearestNodeOnLineString.OutwardEdges.Add(edgeWalkNearestToStop);
                 currentStop.InwardEdges.Add(edgeWalkNearestToStop);
-                if (cpt != buffTrip.Schedule.Details.Count - 1)
-                {
-                    currentStop.OutwardEdges.Add(edgeWalkStopToNearest);
-                    currentNearestNodeOnLineString.InwardEdges.Add(edgeWalkStopToNearest);
-                }
             }
-            else
+
+            if (cpt != buffTrip.Schedule.Details.Count - 1)
             {
-                logger.Debug("Stop and nearest node are at the same coordinates. Stop = {0} {1}, Nearest = {2} {3}", currentStop.Y, currentStop.X, currentNearestNodeOnLineString.Y, currentNearestNodeOnLineString.X);
+                currentStop.OutwardEdges.Add(edgeWalkStopToNearest);
+                currentNearestNodeOnLineString.InwardEdges.Add(edgeWalkStopToNearest);
             }
         }
 
