@@ -18,6 +18,7 @@ namespace SytyRouting.Model
         public double LengthM;
         public double MaxSpeedMPerS;
         public byte TransportModes;
+        public int TagIdRouteType;
 
         [NotNull]
         public Node? SourceNode = null!;

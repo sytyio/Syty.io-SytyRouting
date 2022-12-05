@@ -118,7 +118,7 @@ namespace SytyRouting.DataBase
                 case OneWayState.Yes: // Only forward direction
                     {
                         var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                        var edge = new Edge { OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
+                        var edge = new Edge { OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
                         source.OutwardEdges.Add(edge);
                         target.InwardEdges.Add(edge);
 
@@ -127,7 +127,7 @@ namespace SytyRouting.DataBase
                 case OneWayState.Reversed: // Only backward direction
                     {
                         var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                        var edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes };
+                        var edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
                         source.InwardEdges.Add(edge);
                         target.OutwardEdges.Add(edge);
 
@@ -136,12 +136,12 @@ namespace SytyRouting.DataBase
                 default: // Both ways
                     {
                         var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
-                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes };
+                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
                         source.OutwardEdges.Add(edge);
                         target.InwardEdges.Add(edge);
 
                         internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
-                        edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes };
+                        edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
                         source.InwardEdges.Add(edge);
                         target.OutwardEdges.Add(edge);
 

@@ -13,6 +13,7 @@ namespace SytyRouting
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
         public static byte PublicTransportModes; // mask of the public modes.
+        public static Dictionary<int,int> TagIdRouteTypeToRoutingPenalty = new Dictionary<int,int>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
@@ -525,6 +526,41 @@ namespace SytyRouting
             }
             
             return tagIdToTransportModes;
+        }
+
+        public static void CreateMappingTagIdRouteTypeToRoutingPenality()
+        {
+            Dictionary<int,int> tagIdRouteTypeToRoutingPenalities = new Dictionary<int,int>();
+            
+            for(var i = 0; i < Configuration.GtfsTypeToTransportModes.Length; i++)
+            {
+                var routeType =  Configuration.GtfsTypeToTransportModes[i].RouteType;
+                var penalty = Configuration.GtfsTypeToTransportModes[i].RoutingPenalty;
+                if(!tagIdRouteTypeToRoutingPenalities.ContainsKey(routeType))
+                {
+                    tagIdRouteTypeToRoutingPenalities.Add(routeType,penalty);
+                }
+                else
+                {
+                    logger.Debug("Routing penalty for the GTFS route {0} has already bee set to {}.", routeType, tagIdRouteTypeToRoutingPenalities[routeType]);
+                }
+            }
+
+            for(var i = 0; i < Configuration.OSMTagsToTransportModes.Length; i++)
+            {
+                var tagId =  Configuration.OSMTagsToTransportModes[i].TagId;
+                var penalty = Configuration.OSMTagsToTransportModes[i].RoutingPenalty;
+                if(!tagIdRouteTypeToRoutingPenalities.ContainsKey(tagId))
+                {
+                    tagIdRouteTypeToRoutingPenalities.Add(tagId,penalty);
+                }
+                else
+                {
+                    logger.Debug("Routing penalty for the OSM TagId {0} has already bee set to {}.", tagId, tagIdRouteTypeToRoutingPenalities[tagId]);
+                }
+            }
+
+            TagIdRouteTypeToRoutingPenalty = tagIdRouteTypeToRoutingPenalities;
         }
 
         public static int GetTransportModeNameIndex(string transportModeName)
