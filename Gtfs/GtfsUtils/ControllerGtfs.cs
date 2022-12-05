@@ -12,7 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace SytyRouting.Gtfs.GtfsUtils
 {
 
-    public class ControllerGtfs : ControllerExternalSource
+    public class ControllerGtfs
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -57,8 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            Clean();
-            await DownloadGtfs();
+             await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -115,8 +114,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AllTripsToEdgeDictionary();
             logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
-            Clean();
-
         }
 
         public IEnumerable<Node> GetNodes()
@@ -132,27 +129,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public IEnumerable<Edge> GetEdges()
         {
             return edgeDico.Values.Cast<Edge>();
-        }
-
-        public void Clean()
-        {
-            var path = $"GtfsData{Path.DirectorySeparatorChar}{choice}";
-            var dir = new DirectoryInfo("GtfsData");
-            if (Directory.Exists(path))
-            {
-                Directory.Delete(path, true);
-                logger.Info("Cleaning GtfsData for {0}", choice);
-                if (dir.GetFileSystemInfos().Length == 0)
-                {
-                    Directory.Delete("GtfsData");
-                    logger.Info("Cleaning all GtfsData");
-                }
-            }
-            else
-            {
-                logger.Info("No data found for {0}", choice);
-            }
-
         }
 
         private Dictionary<string, AgencyGtfs> CreateAgencyGtfsDictionary()
