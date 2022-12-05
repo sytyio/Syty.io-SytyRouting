@@ -156,6 +156,7 @@ namespace SytyRouting
                 await TransportModes.CreateMappingTagIdToTransportModes();
                 TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
                 TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+                TransportModes.CreateMappingTagIdRouteTypeToRoutingPenality();
 
         }
 
