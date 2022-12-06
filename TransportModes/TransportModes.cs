@@ -13,7 +13,9 @@ namespace SytyRouting
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
         public static byte PublicTransportModes; // mask of the public modes.
-        public static Dictionary<int,int> TagIdRouteTypeToRoutingPenalty = new Dictionary<int,int>();
+        public static Dictionary<int,double> TagIdRouteTypeToRoutingPenalties = new Dictionary<int,double>();
+        public static Dictionary<byte,double> TransportModeToRoutingPenalties = new Dictionary<byte,double>();
+        public static Dictionary<byte,double> TransportModeMasksToSpeeds = new Dictionary<byte,double>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
@@ -528,9 +530,9 @@ namespace SytyRouting
             return tagIdToTransportModes;
         }
 
-        public static void CreateMappingTagIdRouteTypeToRoutingPenality()
+        public static void CreateMappingTagIdRouteTypeToRoutingPenalty()
         {
-            Dictionary<int,int> tagIdRouteTypeToRoutingPenalities = new Dictionary<int,int>();
+            Dictionary<int,double> tagIdRouteTypeToRoutingPenalities = new Dictionary<int,double>();
             
             for(var i = 0; i < Configuration.GtfsTypeToTransportModes.Length; i++)
             {
@@ -542,7 +544,7 @@ namespace SytyRouting
                 }
                 else
                 {
-                    logger.Debug("Routing penalty for the GTFS route {0} has already bee set to {}.", routeType, tagIdRouteTypeToRoutingPenalities[routeType]);
+                    logger.Debug("Routing penalty for the GTFS route {0} has already bee set to {1}.", routeType, tagIdRouteTypeToRoutingPenalities[routeType]);
                 }
             }
 
@@ -556,11 +558,57 @@ namespace SytyRouting
                 }
                 else
                 {
-                    logger.Debug("Routing penalty for the OSM TagId {0} has already bee set to {}.", tagId, tagIdRouteTypeToRoutingPenalities[tagId]);
+                    logger.Debug("Routing penalty for the OSM TagId {0} has already bee set to {1}.", tagId, tagIdRouteTypeToRoutingPenalities[tagId]);
                 }
             }
 
-            TagIdRouteTypeToRoutingPenalty = tagIdRouteTypeToRoutingPenalities;
+            TagIdRouteTypeToRoutingPenalties = tagIdRouteTypeToRoutingPenalities;
+        }
+
+        public static void CreateMappingTransportModeMaskToRoutingPenalty()
+        {
+            Dictionary<byte,double> transportModeMaskToRoutingPenalties = new Dictionary<byte,double>();
+            
+            foreach(var mask in TransportModeMasks)
+            {
+                if(mask.Key!=0)
+                {
+                    var penalty = Configuration.TransportModeRoutingPenalties[mask.Key];
+                    if(!transportModeMaskToRoutingPenalties.ContainsKey(mask.Value))
+                    {
+                        transportModeMaskToRoutingPenalties.Add(mask.Value,penalty);
+                    }
+                    else
+                    {
+                        logger.Debug("Routing penalty for the transport mode {0} has already bee set to {1}.", MaskToString(mask.Value), transportModeMaskToRoutingPenalties[mask.Value]);
+                    }
+                }
+            }
+
+            TransportModeToRoutingPenalties = transportModeMaskToRoutingPenalties;
+        }
+
+        public static void CreateMappingTransportModeMasksToMaxSpeeds()
+        {
+            Dictionary<byte,double> transportModeMasksToSpeeds = new Dictionary<byte,double>();
+            
+            foreach(var mask in TransportModeMasks)
+            {
+                if(mask.Key!=0)
+                {
+                    var speed = Configuration.TransportModeSpeeds[mask.Key];
+                    if(!transportModeMasksToSpeeds.ContainsKey(mask.Value))
+                    {
+                        transportModeMasksToSpeeds.Add(mask.Value,speed);
+                    }
+                    else
+                    {
+                        logger.Debug("Maximum speed for the transport mode {0} has already bee set to {1} [km/h] .", MaskToString(mask.Value), Helper.MPerSToKMPerHour(transportModeMasksToSpeeds[mask.Value]));
+                    }
+                }
+            }
+
+            TransportModeMasksToSpeeds = transportModeMasksToSpeeds;
         }
 
         public static int GetTransportModeNameIndex(string transportModeName)

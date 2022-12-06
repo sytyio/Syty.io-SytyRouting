@@ -183,6 +183,16 @@ namespace SytyRouting
 			return (rad / Math.PI * 180.0);
 		}
 
+        public static double KMPerHourToMPerS(double kmPerHour)
+        {
+			return ( kmPerHour * 1_000.0 / 60.0 / 60.0 );  // [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]);
+		}
+
+        public static double MPerSToKMPerHour(double mPerS)
+        {
+			return ( mPerS / 1_000.0 * 60.0 * 60.0 );  // [m/s]*[1km/1000m]*[60min/1h]*[60s/1min] = [km/h]);
+		}
+
         public static Boolean AreNodesAtSamePosition(Node a, Node b)
         {
             return a.X == b.X && a.Y == b.Y;
@@ -239,6 +249,20 @@ namespace SytyRouting
             {
                 case CostCriteria.MinimalTravelTime:
                 {
+                    double speed = 0;
+                    if(TransportModes.TransportModeMasksToSpeeds.ContainsKey(transportMode))
+                    {
+                        var transportModeSpeed = TransportModes.TransportModeMasksToSpeeds[transportMode];
+                        if(edge.MaxSpeedMPerS> transportModeSpeed)
+                        {
+                            speed = transportModeSpeed;
+                        }
+                        else
+                        {
+                            speed = edge.MaxSpeedMPerS;
+                        }
+                    }
+
                     cost =  edge.LengthM / edge.MaxSpeedMPerS;
                     break;
                 }                
@@ -254,9 +278,15 @@ namespace SytyRouting
                 cost = -1*cost;                
             }
 
-            if(TransportModes.TagIdRouteTypeToRoutingPenalty.ContainsKey(edge.TagIdRouteType))
+            if(TransportModes.TagIdRouteTypeToRoutingPenalties.ContainsKey(edge.TagIdRouteType))
             {
-                var routingPenalty = TransportModes.TagIdRouteTypeToRoutingPenalty[edge.TagIdRouteType];
+                var routingPenalty = TransportModes.TagIdRouteTypeToRoutingPenalties[edge.TagIdRouteType];
+                cost = cost * routingPenalty;
+            }
+
+            if(TransportModes.TransportModeToRoutingPenalties.ContainsKey(transportMode))
+            {
+                var routingPenalty = TransportModes.TransportModeToRoutingPenalties[transportMode];
                 cost = cost * routingPenalty;
             }
 

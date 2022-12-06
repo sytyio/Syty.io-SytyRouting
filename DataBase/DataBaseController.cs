@@ -69,8 +69,8 @@ namespace SytyRouting.DataBase
 
                     var length_m = Convert.ToDouble(reader.GetValue(12)); // length_m [m]
                     var theGeom = (LineString)reader.GetValue(13); // the_geom (?)
-                    var maxSpeedForward_m_per_s = Convert.ToDouble(reader.GetValue(14)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
-                    var maxSpeedBackward_m_per_s = Convert.ToDouble(reader.GetValue(15)) * 1_000.0 / 60.0 / 60.0;  // maxspeed_forward [km/h]*[1000m/1km]*[1h/60min]*[1min/60s] = [m/s]
+                    var maxSpeedForward_m_per_s = Helper.KMPerHourToMPerS(Convert.ToDouble(reader.GetValue(14)));
+                    var maxSpeedBackward_m_per_s = Helper.KMPerHourToMPerS(Convert.ToDouble(reader.GetValue(15)));
 
                     var tagId = Convert.ToInt32(reader.GetValue(16)); // tag_id
 

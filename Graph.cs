@@ -105,6 +105,8 @@ namespace SytyRouting
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
                         TransportModes.SetPublicTransportModes(publicTransportModes);
                         TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+                        TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+                        TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
                     }
                     else
                     {
@@ -121,7 +123,6 @@ namespace SytyRouting
                 logger.Info("Could not load from file, loading from DB instead.");
                 // Initialise masks 
                 await InitialiseMaskModes();
-
 
                 await GetDbData();            
 
@@ -153,11 +154,11 @@ namespace SytyRouting
 
         private async Task InitialiseMaskModes(){
             transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
-                await TransportModes.CreateMappingTagIdToTransportModes();
-                TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
-                TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
-                TransportModes.CreateMappingTagIdRouteTypeToRoutingPenality();
-
+            await TransportModes.CreateMappingTagIdToTransportModes();
+            TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
+            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+            TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+            TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
         }
 
         public async Task GetDbData(){
