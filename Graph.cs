@@ -19,7 +19,7 @@ namespace SytyRouting
         public double MinCostPerDistance { get; private set; }
         public double MaxCostPerDistance { get; private set; }
 
-        public Dictionary<string, ControllerGtfs> GtfsDico = new Dictionary<string, ControllerGtfs>();
+        // public Dictionary<string, ControllerGtfs> GtfsDico = new Dictionary<string, ControllerGtfs>();
 
         private Task FileSaveAsync(string path)
         {
@@ -122,11 +122,13 @@ namespace SytyRouting
                 // Initialise masks 
                 await InitialiseMaskModes();
 
-
-                await GetDbData();            
+                logger.Info("Nb nodes init {0}",NodesArray.Count())      ;   
+                await GetDbData();   
+                logger.Info("Nb nodes database {0}",NodesArray.Count())      ;   
 
                 KDTree = new KDTree(NodesArray);
-                await AddGtfsData();
+                await GetGtfsData();
+                logger.Info("Nb nodes with gtfs {0}",NodesArray.Count())      ;   
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);
             }
@@ -163,61 +165,13 @@ namespace SytyRouting
                 DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTableName);
                 await db.InitController();
                 NodesArray=db.GetNodes().ToArray();
-                logger.Info("Nb nodes in graph = {0}",NodesArray.Count()); 
         }
 
-        public async Task GetDataFromGtfs()
-        {
-            foreach (var provider in Configuration.ProvidersInfo.Keys)
-            {
-                GtfsDico.Add(provider, new ControllerGtfs(provider));
-            }
-            List<Task> listDwnld = new List<Task>();
-            foreach (var gtfs in GtfsDico)
-            {
-                listDwnld.Add(gtfs.Value.InitController());
-            }
-            await Task.WhenAll(listDwnld);
-        }
-
-        private async Task AddGtfsData()
-        {
-            await GetDataFromGtfs();
-            foreach (var gtfs in GtfsDico)
-            {
-                // Connecting gtfs nodes to graph nodes
-                foreach (var node in gtfs.Value.GetNodes())
-                {
-                    var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    if (node.ValidSource)
-                    {
-                        node.OutwardEdges.Add(newEdgOut);
-                    }
-                    if (node.ValidTarget)
-                    {
-                        node.InwardEdges.Add(newEdgeIn);
-                    }
-                    nearest.InwardEdges.Add(newEdgOut);
-                    nearest.OutwardEdges.Add(newEdgeIn);
-                }
-            }
-            logger.Info("Nb nodes = {0} in graph", NodesArray.Count());
-            foreach (var gtfs in GtfsDico)
-            {
-                var nodes = gtfs.Value.GetNodes().Union(gtfs.Value.GetInternalNodes()).ToArray();
-                var testNode = gtfs.Value.GetNodes();
-                var testInternNode = gtfs.Value.GetInternalNodes();
-                var testEdges = gtfs.Value.GetEdges();
-                NodesArray = NodesArray.Union(nodes).ToArray();
-                logger.Info("Nbr nodes = {0} in graph with the adding of {1} nodes ", NodesArray.Count(), gtfs.Key);
-                logger.Info("Nbr stop nodes = {0}, Nb internal nodes = {1}, Nb new nodes total = {2}", testNode.Count(), testInternNode.Count(), testNode.Count() + testInternNode.Count());
-                logger.Info(" Nbr edges = {0}",testEdges.Count());
-            }
-            int i = 0;
-            NodesArray.ToList().ForEach(x => x.Idx = i++);
-        }
+         public async Task GetGtfsData(){
+            ControllerAllGtfs gtfs = new ControllerAllGtfs(KDTree,NodesArray);
+            await gtfs.InitController();
+            NodesArray = gtfs.GetNodes().ToArray();
+         }
 
         public Node GetNodeByLongitudeLatitude(double x, double y, bool isTarget = false, bool isSource = false)
         {
