@@ -3,8 +3,6 @@ using SytyRouting.Model;
 
 namespace SytyRouting.Gtfs.ModelGtfs
 {
-
-   // If IsShapeAvailable is false => SourceNearestLineString, TargetNearestLineString, WalkDistanceSourceM, WalkDistanceTargetM, DistanceNearestPointsM are irrelevant
     public class EdgeGtfs: Edge
     {
         public string Id { get; }
@@ -14,10 +12,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public RouteGtfs Route { get; }
         public bool IsShapeAvailable { get; }
-
-        // If there is a linestring will contain the initial Stop, otherwise, will be null
-        public StopGtfs? InitialStopSource { get; }
-        public StopGtfs? InitialStopTarget { get; }
  
         
 
@@ -27,7 +21,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Length ="+LengthM+ " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable, StopGtfs? initialStopSource, StopGtfs? initialStopTarget, double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
+        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable,  double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
         {
             OsmID = long.MaxValue; 
             LengthM = distance;
@@ -37,8 +31,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
             SourceNode = source;
             Route = route;
             IsShapeAvailable = iShapeAvailable;
-            InitialStopSource = initialStopSource;
-            InitialStopTarget = initialStopTarget;
             MaxSpeedMPerS = maxSpeedMPerS;
             InternalGeometry = internalGeometry;
             TransportModes = transportModes;
