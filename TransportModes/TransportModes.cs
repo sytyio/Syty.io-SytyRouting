@@ -186,6 +186,39 @@ namespace SytyRouting
             return newSequence;
         }
 
+        public static bool MaskContainsAnyTransportMode(byte mask, byte transportModes)
+        {
+            return MaskContainsAnyTransportMode(mask, MaskToArray(transportModes));
+        }
+
+        public static bool MaskContainsAnyTransportMode(byte mask, byte[] transportModes)
+        {
+            for(int i=0; i<transportModes.Length; i++)
+            {
+                if(MaskContainsTransportMode(mask,transportModes[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool MaskContainsTransportMode(byte mask, byte transportMode)
+        {
+            if(transportMode!=0)
+            {
+                var maskTransportModes = MaskToArray(mask);
+                foreach(var tM in maskTransportModes)
+                {
+                    if((tM & transportMode)==transportMode)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         public static byte GetMaskFromNames(string[] transportModeNames)
         {
             byte transportModesMask = 0;

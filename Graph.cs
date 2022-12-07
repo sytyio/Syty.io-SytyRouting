@@ -223,14 +223,59 @@ namespace SytyRouting
             logger.Debug("\n");
         }
 
-        public void TraceNodes()
+        public void TraceNodes(Node[] nodesArray, int limit)
         {
-            foreach (var node in NodesArray)
+            int nodesToDisplay = 0;
+            if(limit<0 || limit > nodesArray.Length)
+                nodesToDisplay = nodesArray.Length;
+            else
+                nodesToDisplay = limit;
+
+            logger.Debug("Nodes to display: {0} (of {1} in total)", nodesArray.Length);
+            
+            
+            for(var i = 0; i < nodesToDisplay; i++)
             {
                 logger.Debug("Node Idx={0}, OsmID ={1}, X = {2}, Y = {3}",
-                    node.Idx, node.OsmID, node.X, node.Y);
-                TraceEdges(node);
+                    nodesArray[i].Idx, nodesArray[i].OsmID, nodesArray[i].X, nodesArray[i].Y);
+                TraceEdges(nodesArray[i]);
             }
+        }
+
+        public void TraceNodesByTransportMode(byte transportMode, int limit)
+        {
+            var filteredNodes = FilterNodesByAvailableTransportMode(transportMode);
+            TraceNodes(filteredNodes, limit);
+        }
+
+        private Node[] FilterNodesByAvailableTransportMode(byte transportMode)
+        {
+            logger.Debug("Filtering nodes that contain the Transport Mode(s) {0}", TransportModes.MaskToString(transportMode));
+
+            List<Node> filteredNodes = new List<Node>();
+            
+            foreach (var node in NodesArray)
+            {
+                var outwardEdges = node.OutwardEdges;
+                foreach(var outwardEdge in outwardEdges)
+                {
+                    if((outwardEdge.TransportModes & transportMode)==transportMode)
+                    {
+                        filteredNodes.Add(node);
+                    }
+                }
+
+                var inwardEdges = node.InwardEdges;
+                foreach(var inwardEdge in inwardEdges)
+                {
+                    if((inwardEdge.TransportModes & transportMode)==transportMode)
+                    {
+                        filteredNodes.Add(node);
+                    }
+                }
+            }
+
+            return filteredNodes.ToArray();
         }
 
         private void TraceEdges(Node node)
