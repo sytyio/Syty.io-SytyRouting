@@ -231,7 +231,7 @@ namespace SytyRouting
             else
                 nodesToDisplay = limit;
 
-            logger.Debug("Nodes to display: {0} (of {1} in total)", nodesArray.Length);
+            logger.Debug("Nodes to display: {0} (of {1} in total)", nodesToDisplay, nodesArray.Length);
             
             
             for(var i = 0; i < nodesToDisplay; i++)

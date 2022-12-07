@@ -78,7 +78,7 @@ namespace SytyRouting
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             // byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
             // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
-            byte[] transportModesSequence = new byte[1] {TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
+            byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
 
             logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
 
@@ -87,7 +87,7 @@ namespace SytyRouting
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
             personaRouter.TracePersonas();
-            personaRouter.TracePersonasRouteResult();
+            // personaRouter.TracePersonasRouteResult();
 
 
             // // Logger flushing

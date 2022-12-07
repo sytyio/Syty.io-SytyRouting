@@ -3,7 +3,7 @@ using SytyRouting.Model;
 
 namespace SytyRouting.Algorithms.Dijkstra
 {
-    public class Dijkstra : BaseRoutingAlgorithm
+    public class DijkstraTMM : BaseRoutingAlgorithm
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
@@ -21,8 +21,11 @@ namespace SytyRouting.Algorithms.Dijkstra
            
             if(transportModesSequence.Length>0)
             {
-                byte transportMode = transportModesSequence[0];
-                AddStep(null, originNode, 0, 0, transportMode);
+                byte[] transportModes = TransportModes.MaskToArray(transportModesSequence[0]);
+                for(int i=0; i<transportModes.Length; i++)
+                {
+                    AddStep(null, originNode, 0, 0, transportModes[i]);
+                }
             }
             else
             {
@@ -67,28 +70,22 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                         if(transportModesSequence.Length>0)
                         {
-                            var transportMode = currentTransportMask;
-                         
-                            if((edgeTransportModes & transportMode) == transportMode)
-                            {
-                                outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
-                            }
-
-                            if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
-                            {
-                                byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
-
-                                //DEBUG:
-                                if(TransportModes.MaskContainsAnyTransportMode(nextTransportMode, edgeTransportModes))
+                            var currentMaskList = TransportModes.MaskToList(currentTransportMask);
+                            foreach(var transportMode in currentMaskList)
+                            {   
+                                if((edgeTransportModes & transportMode) == transportMode)
                                 {
-                                    logger.Debug("Next TM: {0}", nextTransportMode);
-                                    logger.Debug("Edge {0} TMs: {1}", outwardEdge.OsmID, edgeTransportModes);
+                                    outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
+                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                                 }
 
-                                if((edgeTransportModes & nextTransportMode) == nextTransportMode)
+                                if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
                                 {
-                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex+1, nextTransportMode);
+                                    byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
+                                    if((edgeTransportModes & nextTransportMode) == nextTransportMode)
+                                    {
+                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex+1, nextTransportMode);
+                                    }
                                 }
                             }
                         }
