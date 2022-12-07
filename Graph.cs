@@ -106,6 +106,7 @@ namespace SytyRouting
                         TransportModes.SetPublicTransportModes(publicTransportModes);
                         TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
                         TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+                        TransportModes.CreateMappingTransportModeMaskToRoutingPenalty();
                         TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
                     }
                     else
@@ -161,6 +162,7 @@ namespace SytyRouting
             TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
             TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
             TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+            TransportModes.CreateMappingTransportModeMaskToRoutingPenalty();
             TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
         }
 

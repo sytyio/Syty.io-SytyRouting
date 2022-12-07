@@ -263,7 +263,8 @@ namespace SytyRouting
                         }
                     }
 
-                    cost =  edge.LengthM / edge.MaxSpeedMPerS;
+                    //cost =  edge.LengthM / edge.MaxSpeedMPerS;
+                    cost =  edge.LengthM / speed;
                     break;
                 }                
                 case CostCriteria.MinimalTravelDistance:

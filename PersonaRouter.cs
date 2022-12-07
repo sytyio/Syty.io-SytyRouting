@@ -45,7 +45,7 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 50; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
