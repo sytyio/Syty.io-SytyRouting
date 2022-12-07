@@ -81,6 +81,8 @@ namespace SytyRouting
 
             logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
 
+            graph.TraceNodesByTransportMode(TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence)),1000);
+
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
             personaRouter.TracePersonas();
