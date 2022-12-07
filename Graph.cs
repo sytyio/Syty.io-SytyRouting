@@ -105,6 +105,8 @@ namespace SytyRouting
                         transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
                         TransportModes.SetPublicTransportModes(publicTransportModes);
                         TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+                        TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+                        TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
                     }
                     else
                     {
@@ -155,10 +157,11 @@ namespace SytyRouting
 
         private async Task InitialiseMaskModes(){
             transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
-                await TransportModes.CreateMappingTagIdToTransportModes();
-                TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
-                TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
-
+            await TransportModes.CreateMappingTagIdToTransportModes();
+            TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
+            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+            TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
+            TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
         }
 
         public async Task GetDbData(){

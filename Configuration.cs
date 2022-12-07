@@ -38,7 +38,8 @@ namespace SytyRouting
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
         public static string PublicTransportGroup {get;}
-        public static Dictionary<int,int> TransportModeSpeeds {get;}
+        public static Dictionary<int,double> TransportModeSpeeds {get;}
+        public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
         public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
@@ -88,6 +89,7 @@ namespace SytyRouting
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
             PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
+            TransportModeRoutingPenalties = ValidateTransportModeRoutingPenalties(transportSettings.TransportModes);
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
             OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
             GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
@@ -192,9 +194,9 @@ namespace SytyRouting
             return validPublicTransportModes.ToArray();
         }
 
-        private static Dictionary<int,int> ValidateTransportModeSpeeds(TransportMode[] transportModes)
+        private static Dictionary<int,double> ValidateTransportModeSpeeds(TransportMode[] transportModes)
         {            
-            Dictionary<int,int> validTransportModeSpeeds = new Dictionary<int,int>(TransportModeNames.Count);
+            Dictionary<int,double> validTransportModeSpeeds = new Dictionary<int,double>(TransportModeNames.Count);
 
             foreach(var transportModeName in TransportModeNames)
             {
@@ -207,7 +209,7 @@ namespace SytyRouting
                         {
                             if(transportModes[i].MaxSpeedKmPerH>0)
                             {
-                                validTransportModeSpeeds.Add(key, transportModes[i].MaxSpeedKmPerH);
+                                validTransportModeSpeeds.Add(key, Helper.KMPerHourToMPerS(transportModes[i].MaxSpeedKmPerH));
                                 break;
                             }
                             else
@@ -220,6 +222,36 @@ namespace SytyRouting
             }
 
             return validTransportModeSpeeds;
+        }
+
+        private static Dictionary<int,double> ValidateTransportModeRoutingPenalties(TransportMode[] transportModes)
+        {            
+            Dictionary<int,double> validTransportModePenalties = new Dictionary<int,double>(TransportModeNames.Count);
+
+            foreach(var transportModeName in TransportModeNames)
+            {
+                for(int i=0; i<transportModes.Length; i++)
+                {                    
+                    if(transportModeName.Value.Equals(transportModes[i].Name))
+                    {
+                        var key = transportModeName.Key;
+                        if(!validTransportModePenalties.ContainsKey(key))
+                        {
+                            if(transportModes[i].RoutingPenalty>0)
+                            {
+                                validTransportModePenalties.Add(key, transportModes[i].RoutingPenalty);
+                                break;
+                            }
+                            else
+                            {
+                                logger.Info("The routing penalty for Transport Mode '{0}' should be greater than 0.", transportModes[i].Name); 
+                            }
+                        }
+                    }
+                }
+            }
+
+            return validTransportModePenalties;
         }
 
         private static async Task<OSMTagToTransportMode[]> ValidateOSMTagToTransportModes(OSMTagToTransportMode[] osmTagsToTransportModes)

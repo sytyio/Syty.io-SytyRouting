@@ -18,6 +18,7 @@ namespace SytyRouting.Model
         public double LengthM;
         public double MaxSpeedMPerS;
         public byte TransportModes;
+        public int TagIdRouteType;
 
         [NotNull]
         public Node? SourceNode = null!;
@@ -38,6 +39,7 @@ namespace SytyRouting.Model
             bw.Write(LengthM);
             bw.Write(MaxSpeedMPerS);
             bw.Write(TransportModes);
+            bw.Write(TagIdRouteType);
             bw.Write(SourceNode.Idx);
             bw.Write(TargetNode.Idx);
 
@@ -68,6 +70,7 @@ namespace SytyRouting.Model
             LengthM = br.ReadDouble();
             MaxSpeedMPerS = br.ReadDouble();
             TransportModes = br.ReadByte();
+            TagIdRouteType = br.ReadInt32();
             SourceNode = array[br.ReadInt32()];
             TargetNode = array[br.ReadInt32()];
             
@@ -81,28 +84,6 @@ namespace SytyRouting.Model
                     InternalGeometry[i].Y = br.ReadDouble();
                     InternalGeometry[i].M = br.ReadDouble();
                 }
-            }
-        }
-
-        public void SetCost(CostCriteria costCriteria)
-        {                               
-            switch(costCriteria)
-            {
-                case CostCriteria.MinimalTravelTime:
-                {
-                    Cost =  LengthM / MaxSpeedMPerS;
-                    break;
-                }                
-                case CostCriteria.MinimalTravelDistance:
-                {
-                    Cost = LengthM;
-                    break;
-                }
-            }
-
-            if(OneWayState == OneWayState.Reversed)
-            {
-                Cost = -1*Cost;                
             }
         }
     }

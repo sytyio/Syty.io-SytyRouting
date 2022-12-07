@@ -71,7 +71,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                          
                             if((edgeTransportModes & transportMode) == transportMode)
                             {
-                                outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
+                                //outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                             }
 
@@ -88,7 +88,8 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                                 if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                 {
-                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex+1, nextTransportMode);
+                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
+                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode);
                                 }
                             }
                         }
@@ -103,7 +104,8 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 {
                                     if((edgeTransportModes & transportMode) == transportMode)
                                     {
-                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, -1, transportMode);
+                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
+                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode);
                                     }
                                 }
                             }                    

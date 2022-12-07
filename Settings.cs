@@ -27,7 +27,7 @@ namespace SytyRouting
     {
         public TransportMode[] TransportModes {get; set;} = null!;
         public string PublicTransportGroup {get; set;} = null!;
-         public GtfsTypeToTransportModes[]GtfsTypeToTransportModes {get;set;}=null!;
+        public GtfsTypeToTransportModes[] GtfsTypeToTransportModes {get;set;}=null!;
         public OSMTagToTransportMode[] OSMTagsToTransportModes  {get; set;} = null!;
         public TransportModeRoutingRule[] TransportModeRoutingRules  {get; set;} = null!;
     }
@@ -37,6 +37,7 @@ namespace SytyRouting
         public string Name {get; set;} = null!;
         public int MaxSpeedKmPerH {get; set;}
         public bool IsPublic {get; set;}
+        public double RoutingPenalty {get; set;}
     }
 
     public sealed class TransportModeRoutingRule
@@ -49,6 +50,7 @@ namespace SytyRouting
     {
         public int RouteType { get; set; }
         public string[] AllowedTransportModes {get;set;}=null!;
+        public double RoutingPenalty {get; set;}
     }
 
     public sealed class OSMTagToTransportMode
@@ -57,6 +59,7 @@ namespace SytyRouting
         public string TagValue {get; set;} = null!;
         public int TagId {get; set;}
         public string[] AllowedTransportModes {get; set;} = null!;
+        public double RoutingPenalty {get; set;}
     }
 
     public sealed class RoutingSettings

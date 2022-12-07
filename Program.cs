@@ -72,9 +72,9 @@ namespace SytyRouting
             // string[] requestedSequence = new string[] {"Tram"};
             // string[] requestedSequence = new string[] {"Metro"};
             // string[] requestedSequence = new string[] {"Train"};
-            // string[] requestedSequence = new string[] {"Bicycle"};
-            // string[] requestedSequence = new string[] {"Car"};
-            // string[] requestedSequence = new string[] {""};
+            //string[] requestedSequence = new string[] {"Bicycle"};
+            //string[] requestedSequence = new string[] {"Car"};
+            //string[] requestedSequence = new string[] {""};
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             // byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
             // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
