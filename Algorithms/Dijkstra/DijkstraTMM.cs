@@ -75,7 +75,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                             {   
                                 if((edgeTransportModes & transportMode) == transportMode)
                                 {
-                                    outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
+                                    var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
                                     AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                                 }
 
@@ -84,6 +84,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                     byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
                                     if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                     {
+                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
                                         AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex+1, nextTransportMode);
                                     }
                                 }
@@ -100,6 +101,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 {
                                     if((edgeTransportModes & transportMode) == transportMode)
                                     {
+                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
                                         AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, -1, transportMode);
                                     }
                                 }

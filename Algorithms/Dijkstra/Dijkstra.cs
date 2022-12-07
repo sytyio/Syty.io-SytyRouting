@@ -71,7 +71,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                          
                             if((edgeTransportModes & transportMode) == transportMode)
                             {
-                                //outwardEdge.SetCost(CostCriteria.MinimalTravelTime);                                                
+                                var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
                             }
 
@@ -80,15 +80,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
 
                                 //DEBUG:
-                                if(TransportModes.MaskContainsAnyTransportMode(nextTransportMode, edgeTransportModes))
-                                {
-                                    logger.Debug("Next TM: {0}", nextTransportMode);
-                                    logger.Debug("Edge {0} TMs: {1}", outwardEdge.OsmID, edgeTransportModes);
-                                }
+                                // if(TransportModes.MaskContainsAnyTransportMode(nextTransportMode, edgeTransportModes))
+                                // {
+                                //     logger.Debug("Next TM: {0}", nextTransportMode);
+                                //     logger.Debug("Edge {0} TMs: {1}", outwardEdge.OsmID, edgeTransportModes);
+                                // }
 
                                 if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                 {
-                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
+                                    var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
                                     AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode);
                                 }
                             }
