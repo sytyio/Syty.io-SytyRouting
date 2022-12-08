@@ -72,7 +72,8 @@ namespace SytyRouting.Algorithms.Dijkstra
                             if((edgeTransportModes & transportMode) == transportMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
+                                //AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + outwardEdge.Cost, currentTransportIndex, transportMode);
+                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode);
                             }
 
                             if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
