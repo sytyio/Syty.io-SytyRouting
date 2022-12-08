@@ -79,15 +79,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                             {
                                 byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
 
-                                //DEBUG:
-                                //logger.Debug("Next TM: {0}", TransportModes.MaskToString(nextTransportMode));
-                                //logger.Debug("Edge {0} TMs: {1}", outwardEdge.OsmID, TransportModes.MaskToString(edgeTransportModes));
-                                if(TransportModes.MaskContainsAnyTransportMode(nextTransportMode, edgeTransportModes))
-                                {
-                                    // logger.Debug("Next TM: {0}", TransportModes.MaskToString(nextTransportMode));
-                                    // logger.Debug("Edge {0} TMs: {1}", outwardEdge.OsmID, TransportModes.MaskToString(edgeTransportModes));
-                                }
-
                                 if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                 {
                                     var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
@@ -129,13 +120,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
-
-                //DEBUG:
-                if(TransportModes.MaskContainsAnyTransportMode(transportMode, TransportModes.PublicTransportModes))
-                {
-                    logger.Debug("Public TMs: {0}", TransportModes.MaskToString(TransportModes.PublicTransportModes));
-                    logger.Debug("This TM: {0}", TransportModes.MaskToString(transportMode));
-                }
 
                 if(!exist)
                 {
