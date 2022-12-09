@@ -21,7 +21,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Length ="+LengthM+ " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable,  double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes)
+        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable,  double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes, int tagIdRouteType)
         {
             OsmID = long.MaxValue; 
             LengthM = distance;
@@ -34,6 +34,7 @@ namespace SytyRouting.Gtfs.ModelGtfs
             MaxSpeedMPerS = maxSpeedMPerS;
             InternalGeometry = internalGeometry;
             TransportModes = transportModes;
+            TagIdRouteType=tagIdRouteType;
         }
     }
 }
