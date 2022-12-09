@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-             await DownloadGtfs();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -288,22 +288,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return null;
         }
 
-        public List<DateTime> GetWeekdayInRange(DateTime dateBegin, DateTime dateEnd, DayOfWeek day)
-        {
-            const int daysInWeek = 7;
-            var result = new List<DateTime>();
-            var daysToAdd = ((int)day - (int)dateBegin.DayOfWeek + daysInWeek) % daysInWeek;
-
-            do
-            {
-                dateBegin = dateBegin.AddDays(daysToAdd);
-                result.Add(dateBegin);
-                daysToAdd = daysInWeek;
-            } while (dateBegin < dateEnd);
-
-            return result;
-        }
-
         private void AllTripsToEdgeDictionary()
         {
             if (Configuration.SelectedDate == "")
@@ -420,7 +404,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt); // if there is no lineString nearest and stop are at the same coordinates
                             }
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes);
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes,buffTrip.Route.Type);
                             edgeDico.Add(newId, newEdge);
                             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
                         }
@@ -470,7 +454,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
                 var distance = GetDistanceWithLineString(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, buffTrip);
                 var newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true,
-                                          distance / duration, internalGeom, TransportModes.PublicTransportModes);
+                                          distance / duration, internalGeom, TransportModes.PublicTransportModes,buffTrip.Route.Type);
                 AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
            
             return newEdge;
@@ -487,7 +471,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
-            logger.Debug("Ade nearest node. Stop = {0} {1}, Nearest = {2} {3}", currentStop.Y, currentStop.X, currentNearestNodeOnLineString.Y, currentNearestNodeOnLineString.X);
             nearestNodeDico.Add(id, currentNearestNodeOnLineString);
             if(Double.IsNaN(distance)){
                 distance=0;
@@ -533,28 +516,23 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             var coordinates = splitLineString.Coordinates;
             double distance = 0;
-            logger.Debug("Distance 1  = {0}", distance);
             if (Math.Abs(coordinates[0].X - source.X) > checkValue || Math.Abs(coordinates[0].Y - source.Y) > checkValue)
             {
                 distance += Helper.GetDistance(coordinates[0].X, coordinates[0].Y, source.X, source.Y);
             }
-            logger.Debug("Distance between point {0} {1} and {2} {3} 2 = {4}", coordinates[0].Y, coordinates[0].X, source.Y, source.X, distance);
             int size = coordinates.Count() - 1;
             for (int i = 0; i < size; i++)
             {
                 distance += Helper.GetDistance(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y);
-                logger.Debug("Distance between point {0} {1} and {2} {3} {4}  = {5}", coordinates[i].Y, coordinates[i].X, coordinates[i + 1].Y, coordinates[i + 1].X, 3 + i, distance);
             }
             if (Math.Abs(coordinates[size].X - target.X) > checkValue || Math.Abs(coordinates[size].Y - target.Y) > checkValue)
             {  // if the target is in the linestring
                 distance += Helper.GetDistance(coordinates[size].X, coordinates[size].Y, target.X, target.Y);
-                logger.Debug("Distance {0} {1} and {2} {3} {4}", coordinates[size].Y, coordinates[size].X, target.Y, target.X, distance);
             }
-            logger.Debug("Distance = {0}", distance);
-            if (Math.Abs(distance - Helper.GetDistance(source, target)) > 1000)
-            {
-                logger.Debug("Delta distance with linestring and without = {0}", Math.Abs(distance - Helper.GetDistance(source, target)));
-            }
+            // if (Math.Abs(distance - Helper.GetDistance(source, target)) > 2000)
+            // {
+            //     logger.Debug("Delta distance with linestring and without = {0} for {1}", Math.Abs(distance - Helper.GetDistance(source, target)),choice);
+            // }
             return distance;
         }
 

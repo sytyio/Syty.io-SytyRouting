@@ -2,7 +2,7 @@
 using NLog;
 using SytyRouting.Model;
 using SytyRouting.Algorithms.KDTree;
-
+using System.Diagnostics;
 
 namespace SytyRouting.Gtfs.GtfsUtils
 {
@@ -69,7 +69,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             foreach (var gtfs in GtfsDico)
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 // Connecting gtfs nodes to graph nodes
+                int nodesProcessed = 0;
+                int totalNodes = gtfs.Value.GetNodes().Count();
+                
                 foreach (var node in gtfs.Value.GetNodes())
                 {
                     var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
@@ -85,6 +90,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     }
                     nearest.InwardEdges.Add(newEdgOut);
                     nearest.OutwardEdges.Add(newEdgeIn);
+                    nodesProcessed++;
+                    if(nodesProcessed%1000==0){
+                        var timeSpan = stopWatch.Elapsed;
+                        var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                        Helper.DataLoadBenchmark(totalNodes, nodesProcessed, timeSpan, timeSpanMilliseconds, logger);
+                    }
                 }
             }
             foreach (var gtfs in GtfsDico)
