@@ -130,7 +130,7 @@ namespace SytyRouting
                 logger.Info("Nb nodes database {0}",NodesArray.Count())      ;   
 
                 KDTree = new KDTree(NodesArray);
-                //await GetGtfsData();
+                await GetGtfsData();
                 logger.Info("Nb nodes with gtfs {0}",NodesArray.Count())      ;   
                 KDTree = new KDTree(NodesArray);
                 await FileSaveAsync(path);

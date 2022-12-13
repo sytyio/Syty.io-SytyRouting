@@ -12,6 +12,8 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public RouteGtfs Route { get; }
         public bool IsShapeAvailable { get; }
+
+        public double[] SpeedMPerSAvg = new double [24];
  
         
 

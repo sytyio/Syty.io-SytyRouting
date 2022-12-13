@@ -48,7 +48,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, Edge>? edgeDico = new Dictionary<string, Edge>();
 
         // Nearest nodes
-        private Dictionary<string, Node> nearestNodeDico = new Dictionary<string, Node>();
+        private Dictionary<string, InternalNodeGtfs> nearestNodeDico = new Dictionary<string, InternalNodeGtfs>();
 
         public ControllerGtfs(string provider)
         {
@@ -123,6 +123,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public IEnumerable<Node> GetInternalNodes()
         {
+            foreach(var node in nearestNodeDico){
+                var cpt = 0;
+                logger.Info("Node {0} desserved {1} times",node.Key,cpt);
+            }
             return nearestNodeDico.Values;
         }
 
@@ -295,6 +299,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
                 foreach (var trip in tripDico)
                 {
+                    logger.Info("Trip id = {0}",trip.Key);
                     OneTripToEdgeDictionary(trip.Key);
                 }
             }
@@ -351,7 +356,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
                 var currentStop = currentStopTime.Value.Stop;
-                Node currentNearestNodeOnLineString = new Node { Idx = 0, OsmID = long.MaxValue };
+                InternalNodeGtfs currentNearestNodeOnLineString = new InternalNodeGtfs { Idx = 0, OsmID = long.MaxValue, IdOriginalNode=currentStop.Id};
                 if (previousStop != null && previousStopTime != null && previousNearestOnLineString != null)
                 {
                     currentStop.ValidSource = true;
@@ -359,9 +364,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     if (!edgeDico.ContainsKey(newId))
                     {
                         double distance = Helper.GetDistance(previousStop.X, previousStop.Y, currentStop.X, currentStop.Y); // Replace by distance with de splitLineString 
-                        TimeSpan arrival = currentStopTime.Value.ArrivalTime;
                         TimeSpan departure = previousStopTime.DepartureTime;
-
+                        TimeSpan arrival = currentStopTime.Value.ArrivalTime;
+                        
+                        // Increments the nb of departure for the good hour
+                        currentNearestNodeOnLineString.NbDepartures[currentStopTime.Value.DepartureTime.Hours]++;
                         // temporary solution to include waiting time (later: use of a penalty)
                         var watchTime = (previousStopTime.DepartureTime - previousStopTime.ArrivalTime).TotalSeconds;
                         var duration = (arrival - departure).TotalSeconds + watchTime;
@@ -380,10 +387,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             currentNearestNodeOnLineString.Y = targetNearestLineString.Y;
 
                             // Add to the dictionary
-                            var idForNearestNode = newId + "N";
+                            var idForNearestNode = newId;
                             if (!nearestNodeDico.ContainsKey(idForNearestNode))
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt);
+                            }else{
+                                // Increments the nb of departure for the good hour
+                                nearestNodeDico[newId].NbDepartures[currentStopTime.Value.DepartureTime.Hours]++;
                             }
                             LineString lineString = buffShape.LineString;
 
@@ -399,10 +409,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             currentNearestNodeOnLineString.X = currentStop.X;
                             currentNearestNodeOnLineString.Y = currentStop.Y;
 
-                            var idForNearestNode = newId + "N";
+                            var idForNearestNode = newId;
                             if (!nearestNodeDico.ContainsKey(idForNearestNode))
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt); // if there is no lineString nearest and stop are at the same coordinates
+                            }else{
+                                // Increments the nb of departure for the good hour
+                                nearestNodeDico[newId].NbDepartures[currentStopTime.Value.DepartureTime.Hours]++;
                             }
                             newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes,buffTrip.Route.Type);
                             edgeDico.Add(newId, newEdge);
@@ -412,16 +425,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     else
                     {
                         i++;
+                        nearestNodeDico[newId].NbDepartures[currentStopTime.Value.DepartureTime.Hours]++;
                     }
                 }
                 else
                 { // For the first stop of a trip 
+                    var idForNearestNode = currentStop.Id + "IN" + buffTrip.Route.Id + "N";
                     if (buffShape != null)
                     {
-                        var idForNearestNode = currentStop.Id + "IN" + buffTrip.Route.Id + "N";
+                        
                         if (!nearestNodeDico.ContainsKey(idForNearestNode))
                         {
-                            Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(buffShape.LineString, new Point(currentStop.X, currentStop.Y))[0]);
+                           Point sourceNearestLineString = new Point(DistanceOp.NearestPoints(buffShape.LineString, new Point(currentStop.X, currentStop.Y))[0]);
                             currentNearestNodeOnLineString.X = sourceNearestLineString.X;
                             currentNearestNodeOnLineString.Y = sourceNearestLineString.Y;
                             var length = Helper.GetDistance(sourceNearestLineString.X, sourceNearestLineString.Y, currentStop.X, currentStop.Y);
@@ -430,14 +445,16 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     }
                     else
                     {
-                        var idForNearestNode = currentStop.Id + "IN" + buffTrip.Route.Id + "N";
                         if (!nearestNodeDico.ContainsKey(idForNearestNode))
                         {
+
                             currentNearestNodeOnLineString.X = currentStop.X;
                             currentNearestNodeOnLineString.Y = currentStop.Y;
                             AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt);
                         }
                     }
+                    // Increments the nb of departure for the good hour
+                    nearestNodeDico[idForNearestNode].NbDepartures[currentStopTime.Value.DepartureTime.Hours]++;
                 }
                 previousStop = currentStop;
                 if (cpt != buffTrip.Schedule.Details.Count - 1)
@@ -469,9 +486,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
         }
 
 
-        private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
+        private void AddNearestNodeCreateEdges(StopGtfs currentStop, InternalNodeGtfs currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
-            nearestNodeDico.Add(id, currentNearestNodeOnLineString);
+            nearestNodeDico.Add(id, currentNearestNodeOnLineString);            
             if(Double.IsNaN(distance)){
                 distance=0;
             }

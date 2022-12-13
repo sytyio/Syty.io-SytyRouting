@@ -5,9 +5,6 @@ namespace SytyRouting.Gtfs.ModelGtfs
     {
 
         public string Id { get; set; }
-        public Dictionary<string,EdgeGtfs> InwardEdgesGtfs = new Dictionary<string, EdgeGtfs>();
-        public Dictionary<string,EdgeGtfs> OutwardEdgesGtfs = new Dictionary<string,EdgeGtfs>();
-
 
         public string? Name { get; set; }
 
