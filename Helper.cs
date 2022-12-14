@@ -254,20 +254,23 @@ namespace SytyRouting
                     if(TransportModes.TransportModeMasksToSpeeds.ContainsKey(transportMode))
                     {
                         transportModeSpeed = TransportModes.TransportModeMasksToSpeeds[transportMode];
-                        if(edge.MaxSpeedMPerS> transportModeSpeed)
+                        if(edge.MaxSpeedMPerS>transportModeSpeed && transportModeSpeed>0)
                         {
                             speed = transportModeSpeed;
                         }
-                        else
+                        else if(edge.MaxSpeedMPerS>0)
                         {
                             speed = edge.MaxSpeedMPerS;
                         }
                     }
+                    else if(edge.MaxSpeedMPerS>0)
+                    {
+                        speed = edge.MaxSpeedMPerS;
+                    }
 
-                    //cost =  edge.LengthM / edge.MaxSpeedMPerS;
                     if(speed==0)
                     {
-                        logger.Debug("Cost criteria: {0} :: Edge OSM ID {1} :: Edge speed {2} [m/s] :: Transport Mode {3} :: Transport Mode speed {4} [m/s]", costCriteria.ToString(), edge.OsmID, edge.MaxSpeedMPerS, TransportModes.MaskToString(transportMode), transportModeSpeed);
+                        logger.Debug("Cost criteria: {0} :: Edge OSM ID: {1} :: Edge speed: {2} [m/s] :: Transport Mode: {3} :: Transport Mode: speed {4} [m/s]", costCriteria.ToString(), edge.OsmID, edge.MaxSpeedMPerS, TransportModes.MaskToString(transportMode), transportModeSpeed);
                         throw new Exception("Unable to compute cost: Segment speed is zero.");
                     }
                     cost =  edge.LengthM / speed;
