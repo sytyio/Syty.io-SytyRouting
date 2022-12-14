@@ -9,6 +9,7 @@ namespace SytyRouting.Model
         public Point? HomeLocation;
         public Point? WorkLocation;
         public LineString? Route;
+        public byte[] RequestedTransportSequence = null!;
         public Dictionary<int, byte>? TransportModeTransitions;
         public bool SuccessfulRouteComputation;
     }

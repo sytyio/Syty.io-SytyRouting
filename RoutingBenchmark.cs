@@ -33,8 +33,6 @@ namespace SytyRouting
             //var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
             var connectionString = Configuration.ConnectionString;  // Local DB for testing
 
-            List<Persona> realBrusselVloms = new List<Persona>(12);
-
             // Selected points around Brussels:
 
             //                             Domicile						Travail
@@ -48,6 +46,7 @@ namespace SytyRouting
 
 
             var routingProbes = Configuration.RoutingProbes;
+            List<Persona> realBrusselVloms = new List<Persona>(routingProbes.Length);
 
             // Create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();
@@ -56,8 +55,9 @@ namespace SytyRouting
             {
                 Point home = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].HomeLongitude, routingProbes[i].HomeLatitude));
                 Point work = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].WorkLongitude, routingProbes[i].WorkLatitude));
-            
-                realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work});
+                byte[] requestedTransportModeSequence = TransportModes.NameSequenceToMasksArray(routingProbes[i].TransportSequence);
+
+                realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work, RequestedTransportSequence = requestedTransportModeSequence});
             }
 
             // For a batch selection from a bounding box on Brussels:
@@ -123,13 +123,14 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTableName + " (id, home_location, work_location) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET home_location = $2, work_location = $3", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTableName + " (id, home_location, work_location, transport_sequence) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET home_location = $2, work_location = $3, transport_sequence = $4", connection)
                     {
                         Parameters =
                         {
                             new() { Value = brusseleir.Id },
                             new() { Value = brusseleir.HomeLocation },
-                            new() { Value = brusseleir.WorkLocation }
+                            new() { Value = brusseleir.WorkLocation },
+                            new() { Value = TransportModes.ArrayToNames(brusseleir.RequestedTransportSequence) }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
@@ -146,7 +147,7 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Personas examples successfully uploaded to the database in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
+            logger.Info("{0} Persona examples successfully uploaded to the database in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
             var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTableName, logger);
             logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
         }

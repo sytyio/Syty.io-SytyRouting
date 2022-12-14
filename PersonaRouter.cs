@@ -123,8 +123,9 @@ namespace SytyRouting
                         var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
                         var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                         var workLocation = (Point)reader.GetValue(2); // work_location (Point)
+                        var requestedTransportSequence = (string[])reader.GetValue(3); // transport_sequence (text[])
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NameSequenceToMasksArray(requestedTransportSequence)};
                         personas.Add(persona);
                         
                         personaTaskArray[personaIndex] = persona;
@@ -164,6 +165,11 @@ namespace SytyRouting
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+
+                        if(persona.RequestedTransportSequence is not null)
+                            requestedTransportModes = persona.RequestedTransportSequence;
+                        else
+                            requestedTransportModes = new byte[0];
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
 
