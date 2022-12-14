@@ -76,7 +76,9 @@ namespace SytyRouting
             //string[] requestedSequence = new string[] {"Car"};
             //string[] requestedSequence = new string[] {""};
 
-            string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
+            string[] requestedSequence = new string[] {"Foot", "Bicycle", "Foot", "Car", "Foot"}; // Fine with the 6 Brussel probs
+            //string[] requestedSequence = new string[] {"Foot", "Bicycle", "Foot"}; // No results
+            //string[] requestedSequence = new string[] {"Foot", "Car", "Foot"}; // No results
 
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);

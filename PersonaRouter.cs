@@ -46,6 +46,7 @@ namespace SytyRouting
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
             elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            // elementsToProcess = await Helper.DbTableRowCount("public.routing_benchmark", logger);
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
