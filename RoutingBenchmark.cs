@@ -7,41 +7,25 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting
 {
-    public class RoutingBenchmark
+    public static class RoutingBenchmark
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private List<Persona> personas = new List<Persona>();
+        private static Stopwatch stopWatch = new Stopwatch();
         
 
-        private int elementsToProcess = 0;
-        private int processedDbElements = 0;
-        
-        private bool downloadTasksHaveEnded = false;
-
-
-        private Stopwatch stopWatch = new Stopwatch();
-
-
-        
-
-        public async Task StartReplication()
+        public static async Task StartReplication()
         {
             stopWatch.Start();
 
-            // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            if(elementsToProcess < 1)
-            {
-                logger.Info("No DB elements to process");
-                return;
-            }
+            // // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
+            // elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            // if(elementsToProcess < 1)
+            // {
+            //     logger.Info("No DB elements to process");
+            //     return;
+            // }
             
-            // Task loadingTask = Task.Run(() => PersonaDownloadAsync());
-            // Task monitorTask = Task.Run(() => MonitorReplication());
-            // Task.WaitAll(loadingTask);
-            // downloadTasksHaveEnded=true;
-            // Task.WaitAll(monitorTask);
             await PersonaLocalDBUploadAsync();
 
             stopWatch.Stop();
@@ -49,62 +33,7 @@ namespace SytyRouting
             logger.Info("Persona Replication time :: {0}", totalTime);
         }
 
-        private async Task PersonaDownloadAsync()
-        {
-            var connectionString = Configuration.ConnectionString;
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            var personaTableName = Configuration.PersonaTableName;
-
-            // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
-            //                     0              1              2
-            var queryString = "SELECT id, home_location, work_location FROM " + personaTableName + " ORDER BY id ASC OFFSET 12 LIMIT " + elementsToProcess;
-
-            await using (var command = new NpgsqlCommand(queryString, connection))
-            await using (var reader = await command.ExecuteReaderAsync())
-            {
-                while(await reader.ReadAsync())
-                {
-                    var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
-                    var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
-                    var workLocation = (Point)reader.GetValue(2); // work_location (Point)
-
-                    var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation};
-                    personas.Add(persona);   
-                    
-                    processedDbElements++;
-                }
-            }
-            
-            await connection.CloseAsync();
-        }
-
-        private void MonitorReplication()
-        {
-            int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
-            while(true)
-            {
-                var timeSpan = stopWatch.Elapsed;
-                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                Helper.DataLoadBenchmark(elementsToProcess, elementsToProcess, timeSpan, timeSpanMilliseconds, logger);
-                logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, elementsToProcess, (double)elementsToProcess / elementsToProcess * 100);
-                logger.Info("");
-
-                if(downloadTasksHaveEnded)
-                {
-                    if(processedDbElements != elementsToProcess)
-                    {
-                        logger.Info(" ==>> Inconsistent number of processed elements.");
-                    }
-                    return;
-                }
-
-                Thread.Sleep(monitorSleepMilliseconds);
-            }
-        }
-
-        private async Task PersonaLocalDBUploadAsync()
+        private static async Task PersonaLocalDBUploadAsync()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -113,7 +42,6 @@ namespace SytyRouting
             var connectionString = Configuration.ConnectionString;  // Local DB for testing
 
             List<Persona> realBrusselVloms = new List<Persona>(12);
-
 
             // Selected points around Brussels:
 
@@ -258,8 +186,9 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Personas successfully uploaded to the local database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
-            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+            logger.Info("{0} Personas examples successfully uploaded to the database in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
+            var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTableName, logger);
+            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
         }
     }
 }

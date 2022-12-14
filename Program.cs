@@ -67,7 +67,8 @@ namespace SytyRouting
 
 
             // // Persona spatial data generation
-            // var personaRouter = new PersonaRouter(graph);
+            await RoutingBenchmark.StartReplication();
+            var personaRouter = new PersonaRouter(graph);
 
             // // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
@@ -83,20 +84,25 @@ namespace SytyRouting
             //string[] requestedSequence = new string[] {"Car"};
             //string[] requestedSequence = new string[] {""};
 
-            // string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
+            string[] requestedSequence = new string[] {"Foot", "Bicycle", "Foot", "Car", "Foot"};
+            byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
+
+
+            // string[] requestedSequence = new string[] {"Bus", "Tram", "Metro", "Train"};
+            // byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
 
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
             // byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
             // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
             // byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
 
-            // logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
+            logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
 
-            // //graph.TraceNodesByTransportMode(TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence)),10);
+            graph.TraceNodesByTransportMode(TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence)),10);
 
-            // await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
+            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
-            // personaRouter.TracePersonas();
+            personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();
 
 
