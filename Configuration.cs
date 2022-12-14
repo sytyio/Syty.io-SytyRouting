@@ -35,6 +35,9 @@ namespace SytyRouting
         public static int InitialDataLoadSleepMilliseconds {get;}
         public static int RegularRoutingTaskBatchSize {get;}
 
+        // Routing benchmark:
+        public static RoutingProbe[] RoutingProbes {get;}
+
         // Transport parameters:
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
@@ -57,6 +60,7 @@ namespace SytyRouting
                 .AddJsonFile("appsettings.data.json")
                 .AddJsonFile("appsettings.routing.json")
                 .AddJsonFile("appsettings.transport.json")
+                .AddJsonFile("appsettings.routingbenchmark.json")
                 .Build();
 
             // Get values from the config representation given their key and their target type:
@@ -85,6 +89,9 @@ namespace SytyRouting
             DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
             InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
+
+            RoutingBenchmarkSettings routingBenchmarkSettings = config.GetRequiredSection("RoutingBenchmarkSettings").Get<RoutingBenchmarkSettings>();
+            RoutingProbes = routingBenchmarkSettings.RoutingProbes;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             PublicTransportGroup = transportSettings.PublicTransportGroup;

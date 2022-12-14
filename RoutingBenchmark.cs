@@ -17,14 +17,6 @@ namespace SytyRouting
         public static async Task StartReplication()
         {
             stopWatch.Start();
-
-            // // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            // elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            // if(elementsToProcess < 1)
-            // {
-            //     logger.Info("No DB elements to process");
-            //     return;
-            // }
             
             await PersonaLocalDBUploadAsync();
 
@@ -55,49 +47,57 @@ namespace SytyRouting
             // Avenue Chazal 		4.39112		50.85875		Rue Stevin		    4.37673		50.84564
 
 
-            double[] homeX = new double[6] {
-                                        4.29430,
-                                        4.36430,
-                                        4.26710,
-                                        4.34965,
-                                        4.27223,
-                                        4.39112
-                                                };
+            // double[] homeX = new double[6] {
+            //                             4.29430,
+            //                             4.36430,
+            //                             4.26710,
+            //                             4.34965,
+            //                             4.27223,
+            //                             4.39112
+            //                                     };
 
-            double[] homeY = new double[6] {
-                                                50.83157,
-                                                50.84645,
-                                                50.81541,
-                                                50.84825,
-                                                50.83618,
-                                                50.85875
-                                                        };
+            // double[] homeY = new double[6] {
+            //                                     50.83157,
+            //                                     50.84645,
+            //                                     50.81541,
+            //                                     50.84825,
+            //                                     50.83618,
+            //                                     50.85875
+            //                                             };
 
-            double[] workX = new double[6] {
-                                                                                    4.36927,
-                                                                                    4.33757,
-                                                                                    4.34154,
-                                                                                    4.36790,
-                                                                                    4.35171,
-                                                                                    4.37673
-                                                                                            };
+            // double[] workX = new double[6] {
+            //                                                                         4.36927,
+            //                                                                         4.33757,
+            //                                                                         4.34154,
+            //                                                                         4.36790,
+            //                                                                         4.35171,
+            //                                                                         4.37673
+            //                                                                                 };
 
-            double[] workY = new double[6] {                                                    50.82102,
-                                                                                                50.81635,
-                                                                                                50.84040,
-                                                                                                50.84353,
-                                                                                                50.85046,
-                                                                                                50.84564
-                                                                                                        };
+            // double[] workY = new double[6] {                                                    50.82102,
+            //                                                                                     50.81635,
+            //                                                                                     50.84040,
+            //                                                                                     50.84353,
+            //                                                                                     50.85046,
+            //                                                                                     50.84564
+            //                                                                                             };
 
+
+            var routingProbes = Configuration.RoutingProbes;
 
             // create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();
-			
-            for(int i=0; i<6; i++)
+
+            for(int i=0; i<routingProbes.Length; i++)
             {
-                Point home = geometryFactory.CreatePoint(new Coordinate(homeX[i], homeY[i]));
-                Point work = geometryFactory.CreatePoint(new Coordinate(workX[i], workY[i]));
+                Point home = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].HomeLongitude, routingProbes[i].HomeLatitude));
+                Point work = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].WorkLongitude, routingProbes[i].WorkLatitude));
+            // }
+			
+            // for(int i=0; i<6; i++)
+            // {
+            //     Point home = geometryFactory.CreatePoint(new Coordinate(homeX[i], homeY[i]));
+            //     Point work = geometryFactory.CreatePoint(new Coordinate(workX[i], workY[i]));
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work});
             }
 
