@@ -13,6 +13,7 @@ namespace SytyRouting
         public string PersonaTableName {get; set;} = null!;
         public string RouteTableName {get; set;} = null!;
         public string EdgeTableName {get; set;} = null!;
+        public string RoutingBenchmarkTableName {get; set;} = null!;
     }
 
     public sealed class DataGtfsSettings
