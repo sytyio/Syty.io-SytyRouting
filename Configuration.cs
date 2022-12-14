@@ -20,6 +20,7 @@ namespace SytyRouting
         public static string PersonaTableName {get;}
         public static string ComputedRouteTableName {get;}
         public static string EdgeTableName {get;}
+        public static string RoutingBenchmarkTableName {get;}
 
         // Gtfs settings : 
 
