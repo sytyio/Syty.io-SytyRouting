@@ -28,9 +28,16 @@ namespace SytyRouting
             // for (int i = 0  ; i < graph.GetNodes().Count(); i++)
             // {
             //     var node = graph.GetNodes()[i];
-            //     // if (node.ValidSource||node.ValidTarget){
-            //         graph.TraceOneNode(node);
-            //     // }
+            //     foreach(var data in node.InwardEdges){
+            //         if(data.LengthM==0||data.MaxSpeedMPerS==0||Double.IsNaN(data.LengthM)){
+            //             logger.Info("Type {0}, speed {1}, length {1}",TransportModes.MaskToString(data.TransportModes),data.MaxSpeedMPerS,data.LengthM);
+            //         }
+            //     }
+            //     foreach(var data in node.OutwardEdges){
+            //         if(data.LengthM==0||data.MaxSpeedMPerS==0||Double.IsNaN(data.LengthM)){
+            //             logger.Info("Type {0}, speed {1}, length {1}",TransportModes.MaskToString(data.TransportModes),data.MaxSpeedMPerS,data.LengthM);
+            //         }
+            //     }
             // }
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -59,38 +66,38 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            // Persona spatial data generation
-            var personaRouter = new PersonaRouter(graph);
+            // // Persona spatial data generation
+            // var personaRouter = new PersonaRouter(graph);
 
-            // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
+            // // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
-            // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
-            // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
+            // // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
+            // // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
             // string[] requestedSequence = new string[] {"Bus", "Tram", "Metro", "Train"};
-            // string[] requestedSequence = new string[] {"Foot"};
-            // string[] requestedSequence = new string[] {"Bus"};
-            // string[] requestedSequence = new string[] {"Tram"};
-            // string[] requestedSequence = new string[] {"Metro"};
-            // string[] requestedSequence = new string[] {"Train"};
-            //string[] requestedSequence = new string[] {"Bicycle"};
-            //string[] requestedSequence = new string[] {"Car"};
-            //string[] requestedSequence = new string[] {""};
+            // // string[] requestedSequence = new string[] {"Foot"};
+            // // string[] requestedSequence = new string[] {"Bus"};
+            // // string[] requestedSequence = new string[] {"Tram"};
+            // // string[] requestedSequence = new string[] {"Metro"};
+            // // string[] requestedSequence = new string[] {"Train"};
+            // //string[] requestedSequence = new string[] {"Bicycle"};
+            // //string[] requestedSequence = new string[] {"Car"};
+            // //string[] requestedSequence = new string[] {""};
 
-            string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
+            // // string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
 
-            // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
-            byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
-            // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
-            // byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
+            // // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
+            // byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
+            // // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
+            // // byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
 
-            logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
+            // logger.Info("Computing routes for the sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(transportModesSequence)));
 
-            //graph.TraceNodesByTransportMode(TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence)),10);
+            // //graph.TraceNodesByTransportMode(TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence)),10);
 
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
+            // await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
-            personaRouter.TracePersonas();
-            // personaRouter.TracePersonasRouteResult();
+            // personaRouter.TracePersonas();
+            // // personaRouter.TracePersonasRouteResult();
 
 
             // // Logger flushing

@@ -50,7 +50,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            Clean();
+            // Clean();
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
                 GtfsDico.Add(provider, new ControllerGtfs(provider));
@@ -62,7 +62,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             await Task.WhenAll(listDwnld);
             AddGtfsData();
-            Clean();
+            // Clean();
         }
 
         private void AddGtfsData()
@@ -78,8 +78,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 foreach (var node in gtfs.Value.GetNodes())
                 {
                     var nearest = KDTree.GetNearestNeighbor(node.X, node.Y);
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
-                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = Helper.GetDistance(node, nearest), TransportModes = TransportModes.GetTransportModeMask("Foot") };
+                    var length = Helper.GetDistance(node, nearest);
+                    if(length==0){
+                        length=1;
+                    }
+                    
+                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = length, TransportModes = TransportModes.GetTransportModeMask("Foot"),MaxSpeedMPerS = TransportModes.TransportModeMasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
+                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = length, TransportModes = TransportModes.GetTransportModeMask("Foot"),MaxSpeedMPerS = TransportModes.TransportModeMasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
                     if (node.ValidSource)
                     {
                         node.OutwardEdges.Add(newEdgOut);

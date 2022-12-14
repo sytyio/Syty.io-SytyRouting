@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            await DownloadGtfs();
+            // await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -472,13 +472,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
             nearestNodeDico.Add(id, currentNearestNodeOnLineString);
-            if(Double.IsNaN(distance)){
-                distance=0;
+            if(Double.IsNaN(distance)||distance==0){
+                distance=1;
             }
             // The edges from stop to nearest node and back
             //Temporary : use of Bicyclette type for the walk between de stop and the nearest point on the linestring
-            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString };
-            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop };
+            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString, MaxSpeedMPerS = TransportModes.TransportModeMasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
+            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop, MaxSpeedMPerS = TransportModes.TransportModeMasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
             // Add the edges to the nodes
             if (cpt != 0)
             {
