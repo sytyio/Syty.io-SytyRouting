@@ -250,9 +250,10 @@ namespace SytyRouting
                 case CostCriteria.MinimalTravelTime:
                 {
                     double speed = 0;
+                    double transportModeSpeed = -1;
                     if(TransportModes.TransportModeMasksToSpeeds.ContainsKey(transportMode))
                     {
-                        var transportModeSpeed = TransportModes.TransportModeMasksToSpeeds[transportMode];
+                        transportModeSpeed = TransportModes.TransportModeMasksToSpeeds[transportMode];
                         if(edge.MaxSpeedMPerS> transportModeSpeed)
                         {
                             speed = transportModeSpeed;
@@ -264,6 +265,11 @@ namespace SytyRouting
                     }
 
                     //cost =  edge.LengthM / edge.MaxSpeedMPerS;
+                    if(speed==0)
+                    {
+                        logger.Debug("Cost criteria: {0} :: Edge OSM ID {1} :: Edge speed {2} [m/s] :: Transport Mode {3} :: Transport Mode speed {4} [m/s]", costCriteria.ToString(), edge.OsmID, edge.MaxSpeedMPerS, TransportModes.MaskToString(transportMode), transportModeSpeed);
+                        throw new Exception("Unable to compute cost: Segment speed is zero.");
+                    }
                     cost =  edge.LengthM / speed;
                     break;
                 }                

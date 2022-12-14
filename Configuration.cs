@@ -20,6 +20,7 @@ namespace SytyRouting
         public static string PersonaTableName {get;}
         public static string ComputedRouteTableName {get;}
         public static string EdgeTableName {get;}
+        public static string RoutingBenchmarkTableName {get;}
 
         // Gtfs settings : 
 
@@ -72,6 +73,7 @@ namespace SytyRouting
             PersonaTableName = dBTableSettings.PersonaTableName;
             ComputedRouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
+            RoutingBenchmarkTableName = dBTableSettings.RoutingBenchmarkTableName;
 
             DataGtfsSettings dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
             CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);

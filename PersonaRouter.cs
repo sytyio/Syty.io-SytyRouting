@@ -45,7 +45,8 @@ namespace SytyRouting
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            // elementsToProcess = await Helper.DbTableRowCount("public.routing_benchmark", logger);
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -90,7 +91,8 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
-            var personaTableName = Configuration.PersonaTableName;
+            //var personaTableName = Configuration.PersonaTableName;
+            var personaTableName = "public.routing_benchmark";
 
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
