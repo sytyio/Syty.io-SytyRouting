@@ -47,57 +47,16 @@ namespace SytyRouting
             // Avenue Chazal 		4.39112		50.85875		Rue Stevin		    4.37673		50.84564
 
 
-            // double[] homeX = new double[6] {
-            //                             4.29430,
-            //                             4.36430,
-            //                             4.26710,
-            //                             4.34965,
-            //                             4.27223,
-            //                             4.39112
-            //                                     };
-
-            // double[] homeY = new double[6] {
-            //                                     50.83157,
-            //                                     50.84645,
-            //                                     50.81541,
-            //                                     50.84825,
-            //                                     50.83618,
-            //                                     50.85875
-            //                                             };
-
-            // double[] workX = new double[6] {
-            //                                                                         4.36927,
-            //                                                                         4.33757,
-            //                                                                         4.34154,
-            //                                                                         4.36790,
-            //                                                                         4.35171,
-            //                                                                         4.37673
-            //                                                                                 };
-
-            // double[] workY = new double[6] {                                                    50.82102,
-            //                                                                                     50.81635,
-            //                                                                                     50.84040,
-            //                                                                                     50.84353,
-            //                                                                                     50.85046,
-            //                                                                                     50.84564
-            //                                                                                             };
-
-
             var routingProbes = Configuration.RoutingProbes;
 
-            // create a factory using default values (e.g. floating precision)
+            // Create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();
 
             for(int i=0; i<routingProbes.Length; i++)
             {
                 Point home = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].HomeLongitude, routingProbes[i].HomeLatitude));
                 Point work = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].WorkLongitude, routingProbes[i].WorkLatitude));
-            // }
-			
-            // for(int i=0; i<6; i++)
-            // {
-            //     Point home = geometryFactory.CreatePoint(new Coordinate(homeX[i], homeY[i]));
-            //     Point work = geometryFactory.CreatePoint(new Coordinate(workX[i], workY[i]));
+            
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work});
             }
 
@@ -131,8 +90,9 @@ namespace SytyRouting
 
             var personaTableName = Configuration.PersonaTableName;
             var routingBenchmarkTableName = Configuration.RoutingBenchmarkTableName;
+            var additionalProbes = Configuration.AdditionalRoutingProbes;
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET 12 LIMIT 10;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }

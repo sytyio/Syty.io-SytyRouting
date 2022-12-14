@@ -37,6 +37,7 @@ namespace SytyRouting
 
         // Routing benchmark:
         public static RoutingProbe[] RoutingProbes {get;}
+        public static int AdditionalRoutingProbes {get;}
 
         // Transport parameters:
         public static Dictionary<int,string> TransportModeNames {get;}
@@ -92,6 +93,7 @@ namespace SytyRouting
 
             RoutingBenchmarkSettings routingBenchmarkSettings = config.GetRequiredSection("RoutingBenchmarkSettings").Get<RoutingBenchmarkSettings>();
             RoutingProbes = routingBenchmarkSettings.RoutingProbes;
+            AdditionalRoutingProbes = routingBenchmarkSettings.AdditionalProbes;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
             PublicTransportGroup = transportSettings.PublicTransportGroup;

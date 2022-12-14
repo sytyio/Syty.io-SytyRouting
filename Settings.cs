@@ -26,6 +26,7 @@ namespace SytyRouting
     public sealed class RoutingBenchmarkSettings
     {
         public RoutingProbe[] RoutingProbes {get; set;} = null!;
+        public int AdditionalProbes {get; set;}
     }
 
     public sealed class RoutingProbe
