@@ -22,7 +22,7 @@ namespace SytyRouting
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("Persona Replication time :: {0}", totalTime);
+            logger.Info("Routing benchmark data set creation time :: {0}", totalTime);
         }
 
         private static async Task PersonaLocalDBUploadAsync()
