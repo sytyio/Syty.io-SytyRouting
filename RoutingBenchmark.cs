@@ -14,7 +14,7 @@ namespace SytyRouting
         private static Stopwatch stopWatch = new Stopwatch();
         
 
-        public static async Task StartReplication()
+        public static async Task CreateDataSet()
         {
             stopWatch.Start();
             
