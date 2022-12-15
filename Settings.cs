@@ -37,6 +37,7 @@ namespace SytyRouting
         public string WorkLocation{get; set;} = null!;
         public double WorkLongitude {get; set;}
         public double WorkLatitude {get; set;}
+        public string[] TransportSequence {get; set;} = null!;
     }
 
     public sealed class TransportSettings

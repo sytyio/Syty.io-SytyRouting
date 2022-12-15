@@ -68,7 +68,7 @@ namespace SytyRouting
 
 
             // // Persona spatial data generation
-            await RoutingBenchmark.StartReplication();
+            await RoutingBenchmark.CreateDataSet();
             var personaRouter = new PersonaRouter(graph);
 
             // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));

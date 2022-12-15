@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1; // Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -77,7 +77,8 @@ namespace SytyRouting
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            await DBPersonaRoutesUploadAsync();
+            //await DBPersonaRoutesUploadAsync();
+            await DBRouteBenchmarkUploadAsync();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -112,8 +113,8 @@ namespace SytyRouting
                 var personaIndex = 0;
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
-                //                     0              1              2
-                var queryString = "SELECT id, home_location, work_location FROM " + personaTableName + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                //                        0   1              2              3
+                var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTableName + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -123,8 +124,15 @@ namespace SytyRouting
                         var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
                         var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                         var workLocation = (Point)reader.GetValue(2); // work_location (Point)
+                        var requestedSequence = reader.GetValue(3); // transport_sequence (text[])
+                        string[] requestedTransportSequence;
+                        if(requestedSequence is not null && requestedSequence != DBNull.Value)
+                             requestedTransportSequence = (string[])requestedSequence;
+                        else
+                            requestedTransportSequence = new string[] {""};
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NameSequenceToMasksArray(requestedTransportSequence)};
+                        
                         personas.Add(persona);
                         
                         personaTaskArray[personaIndex] = persona;
@@ -164,6 +172,8 @@ namespace SytyRouting
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+
+                        requestedTransportModes = persona.RequestedTransportSequence;
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
 
@@ -268,6 +278,55 @@ namespace SytyRouting
                 try
                 {
                     await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTableName + " (persona_id, route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET route = $2", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = persona.Id },
+                            new() { Value = persona.Route },
+                        }
+                    };
+                    await cmd_insert.ExecuteNonQueryAsync();
+                }
+                catch
+                {
+                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
+                    uploadFails++;
+                }
+            }
+   
+            await connection.CloseAsync();
+
+            uploadStopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
+            logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
+            logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+        }
+
+        private async Task DBRouteBenchmarkUploadAsync()
+        {
+            Stopwatch uploadStopWatch = new Stopwatch();
+            uploadStopWatch.Start();
+
+            // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
+            var connectionString = Configuration.ConnectionString;            
+            
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+
+            var routeTableName = Configuration.RoutingBenchmarkTableName;
+
+            // await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeTableName + " (persona_id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, route GEOMETRY);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            int uploadFails = 0;
+            foreach(var persona in personas)
+            {
+                try
+                {
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, computed_route) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route = $2", connection)
                     {
                         Parameters =
                         {
