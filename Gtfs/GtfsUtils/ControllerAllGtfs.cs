@@ -50,7 +50,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            // Clean();
+            Clean();
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
                 GtfsDico.Add(provider, new ControllerGtfs(provider));
@@ -62,7 +62,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             await Task.WhenAll(listDwnld);
             AddGtfsData();
-            // Clean();
+            Clean();
         }
 
         private void AddGtfsData()

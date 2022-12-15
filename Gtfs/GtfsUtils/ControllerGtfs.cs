@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            // await DownloadGtfs();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -365,7 +365,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         // temporary solution to include waiting time (later: use of a penalty)
                         var watchTime = (previousStopTime.DepartureTime - previousStopTime.ArrivalTime).TotalSeconds;
                         var duration = (arrival - departure).TotalSeconds + watchTime;
-
+                        if (duration < 0)
+                        {
+                            // logger.Info("duration neg  {0}",duration);
+                            duration += 86400; // for specific cases like arrival current at 00:02:00 but departure previous at 23:57:00
+                        }
                         EdgeGtfs newEdge;
 
                         if (buffShape != null) // if there is a linestring, the edge will be created between the two nearest points of the stops on the linestring
@@ -389,9 +393,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
                             LineString splitLineString = buffShape.SplitLineString[i];
                             var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
-
-                            newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom);
-                            edgeDico.Add(newId, newEdge);
+                            newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
+                                    if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
+                                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+            }
                             i++;
                         }
                         else // if there is no linestring
@@ -404,9 +409,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt); // if there is no lineString nearest and stop are at the same coordinates
                             }
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes,buffTrip.Route.Type);
-                            edgeDico.Add(newId, newEdge);
-                            AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes, buffTrip.Route.Type);
+                            AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, previousStop, currentStop);
+                            if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
+                                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+            }
                         }
                     }
                     else
@@ -450,30 +457,37 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private EdgeGtfs AddEdge(LineString splitLineString, Node currentNearestNodeOnLineString, Node previousNearestOnLineString, string newId, double duration, TripGtfs buffTrip, XYMPoint[] internalGeom)
+        private EdgeGtfs AddEdge(LineString splitLineString, Node currentNearestNodeOnLineString, Node previousNearestOnLineString, string newId, double duration, TripGtfs buffTrip, XYMPoint[] internalGeom, StopGtfs prev, StopGtfs current) // StopGtfs prev, StopGtfs current
         {
-                var distance = GetDistanceWithLineString(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, buffTrip);
-                var newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true,
-                                          distance / duration, internalGeom, TransportModes.PublicTransportModes,buffTrip.Route.Type);
-                AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge);
-           
+            var distance = GetDistanceWithLineString(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, buffTrip);
+            var newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true,
+                                      distance / duration, internalGeom, TransportModes.PublicTransportModes, buffTrip.Route.Type);
+            AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, prev, current);
+            if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
+                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+            }
             return newEdge;
         }
 
 
 
-        private void AddEdgeToNodes(Node previousStop, Node currentStop, EdgeGtfs newEdge)
+        private void AddEdgeToNodes(Node previousStop, Node currentStop, EdgeGtfs newEdge, TripGtfs buffTrip, StopGtfs prev, StopGtfs current) // bufftrip prev current
         {
             previousStop.OutwardEdges.Add(newEdge);
             currentStop.InwardEdges.Add(newEdge);
+            edgeDico.Add(newEdge.Id, newEdge);
+            if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
+                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+            }
         }
 
 
         private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
             nearestNodeDico.Add(id, currentNearestNodeOnLineString);
-            if(Double.IsNaN(distance)||distance==0){
-                distance=1;
+            if (Double.IsNaN(distance) || distance == 0)
+            {
+                distance = 1;
             }
             // The edges from stop to nearest node and back
             //Temporary : use of Bicyclette type for the walk between de stop and the nearest point on the linestring
@@ -516,18 +530,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             var coordinates = splitLineString.Coordinates;
             double distance = 0;
-            if (Math.Abs(coordinates[0].X - source.X) > checkValue || Math.Abs(coordinates[0].Y - source.Y) > checkValue)
-            {
-                distance += Helper.GetDistance(coordinates[0].X, coordinates[0].Y, source.X, source.Y);
-            }
             int size = coordinates.Count() - 1;
             for (int i = 0; i < size; i++)
             {
                 distance += Helper.GetDistance(coordinates[i].X, coordinates[i].Y, coordinates[i + 1].X, coordinates[i + 1].Y);
-            }
-            if (Math.Abs(coordinates[size].X - target.X) > checkValue || Math.Abs(coordinates[size].Y - target.Y) > checkValue)
-            {  // if the target is in the linestring
-                distance += Helper.GetDistance(coordinates[size].X, coordinates[size].Y, target.X, target.Y);
             }
             // if (Math.Abs(distance - Helper.GetDistance(source, target)) > 2000)
             // {
