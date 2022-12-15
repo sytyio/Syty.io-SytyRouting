@@ -7,41 +7,17 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting
 {
-    public class RoutingBenchmark
+    public static class RoutingBenchmark
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private List<Persona> personas = new List<Persona>();
+        private static Stopwatch stopWatch = new Stopwatch();
         
 
-        private int elementsToProcess = 0;
-        private int processedDbElements = 0;
-        
-        private bool downloadTasksHaveEnded = false;
-
-
-        private Stopwatch stopWatch = new Stopwatch();
-
-
-        
-
-        public async Task StartReplication()
+        public static async Task StartReplication()
         {
             stopWatch.Start();
-
-            // elementsToProcess = await Helper.DbTableRowCount(Configuration.PersonaTableName, logger);
-            elementsToProcess = 10; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            if(elementsToProcess < 1)
-            {
-                logger.Info("No DB elements to process");
-                return;
-            }
             
-            // Task loadingTask = Task.Run(() => PersonaDownloadAsync());
-            // Task monitorTask = Task.Run(() => MonitorReplication());
-            // Task.WaitAll(loadingTask);
-            // downloadTasksHaveEnded=true;
-            // Task.WaitAll(monitorTask);
             await PersonaLocalDBUploadAsync();
 
             stopWatch.Stop();
@@ -49,62 +25,7 @@ namespace SytyRouting
             logger.Info("Persona Replication time :: {0}", totalTime);
         }
 
-        private async Task PersonaDownloadAsync()
-        {
-            var connectionString = Configuration.ConnectionString;
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            var personaTableName = Configuration.PersonaTableName;
-
-            // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
-            //                     0              1              2
-            var queryString = "SELECT id, home_location, work_location FROM " + personaTableName + " ORDER BY id ASC OFFSET 12 LIMIT " + elementsToProcess;
-
-            await using (var command = new NpgsqlCommand(queryString, connection))
-            await using (var reader = await command.ExecuteReaderAsync())
-            {
-                while(await reader.ReadAsync())
-                {
-                    var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
-                    var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
-                    var workLocation = (Point)reader.GetValue(2); // work_location (Point)
-
-                    var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation};
-                    personas.Add(persona);   
-                    
-                    processedDbElements++;
-                }
-            }
-            
-            await connection.CloseAsync();
-        }
-
-        private void MonitorReplication()
-        {
-            int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
-            while(true)
-            {
-                var timeSpan = stopWatch.Elapsed;
-                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                Helper.DataLoadBenchmark(elementsToProcess, elementsToProcess, timeSpan, timeSpanMilliseconds, logger);
-                logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, elementsToProcess, (double)elementsToProcess / elementsToProcess * 100);
-                logger.Info("");
-
-                if(downloadTasksHaveEnded)
-                {
-                    if(processedDbElements != elementsToProcess)
-                    {
-                        logger.Info(" ==>> Inconsistent number of processed elements.");
-                    }
-                    return;
-                }
-
-                Thread.Sleep(monitorSleepMilliseconds);
-            }
-        }
-
-        private async Task PersonaLocalDBUploadAsync()
+        private static async Task PersonaLocalDBUploadAsync()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -113,7 +34,6 @@ namespace SytyRouting
             var connectionString = Configuration.ConnectionString;  // Local DB for testing
 
             List<Persona> realBrusselVloms = new List<Persona>(12);
-
 
             // Selected points around Brussels:
 
@@ -127,49 +47,16 @@ namespace SytyRouting
             // Avenue Chazal 		4.39112		50.85875		Rue Stevin		    4.37673		50.84564
 
 
-            double[] homeX = new double[6] {
-                                        4.29430,
-                                        4.36430,
-                                        4.26710,
-                                        4.34965,
-                                        4.27223,
-                                        4.39112
-                                                };
+            var routingProbes = Configuration.RoutingProbes;
 
-            double[] homeY = new double[6] {
-                                                50.83157,
-                                                50.84645,
-                                                50.81541,
-                                                50.84825,
-                                                50.83618,
-                                                50.85875
-                                                        };
-
-            double[] workX = new double[6] {
-                                                                                    4.36927,
-                                                                                    4.33757,
-                                                                                    4.34154,
-                                                                                    4.36790,
-                                                                                    4.35171,
-                                                                                    4.37673
-                                                                                            };
-
-            double[] workY = new double[6] {                                                    50.82102,
-                                                                                                50.81635,
-                                                                                                50.84040,
-                                                                                                50.84353,
-                                                                                                50.85046,
-                                                                                                50.84564
-                                                                                                        };
-
-
-            // create a factory using default values (e.g. floating precision)
+            // Create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();
-			
-            for(int i=0; i<6; i++)
+
+            for(int i=0; i<routingProbes.Length; i++)
             {
-                Point home = geometryFactory.CreatePoint(new Coordinate(homeX[i], homeY[i]));
-                Point work = geometryFactory.CreatePoint(new Coordinate(workX[i], workY[i]));
+                Point home = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].HomeLongitude, routingProbes[i].HomeLatitude));
+                Point work = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].WorkLongitude, routingProbes[i].WorkLatitude));
+            
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work});
             }
 
@@ -203,8 +90,9 @@ namespace SytyRouting
 
             var personaTableName = Configuration.PersonaTableName;
             var routingBenchmarkTableName = Configuration.RoutingBenchmarkTableName;
+            var additionalProbes = Configuration.AdditionalRoutingProbes;
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET 12 LIMIT 10;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -258,8 +146,9 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Personas successfully uploaded to the local database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
-            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+            logger.Info("{0} Personas examples successfully uploaded to the database in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
+            var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTableName, logger);
+            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
         }
     }
 }

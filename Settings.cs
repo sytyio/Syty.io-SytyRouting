@@ -23,6 +23,21 @@ namespace SytyRouting
         public string? SelectedDate {get;set;}=null!;
     }
 
+    public sealed class RoutingBenchmarkSettings
+    {
+        public RoutingProbe[] RoutingProbes {get; set;} = null!;
+        public int AdditionalProbes {get; set;}
+    }
+
+    public sealed class RoutingProbe
+    {
+        public string HomeLocation{get; set;} = null!;
+        public double HomeLongitude {get; set;}
+        public double HomeLatitude {get; set;}
+        public string WorkLocation{get; set;} = null!;
+        public double WorkLongitude {get; set;}
+        public double WorkLatitude {get; set;}
+    }
 
     public sealed class TransportSettings
     {

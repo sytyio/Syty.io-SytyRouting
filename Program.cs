@@ -67,14 +67,15 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            // Persona spatial data generation
+            // // Persona spatial data generation
+            await RoutingBenchmark.StartReplication();
             var personaRouter = new PersonaRouter(graph);
 
             // // logger.Info("Available public transport modes: {0}", TransportModes.NamesToString(Configuration.PublicTransportModes));
 
             // // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
             // // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
-            string[] requestedSequence = new string[] {"Bus", "Tram", "Metro", "Train"};
+            string[] requestedSequence = new string[] {"Foot","Bus","Foot", "Tram","Foot", "Metro", "Foot","Train"};
             // string[] requestedSequence = new string[] {"Foot"};
             // string[] requestedSequence = new string[] {"Bus"};
             // string[] requestedSequence = new string[] {"Tram"};
@@ -83,6 +84,9 @@ namespace SytyRouting
             // string[] requestedSequence = new string[] {"Bicycle"};
             // string[] requestedSequence = new string[] {"Car"};
             // string[] requestedSequence = new string[] {""};
+
+            // string[] requestedSequence = new string[] {"Foot", "Bicycle", "Foot", "Car", "Foot"};
+
 
             // string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
 
@@ -98,7 +102,7 @@ namespace SytyRouting
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>(transportModesSequence);
     
             personaRouter.TracePersonas();
-            // personaRouter.TracePersonasRouteResult();
+            // // personaRouter.TracePersonasRouteResult();
 
 
             // Logger flushing
