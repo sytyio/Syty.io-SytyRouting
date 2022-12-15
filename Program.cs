@@ -75,7 +75,7 @@ namespace SytyRouting
 
             // // string[] requestedSequence = new string[] {"Foot", "Bus", "Tram", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
             // // string[] requestedSequence = new string[] {"Foot", "Car", "Train", "Foot", "Metro", "Bicycle", "Bus", "Foot"};
-            string[] requestedSequence = new string[] {"Foot","Bus","Foot", "Tram","Foot", "Metro", "Foot","Train"};
+            string[] requestedSequence = new string[] {"Foot","Bus","Foot","Tram","Foot","Metro","Foot","Train","Foot"};
             // string[] requestedSequence = new string[] {"Foot"};
             // string[] requestedSequence = new string[] {"Bus"};
             // string[] requestedSequence = new string[] {"Tram"};
