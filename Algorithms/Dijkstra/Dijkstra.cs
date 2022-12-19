@@ -31,7 +31,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                     var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
                     foreach(var transportMode in availableTransportModes)
                     {
-                        AddStep(null, originNode, 0, -1, transportMode, -1);
+                        AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
                     }
                 }
             }
