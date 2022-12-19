@@ -48,7 +48,7 @@ namespace SytyRouting
                         bw.Write((char)transportModeName[i]);
                     }
                 }
-                bw.Write(TransportModes.PublicTransportModes);
+                bw.Write(TransportModes.PublicModes);
             }
             return Task.CompletedTask;
         }

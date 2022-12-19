@@ -12,7 +12,7 @@ namespace SytyRouting
 
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> Masks = new Dictionary<int,byte>();
-        public static byte PublicTransportModes; // mask of the public modes.
+        public static byte PublicModes; // mask of the public modes.
         public static Dictionary<int,double> TagIdRouteTypeToRoutingPenalties = new Dictionary<int,double>();
         public static Dictionary<byte,double> TransportModeToRoutingPenalties = new Dictionary<byte,double>();
         public static Dictionary<byte,double> TransportModeMasksToSpeeds = new Dictionary<byte,double>();
@@ -109,14 +109,14 @@ namespace SytyRouting
             for(int i = 0; i < transportModeSequence.Length; i++)
             {
                 byte currentTransportMask = transportModeSequence[i];
-                if((currentTransportMask & PublicTransportModes) == currentTransportMask || (currentTransportMask & DefaultMode) == currentTransportMask)
+                if((currentTransportMask & PublicModes) == currentTransportMask || (currentTransportMask & DefaultMode) == currentTransportMask)
                 {
                     currentTransportMask |= DefaultMode;
                     i++;
                     for(; i < transportModeSequence.Length; i++)
                     {
                         byte nextTransportMask = transportModeSequence[i];
-                        if((nextTransportMask & PublicTransportModes) == nextTransportMask || nextTransportMask == DefaultMode)
+                        if((nextTransportMask & PublicModes) == nextTransportMask || nextTransportMask == DefaultMode)
                         {
                             currentTransportMask |= nextTransportMask;
                         }
@@ -488,12 +488,12 @@ namespace SytyRouting
 
         public static void SetPublicTransportModes(string[] publicTransportModes)
         {
-            PublicTransportModes = TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(publicTransportModes));
+            PublicModes = TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(publicTransportModes));
         }
 
         public static void SetPublicTransportModes(byte publicTransportModes)
         {
-            PublicTransportModes = publicTransportModes;
+            PublicModes = publicTransportModes;
         }
 
         public static void LoadTransportModeRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)

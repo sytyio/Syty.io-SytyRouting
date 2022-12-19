@@ -409,7 +409,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, 0, cpt); // if there is no lineString nearest and stop are at the same coordinates
                             }
-                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicTransportModes, buffTrip.Route.Type);
+                            newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicModes, buffTrip.Route.Type);
                             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, previousStop, currentStop);
                             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
                                 logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
@@ -461,7 +461,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             var distance = GetDistanceWithLineString(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, buffTrip);
             var newEdge = new EdgeGtfs(newId, previousNearestOnLineString, currentNearestNodeOnLineString, distance, duration, buffTrip.Route, true,
-                                      distance / duration, internalGeom, TransportModes.PublicTransportModes, buffTrip.Route.Type);
+                                      distance / duration, internalGeom, TransportModes.PublicModes, buffTrip.Route.Type);
             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, prev, current);
             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
                 logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
