@@ -11,7 +11,7 @@ namespace SytyRouting
         public static byte DefaultMode;
 
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
-        public static Dictionary<int,byte> TransportModeMasks = new Dictionary<int,byte>();
+        public static Dictionary<int,byte> Masks = new Dictionary<int,byte>();
         public static byte PublicTransportModes; // mask of the public modes.
         public static Dictionary<int,double> TagIdRouteTypeToRoutingPenalties = new Dictionary<int,double>();
         public static Dictionary<byte,double> TransportModeToRoutingPenalties = new Dictionary<byte,double>();
@@ -230,7 +230,7 @@ namespace SytyRouting
                 int transportModeIndex = TransportModes.GetTransportModeNameIndex(transportModeNames[i]);
                 if(transportModeIndex != 0)
                 {
-                    transportModesMask |= TransportModeMasks[transportModeIndex];
+                    transportModesMask |= Masks[transportModeIndex];
                 }   
                 else
                 {
@@ -243,9 +243,9 @@ namespace SytyRouting
         public static byte GetTransportModeMask(string transportModeName)
         {
             var key = GetTransportModeNameIndex(transportModeName);
-            if(TransportModeMasks.ContainsKey(key))
+            if(Masks.ContainsKey(key))
             {
-                return TransportModeMasks[key];
+                return Masks[key];
             }
             else
             {
@@ -307,7 +307,7 @@ namespace SytyRouting
         public static string MaskToString(byte transportModes)
         {
             string result = "";
-            foreach(var transportModeMask in TransportModeMasks)
+            foreach(var transportModeMask in Masks)
             {
                 if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
@@ -326,7 +326,7 @@ namespace SytyRouting
         public static List<byte> MaskToList(byte transportModes)
         {
             List<byte> result = new List<byte>(0);
-            foreach(var transportModeMask in TransportModeMasks)
+            foreach(var transportModeMask in Masks)
             {
                 if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
@@ -342,7 +342,7 @@ namespace SytyRouting
             byte result = 0;
             for(int i = 0; i < transportModes.Length; i++)
             {
-                foreach(var transportModeMask in TransportModeMasks)
+                foreach(var transportModeMask in Masks)
                 {
                     if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
                     {
@@ -359,7 +359,7 @@ namespace SytyRouting
             List<string> listResult = new List<string>(0);
             for(int i = 0; i < transportModes.Length; i++)
             {
-                foreach(var transportModeMask in TransportModeMasks)
+                foreach(var transportModeMask in Masks)
                 {
                     if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
                     {
@@ -391,7 +391,7 @@ namespace SytyRouting
                 {
                     if(transportModesSequence[i].Equals(TransportModeNames[j]))
                     {
-                        masksList.Add(TransportModeMasks[j]);
+                        masksList.Add(Masks[j]);
                         nameFound=true;
                         break;
                     }
@@ -406,7 +406,7 @@ namespace SytyRouting
         public static byte FirstTransportModeFromMask(byte transportModes)
         {
             byte result = 0;
-            foreach(var transportModeMask in TransportModeMasks)
+            foreach(var transportModeMask in Masks)
             {
                 if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
@@ -434,7 +434,7 @@ namespace SytyRouting
         public static string TransportModesToString(byte transportModes)
         {
             string result = "";
-            foreach(var tmm in TransportModeMasks)
+            foreach(var tmm in Masks)
             {
                 if(tmm.Value != 0 && (transportModes & tmm.Value) == tmm.Value)
                 {
@@ -452,11 +452,11 @@ namespace SytyRouting
             // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
-                TransportModeMasks.Add(0,0);
+                Masks.Add(0,0);
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
                     var twoToTheNth = (byte)Math.Pow(2,n);
-                    TransportModeMasks.Add(n+1,twoToTheNth);
+                    Masks.Add(n+1,twoToTheNth);
                 }
             }
             catch (Exception e)
@@ -464,10 +464,10 @@ namespace SytyRouting
                 logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
             }
 
-            TransportModes.DefaultMode = TransportModeMasks[1];
+            TransportModes.DefaultMode = Masks[1];
             logger.Info("Default Transport Mode: {0}", MaskToString(TransportModes.DefaultMode));
 
-            return TransportModeMasks;
+            return Masks;
         }
 
         private static void SetTransportModeNames(string[] transportModes)
@@ -524,7 +524,7 @@ namespace SytyRouting
         
         public static async Task CreateMappingTagIdToTransportModes()
         {
-            OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(TransportModeMasks);
+            OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(Masks);
         }
 
         private static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)
@@ -602,7 +602,7 @@ namespace SytyRouting
         {
             Dictionary<byte,double> transportModeMaskToRoutingPenalties = new Dictionary<byte,double>();
             
-            foreach(var mask in TransportModeMasks)
+            foreach(var mask in Masks)
             {
                 if(mask.Key!=0)
                 {
@@ -625,7 +625,7 @@ namespace SytyRouting
         {
             Dictionary<byte,double> transportModeMasksToSpeeds = new Dictionary<byte,double>();
             
-            foreach(var mask in TransportModeMasks)
+            foreach(var mask in Masks)
             {
                 if(mask.Key!=0)
                 {
