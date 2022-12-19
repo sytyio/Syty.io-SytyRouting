@@ -251,9 +251,9 @@ namespace SytyRouting
                 {
                     double speed = 0;
                     double transportModeSpeed = -1;
-                    if(TransportModes.TransportModeMasksToSpeeds.ContainsKey(transportMode))
+                    if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
                     {
-                        transportModeSpeed = TransportModes.TransportModeMasksToSpeeds[transportMode];
+                        transportModeSpeed = TransportModes.MasksToSpeeds[transportMode];
                         if(edge.MaxSpeedMPerS>transportModeSpeed && transportModeSpeed>0)
                         {
                             speed = transportModeSpeed;

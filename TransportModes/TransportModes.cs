@@ -15,7 +15,7 @@ namespace SytyRouting
         public static byte PublicModes; // mask of the public modes.
         public static Dictionary<int,double> RouteTypesToPenalties = new Dictionary<int,double>();
         public static Dictionary<byte,double> ToRoutingPenalties = new Dictionary<byte,double>();
-        public static Dictionary<byte,double> TransportModeMasksToSpeeds = new Dictionary<byte,double>();
+        public static Dictionary<byte,double> MasksToSpeeds = new Dictionary<byte,double>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
         private static string[] TransportModeNames = new string[1] {NoTransportMode};
 
@@ -641,7 +641,7 @@ namespace SytyRouting
                 }
             }
 
-            TransportModeMasksToSpeeds = transportModeMasksToSpeeds;
+            TransportModes.MasksToSpeeds = transportModeMasksToSpeeds;
         }
 
         public static int GetTransportModeNameIndex(string transportModeName)
