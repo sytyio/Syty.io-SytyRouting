@@ -17,7 +17,7 @@ namespace SytyRouting
         public static Dictionary<byte,double> ToRoutingPenalties = new Dictionary<byte,double>();
         public static Dictionary<byte,double> MasksToSpeeds = new Dictionary<byte,double>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
-        private static string[] TransportModeNames = new string[1] {NoTransportMode};
+        private static string[] Names = new string[1] {NoTransportMode};
 
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -311,7 +311,7 @@ namespace SytyRouting
             {
                 if(transportModeMask.Value != 0 && (transportModes & transportModeMask.Value) == transportModeMask.Value)
                 {
-                    result += TransportModeNames[transportModeMask.Key] + " ";
+                    result += Names[transportModeMask.Key] + " ";
                 }
             }
                 
@@ -363,7 +363,7 @@ namespace SytyRouting
                 {
                     if(transportModeMask.Value != 0 && (transportModes[i] & transportModeMask.Value) == transportModeMask.Value)
                     {
-                        listResult.Add(TransportModeNames[transportModeMask.Key]);
+                        listResult.Add(Names[transportModeMask.Key]);
                     }
                 }
             }
@@ -387,9 +387,9 @@ namespace SytyRouting
             for(int i = 0; i < transportModesSequence.Length; i++)
             {
                 bool nameFound=false;
-                for(int j = 0; j < TransportModeNames.Length; j++)
+                for(int j = 0; j < Names.Length; j++)
                 {
-                    if(transportModesSequence[i].Equals(TransportModeNames[j]))
+                    if(transportModesSequence[i].Equals(Names[j]))
                     {
                         masksList.Add(Masks[j]);
                         nameFound=true;
@@ -474,10 +474,10 @@ namespace SytyRouting
         {
             try
             {
-                Array.Resize(ref TransportModeNames, transportModes.Length);
+                Array.Resize(ref Names, transportModes.Length);
                 for(int i = 0; i < transportModes.Length; i++)
                 {
-                    TransportModeNames[i] = transportModes[i];
+                    Names[i] = transportModes[i];
                 }
             }
             catch (Exception e)
@@ -646,9 +646,9 @@ namespace SytyRouting
 
         public static int GetTransportModeNameIndex(string transportModeName)
         {
-            for(int i = 1; i < TransportModeNames.Length; i++)
+            for(int i = 1; i < Names.Length; i++)
             {
-                if(TransportModeNames[i].Equals(transportModeName))
+                if(Names[i].Equals(transportModeName))
                 {
                     return i;
                 }
