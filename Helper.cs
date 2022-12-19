@@ -288,9 +288,9 @@ namespace SytyRouting
                 cost = -1*cost;                
             }
 
-            if(TransportModes.TagIdRouteTypeToRoutingPenalties.ContainsKey(edge.TagIdRouteType))
+            if(TransportModes.RouteTypesToPenalties.ContainsKey(edge.TagIdRouteType))
             {
-                var routingPenalty = TransportModes.TagIdRouteTypeToRoutingPenalties[edge.TagIdRouteType];
+                var routingPenalty = TransportModes.RouteTypesToPenalties[edge.TagIdRouteType];
                 cost = cost * routingPenalty;
             }
 
