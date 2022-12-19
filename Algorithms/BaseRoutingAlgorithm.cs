@@ -10,7 +10,7 @@ namespace SytyRouting.Algorithms
         [NotNull]
         protected Graph? _graph = null!;
         protected List<Node> route = new List<Node>();
-        protected Dictionary<int, byte> transportModeTransitions = new Dictionary<int, byte>(1);
+        protected Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(1);
         protected double routeCost;
 
         //DEBUG:
@@ -136,9 +136,9 @@ namespace SytyRouting.Algorithms
             return routeCost;
         }
 
-        public Dictionary<int,byte> GetTransportModeTransitions()
+        public Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions()
         {
-            Dictionary<int,byte> tmTransitions =  new Dictionary<int, byte>(transportModeTransitions.Count);
+            Dictionary<int,Tuple<byte,int>> tmTransitions =  new Dictionary<int,Tuple<byte,int>>(transportModeTransitions.Count);
             var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
             var tmTransitionsValues = transportModeTransitions.Values.ToArray();
 

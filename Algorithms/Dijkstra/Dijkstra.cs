@@ -22,7 +22,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             if(transportModesSequence.Length>0)
             {
                 byte transportMode = transportModesSequence[0];
-                AddStep(null, originNode, 0, 0, transportMode);
+                AddStep(null, originNode, 0, 0, transportMode, -1);
             }
             else
             {
@@ -31,7 +31,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                     var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
                     foreach(var transportMode in availableTransportModes)
                     {
-                        AddStep(null, originNode, 0, -1, transportMode);
+                        AddStep(null, originNode, 0, -1, transportMode, -1);
                     }
                 }
             }
@@ -72,13 +72,13 @@ namespace SytyRouting.Algorithms.Dijkstra
                             if((edgeTransportModes & transportMode) == transportMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode);
+                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode, outwardEdge.TagIdRouteType);
                             }
 
                             if((transportMode & TransportModes.PublicModes) != 0 && (edgeTransportModes & TransportModes.DefaultMode) == TransportModes.DefaultMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, TransportModes.DefaultMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode);
+                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode, outwardEdge.TagIdRouteType);
                             }
 
                             if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
@@ -88,7 +88,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                                 {
                                     var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
-                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode);
+                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
                                 }
                             }
                         }
@@ -104,7 +104,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                     if((edgeTransportModes & transportMode) == transportMode)
                                     {
                                         var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode);
+                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode, outwardEdge.TagIdRouteType);
                                     }
                                 }
                             }                    
@@ -119,12 +119,12 @@ namespace SytyRouting.Algorithms.Dijkstra
             return route;
         }
 
-        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportSequenceIndex, byte transportMode)
+        private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportSequenceIndex, byte transportMode, int outboundRouteType)
         {
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode, OutboundRouteType = outboundRouteType };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -146,12 +146,14 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                        transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                     }
                 }
                 else
                 {
-                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, currentStep.TransportMode);
+                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                    transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                 }
                 ReconstructRoute(currentStep.PreviousStep);
                 route.Add(currentStep.ActiveNode!);

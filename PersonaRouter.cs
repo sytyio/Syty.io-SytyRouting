@@ -435,7 +435,7 @@ namespace SytyRouting
             }
         }
 
-        public void TraceRouteDetails(LineString route, Dictionary<int, byte>? transportModeTransitions)
+        public void TraceRouteDetails(LineString route, Dictionary<int, Tuple<byte,int>>? transportModeTransitions)
         {
             var routeCoordinates = route.Coordinates;
 
@@ -447,7 +447,7 @@ namespace SytyRouting
                 try{
                     foreach(var transportModeTransition in transportModeTransitions)
                     {
-                        logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value));
+                        logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value.Item1));
                     }
 
                     logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
@@ -475,7 +475,7 @@ namespace SytyRouting
 
                         if(transportModeTransitions.ContainsKey(node.Idx))
                         {
-                            currentTransportMode = transportModeTransitions[node.Idx];
+                            currentTransportMode = transportModeTransitions[node.Idx].Item1;
                         }
 
                         if(previousTransportMode!=currentTransportMode)
@@ -507,7 +507,7 @@ namespace SytyRouting
                     coordinateXString   = String.Format(" {0,16}", routeCoordinates[route.Count -1].X);
                     coordinateYString   = String.Format(" {0,16}", routeCoordinates[route.Count -1].Y);
                     if(transportModeTransitions.ContainsKey(node.Idx))
-                        transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx]));
+                        transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(transportModeTransitions[node.Idx].Item1));
                     else
                         transportModeString = String.Format(" {0,14}","...");
                     nodeIdxString       = String.Format(" {0,14}", node.Idx);
