@@ -294,9 +294,9 @@ namespace SytyRouting
                 cost = cost * routingPenalty;
             }
 
-            if(TransportModes.ToRoutingPenalties.ContainsKey(transportMode))
+            if(TransportModes.MasksToRoutingPenalties.ContainsKey(transportMode))
             {
-                var routingPenalty = TransportModes.ToRoutingPenalties[transportMode];
+                var routingPenalty = TransportModes.MasksToRoutingPenalties[transportMode];
                 cost = cost * routingPenalty;
             }
 

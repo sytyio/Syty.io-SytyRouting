@@ -55,7 +55,7 @@ namespace SytyRouting
             {
                 Point home = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].HomeLongitude, routingProbes[i].HomeLatitude));
                 Point work = geometryFactory.CreatePoint(new Coordinate(routingProbes[i].WorkLongitude, routingProbes[i].WorkLatitude));
-                byte[] requestedTransportModeSequence = TransportModes.NameSequenceToMasksArray(routingProbes[i].TransportSequence);
+                byte[] requestedTransportModeSequence = TransportModes.NamesToArray(routingProbes[i].TransportSequence);
 
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work, RequestedTransportSequence = requestedTransportModeSequence});
             }

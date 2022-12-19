@@ -491,8 +491,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             // The edges from stop to nearest node and back
             //Temporary : use of Bicyclette type for the walk between de stop and the nearest point on the linestring
-            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
-            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.GetTransportModeMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.GetTransportModeMask("Foot")] };
+            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.NameToMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")] };
+            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.NameToMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")] };
             // Add the edges to the nodes
             if (cpt != 0)
             {

@@ -91,7 +91,7 @@ namespace SytyRouting
             // string[] requestedSequence = new string[] {"Foot", "Bicycle", "Car", "Foot"};
 
             // byte[] transportModesSequence = TransportModes.CreateTransportModeSequence(requestedSequence);
-            byte[] transportModesSequence = TransportModes.NameSequenceToMasksArray(requestedSequence);
+            byte[] transportModesSequence = TransportModes.NamesToArray(requestedSequence);
             // byte[] transportModesSequence = TransportModes.MergePublicTransportSequences(TransportModes.NameSequenceToMasksArray(requestedSequence));
             // byte[] transportModesSequence = new byte[2] {1, TransportModes.ArrayToMask(TransportModes.NameSequenceToMasksArray(requestedSequence))};
 

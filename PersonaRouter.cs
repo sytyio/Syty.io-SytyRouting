@@ -131,7 +131,7 @@ namespace SytyRouting
                         else
                             requestedTransportSequence = new string[] {""};
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NameSequenceToMasksArray(requestedTransportSequence)};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
                         
                         personas.Add(persona);
                         

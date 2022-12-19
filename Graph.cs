@@ -102,12 +102,12 @@ namespace SytyRouting
 
                     if (Configuration.VerifyTransportListFromGraphFile(transportModes))
                     {
-                        transportModeMasks = TransportModes.CreateTransportModeMasks(transportModes);
-                        TransportModes.SetPublicTransportModes(publicTransportModes);
-                        TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+                        transportModeMasks = TransportModes.CreateMasks(transportModes);
+                        TransportModes.SetPublicModes(publicTransportModes);
+                        TransportModes.LoadRoutingRules(Configuration.TransportModeRoutingRules);
                         TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
-                        TransportModes.CreateMappingTransportModeMaskToRoutingPenalty();
-                        TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
+                        TransportModes.CreateMappingMaskToRoutingPenalty();
+                        TransportModes.CreateMappingMasksToMaxSpeeds();
                     }
                     else
                     {
@@ -157,13 +157,13 @@ namespace SytyRouting
         }
 
         private async Task InitialiseMaskModes(){
-            transportModeMasks = TransportModes.CreateTransportModeMasks(Configuration.TransportModeNames.Values.ToArray());
+            transportModeMasks = TransportModes.CreateMasks(Configuration.TransportModeNames.Values.ToArray());
             await TransportModes.CreateMappingTagIdToTransportModes();
-            TransportModes.SetPublicTransportModes(Configuration.PublicTransportModes);
-            TransportModes.LoadTransportModeRoutingRules(Configuration.TransportModeRoutingRules);
+            TransportModes.SetPublicModes(Configuration.PublicTransportModes);
+            TransportModes.LoadRoutingRules(Configuration.TransportModeRoutingRules);
             TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
-            TransportModes.CreateMappingTransportModeMaskToRoutingPenalty();
-            TransportModes.CreateMappingTransportModeMasksToMaxSpeeds();
+            TransportModes.CreateMappingMaskToRoutingPenalty();
+            TransportModes.CreateMappingMasksToMaxSpeeds();
         }
 
         public async Task GetDbData(){

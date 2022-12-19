@@ -116,7 +116,7 @@ namespace SytyRouting
                     var configAllowedTransportModes=Configuration.GtfsTypeToTransportModes[i].AllowedTransportModes;
                     foreach(var transportName in configAllowedTransportModes)
                 {
-                    var key = TransportModes.GetTransportModeNameIndex(transportName);
+                    var key = TransportModes.NameToIndex(transportName);
                     if(transportModeMasks.ContainsKey(key))
                     {
                         mask |= transportModeMasks[key];
