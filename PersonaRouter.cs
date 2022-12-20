@@ -461,7 +461,7 @@ namespace SytyRouting
                     string timeStampString     = String.Format(" {0,14}","Time stamp");
                     string coordinateXString   = String.Format(" {0,16}","Coordinate X");
                     string coordinateYString   = String.Format(" {0,16}","Coordinate Y");
-                    string transportModeString = String.Format(" {0,14}","Transport Mode");
+                    string transportModeString = String.Format(" {0,16}","Transport Mode");
                     string routeTypeString     = String.Format(" {0,14}","Route Type");
                     string routeTagString      = String.Format(" {0,30}","Route Tag (Value : Key)");
                     string routeTransportModesString      = String.Format(" {0,30}","Route Allowed Transport Modes");
@@ -484,7 +484,7 @@ namespace SytyRouting
                         if(previousTransportMode!=currentTransportMode)
                         {
                             previousTransportMode = currentTransportMode;    
-                            transportModeString = String.Format(" {0,14}",TransportModes.MaskToString(currentTransportMode));
+                            transportModeString = String.Format(" {0,16}",TransportModes.MaskToString(currentTransportMode));
                             var routeType = transportModeTransitions[node.Idx].Item2;
                             routeTypeString     = String.Format(" {0,14}",routeType);
                             if(TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
@@ -505,7 +505,7 @@ namespace SytyRouting
                         else
                         {
                             if(transportModeRepetitions<1)
-                                logger.Debug(" {0,10}\t {1,16}\t {2,16}\t {3,14}\t {4,14}\t {5,14}\t {6,30}\t {7,30}\t {8,14}\t {9,14}","...","...","...","...","...","...","...","...","...","...");
+                                logger.Debug(" {0,10}\t {1,16}\t {2,16}\t {3,14}\t {4,16}\t {5,14}\t {6,30}\t {7,30}\t {8,14}\t {9,14}","...","...","...","...","...","...","...","...","...","...");
                             transportModeRepetitions++;
                         }
                     }
@@ -529,7 +529,7 @@ namespace SytyRouting
                     }
                     else
                     {
-                        transportModeString = String.Format(" {0,14}","...");
+                        transportModeString = String.Format(" {0,16}","...");
                         routeTypeString     = String.Format(" {0,14}","...");
                         routeTagString      = String.Format(" {0,30}","...");
                         routeTransportModesString      = String.Format(" {0,30}","...");
