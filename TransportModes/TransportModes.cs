@@ -16,7 +16,7 @@ namespace SytyRouting
         public static Dictionary<int,double> RouteTypesToPenalties = new Dictionary<int,double>();
         public static Dictionary<byte,double> MasksToRoutingPenalties = new Dictionary<byte,double>();
         public static Dictionary<byte,double> MasksToSpeeds = new Dictionary<byte,double>();
-        private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
+        private static Dictionary<int,byte> RouteTypeToTransportModes = new Dictionary<int,byte>();
         public static Dictionary<int,string> OSMTagIdToKeyValue = new Dictionary<int,string>();
         private static string[] Names = new string[1] {NoTransportMode};
 
@@ -421,9 +421,9 @@ namespace SytyRouting
 
         public static byte TagIdToTransportModes(int tagId)
         {
-            if (OSMTagIdToTransportModes.ContainsKey(tagId))
+            if (RouteTypeToTransportModes.ContainsKey(tagId))
             {
-                return OSMTagIdToTransportModes[tagId];
+                return RouteTypeToTransportModes[tagId];
             }
             else
             {
@@ -523,9 +523,32 @@ namespace SytyRouting
             return transportModeRoutingRoules;
         }
         
-        public static async Task CreateMappingTagIdToTransportModes()
+        public static async Task CreateMappingTagIdRouteTypeToTransportModes()
         {
-            OSMTagIdToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(Masks);
+            RouteTypeToTransportModes = await TransportModes.CreateMappingTagIdToTransportModes(Masks);
+            var routeTypeToTransportModes = CreateMappingRouteTypeToTransportModes();
+            foreach(var routeType in routeTypeToTransportModes)
+            {
+                if(!RouteTypeToTransportModes.ContainsKey(routeType.Key))
+                    RouteTypeToTransportModes.Add(routeType.Key,routeType.Value);
+                else
+                    logger.Debug("Route Type or OSM TagId {0} already exists in the Route Type - Transport Modes dictionary", routeType.Key);
+            }
+        }
+
+        private static Dictionary<int,byte> CreateMappingRouteTypeToTransportModes()
+        {
+            Dictionary<int,byte> routeTypeToTransportModes = new Dictionary<int,byte>();
+            foreach(var routeType in Configuration.GtfsTypeToTransportModes)
+            {
+                if(!routeTypeToTransportModes.ContainsKey(routeType.RouteType))
+                {
+                    routeTypeToTransportModes.Add(routeType.RouteType,TransportModes.NamesToMask(routeType.AllowedTransportModes));
+                }
+
+            }
+
+            return routeTypeToTransportModes;
         }
 
         private static async Task<Dictionary<int,byte>> CreateMappingTagIdToTransportModes(Dictionary<int,byte> transportModeMasks)

@@ -464,9 +464,10 @@ namespace SytyRouting
                     string transportModeString = String.Format(" {0,14}","Transport Mode");
                     string routeTypeString     = String.Format(" {0,14}","Route Type");
                     string routeTagString      = String.Format(" {0,30}","Route Tag (Value : Key)");
+                    string routeTransportModesString      = String.Format(" {0,30}","Route Allowed Transport Modes");
                     string nodeIdxString       = String.Format(" {0,14}","Node Idx");
-                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, nodeIdxString, nodeString);
-                    logger.Debug("====================================================================================================================================================================");
+                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, routeTransportModesString, nodeIdxString, nodeString);
+                    logger.Debug("===================================================================================================================================================================================================================");
                     
                     int transportModeRepetitions=0;
                     byte currentTransportMode = 0;
@@ -490,6 +491,7 @@ namespace SytyRouting
                                 routeTagString      = String.Format(" {0,30}",TransportModes.OSMTagIdToKeyValue[routeType]);
                             else
                                 routeTagString      = String.Format(" {0,30}","Not available");
+                            routeTransportModesString = String.Format(" {0,30}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
                             timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
                             vertexString      = String.Format(" {0,10}", n+1);
                             nodeString        = String.Format(" {0,14}", node.OsmID);
@@ -497,13 +499,13 @@ namespace SytyRouting
                             coordinateXString = String.Format(" {0,16}", routeCoordinates[n].X);
                             coordinateYString = String.Format(" {0,16}", routeCoordinates[n].Y);
                             nodeIdxString     = String.Format(" {0,14}", node.Idx);
-                            logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, nodeIdxString, nodeString);
+                            logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, routeTransportModesString, nodeIdxString, nodeString);
                             transportModeRepetitions=0;
                         }
                         else
                         {
                             if(transportModeRepetitions<1)
-                                logger.Debug(" {0,10}\t {1,16}\t {2,16}\t {3,14}\t {4,14}\t {5,14}\t {6,30}\t {7,14}\t {8,14}","...","...","...","...","...","...","...","...","...");
+                                logger.Debug(" {0,10}\t {1,16}\t {2,16}\t {3,14}\t {4,14}\t {5,14}\t {6,30}\t {7,30}\t {8,14}\t {9,14}","...","...","...","...","...","...","...","...","...","...");
                             transportModeRepetitions++;
                         }
                     }
@@ -523,15 +525,17 @@ namespace SytyRouting
                             routeTagString      = String.Format(" {0,30}",TransportModes.OSMTagIdToKeyValue[routeType]);
                         else
                             routeTagString      = String.Format(" {0,30}","Not available");
+                        routeTransportModesString = String.Format(" {0,30}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
                     }
                     else
                     {
                         transportModeString = String.Format(" {0,14}","...");
                         routeTypeString     = String.Format(" {0,14}","...");
                         routeTagString      = String.Format(" {0,30}","...");
+                        routeTransportModesString      = String.Format(" {0,30}","...");
                     }
                     nodeIdxString       = String.Format(" {0,14}", node.Idx);
-                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, nodeIdxString, nodeString);
+                    logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexString, coordinateXString, coordinateYString, timeStampString, transportModeString, routeTypeString, routeTagString, routeTransportModesString, nodeIdxString, nodeString);
                 }
                 catch (Exception e)
                 {

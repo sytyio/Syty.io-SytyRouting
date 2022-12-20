@@ -104,6 +104,7 @@ namespace SytyRouting
                     {
                         transportModeMasks = TransportModes.CreateMasks(transportModes);
                         TransportModes.SetPublicModes(publicTransportModes);
+                        await TransportModes.CreateMappingTagIdRouteTypeToTransportModes();
                         TransportModes.LoadRoutingRules(Configuration.TransportModeRoutingRules);
                         TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
                         TransportModes.CreateMappingMaskToRoutingPenalty();
@@ -159,7 +160,7 @@ namespace SytyRouting
 
         private async Task InitialiseMaskModes(){
             transportModeMasks = TransportModes.CreateMasks(Configuration.TransportModeNames.Values.ToArray());
-            await TransportModes.CreateMappingTagIdToTransportModes();
+            await TransportModes.CreateMappingTagIdRouteTypeToTransportModes();
             TransportModes.CreateMappingTagIdToKeyValue();
             TransportModes.SetPublicModes(Configuration.PublicTransportModes);
             TransportModes.LoadRoutingRules(Configuration.TransportModeRoutingRules);
