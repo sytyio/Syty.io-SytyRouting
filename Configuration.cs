@@ -45,7 +45,7 @@ namespace SytyRouting
         public static string PublicTransportGroup {get;}
         public static Dictionary<int,double> TransportModeSpeeds {get;}
         public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
-        public static OSMTagToTransportMode[] OSMTagsToTransportModes {get;} = null!;
+        public static OSMTags[] OSMTags {get;} = null!;
         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
         private static TransportSettings transportSettings {get; set;}
 
@@ -102,7 +102,7 @@ namespace SytyRouting
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
             TransportModeRoutingPenalties = ValidateTransportModeRoutingPenalties(transportSettings.TransportModes);
             TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
-            OSMTagsToTransportModes = transportSettings.OSMTagsToTransportModes;
+            OSMTags = transportSettings.OSMTags;
             GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;         
         }
 
@@ -265,11 +265,11 @@ namespace SytyRouting
             return validTransportModePenalties;
         }
 
-        private static async Task<OSMTagToTransportMode[]> ValidateOSMTagToTransportModes(OSMTagToTransportMode[] osmTagsToTransportModes)
+        private static async Task<OSMTags[]> ValidateOSMTagToTransportModes(OSMTags[] osmTagsToTransportModes)
         {
             int[] configTagIds = await Configuration.ValidateOSMTags();
 
-            OSMTagToTransportMode[] validOSMTagsToTransportModes = new OSMTagToTransportMode[configTagIds.Length];
+            OSMTags[] validOSMTagsToTransportModes = new OSMTags[configTagIds.Length];
 
             for(int i = 0; i < validOSMTagsToTransportModes.Length; i++)
             {
@@ -336,10 +336,10 @@ namespace SytyRouting
             }
             Array.Sort(osmTagIds, 0, osmTagIds.Length);
 
-            int[] configTagIds = new int[transportSettings.OSMTagsToTransportModes.Length];
-            for(int i = 0; i < transportSettings.OSMTagsToTransportModes.Length; i++)
+            int[] configTagIds = new int[transportSettings.OSMTags.Length];
+            for(int i = 0; i < transportSettings.OSMTags.Length; i++)
             {
-                configTagIds[i] = transportSettings.OSMTagsToTransportModes[i].TagId;
+                configTagIds[i] = transportSettings.OSMTags[i].Id;
             }
             Array.Sort(configTagIds, 0, configTagIds.Length);
 

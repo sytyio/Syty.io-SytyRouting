@@ -17,6 +17,7 @@ namespace SytyRouting
         public static Dictionary<byte,double> MasksToRoutingPenalties = new Dictionary<byte,double>();
         public static Dictionary<byte,double> MasksToSpeeds = new Dictionary<byte,double>();
         private static Dictionary<int,byte> OSMTagIdToTransportModes = new Dictionary<int,byte>();
+        public static Dictionary<int,string> OSMTagIdToKeyValue = new Dictionary<int,string>();
         private static string[] Names = new string[1] {NoTransportMode};
 
         
@@ -537,7 +538,7 @@ namespace SytyRouting
             {
                 byte mask = 0; // Default Transport Mode: 0
 
-                var configAllowedTransportModes = Configuration.ValidateAllowedTransportModes(Configuration.OSMTagsToTransportModes[i].AllowedTransportModes);
+                var configAllowedTransportModes = Configuration.ValidateAllowedTransportModes(Configuration.OSMTags[i].AllowedTransportModes);
                 foreach(var transportName in configAllowedTransportModes)
                 {
                     int transportModeIndex = NameToIndex(transportName);
@@ -563,6 +564,27 @@ namespace SytyRouting
             return tagIdToTransportModes;
         }
 
+        public static void CreateMappingTagIdToKeyValue()
+        {
+            OSMTags[] tags = Configuration.OSMTags;
+
+            Dictionary<int,string> tagIdToKeyValue = new Dictionary<int,string>();
+            
+            foreach(var tag in tags)
+            {
+                if (!tagIdToKeyValue.ContainsKey(tag.Id))
+                {
+                    tagIdToKeyValue.Add(tag.Id, tag.Key + " : " + tag.Value);
+                }
+                else
+                {
+                    logger.Debug("Unable to add key to OSM TagId - to - OSM TagKeyValue. Tag id: {0}", tag.Id);
+                }
+            }
+            
+            OSMTagIdToKeyValue = tagIdToKeyValue;
+        }
+
         public static void CreateMappingTagIdRouteTypeToRoutingPenalty()
         {
             Dictionary<int,double> tagIdRouteTypeToRoutingPenalities = new Dictionary<int,double>();
@@ -581,10 +603,10 @@ namespace SytyRouting
                 }
             }
 
-            for(var i = 0; i < Configuration.OSMTagsToTransportModes.Length; i++)
+            for(var i = 0; i < Configuration.OSMTags.Length; i++)
             {
-                var tagId =  Configuration.OSMTagsToTransportModes[i].TagId;
-                var penalty = Configuration.OSMTagsToTransportModes[i].RoutingPenalty;
+                var tagId =  Configuration.OSMTags[i].Id;
+                var penalty = Configuration.OSMTags[i].RoutingPenalty;
                 if(!tagIdRouteTypeToRoutingPenalities.ContainsKey(tagId))
                 {
                     tagIdRouteTypeToRoutingPenalities.Add(tagId,penalty);

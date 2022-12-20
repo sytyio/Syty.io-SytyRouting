@@ -45,7 +45,7 @@ namespace SytyRouting
         public TransportMode[] TransportModes {get; set;} = null!;
         public string PublicTransportGroup {get; set;} = null!;
         public GtfsTypeToTransportModes[] GtfsTypeToTransportModes {get;set;}=null!;
-        public OSMTagToTransportMode[] OSMTagsToTransportModes  {get; set;} = null!;
+        public OSMTags[] OSMTags  {get; set;} = null!;
         public TransportModeRoutingRule[] TransportModeRoutingRules  {get; set;} = null!;
     }
     
@@ -70,11 +70,11 @@ namespace SytyRouting
         public double RoutingPenalty {get; set;}
     }
 
-    public sealed class OSMTagToTransportMode
+    public sealed class OSMTags
     {
-        public string TagKey {get; set;} = null!;
-        public string TagValue {get; set;} = null!;
-        public int TagId {get; set;}
+        public string Key {get; set;} = null!;
+        public string Value {get; set;} = null!;
+        public int Id {get; set;}
         public string[] AllowedTransportModes {get; set;} = null!;
         public double RoutingPenalty {get; set;}
     }

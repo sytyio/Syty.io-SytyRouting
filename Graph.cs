@@ -108,6 +108,7 @@ namespace SytyRouting
                         TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();
                         TransportModes.CreateMappingMaskToRoutingPenalty();
                         TransportModes.CreateMappingMasksToMaxSpeeds();
+                        TransportModes.CreateMappingTagIdToKeyValue();
                     }
                     else
                     {
@@ -159,6 +160,7 @@ namespace SytyRouting
         private async Task InitialiseMaskModes(){
             transportModeMasks = TransportModes.CreateMasks(Configuration.TransportModeNames.Values.ToArray());
             await TransportModes.CreateMappingTagIdToTransportModes();
+            TransportModes.CreateMappingTagIdToKeyValue();
             TransportModes.SetPublicModes(Configuration.PublicTransportModes);
             TransportModes.LoadRoutingRules(Configuration.TransportModeRoutingRules);
             TransportModes.CreateMappingTagIdRouteTypeToRoutingPenalty();

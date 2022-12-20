@@ -86,5 +86,17 @@ namespace SytyRouting.Model
             
             return transportModes;
         }
+
+        public Edge GetOutboundEdge(byte transportMode)
+        {
+            Edge edge = null!;
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                if((outwardEdge.TransportModes & transportMode) != 0)
+                    edge = outwardEdge; 
+            }
+
+            return edge;
+        }
     }
 }
