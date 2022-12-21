@@ -97,12 +97,12 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingBenchmark_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingbenchmarkpt_pk;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingBenchmark_pk PRIMARY KEY (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingbenchmarkpt_pk PRIMARY KEY (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
