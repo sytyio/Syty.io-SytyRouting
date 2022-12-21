@@ -10,6 +10,8 @@ namespace SytyRouting
 
         public static byte DefaultMode;
 
+        public static int GtfsDefaultFoot = 13; // see on config file
+
         public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
         public static Dictionary<int,byte> Masks = new Dictionary<int,byte>();
         public static byte PublicModes; // mask of the public modes.

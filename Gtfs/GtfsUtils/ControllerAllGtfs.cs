@@ -83,8 +83,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         length=1;
                     }
                     
-                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = length, TransportModes = TransportModes.NameToMask("Foot"),MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")] };
-                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = length, TransportModes = TransportModes.NameToMask("Foot"),MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")] };
+                    var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = length, TransportModes = TransportModes.NameToMask("Foot"),MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")], TagIdRouteType=TransportModes.GtfsDefaultFoot };
+                    var newEdgeIn = new Edge { OsmID = long.MaxValue, SourceNode = nearest, TargetNode = node, LengthM = length, TransportModes = TransportModes.NameToMask("Foot"),MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")], TagIdRouteType=TransportModes.GtfsDefaultFoot };
                     if (node.ValidSource)
                     {
                         node.OutwardEdges.Add(newEdgOut);
