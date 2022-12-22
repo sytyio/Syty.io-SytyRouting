@@ -102,6 +102,10 @@ namespace SytyRouting
         {
 			double theta = lon1 - lon2;
 			double dist = Math.Sin(deg2rad(lat1)) * Math.Sin(deg2rad(lat2)) + Math.Cos(deg2rad(lat1)) * Math.Cos(deg2rad(lat2)) * Math.Cos(deg2rad(theta));
+            if(dist>1.0)
+            {
+                dist = 1.0;
+            }
 			dist = Math.Acos(dist);
 			dist = rad2deg(dist);
 			dist = dist * 110574.2727;
