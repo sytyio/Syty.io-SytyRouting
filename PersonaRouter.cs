@@ -38,7 +38,7 @@ namespace SytyRouting
             _graph = graph;
         }
 
-        public async Task StartRouting<T>(byte[] transportModes) where T: IRoutingAlgorithm, new()
+        public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -69,7 +69,7 @@ namespace SytyRouting
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t, transportModes));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -157,7 +157,7 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex, byte[] requestedTransportModes) where T: IRoutingAlgorithm, new()
+        private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -173,7 +173,7 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
-                        requestedTransportModes = persona.RequestedTransportSequence;
+                        var requestedTransportModes = persona.RequestedTransportSequence;
 
                         var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
 
