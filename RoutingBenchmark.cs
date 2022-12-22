@@ -92,17 +92,22 @@ namespace SytyRouting
             var routingBenchmarkTableName = Configuration.RoutingBenchmarkTableName;
             var additionalProbes = Configuration.AdditionalRoutingProbes;
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";", connection))
+            await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routingBenchmarkTableName + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingBenchmark_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE " + routingBenchmarkTableName + " AS SELECT id, home_location, work_location FROM " + personaTableName + " WHERE id > " + routingProbes.Length + " AND ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingBenchmark_pk PRIMARY KEY (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingbenchmark_pk;", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingbenchmark_pk PRIMARY KEY (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -141,7 +146,39 @@ namespace SytyRouting
                     uploadFails++;
                 }
             }
+
+            int[] additionalProbesIds = new int[additionalProbes];
+            var queryString = "SELECT id FROM " + routingBenchmarkTableName + " WHERE id > " + routingProbes.Length + ";";
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                int i = 0;
+                while (await reader.ReadAsync() && i < additionalProbes)
+                {
+                    additionalProbesIds[i++] = Convert.ToInt32(reader.GetValue(0));
+                }
+            }
    
+            for(int i = 0; i < additionalProbes; i++)
+            {
+                try
+                {
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTableName + " (id, transport_sequence) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET transport_sequence = $2", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = additionalProbesIds[i] },
+                            new() { Value = Configuration.DefaultBenchmarkSequence }
+                        }
+                    };
+                    await cmd_insert.ExecuteNonQueryAsync();
+                }
+                catch
+                {
+                    logger.Debug(" ==>> Unable to upload record to database. Persona Id {0}", additionalProbesIds[i]);
+                    uploadFails++;
+                }
+            }
             
             await connection.CloseAsync();
 
