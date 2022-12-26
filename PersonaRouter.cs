@@ -330,12 +330,38 @@ namespace SytyRouting
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
+
+                    if(persona.Route is not null)
+                    {
+                        var routeTotalMilliseconds = ConvertXYMRouteToXYTotalMillisecodsRoute(persona.Route);
+
+                        await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, computed_route_total_milliseconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_total_milliseconds = $2", connection)
+                        {
+                            Parameters =
+                            {
+                                new() { Value = persona.Id },
+                                new() { Value = routeTotalMilliseconds },
+                            }
+                        };
+                    
+                        await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
+                    }
                 }
                 catch
                 {
                     logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
                     uploadFails++;
                 }
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_2d = st_force2d(computed_route);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_temporal_point_1 = computed_route::tgeompoint;", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
             }
    
             await connection.CloseAsync();
@@ -344,6 +370,35 @@ namespace SytyRouting
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+        }
+
+        private LineString ConvertXYMRouteToXYTotalMillisecodsRoute(LineString route)
+        {
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
+
+            if(route.Count <= 1)
+            {
+                return new LineString(null, geometryFactory);
+            }
+
+            var newRoute = route.Copy();
+            var newRouteCoordinates = newRoute.Coordinates;
+            var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
+
+            for(var i = 0; i < newRouteCoordinates.Length; i++)
+            {   
+                mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
+            }
+
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
+            for(var i = 0; i < coordinateSequence.Count; i++)
+            {
+                coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds);
+            }
+            coordinateSequence.ReleaseCoordinateArray();
+
+            return new LineString(coordinateSequence, geometryFactory);
         }
 
         public void TracePersonaDetails(Persona persona)
