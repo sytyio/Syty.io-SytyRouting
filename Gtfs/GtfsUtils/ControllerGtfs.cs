@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            await DownloadGtfs();
+            // await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -156,9 +156,22 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             if (CtrlCsv.RecordsAgency.Count == 0)
             {
-                return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), null));
+                return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, GtfsExtendedTypeToBasicType(x.Type), new Dictionary<string, TripGtfs>(), null));
             }
-            return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, x.Type, new Dictionary<string, TripGtfs>(), GetAgency(x.AgencyId)));
+            return CtrlCsv.RecordsRoute.ToDictionary(x => x.Id, x => new RouteGtfs(x.Id, x.LongName, GtfsExtendedTypeToBasicType(x.Type), new Dictionary<string, TripGtfs>(), GetAgency(x.AgencyId)));
+        }
+
+        private int GtfsExtendedTypeToBasicType(int type){
+            switch(type){
+                case int n when (n<=12):
+                return type;
+                case int n when (n==700):
+                return 3;
+                case int n when (n>=100&&n<=103):
+                return 2;
+                default:
+                    throw new ArgumentException(String.Format("Type not implemented for type = {0} see here https://developers.google.com/transit/gtfs/reference/exten ",type));
+            }
         }
 
         private AgencyGtfs? GetAgency(string id)
