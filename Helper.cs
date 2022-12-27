@@ -70,7 +70,6 @@ namespace SytyRouting
 
         public static string FormatElapsedTime(TimeSpan timeSpan)
         {
-            // Format: [-][d.]hh:mm:ss[.fffffff]
             string elapsedTime = String.Format("{0:0}.{1:00}:{2:00}:{3:00}.{4:000}",
                 timeSpan.Days, timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds,
                 timeSpan.Milliseconds);

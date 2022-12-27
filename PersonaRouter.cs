@@ -333,14 +333,14 @@ namespace SytyRouting
 
                     if(persona.Route is not null)
                     {
-                        var routeTotalMilliseconds = ConvertXYMRouteToXYTotalMillisecodsRoute(persona.Route);
+                        var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
 
-                        await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, computed_route_total_milliseconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_total_milliseconds = $2", connection)
+                        await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
                         {
                             Parameters =
                             {
                                 new() { Value = persona.Id },
-                                new() { Value = routeTotalMilliseconds },
+                                new() { Value = routeMSeconds },
                             }
                         };
                     
@@ -359,9 +359,26 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_temporal_point_1 = computed_route::tgeompoint;", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_temporal_point = computed_route_m_seconds::tgeompoint WHERE is_valid_route = true;", connection))
+            {
+                //try
+                //{
+                    await cmd.ExecuteNonQueryAsync();
+                //}
+                //catch(Exception e)
+                //{
+                //    logger.Debug("Unable to cast route to tgeompoint type: {0}", e.Message);
+                //}
             }
    
             await connection.CloseAsync();
@@ -372,7 +389,7 @@ namespace SytyRouting
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
         }
 
-        private LineString ConvertXYMRouteToXYTotalMillisecodsRoute(LineString route)
+        private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
@@ -394,7 +411,7 @@ namespace SytyRouting
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
             {
-                coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds);
+                coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
             }
             coordinateSequence.ReleaseCoordinateArray();
 
