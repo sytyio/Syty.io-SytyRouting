@@ -83,6 +83,34 @@ namespace SytyRouting
             // osm.org	
             // http://www.openstreetmap.org/?&box=yes& ...
 
+
+            // Ref.: MobilityDB 1.0 User’s Manual, p.45
+            // A common way to store temporal points in PostGIS is to represent them as geometries of type LINESTRING M and abuse the
+            // M dimension to encode timestamps as seconds since 1970-01-01 00:00:00. These time-enhanced geometries, called trajectories,
+            // can be validated with the function ST_IsValidTrajectory to verify that the M value is growing from each vertex to
+            // the next. Trajectories can be manipulated with the functions ST_ClosestPointOfApproach, ST_DistanceCPA, and
+            // ST_CPAWithin. Temporal point values can be converted to/from PostGIS trajectories
+
+            // Cast a PostGIS trajectory to a temporal point:
+            // geometry::tgeompoint
+            // geography::tgeogpoint
+            // SELECT asText(geometry 'LINESTRING M (0 0 978307200,0 1 978393600,
+            // 1 1 978480000)'::tgeompoint);
+            // -- "[POINT(0 0)@2001-01-01, POINT(0 1)@2001-01-02, POINT(1 1)@2001-01-03]";
+            // SELECT asText(geometry 'GEOMETRYCOLLECTION M (LINESTRING M (0 0 978307200,1 1 978393600),
+            // POINT M (1 1 978480000),LINESTRING M (1 1 978652800,0 0 978739200))'::tgeompoint);
+            // -- "{[POINT(0 0)@2001-01-01, POINT(1 1)@2001-01-02], [POINT(1 1)@2001-01-03],
+            // [POINT(1 1)@2001-01-05, POINT(0 0)@2001-01-06]}"
+
+            // Ref.: PostGIS:
+            // https://postgis.net/docs/ST_IsValidTrajectory.html
+            // boolean ST_IsValidTrajectory(geometry line);
+            // Tests if a geometry encodes a valid trajectory. A valid trajectory is represented as a LINESTRING with measures (M values). The measure values must increase from each vertex to the next. 
+
+            // https://postgis.net/docs/ST_IsEmpty.html                       
+            // boolean ST_IsEmpty(geometry geomA);
+            // Returns true if this Geometry is an empty geometry. If true, then this Geometry represents an empty geometry collection, polygon, point etc.
+            
             
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
@@ -127,17 +155,17 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS computed_route_total_milliseconds GEOMETRY;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS computed_route_m_seconds GEOMETRY;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS computed_route_temporal_point_1 TGEOMPOINT;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS computed_route_temporal_point_2 TGEOMPOINT;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS computed_route_temporal_point TGEOMPOINT;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -199,24 +227,6 @@ namespace SytyRouting
                     uploadFails++;
                 }
             }
-
-            // Ref.: MobilityDB 1.0 User’s Manual, p.45
-            // A common way to store temporal points in PostGIS is to represent them as geometries of type LINESTRING M and abuse the
-            // M dimension to encode timestamps as seconds since 1970-01-01 00:00:00. These time-enhanced geometries, called trajectories,
-            // can be validated with the function ST_IsValidTrajectory to verify that the M value is growing from each vertex to
-            // the next. Trajectories can be manipulated with the functions ST_ClosestPointOfApproach, ST_DistanceCPA, and
-            // ST_CPAWithin. Temporal point values can be converted to/from PostGIS trajectories
-
-            // Cast a PostGIS trajectory to a temporal point:
-            // geometry::tgeompoint
-            // geography::tgeogpoint
-            // SELECT asText(geometry 'LINESTRING M (0 0 978307200,0 1 978393600,
-            // 1 1 978480000)'::tgeompoint);
-            // -- "[POINT(0 0)@2001-01-01, POINT(0 1)@2001-01-02, POINT(1 1)@2001-01-03]";
-            // SELECT asText(geometry 'GEOMETRYCOLLECTION M (LINESTRING M (0 0 978307200,1 1 978393600),
-            // POINT M (1 1 978480000),LINESTRING M (1 1 978652800,0 0 978739200))'::tgeompoint);
-            // -- "{[POINT(0 0)@2001-01-01, POINT(1 1)@2001-01-02], [POINT(1 1)@2001-01-03],
-            // [POINT(1 1)@2001-01-05, POINT(0 0)@2001-01-06]}"
             
             await connection.CloseAsync();
 
