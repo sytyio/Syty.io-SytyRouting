@@ -7,7 +7,7 @@ namespace SytyRouting.Algorithms.KDTree
     public class KDNode
     {
         [NotNull]
-        public Node? Item;
+        public Node? Item = null!;
         public KDNode? Low;
         public KDNode? High;
 

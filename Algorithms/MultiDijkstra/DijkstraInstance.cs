@@ -8,10 +8,10 @@ namespace SytyRouting.Algorithms.MultiDijkstra
     {
         public int Idx;
 
-        public int[] Origins;
-        public double[] TotalCosts;
+        public int[] Origins = null!;
+        public double[] TotalCosts = null!;
 
-        public int[] Depths;
+        public int[] Depths = null!;
     }
 
 }

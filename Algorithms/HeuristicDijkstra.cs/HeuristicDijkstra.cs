@@ -60,7 +60,7 @@ namespace SytyRouting.Algorithms.HeuristicDijkstra
 
         private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, Node destinationNode)
         {
-            if (bestScoreForNode[nextNode.Idx] > cumulatedCost)
+            if (nextNode is not null && bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
                 var distance = Helper.GetDistance(nextNode, destinationNode);
                 var heuristic = cumulatedCost +  distance * _graph.MinCostPerDistance;

@@ -59,7 +59,7 @@ namespace SytyRouting.Algorithms.ArrayDijkstra
 
         private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost)
         {
-            if (bestScoreForNode[nextNode.Idx] > cumulatedCost)
+            if (nextNode is not null && bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
                 var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
