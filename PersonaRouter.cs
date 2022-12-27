@@ -330,12 +330,55 @@ namespace SytyRouting
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
+
+                    if(persona.Route is not null)
+                    {
+                        var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
+
+                        await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
+                        {
+                            Parameters =
+                            {
+                                new() { Value = persona.Id },
+                                new() { Value = routeMSeconds },
+                            }
+                        };
+                    
+                        await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
+                    }
                 }
                 catch
                 {
                     logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
                     uploadFails++;
                 }
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_2d = st_force2d(computed_route);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET computed_route_temporal_point = computed_route_m_seconds::tgeompoint WHERE is_valid_route = true;", connection))
+            {
+                //try
+                //{
+                    await cmd.ExecuteNonQueryAsync();
+                //}
+                //catch(Exception e)
+                //{
+                //    logger.Debug("Unable to cast route to tgeompoint type: {0}", e.Message);
+                //}
             }
    
             await connection.CloseAsync();
@@ -344,6 +387,35 @@ namespace SytyRouting
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+        }
+
+        private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
+        {
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
+
+            if(route.Count <= 1)
+            {
+                return new LineString(null, geometryFactory);
+            }
+
+            var newRoute = route.Copy();
+            var newRouteCoordinates = newRoute.Coordinates;
+            var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
+
+            for(var i = 0; i < newRouteCoordinates.Length; i++)
+            {   
+                mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
+            }
+
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
+            for(var i = 0; i < coordinateSequence.Count; i++)
+            {
+                coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
+            }
+            coordinateSequence.ReleaseCoordinateArray();
+
+            return new LineString(coordinateSequence, geometryFactory);
         }
 
         public void TracePersonaDetails(Persona persona)
