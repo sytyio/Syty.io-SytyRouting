@@ -157,7 +157,8 @@ namespace SytyRouting.DataBase
 
         public IEnumerable<Node> GetInternalNodes()
         {
-            return null;
+            //return null;
+            throw new NotImplementedException();
         }
 
         public IEnumerable<Node> GetNodes()

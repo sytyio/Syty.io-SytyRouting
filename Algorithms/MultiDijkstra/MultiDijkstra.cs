@@ -7,8 +7,8 @@ namespace SytyRouting.Algorithms.MultiDijkstra
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private static DijkstraInstance[] history;
-        private static List<DijkstraInstance> historyL;
+        private static DijkstraInstance[] history = null!;
+        private static List<DijkstraInstance> historyL = null!;
 
         public override void Initialize(Graph graph)
         {
@@ -88,7 +88,7 @@ namespace SytyRouting.Algorithms.MultiDijkstra
 
                 while (queue.TryDequeue(out int currentIdx, out double priority))
                 {
-                    if(quickRoute && samePath[currentIdx] != -1 && currentIdx != destinationNode.Idx)
+                    if(closestInstances != null && quickRoute && samePath[currentIdx] != -1 && currentIdx != destinationNode.Idx)
                     {
                         Unroll(closestInstances[samePath[currentIdx]], instance, done, destinationNode.Idx, currentIdx);
                         done[currentIdx] = true;

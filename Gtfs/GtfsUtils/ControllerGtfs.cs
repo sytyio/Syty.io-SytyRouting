@@ -17,33 +17,33 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         [NotNull]
-        public ControllerCsv? CtrlCsv;
+        public ControllerCsv? CtrlCsv = null!;
         private string choice;
 
         private const double checkValue = 0.000000000000001;
 
         [NotNull]
-        private Dictionary<string, TripGtfs>? tripDicoForOneDay;
+        private Dictionary<string, TripGtfs>? tripDicoForOneDay = null!;
 
         private static int idGeneratorAgency = int.MaxValue - 10000;
 
         [NotNull]
-        private Dictionary<string, StopGtfs>? stopDico;
+        private Dictionary<string, StopGtfs>? stopDico = null!;
 
         [NotNull]
-        private Dictionary<string, RouteGtfs>? routeDico;
+        private Dictionary<string, RouteGtfs>? routeDico = null!;
         [NotNull]
-        private Dictionary<string, ShapeGtfs>? shapeDico;
+        private Dictionary<string, ShapeGtfs>? shapeDico = null!;
         [NotNull]
-        private Dictionary<string, CalendarGtfs>? calendarDico;
+        private Dictionary<string, CalendarGtfs>? calendarDico = null!;
         [NotNull]
-        private Dictionary<string, TripGtfs>? tripDico;
+        private Dictionary<string, TripGtfs>? tripDico = null!;
         [NotNull]
-        private Dictionary<string, AgencyGtfs>? agencyDico;
+        private Dictionary<string, AgencyGtfs>? agencyDico = null!;
         [NotNull]
-        private Dictionary<string, ScheduleGtfs>? scheduleDico;
+        private Dictionary<string, ScheduleGtfs>? scheduleDico = null!;
 
-        private Dictionary<string, Dictionary<DateTime, int>> calendarDateDico;
+        private Dictionary<string, Dictionary<DateTime, int>> calendarDateDico = null!;
         [NotNull]
         private Dictionary<string, Edge>? edgeDico = new Dictionary<string, Edge>();
 
@@ -57,7 +57,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public async Task InitController()
         {
-            // await DownloadGtfs();
+            await DownloadGtfs();
             CtrlCsv = new ControllerCsv(choice);
 
             var stopWatch = new Stopwatch();
@@ -186,7 +186,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         // Create the shapes
         private Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary()
         {
-            return CtrlCsv.RecordsShape.GroupBy(x => x.Id).ToDictionary(x => x.Key, x => new ShapeGtfs(x.Key, x.OrderBy(y => y.PtSequence).ToDictionary(y => y.PtSequence, y => (new Point(y.PtLon, y.PtLat))), CreateLineString(x.Key)));
+            return CtrlCsv.RecordsShape.GroupBy(x => x.Id).ToDictionary(x => x.Key, x => new ShapeGtfs(x.Key, x.OrderBy(y => y.PtSequence).ToDictionary(y => y.PtSequence, y => (new Point(y.PtLon, y.PtLat))), CreateLineString(x.Key)!));
         }
 
         private Dictionary<string, CalendarGtfs> CreateCalendarGtfsDictionary()
@@ -198,7 +198,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                                                                     Convert.ToBoolean(x.Thursday),
                                                                     Convert.ToBoolean(x.Friday),
                                                                     Convert.ToBoolean(x.Saturday),
-                                                                    Convert.ToBoolean(x.Sunday)}, null, DateTime.ParseExact(x.DateBegin.Trim(), "yyyyMMdd", CultureInfo.InvariantCulture), DateTime.ParseExact(x.DateEnd.Trim(), "yyyyMMdd", CultureInfo.InvariantCulture))); //here
+                                                                    Convert.ToBoolean(x.Sunday)}, null!, DateTime.ParseExact(x.DateBegin.Trim(), "yyyyMMdd", CultureInfo.InvariantCulture), DateTime.ParseExact(x.DateEnd.Trim(), "yyyyMMdd", CultureInfo.InvariantCulture))); //here
         }
 
         private Dictionary<string, Dictionary<DateTime, int>> CreateCalendarDateGtfsDictionary()
@@ -278,9 +278,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var tripDico = new Dictionary<string, TripGtfs>();
             if (shapeDico.Count == 0)
             {
-                return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, null, scheduleDico[x.Id], GetCalendar(x.ServiceId)));
+                return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, null, scheduleDico[x.Id], GetCalendar(x.ServiceId)!));
             }
-            return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, GetShape(x.ShapeId), scheduleDico[x.Id], GetCalendar(x.ServiceId)));
+            return CtrlCsv.RecordsTrip.ToDictionary(x => x.Id, x => new TripGtfs(routeDico[x.RouteId], x.Id, GetShape(x.ShapeId), scheduleDico[x.Id], GetCalendar(x.ServiceId)!));
         }
 
         private CalendarGtfs? GetCalendar(string serviceId)
@@ -294,7 +294,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private ShapeGtfs? GetShape(string? shapeId)
         {
-            if (shapeDico.ContainsKey(shapeId))
+            if (shapeId != null && shapeDico.ContainsKey(shapeId))
             {
                 return shapeDico[shapeId];
             }
@@ -383,7 +383,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             // logger.Info("duration neg  {0}",duration);
                             duration += 86400; // for specific cases like arrival current at 00:02:00 but departure previous at 23:57:00
                         }
-                        EdgeGtfs newEdge;
+
+                        EdgeGtfs newEdge = null!;
 
                         if (buffShape != null) // if there is a linestring, the edge will be created between the two nearest points of the stops on the linestring
                         {
@@ -404,12 +405,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             }
                             LineString lineString = buffShape.LineString;
 
-                            LineString splitLineString = buffShape.SplitLineString[i];
+                            LineString splitLineString = buffShape.SplitLineString![i];
                             var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
-                            newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
-                                    if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
+                            if(internalGeom != null)
+                                newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
+                            if(newEdge !=null && (newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0))
+                            {
                                 logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
-            }
+                            }
                             i++;
                         }
                         else // if there is no linestring

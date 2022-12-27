@@ -43,12 +43,12 @@ namespace SytyRouting
         // Transport parameters:
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
-        public static string PublicTransportGroup {get;}
+        public static string PublicTransportGroup {get;} = null!;
         public static Dictionary<int,double> TransportModeSpeeds {get;}
         public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
         public static OSMTags[] OSMTags {get;} = null!;
         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
-        private static TransportSettings transportSettings {get; set;}
+        private static TransportSettings transportSettings {get; set;} = null!;
 
         // Transport Modes routing rules:
         public static TransportModeRoutingRule[] TransportModeRoutingRules {get;} = null!;
@@ -68,37 +68,62 @@ namespace SytyRouting
             // Get values from the config representation given their key and their target type:
 
             Settings settings = config.GetRequiredSection("Settings").Get<Settings>();
-            GraphFileName = settings.GraphFileName;
+            if(settings != null)
+                GraphFileName = settings.GraphFileName;
+            else
+                throw new Exception("Config settings are not valid.");
 
             DbSettings dBConnectionSettings = config.GetRequiredSection("DbConnectionSettings").Get<DbSettings>();
-            ConnectionString = dBConnectionSettings.ConnectionString;
+            if(dBConnectionSettings != null)
+                ConnectionString = dBConnectionSettings.ConnectionString;
+            else
+                throw new Exception("Config dBConnectionSettings are not valid.");
             LocalConnectionString = dBConnectionSettings.LocalConnectionString;
             
             DbSettings dBTableSettings = config.GetRequiredSection("DbTableSettings").Get<DbSettings>();
-            ConfigurationTableName = dBTableSettings.ConfigurationTableName;
+            if(dBTableSettings != null)
+                ConfigurationTableName = dBTableSettings.ConfigurationTableName;
+            else
+                throw new Exception("Config dBTableSettings are not valid.");
+            
             PersonaTableName = dBTableSettings.PersonaTableName;
             ComputedRouteTableName = dBTableSettings.RouteTableName;
             EdgeTableName = dBTableSettings.EdgeTableName;
             RoutingBenchmarkTableName = dBTableSettings.RoutingBenchmarkTableName;
 
             DataGtfsSettings dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
-            CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+            if(dataGtfsSettings != null)
+                CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+            else
+                throw new Exception("Config dataGtfsSettings are not valid.");
             InitialiseDateGtfs(dataGtfsSettings.SelectedDate);
 
-
             RoutingSettings routingSettings = config.GetRequiredSection("RoutingSettings").Get<RoutingSettings>();
-            MonitorSleepMilliseconds = routingSettings.MonitorSleepMilliseconds;
+            if(routingSettings != null)
+                MonitorSleepMilliseconds = routingSettings.MonitorSleepMilliseconds;
+            else
+                throw new Exception("Config routingSettings are not valid.");
+            
             DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
             InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
             RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
 
             RoutingBenchmarkSettings routingBenchmarkSettings = config.GetRequiredSection("RoutingBenchmarkSettings").Get<RoutingBenchmarkSettings>();
-            RoutingProbes = routingBenchmarkSettings.RoutingProbes;
+            if(routingBenchmarkSettings != null)
+                RoutingProbes = routingBenchmarkSettings.RoutingProbes;
+            else
+                throw new Exception("Config routingBenchmarkSettings are not valid.");
+            
             AdditionalRoutingProbes = routingBenchmarkSettings.AdditionalProbes;
             DefaultBenchmarkSequence = routingBenchmarkSettings.DefaultBenchmarkSequence;
 
             transportSettings = config.GetRequiredSection("TransportSettings").Get<TransportSettings>();
-            PublicTransportGroup = transportSettings.PublicTransportGroup;
+            if(transportSettings != null)
+                PublicTransportGroup = transportSettings.PublicTransportGroup;
+            else
+                throw new Exception("Config transportSettings are not valid.");
+           
+            
             TransportModeNames = ValidateTransportModeNames(transportSettings.TransportModes);
             PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
             TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
