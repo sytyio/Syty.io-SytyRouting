@@ -451,10 +451,11 @@ namespace SytyRouting
 
         public void TraceRoute(Persona persona)
         {
-            if(persona.Route is not null)
+            if(persona.Route is not null && persona.TransportModeTransitions is not null)
             {
-                //TraceRoute(persona.Route);
-                TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
+                // TraceRoute(persona.Route);
+                // TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
+                TransportTransitionsToTTEXT(persona.Route, persona.TransportModeTransitions);
             }
         }
 
@@ -519,7 +520,7 @@ namespace SytyRouting
                 try{
                     foreach(var transportModeTransition in transportModeTransitions)
                     {
-                        logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value.Item1));
+                       logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transportModeTransition.Key, transportModeTransition.Value, TransportModes.MaskToString(transportModeTransition.Value.Item1));
                     }
 
                     logger.Debug("> Route ({0} vertices)", routeCoordinates.Length);
@@ -614,6 +615,79 @@ namespace SytyRouting
                     logger.Debug("Unable to display data:", e.Message);
                 }
             }
+        }
+
+        private void TransportTransitionsToTTEXT(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
+        {
+            var coordinates = route.Coordinates;
+            Node node;
+            string timeStamp;
+
+            string ttextS = "[";
+
+            foreach(var transition in transitions)
+            {
+                logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transition.Key, transition.Value, TransportModes.MaskToString(transition.Value.Item1));
+            }
+        
+            string timeStampS     = String.Format("{0,14}","Time stamp");
+            string transportModeS = String.Format("{0,18}","Transport Mode");
+            
+            logger.Debug("{0}\t{1}", timeStampS, transportModeS);
+            logger.Debug("=======================================");
+            
+            int transportModeRepetitions=0;
+            byte currentTransportMode = 0;
+            byte previousTransportMode = 0;
+            for(var n = 0; n < coordinates.Length; n++)
+            {
+                node = _graph.GetNodeByLongitudeLatitude(coordinates[n].X, coordinates[n].Y);
+
+                if(transitions.ContainsKey(node.Idx))
+                {
+                    currentTransportMode = transitions[node.Idx].Item1;
+                }
+
+                if(previousTransportMode!=currentTransportMode)
+                {
+                    previousTransportMode = currentTransportMode;    
+                    // transportModeS = String.Format("{0,18}",TransportModes.MaskToString(currentTransportMode));
+                    transportModeS = TransportModes.MaskToString(currentTransportMode);
+                    var routeType = transitions[node.Idx].Item2;
+                    if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                        transportModeS = TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType));
+                    
+                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                    timeStampS   = String.Format("{0,14}", timeStamp);
+                    
+                    logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
+                    transportModeRepetitions=0;
+
+                    ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
+                }
+                else
+                {
+                    if(transportModeRepetitions<1)
+                        logger.Debug("{0,14}\t{1,18}",":",":");
+                    transportModeRepetitions++;
+                } 
+            }
+            node = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
+            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
+            timeStampS     = String.Format("{0,14}", timeStamp);
+            if(transitions.ContainsKey(node.Idx))
+            {
+                var routeType = transitions[node.Idx].Item2;
+                if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                    transportModeS = String.Format("{0,18}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
+            }
+
+            ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
+            
+            ttextS += "]";
+
+            logger.Debug("{0}\t{1}", timeStampS, transportModeS);
+            logger.Debug("ttext string: {0}", ttextS);
         }
 
         public void TracePersonasRouteResult()

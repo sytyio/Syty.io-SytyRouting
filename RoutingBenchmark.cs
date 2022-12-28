@@ -170,6 +170,11 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS transport_transitions TTEXT;", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
             int uploadFails = 0;
 
             foreach(var brusseleir in realBrusselVloms)
