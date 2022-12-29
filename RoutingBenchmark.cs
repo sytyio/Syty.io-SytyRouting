@@ -170,6 +170,16 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
             await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS transport_transitions TTEXT;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();

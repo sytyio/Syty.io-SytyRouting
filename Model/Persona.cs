@@ -11,6 +11,7 @@ namespace SytyRouting.Model
         public LineString? Route;
         public byte[] RequestedTransportSequence = null!;
         public Dictionary<int, Tuple<byte,int>>? TransportModeTransitions;
+        public Tuple<string[],DateTime[]> TTextTransitions = null!;
         public bool SuccessfulRouteComputation;
     }
 }

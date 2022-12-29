@@ -33,6 +33,8 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
+        private static DateTime baseDateTime = DateTime.Parse("1970-01-01T00:00:00.0000000+01:00"); //Time Zone: Brussels +1
+
         public PersonaRouter(Graph graph)
         {
             _graph = graph;
@@ -181,7 +183,10 @@ namespace SytyRouting
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
                             persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
-                            persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();                                
+                            persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+
+                            persona.TTextTransitions = TransportTransitionsToTTEXT(persona.Route, persona.TransportModeTransitions);
+
                             persona.SuccessfulRouteComputation = true;
 
                             Interlocked.Increment(ref computedRoutes);
@@ -346,6 +351,26 @@ namespace SytyRouting
                     
                         await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
                     }
+
+                    //if(persona.TTextTransitions is not null)
+                    //{
+                        //var timeStampTZ = baseDateTime.Add(TimeSpan.Zero);
+                        
+                        var transportModes = persona.TTextTransitions.Item1;
+                        var timeStampsTZ = persona.TTextTransitions.Item2;
+                        
+                        await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTableName + " (id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                        {
+                            Parameters =
+                            {
+                                new() { Value = persona.Id },
+                                new() { Value = transportModes },
+                                new() { Value = timeStampsTZ },
+                            }
+                        };
+                    
+                        await cmd_insert_ttext.ExecuteNonQueryAsync();
+                    //}
                 }
                 catch
                 {
@@ -379,6 +404,11 @@ namespace SytyRouting
                 //{
                 //    logger.Debug("Unable to cast route to tgeompoint type: {0}", e.Message);
                 //}
+            }
+
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET transport_transitions = ttext_seq(ARRAY[ttext_inst(transport_modes, time_stamps)]); WHERE is_valid_route = true;", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
             }
    
             await connection.CloseAsync();
@@ -454,8 +484,8 @@ namespace SytyRouting
             if(persona.Route is not null && persona.TransportModeTransitions is not null)
             {
                 // TraceRoute(persona.Route);
-                // TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
-                TransportTransitionsToTTEXT(persona.Route, persona.TransportModeTransitions);
+                TraceRouteDetails(persona.Route, persona.TransportModeTransitions);
+                // TransportTransitionsToTTEXT(persona.Route, persona.TransportModeTransitions);
             }
         }
 
@@ -617,13 +647,17 @@ namespace SytyRouting
             }
         }
 
-        private void TransportTransitionsToTTEXT(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
+        private Tuple<string[],DateTime[]> TransportTransitionsToTTEXT(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
         {
             var coordinates = route.Coordinates;
             Node node;
-            string timeStamp;
+            if(transitions == null || transitions.Count <1)
+                return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+            
+            List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
+            List<string> transportModes = new List<string>(transitions.Count);
 
-            string ttextS = "[";
+            string ttextS = "";
 
             foreach(var transition in transitions)
             {
@@ -651,19 +685,22 @@ namespace SytyRouting
                 if(previousTransportMode!=currentTransportMode)
                 {
                     previousTransportMode = currentTransportMode;    
-                    // transportModeS = String.Format("{0,18}",TransportModes.MaskToString(currentTransportMode));
-                    transportModeS = TransportModes.MaskToString(currentTransportMode);
+                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
                     var routeType = transitions[node.Idx].Item2;
                     if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                        transportModeS = TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType));
+                        transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
                     
-                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
-                    timeStampS   = String.Format("{0,14}", timeStamp);
+
+                    timeStamps.Add(baseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
+                    transportModes.Add(transportModeS);
+
+
+                    timeStampS   = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
                     
                     logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
                     transportModeRepetitions=0;
 
-                    ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
+                    //ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
                 }
                 else
                 {
@@ -673,21 +710,30 @@ namespace SytyRouting
                 } 
             }
             node = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
-            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
-            timeStampS     = String.Format("{0,14}", timeStamp);
+            //timeStamp = Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
+
+
+            timeStamps.Add(baseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
+
+
+            timeStampS     = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
             if(transitions.ContainsKey(node.Idx))
             {
                 var routeType = transitions[node.Idx].Item2;
                 if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                    transportModeS = String.Format("{0,18}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
+                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
             }
+            transportModes.Add(transportModeS);
 
-            ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
-            
-            ttextS += "]";
+            //ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00";
+            //ttextS += "'" + "1970-01-01 " + timeStamp + "+00'::TIMESTAMPTZ";
+            //ttextS += "]";
 
-            logger.Debug("{0}\t{1}", timeStampS, transportModeS);
+            logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
             logger.Debug("ttext string: {0}", ttextS);
+
+            // return ttextS;
+            return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
 
         public void TracePersonasRouteResult()
