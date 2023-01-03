@@ -406,10 +406,10 @@ namespace SytyRouting
                 //}
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET transport_transitions = ttext_seq(ARRAY[ttext_inst(transport_modes, time_stamps)]); WHERE is_valid_route = true;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET transport_transitions = ttext_seq(ARRAY[ttext_inst(transport_modes, time_stamps)]); WHERE is_valid_route = true;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
    
             await connection.CloseAsync();
 
@@ -673,7 +673,7 @@ namespace SytyRouting
             int transportModeRepetitions=0;
             byte currentTransportMode = 0;
             byte previousTransportMode = 0;
-            for(var n = 0; n < coordinates.Length; n++)
+            for(var n = 0; n < coordinates.Length-1; n++)
             {
                 node = _graph.GetNodeByLongitudeLatitude(coordinates[n].X, coordinates[n].Y);
 
