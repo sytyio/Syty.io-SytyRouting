@@ -20,7 +20,7 @@ namespace SytyRouting
 
         private static string[] Names = new string[1] {NoTransportMode};
         private static Dictionary<int,byte> Masks = new Dictionary<int,byte>();
-        public static Dictionary<int,byte> RouteTypeToTransportModes = new Dictionary<int,byte>();
+        private static Dictionary<int,byte> RouteTypeToTransportModes = new Dictionary<int,byte>();
         
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
