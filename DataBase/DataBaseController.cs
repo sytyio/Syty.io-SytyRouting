@@ -16,11 +16,11 @@ namespace SytyRouting.DataBase
 
         public string ConnectionString;
 
-        public string EdgeTableName;
+        public string EdgeTable;
 
-        public DataBaseController(string connection, string edgeTableName){
+        public DataBaseController(string connection, string edgeTable){
                 ConnectionString = connection;
-                EdgeTableName=edgeTableName;
+                EdgeTable=edgeTable;
         }
 
         private async Task DBLoadAsync()
@@ -36,11 +36,11 @@ namespace SytyRouting.DataBase
             await connection.OpenAsync();
 
             // Get the total number of rows to estimate the Graph creation time
-            var totalDbRows = await Helper.DbTableRowCount(EdgeTableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(EdgeTable, logger);
 
             // Read all 'ways' rows and create the corresponding Nodes            
             //                             0       1       2     3             4        5   6   7   8   9          10          11        12        13                14                 15      16
-            var queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTableName + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
+            var queryString = "SELECT osm_id, source, target, cost, reverse_cost, one_way, x1, y1, x2, y2, source_osm, target_osm, length_m, the_geom, maxspeed_forward, maxspeed_backward, tag_id FROM " + Configuration.EdgeTable + " where length_m is not null"; // ORDER BY osm_id ASC LIMIT 10"; //  ORDER BY osm_id ASC LIMIT 10
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())

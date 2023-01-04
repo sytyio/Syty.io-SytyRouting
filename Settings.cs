@@ -9,11 +9,12 @@ namespace SytyRouting
     {
         public string ConnectionString { get; set; } = null!;
         public string LocalConnectionString { get; set; } = null!;
-        public string ConfigurationTableName {get; set;} = null!;
-        public string PersonaTableName {get; set;} = null!;
-        public string RouteTableName {get; set;} = null!;
-        public string EdgeTableName {get; set;} = null!;
-        public string RoutingBenchmarkTableName {get; set;} = null!;
+        public string ConfigurationTable {get; set;} = null!;
+        public string PersonaTable {get; set;} = null!;
+        public string RouteTable {get; set;} = null!;
+        public string EdgeTable {get; set;} = null!;
+        public string RoutingBenchmarkTable {get; set;} = null!;
+        public string RoutingBenchmarkTempTable {get; set;} = null!;
     }
 
     public sealed class DataGtfsSettings

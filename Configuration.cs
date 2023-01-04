@@ -16,11 +16,12 @@ namespace SytyRouting
         public static string LocalConnectionString {get;}
         
         // DB table settings:
-        public static string ConfigurationTableName {get;}
-        public static string PersonaTableName {get;}
-        public static string ComputedRouteTableName {get;}
-        public static string EdgeTableName {get;}
-        public static string RoutingBenchmarkTableName {get;}
+        public static string ConfigurationTable {get;}
+        public static string PersonaTable {get;}
+        public static string ComputedRouteTable {get;}
+        public static string EdgeTable {get;}
+        public static string RoutingBenchmarkTable {get;}
+        public static string RoutingBenchmarkTempTable {get;}
 
         // Gtfs settings : 
 
@@ -83,14 +84,15 @@ namespace SytyRouting
                 
                 DbSettings? dBTableSettings = config.GetRequiredSection("DbTableSettings").Get<DbSettings>();
                 if(dBTableSettings != null)
-                    ConfigurationTableName = dBTableSettings.ConfigurationTableName;
+                    ConfigurationTable = dBTableSettings.ConfigurationTable;
                 else
                     throw new Exception("Config dBTableSettings are not valid.");
                 
-                PersonaTableName = dBTableSettings.PersonaTableName;
-                ComputedRouteTableName = dBTableSettings.RouteTableName;
-                EdgeTableName = dBTableSettings.EdgeTableName;
-                RoutingBenchmarkTableName = dBTableSettings.RoutingBenchmarkTableName;
+                PersonaTable = dBTableSettings.PersonaTable;
+                ComputedRouteTable = dBTableSettings.RouteTable;
+                EdgeTable = dBTableSettings.EdgeTable;
+                RoutingBenchmarkTable = dBTableSettings.RoutingBenchmarkTable;
+                RoutingBenchmarkTempTable = dBTableSettings.RoutingBenchmarkTempTable;
 
                 DataGtfsSettings? dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
                 if(dataGtfsSettings != null)
@@ -342,11 +344,11 @@ namespace SytyRouting
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
             
-            var totalDbRows = await Helper.DbTableRowCount(Configuration.ConfigurationTableName, logger);
+            var totalDbRows = await Helper.DbTableRowCount(Configuration.ConfigurationTable, logger);
             int[] osmTagIds = new int[totalDbRows];
             // Read the 'configuration' rows and create an array of tag_ids
             //                      0
-            string queryString = "SELECT tag_id FROM " + Configuration.ConfigurationTableName;
+            string queryString = "SELECT tag_id FROM " + Configuration.ConfigurationTable;
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())

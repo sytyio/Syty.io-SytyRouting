@@ -170,7 +170,7 @@ namespace SytyRouting
         }
 
         public async Task GetDbData(){
-                DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTableName);
+                DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTable);
                 await db.InitController();
                 NodesArray=db.GetNodes().ToArray();
         }
