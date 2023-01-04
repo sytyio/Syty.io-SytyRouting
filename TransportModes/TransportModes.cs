@@ -323,6 +323,21 @@ namespace SytyRouting
             return (result == "")? TransportModes.NoTransportMode : result;
         }
 
+        public static string SingleMaskToString(byte transportMode)
+        {
+            string result = "";
+            foreach(var transportModeMask in Masks)
+            {
+                if(transportModeMask.Value != 0 && (transportMode & transportModeMask.Value) == transportModeMask.Value)
+                {
+                    result = Names[transportModeMask.Key];
+                    break;
+                }
+            }
+                
+            return (result == "")? TransportModes.NoTransportMode : result;
+        }
+
         public static byte[] NamesToArray(string[] transportModesSequence)
         {
             List<byte> masksList = new List<byte>(0);
