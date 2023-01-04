@@ -406,9 +406,39 @@ namespace SytyRouting
                 //}
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTableName + " SET transport_transitions = ttext_seq(ARRAY[ttext_inst(transport_modes, time_stamps)]); WHERE is_valid_route = true;", connection))
+            //PLGSQL: Iterates over each transport mode transition to create the corresponding temporat text type for each valid route
+            var iterationString = @"
+            DO 
+            $$
+            <<outerblock>>
+            DECLARE
+            _id int;
+            _arr_tm text[];
+            _arr_ts timestamptz[];
+            BEGIN	
+                FOR _id, _arr_tm, _arr_ts in SELECT id, transport_modes, time_stamps FROM routing_benchmark_test ORDER BY id ASC
+                LOOP
+                    RAISE NOTICE 'id: %', _id;
+                    RAISE NOTICE 'transport modes: %', _arr_tm;
+                    RAISE NOTICE 'time stamps: %', _arr_ts;
+                    UPDATE routing_benchmark_test SET first_ttext = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND id = _id;
+
+                END LOOP;
+            END;
+            $$;
+            ";
+
+            await using (var cmd = new NpgsqlCommand(iterationString, connection))
             {
-                await cmd.ExecuteNonQueryAsync();
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                catch(Exception e)
+                {
+                    logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
+                }
+                
             }
    
             await connection.CloseAsync();

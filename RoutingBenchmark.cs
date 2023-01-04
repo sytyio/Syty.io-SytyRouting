@@ -130,12 +130,12 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingbenchmark_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " DROP CONSTRAINT IF EXISTS routingbenchmarktest_pk;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingbenchmark_pk PRIMARY KEY (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD CONSTRAINT routingbenchmarktest_pk PRIMARY KEY (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -180,7 +180,36 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS transport_transitions TTEXT;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS first_ttext TTEXT[];", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            // PLGSQL: Merge each transport_mode with its corresponding transition time_stamp: 
+            var functionString =  @"
+            CREATE OR REPLACE FUNCTION coalesce_transport_modes_time_stamps(transport_modes text[], time_stamps timestamptz[]) RETURNS ttext[] AS $$
+	        DECLARE
+	            _arr_ttext ttext[];
+	            _seq_ttext ttext;
+	            _transport_mode text;
+	            _index int;
+	        BEGIN
+		        _index := 0;
+                FOREACH _transport_mode IN ARRAY transport_modes
+                LOOP
+                    _index := _index + 1;
+                    RAISE NOTICE 'current tranport mode: %', _transport_mode;
+                    _arr_ttext[_index] := ttext_inst(transport_modes[_index], time_stamps[_index]);			
+                    RAISE NOTICE 'current ttext: %', _arr_ttext[_index];
+                END LOOP;
+        		_seq_ttext := ttext_seq(_arr_ttext);
+        		RAISE NOTICE 'sequence: %', _seq_ttext;
+        		RETURN _arr_ttext;
+	        END;
+            $$ LANGUAGE PLPGSQL;
+            ";
+
+            await using (var cmd = new NpgsqlCommand(functionString, connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
