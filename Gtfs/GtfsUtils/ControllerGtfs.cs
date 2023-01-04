@@ -429,7 +429,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, previousStop, currentStop);
                             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
                                 logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
-            }
+                            }
                         }
                     }
                     else
@@ -485,8 +485,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return newEdge;
         }
 
-
-
         private void AddEdgeToNodes(Node previousStop, Node currentStop, EdgeGtfs newEdge, TripGtfs buffTrip, StopGtfs prev, StopGtfs current) // bufftrip prev current
         {
             previousStop.OutwardEdges.Add(newEdge);
@@ -497,7 +495,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-
         private void AddNearestNodeCreateEdges(StopGtfs currentStop, Node currentNearestNodeOnLineString, string id, TripGtfs buffTrip, double distance, int cpt)
         {
             nearestNodeDico.Add(id, currentNearestNodeOnLineString);
@@ -506,8 +503,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 distance = 1;
             }
             // The edges from stop to nearest node and back
-            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.NameToMask("Foot"), SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")], TagIdRouteType=TransportModes.GtfsDefaultFoot};
-            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.NameToMask("Foot"), SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.NameToMask("Foot")], TagIdRouteType=TransportModes.GtfsDefaultFoot };
+            var edgeWalkStopToNearest = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.DefaultMode, SourceNode = currentStop, TargetNode = currentNearestNodeOnLineString, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.DefaultMode], TagIdRouteType=TransportModes.GtfsDefaultFoot};            
+            var edgeWalkNearestToStop = new Edge { OsmID = long.MaxValue, LengthM = distance, TransportModes = TransportModes.DefaultMode, SourceNode = currentNearestNodeOnLineString, TargetNode = currentStop, MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.DefaultMode], TagIdRouteType=TransportModes.GtfsDefaultFoot };
             // Add the edges to the nodes
             if (cpt != 0)
             {
@@ -521,8 +518,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 currentNearestNodeOnLineString.InwardEdges.Add(edgeWalkStopToNearest);
             }
         }
-
-
 
         private void AddTripsToRoute()
         {
@@ -564,7 +559,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         /**
          0 for monday, 1 for tuesday, 2 for wednesday, 3 for thursday, 4 for friday, 5 for saturday, 6 for sunday
-*/
+        **/
+
         public Dictionary<string, TripGtfs> SelectAllTripsForGivenDayAndBetweenGivenHours(TimeSpan min, TimeSpan max, int day)
         {
             Dictionary<string, TripGtfs> targetedTrips = new Dictionary<string, TripGtfs>();
