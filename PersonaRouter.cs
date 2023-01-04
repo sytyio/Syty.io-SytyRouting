@@ -185,7 +185,7 @@ namespace SytyRouting
                             persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
                             persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
-                            persona.TTextTransitions = TransportTransitionsToTTEXT(persona.Route, persona.TransportModeTransitions);
+                            persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
 
                             persona.SuccessfulRouteComputation = true;
 
@@ -677,7 +677,7 @@ namespace SytyRouting
             }
         }
 
-        private Tuple<string[],DateTime[]> TransportTransitionsToTTEXT(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
+        private Tuple<string[],DateTime[]> TransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
         {
             var coordinates = route.Coordinates;
             Node node;
