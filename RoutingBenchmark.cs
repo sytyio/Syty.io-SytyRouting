@@ -90,17 +90,10 @@ namespace SytyRouting
             // can be validated with the function ST_IsValidTrajectory to verify that the M value is growing from each vertex to
             // the next. Trajectories can be manipulated with the functions ST_ClosestPointOfApproach, ST_DistanceCPA, and
             // ST_CPAWithin. Temporal point values can be converted to/from PostGIS trajectories
-
+            //
             // Cast a PostGIS trajectory to a temporal point:
             // geometry::tgeompoint
             // geography::tgeogpoint
-            // SELECT asText(geometry 'LINESTRING M (0 0 978307200,0 1 978393600,
-            // 1 1 978480000)'::tgeompoint);
-            // -- "[POINT(0 0)@2001-01-01, POINT(0 1)@2001-01-02, POINT(1 1)@2001-01-03]";
-            // SELECT asText(geometry 'GEOMETRYCOLLECTION M (LINESTRING M (0 0 978307200,1 1 978393600),
-            // POINT M (1 1 978480000),LINESTRING M (1 1 978652800,0 0 978739200))'::tgeompoint);
-            // -- "{[POINT(0 0)@2001-01-01, POINT(1 1)@2001-01-02], [POINT(1 1)@2001-01-03],
-            // [POINT(1 1)@2001-01-05, POINT(0 0)@2001-01-06]}"
 
             // Ref.: PostGIS:
             // https://postgis.net/docs/ST_IsValidTrajectory.html
@@ -180,7 +173,7 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS second_ttext TTEXT(Sequence);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_transitions TTEXT(Sequence);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }

@@ -351,26 +351,21 @@ namespace SytyRouting
                     
                         await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
                     }
-
-                    //if(persona.TTextTransitions is not null)
-                    //{
-                        //var timeStampTZ = baseDateTime.Add(TimeSpan.Zero);
                         
-                        var transportModes = persona.TTextTransitions.Item1;
-                        var timeStampsTZ = persona.TTextTransitions.Item2;
-                        
-                        await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
-                        {
-                            Parameters =
-                            {
-                                new() { Value = persona.Id },
-                                new() { Value = transportModes },
-                                new() { Value = timeStampsTZ },
-                            }
-                        };
+                    var transportModes = persona.TTextTransitions.Item1;
+                    var timeStampsTZ = persona.TTextTransitions.Item2;
                     
-                        await cmd_insert_ttext.ExecuteNonQueryAsync();
-                    //}
+                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = persona.Id },
+                            new() { Value = transportModes },
+                            new() { Value = timeStampsTZ },
+                        }
+                    };
+                
+                    await cmd_insert_ttext.ExecuteNonQueryAsync();
                 }
                 catch
                 {
@@ -396,14 +391,7 @@ namespace SytyRouting
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET computed_route_temporal_point = computed_route_m_seconds::tgeompoint WHERE is_valid_route = true;", connection))
             {
-                //try
-                //{
-                    await cmd.ExecuteNonQueryAsync();
-                //}
-                //catch(Exception e)
-                //{
-                //    logger.Debug("Unable to cast route to tgeompoint type: {0}", e.Message);
-                //}
+                await cmd.ExecuteNonQueryAsync();
             }
 
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
@@ -415,12 +403,12 @@ namespace SytyRouting
             _arr_tm text[];
             _arr_ts timestamptz[];
             BEGIN    
-                FOR _id, _arr_tm, _arr_ts in SELECT id, transport_modes, time_stamps FROM routing_benchmark_test ORDER BY id ASC
+                FOR _id, _arr_tm, _arr_ts in SELECT id, transport_modes, time_stamps FROM routing_benchmark ORDER BY id ASC
                 LOOP
                     RAISE NOTICE 'id: %', _id;
                     RAISE NOTICE 'transport modes: %', _arr_tm;
                     RAISE NOTICE 'time stamps: %', _arr_ts;
-                    UPDATE routing_benchmark_test SET second_ttext = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND id = _id;
+                    UPDATE routing_benchmark SET transport_transitions = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND id = _id;
                 END LOOP;
             END;
             $$;
