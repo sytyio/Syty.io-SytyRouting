@@ -605,7 +605,7 @@ namespace SytyRouting
                     int transportModeRepetitions=0;
                     byte currentTransportMode = 0;
                     byte previousTransportMode = 0;
-                    for(var n = 0; n < routeCoordinates.Length; n++)
+                    for(var n = 0; n < routeCoordinates.Length-1; n++)
                     {
                         node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
 
@@ -703,7 +703,7 @@ namespace SytyRouting
             int transportModeRepetitions=0;
             byte currentTransportMode = 0;
             byte previousTransportMode = 0;
-            for(var n = 0; n < coordinates.Length; n++)
+            for(var n = 0; n < coordinates.Length-1; n++)
             {
                 node = _graph.GetNodeByLongitudeLatitude(coordinates[n].X, coordinates[n].Y);
 
