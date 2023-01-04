@@ -180,7 +180,7 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS first_ttext TTEXT[];", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTableName + " ADD COLUMN IF NOT EXISTS second_ttext TTEXT(Sequence);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
