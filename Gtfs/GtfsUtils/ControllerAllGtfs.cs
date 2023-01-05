@@ -85,7 +85,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         
                         // Perhaps a config setting instead of a die-hard 1?
                         if(length==0){
-                            length=1;
+                            length=Configuration.NotNullDistanceFootTransitions; // Average edge type 13 length: 5.327618825484594 [m]
                         }
                         
                         var newEdgOut = new Edge { OsmID = long.MaxValue, SourceNode = node, TargetNode = nearest, LengthM = length, TransportModes = TransportModes.DefaultMode,MaxSpeedMPerS = TransportModes.MasksToSpeeds[TransportModes.DefaultMode], TagIdRouteType=TransportModes.GtfsDefaultFoot };

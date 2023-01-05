@@ -49,6 +49,7 @@ namespace SytyRouting
         public GtfsTypeToTransportModes[] GtfsTypeToTransportModes {get;set;}=null!;
         public OSMTags[] OSMTags  {get; set;} = null!;
         public TransportModeRoutingRule[] TransportModeRoutingRules  {get; set;} = null!;
+        public double NotNullDistanceFootTransitions {get; set;}
     }
     
     public sealed class TransportMode
