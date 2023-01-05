@@ -63,7 +63,7 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
-        public LineString ConvertRouteFromNodesToLineString(List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString NodeRouteToLineStringMMilliseconds(List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);

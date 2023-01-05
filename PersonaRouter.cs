@@ -182,7 +182,7 @@ namespace SytyRouting
                         if(route.Count > 0)
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
-                            persona.Route = routingAlgorithm.ConvertRouteFromNodesToLineString(route, currentTime);
+                            persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
                             persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                             persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
@@ -338,6 +338,13 @@ namespace SytyRouting
 
                     if(persona.Route is not null)
                     {
+                        //DEBUG:
+                        if(persona.Id==1)
+                        {
+                            TraceFullRoute(persona.Route);
+                        }
+                        //
+
                         var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
 
                         await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
@@ -380,11 +387,13 @@ namespace SytyRouting
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
+            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
+            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true WHERE st_IsEmpty(computed_route_m_seconds);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -437,6 +446,35 @@ namespace SytyRouting
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
         }
 
+        // private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
+        // {
+        //     var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+        //     var geometryFactory = new GeometryFactory(sequenceFactory);
+
+        //     if(route.Count <= 1)
+        //     {
+        //         return new LineString(null, geometryFactory);
+        //     }
+
+        //     var newRoute = route.Copy();
+        //     var newRouteCoordinates = newRoute.Coordinates;
+        //     var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
+
+        //     for(var i = 0; i < newRouteCoordinates.Length; i++)
+        //     {   
+        //         mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
+        //     }
+
+        //     var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
+        //     for(var i = 0; i < coordinateSequence.Count; i++)
+        //     {
+        //         coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
+        //     }
+        //     coordinateSequence.ReleaseCoordinateArray();
+
+        //     return new LineString(coordinateSequence, geometryFactory);
+        // }
+
         private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
@@ -459,7 +497,7 @@ namespace SytyRouting
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
             {
-                coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
+                coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds / 1000.0);
             }
             coordinateSequence.ReleaseCoordinateArray();
 

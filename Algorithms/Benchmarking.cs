@@ -78,7 +78,7 @@ namespace SytyRouting
 
             stopWatch.Start();
             var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, transportModesSequence);
-            var xympRoute = routingAlgorithm.ConvertRouteFromNodesToLineString(route, TimeSpan.Zero);
+            var xympRoute = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, TimeSpan.Zero);
             stopWatch.Stop();
 
             logger.Info("{0,25} execution time: {1,10:0.000} (ms)", routingAlgorithm.GetType().Name, stopWatch.ElapsedTicks * nanosecondsPerTick / 1000000.0);
@@ -124,7 +124,7 @@ namespace SytyRouting
 
                 stopWatch = Stopwatch.StartNew();
                 var route = routingAlgorithm.GetRoute(originNode.OsmID, destinationNode.OsmID, transportModesSequence);
-                var xympRoute = routingAlgorithm.ConvertRouteFromNodesToLineString(route, TimeSpan.Zero);
+                var xympRoute = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, TimeSpan.Zero);
                 stopWatch.Stop();
                 
                 elapsedRunTimeTicks[i] = stopWatch.ElapsedTicks;
@@ -179,12 +179,12 @@ namespace SytyRouting
 
                 var startTicks = stopWatch.ElapsedTicks;
                 var route1 = algorithm1.GetRoute(originNode.OsmID, destinationNode.OsmID, transportModesSequence);
-                var xympRoute1 = algorithm1.ConvertRouteFromNodesToLineString(route1, TimeSpan.Zero);
+                var xympRoute1 = algorithm1.NodeRouteToLineStringMMilliseconds(route1, TimeSpan.Zero);
                 elapsedRunTimeTicks1[i] = stopWatch.ElapsedTicks-startTicks;
 
                 startTicks = stopWatch.ElapsedTicks;
                 var route2 = algorithm2.GetRoute(originNode.OsmID, destinationNode.OsmID, transportModesSequence);
-                var xympRoute2 = algorithm2.ConvertRouteFromNodesToLineString(route2, TimeSpan.Zero);
+                var xympRoute2 = algorithm2.NodeRouteToLineStringMMilliseconds(route2, TimeSpan.Zero);
                 elapsedRunTimeTicks2[i] = stopWatch.ElapsedTicks-startTicks;
 
                 var routesAreEqual = CompareRouteSequences(route1, route2);

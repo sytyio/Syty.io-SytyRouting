@@ -9,7 +9,7 @@ namespace SytyRouting.Algorithms
         List<Node> GetRoute(double originLatitude, double originLongitude, double destinationLatitude, double destinationLongitud, byte[] transportModesSequence);
         List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, byte[] transportModesSequence);
         Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions();
-        LineString ConvertRouteFromNodesToLineString(List<Node> route, TimeSpan initialTimeStamp);
+        LineString NodeRouteToLineStringMMilliseconds(List<Node> route, TimeSpan initialTimeStamp);
         double GetRouteCost();
     }
 }
