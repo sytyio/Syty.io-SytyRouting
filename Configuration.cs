@@ -213,7 +213,6 @@ namespace SytyRouting
                 {
                     validTransportModeNames[index] = transportModeNames[index-1]; 
                 }
-                // validTransportModeNames.Add(index,PublicTransportGroup);                
             }
             catch(Exception e)
             {
@@ -221,7 +220,7 @@ namespace SytyRouting
             }
 
             string transportModesString = TransportModes.NamesToString(validTransportModeNames.Values.ToArray()[1..]);
-            logger.Info("Transport Modes ordered by routing priority: {0}.", transportModesString);
+            logger.Info("Transport Modes loaded: {0}.", transportModesString);
 
             return validTransportModeNames;
         }
