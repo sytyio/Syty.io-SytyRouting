@@ -24,7 +24,6 @@ namespace SytyRouting
         public static string RoutingBenchmarkTempTable {get;}
 
         // Gtfs settings : 
-
         public static DataGtfsSettings DataGtfsSettings {get;set;} = null!;
         public static Dictionary<String, Uri> ProvidersInfo {get;set;} = null!;
 
@@ -49,6 +48,7 @@ namespace SytyRouting
         public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
         public static OSMTags[] OSMTags {get;} = null!;
         public static GtfsTypeToTransportModes [] GtfsTypeToTransportModes {get;}=null!;
+        public static double NotNullDistanceFootTransitions;
         private static TransportSettings? transportSettings {get; set;} = null!;
 
         // Transport Modes routing rules:
@@ -133,6 +133,7 @@ namespace SytyRouting
                 TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
                 OSMTags = transportSettings.OSMTags;
                 GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;
+                NotNullDistanceFootTransitions = transportSettings.NotNullDistanceFootTransitions;
             }
             else
             {
