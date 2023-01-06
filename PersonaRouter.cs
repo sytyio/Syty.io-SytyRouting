@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1;//Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -182,7 +182,22 @@ namespace SytyRouting
                         if(route.Count > 0)
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
+
+                            //DEBUG:
+                            if(persona.Id==1)
+                            {
+                                logger.Debug("Problematic Persona Id: {0}",persona.Id);
+                            }
+                            //
+
                             persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
+
+                            //DEBUG:
+                            if(persona.Route.IsEmpty)
+                            {
+                                logger.Debug("Empty LineString. Persona Id: {0}",persona.Id);
+                            }
+                            //
                             persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                             persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
@@ -339,7 +354,7 @@ namespace SytyRouting
                     if(persona.Route is not null)
                     {
                         //DEBUG:
-                        if(persona.Id==1)
+                        if(persona.Id==8)
                         {
                             TraceFullRoute(persona.Route);
                         }
@@ -577,20 +592,34 @@ namespace SytyRouting
         public void TraceFullRoute(LineString route)
         {
             var routeCoordinates = route.Coordinates;
+            
+            logger.Debug("GeometryType:", route.GeometryType);
+            logger.Debug("IsClosed: {0}", route.IsClosed);
+            logger.Debug("IsEmpy: {0}", route.IsEmpty);
+            logger.Debug("IsGeometryCollection: {0}", route.IsSimple);
+            logger.Debug("IsValid: {0}", route.IsValid);
 
             Node node;
             string timeStamp;
 
             logger.Debug("> Route ({0})", routeCoordinates.Length);
-            logger.Debug(String.Format("Nodes :: Time stamps:"));
+            logger.Debug(String.Format(" Index :    --------- Coordinates ----------      ::                Node  ::                   M ::         Time stamp"));
+            logger.Debug(String.Format("       :                  X ::                  Y ::                      ::                   M ::                   "));
+
+            double previousM=0.0;
+            double  currentM=0.0;
             for(var n = 0; n < routeCoordinates.Length; n++)
             {
+                currentM = routeCoordinates[n].M;
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
                 if(route.Coordinates[n].M<double.MaxValue)
                     timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
                 else
-                    timeStamp = "Inf";
-                logger.Debug(String.Format("{0} : {1,14} :: {2,14},", n+1, node.OsmID, timeStamp));
+                    timeStamp = "Inf <<<===";
+                if(previousM>=currentM)
+                    timeStamp = " " + timeStamp + " <<<=== M ordinate inconsistency"; 
+                logger.Debug(String.Format("{0,6} : {1,18} :: {2,18} :: {3,20} :: {4,20} :: {5,15}",n+1,routeCoordinates[n].X,routeCoordinates[n].Y, node.OsmID, routeCoordinates[n].M, timeStamp));
+                previousM = currentM;
             }
         }
 

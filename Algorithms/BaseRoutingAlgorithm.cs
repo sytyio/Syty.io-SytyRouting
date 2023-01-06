@@ -76,12 +76,23 @@ namespace SytyRouting.Algorithms
             List<Coordinate> xyCoordinates = new List<Coordinate>(0);
             List<double> mOrdinates = new List<double>(0);
 
+            //DEBUG:
+            double currentM=0.0;
+            double previousM=-1.0;
+            bool mSequenceInconsistency=false;
+            //
+
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
-            var previousTimeInterval = initialTimeStamp.TotalMilliseconds;
+            var previousTimeIntervalMilliseconds = initialTimeStamp.TotalMilliseconds;
 
             xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
-            mOrdinates.Add(previousTimeInterval);
+            mOrdinates.Add(previousTimeIntervalMilliseconds);
+
+            //DEBUG:
+            currentM=previousTimeIntervalMilliseconds;
+            //
+
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {          
@@ -90,6 +101,7 @@ namespace SytyRouting.Algorithms
                 {
                     if(edge.MaxSpeedMPerS==0)
                     {
+                        Console.WriteLine("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
                         return new LineString(null, geometryFactory);
                     }
                     
@@ -101,24 +113,64 @@ namespace SytyRouting.Algorithms
                         {
                             var internalPointX = edge.InternalGeometry[j].X;
                             var internalPointY = edge.InternalGeometry[j].Y;
-                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeInterval;
+                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeIntervalMilliseconds;
 
                             xyCoordinates.Add(new Coordinate(internalPointX, internalPointY));
                             mOrdinates.Add(internalPointM);
+                            //DEBUG:
+                            previousM=currentM;
+                            currentM=internalPointM;
+                            if(previousM==currentM)
+                            {
+                                mSequenceInconsistency=true;
+                                Console.WriteLine("previous M = current M");
+                            }
+                            //
                         }
                     }
 
                     var targetPointX = edge.TargetNode.X;
                     var targetPointY = edge.TargetNode.Y;
-                    previousTimeInterval = minTimeIntervalMilliseconds + previousTimeInterval;
+
+                    previousTimeIntervalMilliseconds = minTimeIntervalMilliseconds + previousTimeIntervalMilliseconds;
 
                     xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
-                    mOrdinates.Add(previousTimeInterval);
+                    mOrdinates.Add(previousTimeIntervalMilliseconds);
+
+                    //DEBUG:
+                    previousM=currentM;
+                    currentM=previousTimeIntervalMilliseconds;
+                    if(previousM==currentM)
+                    {
+                        mSequenceInconsistency=true;
+                        Console.WriteLine("previous M = current M");
+                    }
+                    //
                 }
                 else
                 {
                     return new LineString(null, geometryFactory);
                 }
+                //DEBUG:
+                // if(!isValidSequence(mOrdinates.ToArray()))
+                // {
+                //     double prevM=0.0;
+                //     foreach(var m in mOrdinates)
+                //     {   
+                //         if(m<=prevM)
+                //         {
+                //             Console.WriteLine("----------------", m);
+                //         }
+                //         Console.WriteLine("M: {0}", m);
+                //         if(m<=prevM)
+                //         {
+                //             Console.WriteLine("----------------", m);
+                //         }
+                //         prevM=m;
+                //     }                    
+                //     Console.WriteLine("At least one previous M = current M");
+                // }
+                //
             }
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
@@ -128,7 +180,30 @@ namespace SytyRouting.Algorithms
             }
             coordinateSequence.ReleaseCoordinateArray();
 
-            return new LineString(coordinateSequence, geometryFactory);
+
+            //DEBUG:
+            if(mSequenceInconsistency)
+                return new LineString(null, geometryFactory);
+            else //
+                return new LineString(coordinateSequence, geometryFactory);
+            
+        }
+
+        private bool isValidSequence(double[] m)
+        {
+            if(m.Length>0)
+            {
+                for(int i=1; i<m.Length; i++)
+                {
+                    if(m[i]<=m[i-1])
+                    {
+                        Console.WriteLine("M sequence inconsistency");
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
         }
 
         public double GetRouteCost()

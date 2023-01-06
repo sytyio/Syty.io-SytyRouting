@@ -379,7 +379,54 @@ namespace SytyRouting
             }
         }
 
+        public static void SearchForLoopEdges(Graph _graph)
+        {
+            var nodes = _graph.GetNodes();
+            var outwardEdges = nodes.SelectMany(t => t.OutwardEdges).ToArray();
+            var inwardEdges  = nodes.SelectMany(t => t.InwardEdges).ToArray();
 
+            List<Edge> _oe = new List<Edge>();
+            List<Edge> _ie = new List<Edge>();
+
+            logger.Debug("Nodes: {0}", nodes.Length);
+            logger.Debug("Outward Edges: {0}", outwardEdges.Length);
+            logger.Debug(" Inward Edges: {0}", inwardEdges.Length);
+
+            for(int n=0; n<nodes.Length; n++)
+            {
+                foreach(Edge oe in nodes[n].OutwardEdges)
+                {
+                    _oe.Add(oe);
+                }
+                foreach(Edge ie in nodes[n].InwardEdges)
+                {
+                    _ie.Add(ie);
+                }
+            }
+            logger.Debug("Outward Edges: {0}", _oe.Count);
+            logger.Debug(" Inward Edges: {0}", _ie.Count);
+
+            int maxFailDisplay=100;
+            int fails=0;
+            foreach(Edge ie in _ie)
+            {
+                if(ie.SourceNode == ie.TargetNode)
+                {
+                    fails++;
+                    if(fails<maxFailDisplay)
+                    {
+                        logger.Debug("Loop edge found:");
+                        logger.Debug("Source: {0}::{1} :tegraT", ie.SourceNode.Idx,ie.TargetNode.Idx);
+                        _graph.TraceOneNode(ie.SourceNode);
+                    }
+                }
+            }
+            logger.Debug("{0} loop edge(s) found", fails);
+        }
+
+        // public static void VerifySequenceStagnation<T>(IEnumerable<T> sequence) where T: IComparable, new() 
+        // {
+        // }
 
         
     }

@@ -77,6 +77,11 @@ namespace SytyRouting
             // // personaRouter.TracePersonasRouteResult();
 
 
+            //DEBUG:
+            //TestBench.SearchForLoopEdges(graph);
+            //
+
+
             // Logger flushing
             LogManager.Shutdown();
         }
