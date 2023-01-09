@@ -73,11 +73,11 @@ namespace SytyRouting
                 int t = taskIndex;
                 routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
-            Task monitorTask = Task.Run(() => MonitorRouteCalculation());
+            //Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
-            Task.WaitAll(monitorTask);
+            //Task.WaitAll(monitorTask);
 
             //await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();

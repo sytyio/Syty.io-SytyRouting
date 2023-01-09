@@ -91,12 +91,24 @@ namespace SytyRouting.Algorithms
 
             //DEBUG:
             currentM=previousTimeIntervalMilliseconds;
+
+            Edge? currentEdge=null;
+            Edge? previousEdge=null;
             //
 
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
-            {          
+            {   
+                //DEBUG:
+                previousEdge=currentEdge;
+                //
+
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
+
+                //DEBUG:
+                currentEdge=edge!;
+                //
+
                 if(edge is not null)
                 {
                     if(edge.MaxSpeedMPerS==0)
@@ -124,6 +136,7 @@ namespace SytyRouting.Algorithms
                             {
                                 mSequenceInconsistency=true;
                                 Console.WriteLine("previous M = current M");
+                                TestBench.TraceNodeToLineStringRouteConversion(nodeRoute, i, xyCoordinates, mOrdinates, currentEdge, j, previousEdge!, minTimeIntervalMilliseconds, previousTimeIntervalMilliseconds);
                             }
                             //
                         }
@@ -144,6 +157,7 @@ namespace SytyRouting.Algorithms
                     {
                         mSequenceInconsistency=true;
                         Console.WriteLine("previous M = current M");
+                        TestBench.TraceNodeToLineStringRouteConversion(nodeRoute, i, xyCoordinates,mOrdinates, currentEdge, -1, previousEdge!, minTimeIntervalMilliseconds, previousTimeIntervalMilliseconds);
                     }
                     //
                 }

@@ -371,6 +371,7 @@ namespace SytyRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // M ordinate verification (time stamps)
         public static void DisplayEdgesWithLessThanXMLength(Edge edge,double xm)
         {
             if(edge.LengthM==xm && edge.TagIdRouteType == 13)
@@ -424,9 +425,63 @@ namespace SytyRouting
             logger.Debug("{0} loop edge(s) found", fails);
         }
 
-        // public static void VerifySequenceStagnation<T>(IEnumerable<T> sequence) where T: IComparable, new() 
-        // {
-        // }
+        public static void TraceNodeToLineStringRouteConversion(List<Node> nodeRoute, int nodeRouteIndex, List<Coordinate> xyCoordinates, List<double> mOrdinates, Edge currentEdge, int currentEdgeInternalGeometryIndex, Edge previousEdge, double minTimeIntervalMilliseconds, double previousTimeIntervalMilliseconds)
+        {
+            var j = currentEdgeInternalGeometryIndex;
+            var internalPointM = currentEdge.InternalGeometry?[j].M * minTimeIntervalMilliseconds + previousTimeIntervalMilliseconds;
+            var currentM=internalPointM;
+            logger.Debug("Current M: {0}", currentM);
+            logger.Debug("Current Time Interval: {0}",minTimeIntervalMilliseconds);
+            logger.Debug("Previous Time Interval: {0}",previousTimeIntervalMilliseconds);
+
+            string notes="";
+            int setSize=previousEdge.InternalGeometry!.Length+currentEdgeInternalGeometryIndex;
+            int n=mOrdinates.Count-setSize-3;
+            
+            var previousEdgeInternalGeometry=previousEdge.InternalGeometry;
+            logger.Debug("index:\t\tX-ordinate:\t(x-ordinate):\tY-ordinate:\t(y-Ordinate):\tM-ordinate:\t\tNotes:");
+            logger.Debug("{0} {1}\t\t{2}\t\t{3}\t{4}\t\t{5}\t{6}\t\t\t{7}"," "," ",nodeRoute[nodeRouteIndex-1].X,"",nodeRoute[nodeRouteIndex-1].Y,"","","<-   Previous route Node");
+            logger.Debug("{0} ({1})\t\t{2}\t({3})\t{4}\t({5})\t{6}\t\t\t{7}"," ",n,previousEdge.SourceNode.X,xyCoordinates[n].X,previousEdge.SourceNode.Y,xyCoordinates[n].Y,"","<-   Previous Edge Source Node");
+            n++;
+            for(int m=0; m<previousEdge.InternalGeometry!.Length; m++)
+            {
+                if(m==0)
+                    notes+=String.Format("<-   Previous Edge Internal Geometry (geometry length={0}), edge type: {1}",previousEdge.InternalGeometry!.Length,previousEdge.TagIdRouteType);
+                else
+                    notes="";
+                logger.Debug("{0} ({1})\t\t{2}\t({3})\t{4}\t({5})\t{6}\t{7}",m,n,previousEdgeInternalGeometry![m].X,xyCoordinates[n].X,previousEdgeInternalGeometry![m].Y,xyCoordinates[n].Y,previousEdgeInternalGeometry![m].M,notes);
+                n++;
+            }
+            logger.Debug("{0}{1}\t\t\t{2}\t\t{3}\t{4}\t{5}\t\t\t\t\t{6}","","",previousEdge.TargetNode.X,"",previousEdge.TargetNode.Y,"","<-   Previous Edge Target Node");
+            logger.Debug("----------------------------------------------------------------------------------------------------------------");
+            
+            var currentEdgeInternalGeometry=currentEdge.InternalGeometry;
+            logger.Debug("{0} {1}\t\t{2}\t\t{3}\t{4}\t\t{5}\t\t\t\t{6}"," "," ",nodeRoute[nodeRouteIndex].X,"",nodeRoute[nodeRouteIndex].Y,"","<-   Current route Node");
+            logger.Debug("{0} ({1})\t\t{2}\t({3})\t{4}\t({5})\t\t\t\t{6}"," ",n,currentEdge.SourceNode.X,xyCoordinates[n].X,currentEdge.SourceNode.Y,xyCoordinates[n].Y,"<-   Current Edge Source Node");
+            n++;
+            for(int m=0; m<=currentEdgeInternalGeometryIndex; m++)
+            {
+                if(m==currentEdgeInternalGeometryIndex)
+                    notes=String.Format("<--- M duplication!");
+                else if(m==0)
+                    notes+=String.Format("<-   Current Edge Internal Geometry (geometry length={0}), edge type: {1}",currentEdge.InternalGeometry!.Length,currentEdge.TagIdRouteType);
+                else
+                    notes="";
+                logger.Debug("{0} ({1})\t\t{2}\t({3})\t{4}\t({5})\t{6}\t{7}",m,n,currentEdgeInternalGeometry![m].X,xyCoordinates[n].X,currentEdgeInternalGeometry![m].Y,xyCoordinates[n].Y,currentEdgeInternalGeometry![m].M,notes);
+                n++;
+            }
+            logger.Debug("{0}{1}\t\t\t{2}\t\t{3}\t{4}\t{5}\t\t\t\t\t{6}","","",currentEdge.TargetNode.X,"",currentEdge.TargetNode.Y,"","<-   Current Edge Target Node");
+
+            
+            logger.Debug("-----------------------------------------------------------------------------------------------------------------");
+            for(int m=mOrdinates.Count-setSize-1; m<mOrdinates.Count; m++)
+            {
+                logger.Debug("{0}\t{1}\t{2}\t{3}",m,xyCoordinates[m].X,xyCoordinates[m].Y,mOrdinates[m]);
+            }
+
+            Environment.Exit(0);
+        }
+
 
         
     }
