@@ -132,7 +132,7 @@ namespace SytyRouting.Algorithms
                             //DEBUG:
                             previousM=currentM;
                             currentM=internalPointM;
-                            if(previousM==currentM && edge.TagIdRouteType>13)
+                            if(previousM==currentM)
                             {
                                 mSequenceInconsistency=true;
                                 Console.WriteLine("previous M = current M");
@@ -153,7 +153,7 @@ namespace SytyRouting.Algorithms
                     //DEBUG:
                     previousM=currentM;
                     currentM=previousTimeIntervalMilliseconds;
-                    if(previousM==currentM && edge.TagIdRouteType>13)
+                    if(previousM==currentM)
                     {
                         mSequenceInconsistency=true;
                         Console.WriteLine("previous M = current M");

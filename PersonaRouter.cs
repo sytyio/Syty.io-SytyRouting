@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1;//Environment.ProcessorCount;
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -736,7 +736,7 @@ namespace SytyRouting
         {
             var coordinates = route.Coordinates;
             Node node;
-            if(transitions == null || transitions.Count <1 || route.IsEmpty)
+            if(transitions == null || transitions.Count <1)
                 return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
             
             List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
@@ -746,14 +746,14 @@ namespace SytyRouting
 
             foreach(var transition in transitions)
             {
-                //logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transition.Key, transition.Value, TransportModes.MaskToString(transition.Value.Item1));
+                logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transition.Key, transition.Value, TransportModes.MaskToString(transition.Value.Item1));
             }
         
             string timeStampS     = String.Format("{0,14}","Time stamp");
             string transportModeS = String.Format("{0,18}","Transport Mode");
             
-            //logger.Debug("{0}\t{1}", timeStampS, transportModeS);
-            //logger.Debug("=======================================");
+            logger.Debug("{0}\t{1}", timeStampS, transportModeS);
+            logger.Debug("=======================================");
             
             int transportModeRepetitions=0;
             byte currentTransportMode = 0;
@@ -782,7 +782,7 @@ namespace SytyRouting
 
                     timeStampS   = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
                     
-                    //logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
+                    logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
                     transportModeRepetitions=0;
 
                     //ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
@@ -790,7 +790,7 @@ namespace SytyRouting
                 else
                 {
                     if(transportModeRepetitions<1)
-                        //logger.Debug("{0,14}\t{1,18}",":",":");
+                        logger.Debug("{0,14}\t{1,18}",":",":");
                     transportModeRepetitions++;
                 } 
             }
@@ -814,8 +814,8 @@ namespace SytyRouting
             //ttextS += "'" + "1970-01-01 " + timeStamp + "+00'::TIMESTAMPTZ";
             //ttextS += "]";
 
-            //logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
-            //logger.Debug("ttext string: {0}", ttextS);
+            logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
+            logger.Debug("ttext string: {0}", ttextS);
 
             // return ttextS;
             return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
