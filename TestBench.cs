@@ -436,6 +436,9 @@ public static void TraceNodeToLineStringRouteConversion(List<Node> nodeRoute, in
                 logger.Debug("Current M: {0}", currentM);
                 logger.Debug("Current Time Interval: {0}",minTimeIntervalMilliseconds);
                 logger.Debug("Previous Time Interval: {0}",previousTimeIntervalMilliseconds);
+                logger.Debug("Current Edge OSM Id: {0}",currentEdge.OsmID);
+                logger.Debug("Current Edge Source Node OSM Id: {0}",currentEdge.SourceNode.OsmID);
+                logger.Debug("Current Edge Target Node OSM Id: {0}",currentEdge.TargetNode.OsmID);
             }
 
             string notes="";

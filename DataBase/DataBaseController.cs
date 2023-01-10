@@ -112,6 +112,13 @@ namespace SytyRouting.DataBase
 
         private void CreateEdges(long osmID, double cost, double reverse_cost, OneWayState oneWayState, Node source, Node target, double length_m, LineString geometry, double maxspeed_forward, double maxspeed_backward, int tagId)
         {
+
+            //DEBUG:
+            if(osmID==540660163)
+            {
+                logger.Debug("Got you, bitch!");
+            }
+            //
             byte transportModes = TransportModes.TagIdToTransportModes(tagId);
             switch (oneWayState)
             {

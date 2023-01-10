@@ -144,13 +144,21 @@ namespace SytyRouting
                 }
 
                 CalculateCumulativeDistance(fullGeometry, fullGeometry.Length-1);
-                NormalizeGeometry(fullGeometry);
+                XYMPoint[] validatedGeometry = ValidateMOrdinateProgression(fullGeometry);
+                NormalizeGeometry(validatedGeometry);
 
-                var internalGeometry = new XYMPoint[coordinates.Length-2];
+                var internalGeometry = new XYMPoint[validatedGeometry.Length-2];
                 for(var i = 0; i < internalGeometry.Length; i++)
                 {
-                    internalGeometry[i] = fullGeometry[i+1];
+                    internalGeometry[i] = validatedGeometry[i+1];
                 }
+
+                //DEBUG:
+                if(internalGeometry.Length==2)
+                {
+                    //logger.Debug("Got you!");
+                }
+                //
                 
                 return internalGeometry;
             }
@@ -177,6 +185,24 @@ namespace SytyRouting
                 return cumulativeDistance;
             }
             return 0;
+        }
+
+        private static XYMPoint[] ValidateMOrdinateProgression(XYMPoint[] fullGeometry)
+        {
+            List<XYMPoint> validatedGeometry = new List<XYMPoint>(fullGeometry.Length);
+            if(fullGeometry.Length>0)
+            {
+                validatedGeometry.Add(fullGeometry[0]);
+                for(int i = 1; i < fullGeometry.Length; i++)
+                {
+                    if(fullGeometry[i].M > fullGeometry[i-1].M)
+                    {
+                        validatedGeometry.Add(fullGeometry[i]);
+                    }
+                }
+            }
+
+            return validatedGeometry.ToArray();
         }
 
         private static void NormalizeGeometry(XYMPoint[] geometry)
