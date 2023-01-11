@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
@@ -12,6 +13,8 @@ namespace SytyRouting.Algorithms
         protected List<Node> route = new List<Node>();
         protected Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(1);
         protected double routeCost;
+
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         //DEBUG:
         protected int Steps = 0;
@@ -28,8 +31,15 @@ namespace SytyRouting.Algorithms
             {
                 throw new ArgumentException("You must initialize the routing algorithm first!");
             }
-            var originNode = _graph.GetNodeByLongitudeLatitude(x1, y1);
-            var destinationNode = _graph.GetNodeByLongitudeLatitude(x2, y2);
+
+            var originNode = _graph.GetNodeByLongitudeLatitude(x1, y1, isSource: true);
+            var destinationNode = _graph.GetNodeByLongitudeLatitude(x2, y2, isTarget: true);
+
+            if(originNode == destinationNode)
+            {
+                logger.Debug("Origin and destination nodes are equal. Skipping route calculation.");
+                return null!;
+            }
             
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }

@@ -34,7 +34,6 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
-        private static DateTime baseDateTime = DateTime.Parse("1970-01-01T00:00:00.0000000+01:00"); //Time Zone: Brussels +1
 
         public PersonaRouter(Graph graph)
         {
@@ -118,7 +117,6 @@ namespace SytyRouting
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                        0   1              2              3
                 var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
-                //var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " WHERE id=820 ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -174,16 +172,18 @@ namespace SytyRouting
 
                     try
                     {
-                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
-                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+                        var originX = persona.HomeLocation!.X;
+                        var originY = persona.HomeLocation.Y;
+                        
+                        var destinationX = persona.WorkLocation!.X;
+                        var destinationY = persona.WorkLocation.Y;
+                        
+                        var requestedTransportModes = persona.RequestedTransportSequence;
 
-                        if(origin!=destination)
+                        var route = routingAlgorithm.GetRoute(originX, originY, destinationX, destinationY, requestedTransportModes);
+
+                        if(route != null)
                         {
-                            var requestedTransportModes = persona.RequestedTransportSequence;
-
-                            //var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
-                            var route = routingAlgorithm.GetRoute(origin.X, origin.Y, destination.X, destination.Y, requestedTransportModes);
-
                             if(route.Count > 0)
                             {
                                 TimeSpan currentTime = TimeSpan.Zero;
@@ -205,7 +205,10 @@ namespace SytyRouting
                         }
                         else
                         {
-                            logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
+                            var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
+                            var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+                            if(origin == destination)
+                                logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
                         }
                     }
                     catch (Exception e)
@@ -768,7 +771,7 @@ namespace SytyRouting
                         transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
                     
 
-                    timeStamps.Add(baseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
+                    timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
                     transportModes.Add(transportModeS);
 
 
@@ -790,7 +793,7 @@ namespace SytyRouting
             //timeStamp = Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
 
 
-            timeStamps.Add(baseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
+            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
 
 
             timeStampS     = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
