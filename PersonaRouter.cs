@@ -117,6 +117,7 @@ namespace SytyRouting
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                        0   1              2              3
                 var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                //var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " WHERE id=820 ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -354,8 +355,9 @@ namespace SytyRouting
                     if(persona.Route is not null)
                     {
                         //DEBUG:
-                        if(persona.Id==8)
+                        if(persona.Id==820)
                         {
+                            logger.Debug("Full route for Persona Id {0}",persona.Id);
                             TraceFullRoute(persona.Route);
                         }
                         //
@@ -604,9 +606,9 @@ namespace SytyRouting
 
             logger.Debug("> Route ({0})", routeCoordinates.Length);
             logger.Debug(String.Format(" Index :    --------- Coordinates ----------      ::                Node  ::                   M ::         Time stamp"));
-            logger.Debug(String.Format("       :                  X ::                  Y ::                      ::                   M ::                   "));
+            logger.Debug(String.Format("       :                  X ::                  Y ::                      ::                     ::                   "));
 
-            double previousM=0.0;
+            double previousM=-1.0;
             double  currentM=0.0;
             for(var n = 0; n < routeCoordinates.Length; n++)
             {
@@ -621,6 +623,8 @@ namespace SytyRouting
                 logger.Debug(String.Format("{0,6} : {1,18} :: {2,18} :: {3,20} :: {4,20} :: {5,15}",n+1,routeCoordinates[n].X,routeCoordinates[n].Y, node.OsmID, routeCoordinates[n].M, timeStamp));
                 previousM = currentM;
             }
+
+            Environment.Exit(0);
         }
 
         public void TraceRouteDetails(LineString route, Dictionary<int, Tuple<byte,int>>? transportModeTransitions)
