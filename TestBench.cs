@@ -425,7 +425,7 @@ namespace SytyRouting
             logger.Debug("{0} loop edge(s) found", fails);
         }
 
-public static void TraceNodeToLineStringRouteConversion(List<Node> nodeRoute, int nodeRouteIndex, List<Coordinate> xyCoordinates, List<double> mOrdinates, Edge currentEdge, int currentEdgeInternalGeometryIndex, Edge previousEdge, double minTimeIntervalMilliseconds, double previousTimeIntervalMilliseconds)
+        public static void TraceNodeToLineStringRouteConversion(List<Node> nodeRoute, int nodeRouteIndex, List<Coordinate> xyCoordinates, List<double> mOrdinates, Edge currentEdge, int currentEdgeInternalGeometryIndex, Edge previousEdge, double minTimeIntervalMilliseconds, double previousTimeIntervalMilliseconds)
         {
             var j = currentEdgeInternalGeometryIndex;
             if(j>=0)
