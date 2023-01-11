@@ -18,6 +18,11 @@ namespace SytyRouting
         private Graph _graph;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+
+        //DEBUG:
+        private static int throublemaId = 820;// 6162;
+        //
+
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -172,7 +177,7 @@ namespace SytyRouting
                     var persona = personaArray[i];
 
                     //DEBUG:
-                    if(persona.Id==10290)//6162)
+                    if(persona.Id==throublemaId)
                     {
                         logger.Debug("Problematic Persona Id: {0}",persona.Id);
                     }
@@ -355,7 +360,7 @@ namespace SytyRouting
                     if(persona.Route is not null)
                     {
                         //DEBUG:
-                        if(persona.Id==6162)
+                        if(persona.Id==throublemaId)
                         {
                             logger.Debug("Full route for Persona Id {0}",persona.Id);
                             TraceFullRoute(persona.Route);
@@ -624,7 +629,7 @@ namespace SytyRouting
                 previousM = currentM;
             }
 
-            Environment.Exit(0);
+            //Environment.Exit(0);
         }
 
         public void TraceRouteDetails(LineString route, Dictionary<int, Tuple<byte,int>>? transportModeTransitions)
