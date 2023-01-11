@@ -172,7 +172,7 @@ namespace SytyRouting
                     var persona = personaArray[i];
 
                     //DEBUG:
-                    if(persona.Id==1615)//820)
+                    if(persona.Id==10290)//6162)
                     {
                         logger.Debug("Problematic Persona Id: {0}",persona.Id);
                     }
@@ -355,7 +355,7 @@ namespace SytyRouting
                     if(persona.Route is not null)
                     {
                         //DEBUG:
-                        if(persona.Id==820)
+                        if(persona.Id==6162)
                         {
                             logger.Debug("Full route for Persona Id {0}",persona.Id);
                             TraceFullRoute(persona.Route);
