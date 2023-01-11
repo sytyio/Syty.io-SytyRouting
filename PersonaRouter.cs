@@ -20,7 +20,7 @@ namespace SytyRouting
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
         //DEBUG:
-        private static int throublemaId = 820;// 6162;
+        private static int throublemaId = 6162;
         //
 
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
@@ -192,7 +192,8 @@ namespace SytyRouting
                         {
                             var requestedTransportModes = persona.RequestedTransportSequence;
 
-                            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+                            //var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
+                            var route = routingAlgorithm.GetRoute(origin.X, origin.Y, destination.X, destination.Y, requestedTransportModes);
 
                             if(route.Count > 0)
                             {
