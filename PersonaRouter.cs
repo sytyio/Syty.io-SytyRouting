@@ -171,6 +171,13 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
+                    //DEBUG:
+                    if(persona.Id==1615)//820)
+                    {
+                        logger.Debug("Problematic Persona Id: {0}",persona.Id);
+                    }
+                    //
+
                     try
                     {
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
@@ -183,13 +190,6 @@ namespace SytyRouting
                         if(route.Count > 0)
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
-
-                            //DEBUG:
-                            if(persona.Id==1)
-                            {
-                                logger.Debug("Problematic Persona Id: {0}",persona.Id);
-                            }
-                            //
 
                             persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
 

@@ -116,7 +116,7 @@ namespace SytyRouting.DataBase
             //DEBUG:
             if(osmID==540660163)
             {
-                logger.Debug("Got you, bitch!");
+                logger.Debug("Got you, itch!");
             }
             //
             byte transportModes = TransportModes.TagIdToTransportModes(tagId);
