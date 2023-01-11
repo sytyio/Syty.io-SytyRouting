@@ -19,10 +19,6 @@ namespace SytyRouting
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
-        //DEBUG:
-        private static int throublemaId = 6162;
-        //
-
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
         private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
@@ -175,13 +171,6 @@ namespace SytyRouting
                 for(var i = 0; i < personaArray.Length; i++)
                 {
                     var persona = personaArray[i];
-
-                    //DEBUG:
-                    if(persona.Id==throublemaId)
-                    {
-                        logger.Debug("Problematic Persona Id: {0}",persona.Id);
-                    }
-                    //
 
                     try
                     {
@@ -361,14 +350,6 @@ namespace SytyRouting
 
                     if(persona.Route is not null)
                     {
-                        //DEBUG:
-                        if(persona.Id==throublemaId)
-                        {
-                            logger.Debug("Full route for Persona Id {0}",persona.Id);
-                            TraceFullRoute(persona.Route);
-                        }
-                        //
-
                         var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
 
                         await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
