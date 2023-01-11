@@ -175,27 +175,34 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
-                        var requestedTransportModes = persona.RequestedTransportSequence;
-
-                        var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
-
-                        if(route.Count > 0)
+                        if(origin!=destination)
                         {
-                            TimeSpan currentTime = TimeSpan.Zero;
+                            var requestedTransportModes = persona.RequestedTransportSequence;
 
-                            persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
+                            var route = routingAlgorithm.GetRoute(origin.OsmID, destination.OsmID, requestedTransportModes);
 
-                            persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+                            if(route.Count > 0)
+                            {
+                                TimeSpan currentTime = TimeSpan.Zero;
 
-                            persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
 
-                            persona.SuccessfulRouteComputation = true;
+                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
-                            Interlocked.Increment(ref computedRoutes);
+                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+
+                                persona.SuccessfulRouteComputation = true;
+
+                                Interlocked.Increment(ref computedRoutes);
+                            }
+                            else
+                            {
+                                logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                            }
                         }
                         else
                         {
-                            logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                            logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
                         }
                     }
                     catch (Exception e)
