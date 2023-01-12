@@ -18,24 +18,44 @@ namespace SytyRouting.Algorithms.Dijkstra
             transportModeTransitions.Clear();
             routeCost = 0;
             TrasnportModeSequence = transportModesSequence;
+            var sequenceLength = transportModesSequence.Length;
            
-            if(transportModesSequence.Length>0)
+            if(sequenceLength>0)
             {
                 byte transportMode = transportModesSequence[0];
                 Edge outboundEdge = originNode.GetOutboundEdge(transportMode);
                 if(outboundEdge != null)
+                {
                     AddStep(null, originNode, 0, 0, transportMode, outboundEdge.TagIdRouteType);
+                }
+                else
+                {
+                    //DEBUG:
+                    // logger.Debug("Origin Node Idx {0} does not contain the requested transport mode '{1}'.",originNode.Idx,TransportModes.MaskToString(transportMode));
+                    // var outboundEdgeTypes = originNode.GetOutboundEdgeTypes();
+                    // string outboundEdgeTypesS = "";
+                    // foreach(var edgeType in outboundEdgeTypes)
+                    // {
+                    //     outboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + ", ";
+                    // }
+                    // logger.Debug("Outbound Edge type(s): {0}.",outboundEdgeTypesS);
+                    // logger.Debug("Available outbound transport modes: {0}",TransportModes.MaskToString(originNode.GetAvailableOutboundTransportModes()));
+                    //
+                    StartWithAvailableTransportModes(originNode);
+                    sequenceLength = 0;
+                }
             }
             else
             {
-                foreach(var outwardEdge in originNode.OutwardEdges)
-                {
-                    var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
-                    foreach(var transportMode in availableTransportModes)
-                    {
-                        AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
-                    }
-                }
+                // // foreach(var outwardEdge in originNode.OutwardEdges)
+                // // {
+                // //     var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
+                // //     foreach(var transportMode in availableTransportModes)
+                // //     {
+                // //         AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
+                // //     }
+                // // }
+                StartWithAvailableTransportModes(originNode);
             }
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
@@ -44,7 +64,7 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                 int currentTransportIndex = currentStep.TransportSequenceIndex;
                 byte currentTransportMask;
-                if(TrasnportModeSequence.Length>0)
+                if(sequenceLength>0)
                 {
                     currentTransportMask = transportModesSequence[currentTransportIndex];
                 }
@@ -67,7 +87,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         var edgeTransportModes = outwardEdge.TransportModes;
 
-                        if(transportModesSequence.Length>0)
+                        if(sequenceLength>0)
                         {
                             var transportMode = currentTransportMask;
                          
@@ -83,7 +103,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode, outwardEdge.TagIdRouteType);
                             }
 
-                            if(currentTransportIndex>=0 && currentTransportIndex<transportModesSequence.Length-1)
+                            if(currentTransportIndex>=0 && currentTransportIndex<sequenceLength-1)
                             {
                                 byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
 
@@ -119,6 +139,18 @@ namespace SytyRouting.Algorithms.Dijkstra
             bestScoreForNode.Clear();
 
             return route;
+        }
+
+        private void StartWithAvailableTransportModes(Node originNode)
+        {
+            foreach(var outwardEdge in originNode.OutwardEdges)
+            {
+                var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
+                foreach(var transportMode in availableTransportModes)
+                {
+                    AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
+                }
+            }
         }
 
         private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportSequenceIndex, byte transportMode, int outboundRouteType)

@@ -129,9 +129,16 @@ namespace SytyRouting
                         var requestedSequence = reader.GetValue(3); // transport_sequence (text[])
                         string[] requestedTransportSequence;
                         if(requestedSequence is not null && requestedSequence != DBNull.Value)
-                             requestedTransportSequence = (string[])requestedSequence;
+                             requestedTransportSequence = ValidateTransportSequence(homeLocation, workLocation, (string[])requestedSequence);
                         else
                             requestedTransportSequence = new string[] {""};
+
+                        //debug:
+                        if(requestedTransportSequence[0].Equals(""))
+                        {
+                            logger.Debug("Requested transport sequence: {0}", requestedTransportSequence);
+                        }
+                        //
 
                         var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
                         
@@ -157,6 +164,57 @@ namespace SytyRouting
                     Thread.Sleep(dBPersonaLoadAsyncSleepMilliseconds);
             }
             await connection.CloseAsync();
+        }
+
+        private string[] ValidateTransportSequence(Point homeLocation, Point workLocation, string[] transportSequence)
+        {
+            byte initialTransportMode = TransportModes.NameToMask(transportSequence.First());
+            //byte finalTransportMode = TransportModes.NameToMask(transportSequence.Last());
+
+            var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
+            //var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
+
+            Edge outboundEdge = originNode.GetOutboundEdge(initialTransportMode);
+            //Edge inboundEdge = destinationNode.GetInboundEdge(finalTransportMode);
+
+            if(outboundEdge != null)// && inboundEdge != null)
+            {
+                return transportSequence;
+            }
+            else
+            {
+                //logger.Debug("Origin Node Idx {0} and/or Destination Node Idx {1} do not contain the requested transport mode(s) '{2}'.",originNode.Idx,destinationNode.Idx,TransportModes.MaskToString(initialTransportMode));
+                logger.Debug("Origin Node Idx {0} does not contain the requested transport mode(s) '{1}'.",originNode.Idx,TransportModes.SingleMaskToString(initialTransportMode));
+
+                var outboundEdgeTypes = originNode.GetOutboundEdgeTypes();
+                string outboundEdgeTypesS = "";
+                foreach(var edgeType in outboundEdgeTypes)
+                {
+                    if(TransportModes.OSMTagIdToKeyValue.ContainsKey(edgeType))
+                        outboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + ", ";
+                }
+                logger.Debug("Outbound Edge type(s): {0}.",outboundEdgeTypesS);
+                
+                var outboundTransportModes = originNode.GetAvailableOutboundTransportModes();
+                logger.Debug("Available outbound transport modes at origin: {0}",TransportModes.MaskToString(outboundTransportModes));
+                initialTransportMode = TransportModes.MaskToArray(outboundTransportModes).First();
+
+                // var inboundEdgeTypes = destinationNode.GetInboundEdgeTypes();
+                // string inboundEdgeTypesS = "";
+                // foreach(var edgeType in inboundEdgeTypes)
+                // {
+                //     if(TransportModes.OSMTagIdToKeyValue.ContainsKey(edgeType))
+                //         inboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + ", ";
+                // }
+                // logger.Debug("Inbound Edge type(s): {0}.",inboundEdgeTypesS);
+                
+                // var inboundTransportModes = destinationNode.GetAvailableInboundTransportModes();
+                // logger.Debug("Available inbound transport modes at destination: {0}",TransportModes.MaskToString(inboundTransportModes));
+                // finalTransportMode = TransportModes.MaskToArray(inboundTransportModes).First();
+                //return new string[] {TransportModes.MaskToString(initialTransportMode), TransportModes.MaskToString(finalTransportMode)};
+            }
+
+            return new string[] {""};
         }
 
         private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
@@ -208,6 +266,11 @@ namespace SytyRouting
                             else
                             {
                                 logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                                
+                                //DEBUG:
+                                TracePersonaDetails(persona);
+                                logger.Debug("");
+                                //
                             }
                         }
                         else
@@ -348,11 +411,12 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_sequence, computed_route) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_sequence = $2, computed_route = $3", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
+                            new() { Value = TransportModes.ArrayToNames(persona.RequestedTransportSequence)},
                             new() { Value = persona.Route },
                         }
                     };
