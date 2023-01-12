@@ -170,6 +170,13 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
+                    //DEBUG:
+                    if(persona.Id==1583)//1426)
+                    {
+                        Console.WriteLine("Probe {0}",persona.Id);
+                    }
+                    //
+
                     try
                     {
                         var originX = persona.HomeLocation!.X;
@@ -737,7 +744,7 @@ namespace SytyRouting
             List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
             List<string> transportModes = new List<string>(transitions.Count);
 
-            string ttextS = "";
+            //string ttextS = "";
 
             foreach(var transition in transitions)
             {
