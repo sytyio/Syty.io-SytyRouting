@@ -58,9 +58,14 @@ namespace SytyRouting.Algorithms.Dijkstra
                 StartWithAvailableTransportModes(originNode);
             }
 
+            //debug:
+            Node activeNode = new Node();
+            //
+
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
-                var activeNode = currentStep!.ActiveNode;
+                //var activeNode = currentStep!.ActiveNode;
+                activeNode = currentStep!.ActiveNode;
 
                 int currentTransportIndex = currentStep.TransportSequenceIndex;
                 byte currentTransportMask;
@@ -134,6 +139,15 @@ namespace SytyRouting.Algorithms.Dijkstra
                     }
                 }
             }
+
+            //debug:
+            if(activeNode!=destinationNode)
+            {
+                logger.Debug("!############################!");
+                logger.Debug(" Destination node not reached!");
+                logger.Debug("!############################!");
+            }
+            //
 
             dijkstraStepsQueue.Clear();
             bestScoreForNode.Clear();
