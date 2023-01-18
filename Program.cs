@@ -71,14 +71,14 @@ namespace SytyRouting
             await RoutingBenchmark.CreateDataSet();
             var personaRouter = new PersonaRouter(graph);
 
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            //await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
     
             //personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();
 
 
             //DEBUG:
-            //TestBench.SearchForLoopEdges(graph);
+            TestBench.SearchForLoopEdges(graph);
             //
 
 
