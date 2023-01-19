@@ -93,10 +93,50 @@ namespace SytyRouting.Model
             foreach(var outwardEdge in OutwardEdges)
             {
                 if((outwardEdge.TransportModes & transportMode) != 0)
-                    edge = outwardEdge; 
+                {
+                    edge = outwardEdge;
+                    break;
+                }
             }
 
             return edge;
+        }
+
+        public Edge GetInboundEdge(byte transportMode)
+        {
+            Edge edge = null!;
+            foreach(var inwardEdge in InwardEdges)
+            {
+                if((inwardEdge.TransportModes & transportMode) != 0)
+                {
+                    edge = inwardEdge;
+                    break;
+                }
+            }
+
+            return edge;
+        }
+
+        public int[] GetOutboundEdgeTypes()
+        {            
+            List<int> edgeTypes = new List<int>(0);
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                edgeTypes.Add(outwardEdge.TagIdRouteType);
+            }
+
+            return edgeTypes.ToArray();
+        }
+
+        public int[] GetInboundEdgeTypes()
+        {            
+            List<int> edgeTypes = new List<int>(0);
+            foreach(var inwardEdge in InwardEdges)
+            {
+                edgeTypes.Add(inwardEdge.TagIdRouteType);
+            }
+
+            return edgeTypes.ToArray();
         }
     }
 }

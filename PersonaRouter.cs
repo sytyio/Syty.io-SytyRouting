@@ -34,6 +34,8 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
+        private int sequenceValidationErrors = 0;
+        private int originEqualsDestinationErrors = 0;
 
         public PersonaRouter(Graph graph)
         {
@@ -73,11 +75,11 @@ namespace SytyRouting
                 int t = taskIndex;
                 routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
-            //Task monitorTask = Task.Run(() => MonitorRouteCalculation());
+            Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
-            //Task.WaitAll(monitorTask);
+            Task.WaitAll(monitorTask);
 
             //await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();
@@ -129,9 +131,13 @@ namespace SytyRouting
                         var requestedSequence = reader.GetValue(3); // transport_sequence (text[])
                         string[] requestedTransportSequence;
                         if(requestedSequence is not null && requestedSequence != DBNull.Value)
-                             requestedTransportSequence = (string[])requestedSequence;
+                        {
+                             requestedTransportSequence = ValidateTransportSequence(id, homeLocation, workLocation, (string[])requestedSequence);
+                        }
                         else
+                        {
                             requestedTransportSequence = new string[] {""};
+                        }
 
                         var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
                         
@@ -157,6 +163,74 @@ namespace SytyRouting
                     Thread.Sleep(dBPersonaLoadAsyncSleepMilliseconds);
             }
             await connection.CloseAsync();
+        }
+
+        private string[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
+        {
+            byte initialTransportMode = TransportModes.NameToMask(transportSequence.First());
+            byte finalTransportMode = TransportModes.NameToMask(transportSequence.Last());
+
+            var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
+            var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
+
+            Edge outboundEdge = originNode.GetOutboundEdge(initialTransportMode);
+            Edge inboundEdge = destinationNode.GetInboundEdge(finalTransportMode);
+
+            if(outboundEdge != null && inboundEdge != null)
+            {
+                return transportSequence;
+            }
+            else
+            {
+                sequenceValidationErrors++;
+
+                logger.Debug("!===================================!");
+                logger.Debug(" Transport sequence validation error:");
+                logger.Debug("!===================================!");
+                logger.Debug(" Persona Id: {0}", id);
+                if(outboundEdge == null)
+                {
+                    logger.Debug(" ORIGIN Node Idx {0} does not contain the requested transport mode '{1}'.",originNode.Idx,TransportModes.SingleMaskToString(initialTransportMode)); // Use MaskToString() if the first byte in the sequence represents more than one Transport Mode
+
+                    var outboundEdgeTypes = originNode.GetOutboundEdgeTypes();
+                    string outboundEdgeTypesS = "";
+                    foreach(var edgeType in outboundEdgeTypes)
+                    {
+                        if(TransportModes.OSMTagIdToKeyValue.ContainsKey(edgeType))
+                            outboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + " ";
+                    }
+                    logger.Debug(" Outbound Edge type(s): {0}",outboundEdgeTypesS);
+                    
+                    var outboundTransportModes = originNode.GetAvailableOutboundTransportModes();
+                    logger.Debug(" Available outbound transport modes at origin: {0}",TransportModes.MaskToString(outboundTransportModes));
+                    initialTransportMode = TransportModes.MaskToArray(outboundTransportModes).First();
+                }
+
+                if(inboundEdge == null)
+                {
+                    logger.Debug(" DESTINATION Node Idx {0} does not contain the requested transport mode '{1}'.",destinationNode.Idx,TransportModes.SingleMaskToString(finalTransportMode));
+
+                    var inboundEdgeTypes = destinationNode.GetInboundEdgeTypes();
+                    string inboundEdgeTypesS = "";
+                    foreach(var edgeType in inboundEdgeTypes)
+                    {
+                        if(TransportModes.OSMTagIdToKeyValue.ContainsKey(edgeType))
+                            inboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + " ";
+                    }
+                    logger.Debug(" Inbound Edge type(s): {0}",inboundEdgeTypesS);
+                    
+                    var inboundTransportModes = destinationNode.GetAvailableInboundTransportModes();
+                    logger.Debug(" Available inbound transport modes at destination: {0}",TransportModes.MaskToString(inboundTransportModes));
+                    finalTransportMode = TransportModes.MaskToArray(inboundTransportModes).First();
+                }
+            
+                var newSequence = new string[2];
+                newSequence[0] = TransportModes.SingleMaskToString(initialTransportMode);
+                newSequence[1] = TransportModes.SingleMaskToString(finalTransportMode);
+                logger.Debug(" Requested transport sequence overridden to: {0}", TransportModes.NamesToString(newSequence));
+                
+                return newSequence;
+            }
         }
 
         private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
@@ -201,6 +275,11 @@ namespace SytyRouting
                             else
                             {
                                 logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                                
+                                //DEBUG:
+                                TracePersonaDetails(persona);
+                                logger.Debug("");
+                                //
                             }
                         }
                         else
@@ -208,7 +287,10 @@ namespace SytyRouting
                             var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                             var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
                             if(origin == destination)
+                            {
                                 logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
+                                originEqualsDestinationErrors++;
+                            }
                         }
                     }
                     catch (Exception e)
@@ -341,11 +423,12 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_sequence, computed_route) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_sequence = $2, computed_route = $3", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
+                            new() { Value = TransportModes.ArrayToNames(persona.RequestedTransportSequence)},
                             new() { Value = persona.Route },
                         }
                     };
@@ -446,8 +529,11 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
-            logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
+            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
+            logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails, totalTime);
+            logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
+            logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
+            logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
         private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
@@ -491,6 +577,7 @@ namespace SytyRouting
             logger.Debug("Work location: ({0,18},{1,18})\t :: OSM Coordinates: {2,18},{3,18}\t : Destination OsmID {4}", persona.WorkLocation!.X, persona.WorkLocation!.Y, persona.WorkLocation!.Y, persona.WorkLocation!.X, destination.OsmID);
             var destinationTransportModes = origin.GetAvailableInboundTransportModes();
             logger.Debug("Avilable Inbound Transport modes for Node {0}: {1}", destination.OsmID, TransportModes.MaskToString(originTransportModes));
+            logger.Debug("Requested transport modes: {0} ({1})", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.RequestedTransportSequence)), TransportModes.ArrayToMask(persona.RequestedTransportSequence));
         }
 
         public void TracePersonas()

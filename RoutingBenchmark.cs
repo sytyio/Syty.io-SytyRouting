@@ -275,9 +275,9 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Persona examples successfully uploaded to the database in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
+            logger.Info("{0} Persona examples successfully uploaded to the database (routing benchmark table) in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
             var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTable, logger);
-            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %)", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
+            logger.Debug("{0} personas (out of {1}) failed to upload ({2} %) to the routing benchmark table", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
         }
     }
 }
