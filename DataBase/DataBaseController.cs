@@ -30,6 +30,8 @@ namespace SytyRouting.DataBase
 
             Dictionary<long, Node> nodes = new Dictionary<long, Node>();
 
+            long sourceEqualsTargetEdges = 0;
+
             // connectionString = Configuration.ConnectionString;
 
             await using var connection = new NpgsqlConnection(ConnectionString);
@@ -50,16 +52,25 @@ namespace SytyRouting.DataBase
                 while (await reader.ReadAsync())
                 {
                     var sourceId = Convert.ToInt64(reader.GetValue(1)); // source
+                    var targetId = Convert.ToInt64(reader.GetValue(2)); // target
+                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));  // gid
+
+                    if(sourceId==targetId)
+                    {
+                        logger.Trace("Source Id {0} is equal to Target Id {1} for OSM way Id {2}", sourceId, targetId, edgeOSMId);
+                        sourceEqualsTargetEdges++;
+                        continue;
+                    }
+
                     var sourceX = Convert.ToDouble(reader.GetValue(6)); // x1
                     var sourceY = Convert.ToDouble(reader.GetValue(7)); // y1 
                     var sourceOSMId = Convert.ToInt64(reader.GetValue(10)); // source_osm
 
-                    var targetId = Convert.ToInt64(reader.GetValue(2)); // target
                     var targetX = Convert.ToDouble(reader.GetValue(8)); // x2
                     var targetY = Convert.ToDouble(reader.GetValue(9)); // y2
                     var targetOSMId = Convert.ToInt64(reader.GetValue(11)); // target_osm
 
-                    var edgeOSMId = Convert.ToInt64(reader.GetValue(0));  // gid
+                    
                     var edgeCost = Convert.ToDouble(reader.GetValue(3));  // cost
                     var edgeReverseCost = Convert.ToDouble(reader.GetValue(4)); // reverse_cost
                     var edgeOneWay = (OneWayState)Convert.ToInt32(reader.GetValue(5)); // one_way
@@ -96,6 +107,7 @@ namespace SytyRouting.DataBase
                 var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
                 logger.Info("Graph creation time          (HH:MM:S.mS) :: " + totalTime);
                 logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, totalDbRows);
+                logger.Debug("Number of discarded edges (OSM ways with equal source and destination): {0} ({1} \\%)", sourceEqualsTargetEdges, sourceEqualsTargetEdges/totalDbRows*100);
             }
         }
 

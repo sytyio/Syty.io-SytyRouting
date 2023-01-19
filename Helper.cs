@@ -152,7 +152,7 @@ namespace SytyRouting
                 {
                     internalGeometry[i] = validatedGeometry[i+1];
                 }
-
+                
                 return internalGeometry;
             }
             else
