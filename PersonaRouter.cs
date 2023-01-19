@@ -184,21 +184,8 @@ namespace SytyRouting
                         {
                             TimeSpan currentTime = TimeSpan.Zero;
 
-                            //DEBUG:
-                            if(persona.Id==1)
-                            {
-                                logger.Debug("Problematic Persona Id: {0}",persona.Id);
-                            }
-                            //
-
                             persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
 
-                            //DEBUG:
-                            if(persona.Route.IsEmpty)
-                            {
-                                logger.Debug("Empty LineString. Persona Id: {0}",persona.Id);
-                            }
-                            //
                             persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                             persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
@@ -354,14 +341,6 @@ namespace SytyRouting
 
                     if(persona.Route is not null)
                     {
-                        //DEBUG:
-                        if(persona.Id==820)
-                        {
-                            logger.Debug("Full route for Persona Id {0}",persona.Id);
-                            TraceFullRoute(persona.Route);
-                        }
-                        //
-
                         var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
 
                         await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)

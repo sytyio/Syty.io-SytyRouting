@@ -152,13 +152,6 @@ namespace SytyRouting
                 {
                     internalGeometry[i] = validatedGeometry[i+1];
                 }
-
-                //DEBUG:
-                if(internalGeometry.Length==2)
-                {
-                    //logger.Debug("Got you!");
-                }
-                //
                 
                 return internalGeometry;
             }

@@ -76,12 +76,6 @@ namespace SytyRouting.Algorithms
             List<Coordinate> xyCoordinates = new List<Coordinate>(0);
             List<double> mOrdinates = new List<double>(0);
 
-            //DEBUG:
-            double currentM=0.0;
-            double previousM=-1.0;
-            bool mSequenceInconsistency=false;
-            //
-
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
             var previousTimeIntervalMilliseconds = initialTimeStamp.TotalMilliseconds;
@@ -89,25 +83,10 @@ namespace SytyRouting.Algorithms
             xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
             mOrdinates.Add(previousTimeIntervalMilliseconds);
 
-            //DEBUG:
-            currentM=previousTimeIntervalMilliseconds;
-
-            Edge? currentEdge=null;
-            Edge? previousEdge=null;
-            //
-
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {   
-                //DEBUG:
-                previousEdge=currentEdge;
-                //
-
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
-
-                //DEBUG:
-                currentEdge=edge!;
-                //
 
                 if(edge is not null)
                 {
@@ -129,16 +108,6 @@ namespace SytyRouting.Algorithms
 
                             xyCoordinates.Add(new Coordinate(internalPointX, internalPointY));
                             mOrdinates.Add(internalPointM);
-                            //DEBUG:
-                            previousM=currentM;
-                            currentM=internalPointM;
-                            if(previousM==currentM && edge.TagIdRouteType>13)
-                            {
-                                mSequenceInconsistency=true;
-                                Console.WriteLine("previous M = current M");
-                                TestBench.TraceNodeToLineStringRouteConversion(nodeRoute, i, xyCoordinates, mOrdinates, currentEdge, j, previousEdge!, minTimeIntervalMilliseconds, previousTimeIntervalMilliseconds);
-                            }
-                            //
                         }
                     }
 
@@ -149,42 +118,11 @@ namespace SytyRouting.Algorithms
 
                     xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
                     mOrdinates.Add(previousTimeIntervalMilliseconds);
-
-                    //DEBUG:
-                    previousM=currentM;
-                    currentM=previousTimeIntervalMilliseconds;
-                    if(previousM==currentM && edge.TagIdRouteType>13)
-                    {
-                        mSequenceInconsistency=true;
-                        Console.WriteLine("previous M = current M");
-                        TestBench.TraceNodeToLineStringRouteConversion(nodeRoute, i, xyCoordinates,mOrdinates, currentEdge, -1, previousEdge!, minTimeIntervalMilliseconds, previousTimeIntervalMilliseconds);
-                    }
-                    //
                 }
                 else
                 {
                     return new LineString(null, geometryFactory);
                 }
-                //DEBUG:
-                // if(!isValidSequence(mOrdinates.ToArray()))
-                // {
-                //     double prevM=0.0;
-                //     foreach(var m in mOrdinates)
-                //     {   
-                //         if(m<=prevM)
-                //         {
-                //             Console.WriteLine("----------------", m);
-                //         }
-                //         Console.WriteLine("M: {0}", m);
-                //         if(m<=prevM)
-                //         {
-                //             Console.WriteLine("----------------", m);
-                //         }
-                //         prevM=m;
-                //     }                    
-                //     Console.WriteLine("At least one previous M = current M");
-                // }
-                //
             }
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
@@ -194,13 +132,7 @@ namespace SytyRouting.Algorithms
             }
             coordinateSequence.ReleaseCoordinateArray();
 
-
-            //DEBUG:
-            if(mSequenceInconsistency)
-                return new LineString(null, geometryFactory);
-            else //
-                return new LineString(coordinateSequence, geometryFactory);
-            
+            return new LineString(coordinateSequence, geometryFactory);            
         }
 
         private bool isValidSequence(double[] m)
