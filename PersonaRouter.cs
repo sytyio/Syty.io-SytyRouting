@@ -395,13 +395,11 @@ namespace SytyRouting
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
-            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
-            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true WHERE st_IsEmpty(computed_route_m_seconds);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -431,8 +429,6 @@ namespace SytyRouting
             $$;
             ";
 
-            
-
             await using (var cmd = new NpgsqlCommand(iterationString, connection))
             {
                 try
@@ -453,35 +449,6 @@ namespace SytyRouting
             logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
         }
-
-        // private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
-        // {
-        //     var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-        //     var geometryFactory = new GeometryFactory(sequenceFactory);
-
-        //     if(route.Count <= 1)
-        //     {
-        //         return new LineString(null, geometryFactory);
-        //     }
-
-        //     var newRoute = route.Copy();
-        //     var newRouteCoordinates = newRoute.Coordinates;
-        //     var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
-
-        //     for(var i = 0; i < newRouteCoordinates.Length; i++)
-        //     {   
-        //         mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
-        //     }
-
-        //     var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
-        //     for(var i = 0; i < coordinateSequence.Count; i++)
-        //     {
-        //         coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
-        //     }
-        //     coordinateSequence.ReleaseCoordinateArray();
-
-        //     return new LineString(coordinateSequence, geometryFactory);
-        // }
 
         private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
         {
@@ -729,28 +696,17 @@ namespace SytyRouting
 
         private Tuple<string[],DateTime[]> TransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
         {
-            var coordinates = route.Coordinates;
-            Node node;
             if(transitions == null || transitions.Count <1 || route.IsEmpty)
                 return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+
+            var coordinates = route.Coordinates;
+            Node node;
             
             List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
             List<string> transportModes = new List<string>(transitions.Count);
-
-            string ttextS = "";
-
-            foreach(var transition in transitions)
-            {
-                //logger.Debug("Transport Mode transitions :: {0}:{1}: {2}", transition.Key, transition.Value, TransportModes.MaskToString(transition.Value.Item1));
-            }
         
-            string timeStampS     = String.Format("{0,14}","Time stamp");
             string transportModeS = String.Format("{0,18}","Transport Mode");
-            
-            //logger.Debug("{0}\t{1}", timeStampS, transportModeS);
-            //logger.Debug("=======================================");
-            
-            int transportModeRepetitions=0;
+                        
             byte currentTransportMode = 0;
             byte previousTransportMode = 0;
             for(var n = 0; n < coordinates.Length-1; n++)
@@ -770,33 +726,15 @@ namespace SytyRouting
                     if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
                         transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
                     
-
                     timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
-                    transportModes.Add(transportModeS);
-
-
-                    timeStampS   = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
-                    
-                    //logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
-                    transportModeRepetitions=0;
-
-                    //ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00,";
-                }
-                else
-                {
-                    if(transportModeRepetitions<1)
-                        //logger.Debug("{0,14}\t{1,18}",":",":");
-                    transportModeRepetitions++;
+                    transportModes.Add(transportModeS);                    
                 } 
             }
+            
             node = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
-            //timeStamp = Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
-
 
             timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
 
-
-            timeStampS     = String.Format("{0,14}", Helper.FormatElapsedTimeHHMMSS(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
             if(transitions.ContainsKey(node.Idx))
             {
                 var routeType = transitions[node.Idx].Item2;
@@ -805,14 +743,6 @@ namespace SytyRouting
             }
             transportModes.Add(transportModeS);
 
-            //ttextS += "\"" + transportModeS + "\"" + "@1970-01-01 " + timeStamp + "+00";
-            //ttextS += "'" + "1970-01-01 " + timeStamp + "+00'::TIMESTAMPTZ";
-            //ttextS += "]";
-
-            //logger.Debug("{0,14}\t{1,18}", timeStampS, transportModeS);
-            //logger.Debug("ttext string: {0}", ttextS);
-
-            // return ttextS;
             return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
 
