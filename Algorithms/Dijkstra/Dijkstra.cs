@@ -30,41 +30,19 @@ namespace SytyRouting.Algorithms.Dijkstra
                 }
                 else
                 {
-                    //DEBUG:
-                    // logger.Debug("Origin Node Idx {0} does not contain the requested transport mode '{1}'.",originNode.Idx,TransportModes.MaskToString(transportMode));
-                    // var outboundEdgeTypes = originNode.GetOutboundEdgeTypes();
-                    // string outboundEdgeTypesS = "";
-                    // foreach(var edgeType in outboundEdgeTypes)
-                    // {
-                    //     outboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + ", ";
-                    // }
-                    // logger.Debug("Outbound Edge type(s): {0}.",outboundEdgeTypesS);
-                    // logger.Debug("Available outbound transport modes: {0}",TransportModes.MaskToString(originNode.GetAvailableOutboundTransportModes()));
-                    //
                     StartWithAvailableTransportModes(originNode);
                     sequenceLength = 0;
                 }
             }
             else
             {
-                // // foreach(var outwardEdge in originNode.OutwardEdges)
-                // // {
-                // //     var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
-                // //     foreach(var transportMode in availableTransportModes)
-                // //     {
-                // //         AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
-                // //     }
-                // // }
                 StartWithAvailableTransportModes(originNode);
             }
 
-            //debug:
             Node activeNode = new Node();
-            //
 
             while(dijkstraStepsQueue.TryDequeue(out DijkstraStep? currentStep, out double priority))
             {
-                //var activeNode = currentStep!.ActiveNode;
                 activeNode = currentStep!.ActiveNode;
 
                 int currentTransportIndex = currentStep.TransportSequenceIndex;
@@ -140,14 +118,12 @@ namespace SytyRouting.Algorithms.Dijkstra
                 }
             }
 
-            //debug:
             if(activeNode!=destinationNode)
             {
                 logger.Debug("!############################!");
                 logger.Debug(" Destination node not reached!");
                 logger.Debug("!############################!");
             }
-            //
 
             dijkstraStepsQueue.Clear();
             bestScoreForNode.Clear();

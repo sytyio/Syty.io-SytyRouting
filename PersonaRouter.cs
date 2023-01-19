@@ -34,11 +34,8 @@ namespace SytyRouting
 
         private Stopwatch stopWatch = new Stopwatch();
 
-        //debug:
         private int sequenceValidationErrors = 0;
         private int originEqualsDestinationErrors = 0;
-        //
-
 
         public PersonaRouter(Graph graph)
         {
@@ -226,22 +223,7 @@ namespace SytyRouting
                     logger.Debug(" Available inbound transport modes at destination: {0}",TransportModes.MaskToString(inboundTransportModes));
                     finalTransportMode = TransportModes.MaskToArray(inboundTransportModes).First();
                 }
-
-                // var inboundEdgeTypes = destinationNode.GetInboundEdgeTypes();
-                // string inboundEdgeTypesS = "";
-                // foreach(var edgeType in inboundEdgeTypes)
-                // {
-                //     if(TransportModes.OSMTagIdToKeyValue.ContainsKey(edgeType))
-                //         inboundEdgeTypesS += edgeType.ToString() +  " " + TransportModes.OSMTagIdToKeyValue[edgeType] + ", ";
-                // }
-                // logger.Debug("Inbound Edge type(s): {0}.",inboundEdgeTypesS);
-                
-                // var inboundTransportModes = destinationNode.GetAvailableInboundTransportModes();
-                // logger.Debug("Available inbound transport modes at destination: {0}",TransportModes.MaskToString(inboundTransportModes));
-                // finalTransportMode = TransportModes.MaskToArray(inboundTransportModes).First();
-                //return new string[] {TransportModes.MaskToString(initialTransportMode), TransportModes.MaskToString(finalTransportMode)};
-
-                //var newSequence = new string[] {"Car"};
+            
                 var newSequence = new string[2];
                 newSequence[0] = TransportModes.SingleMaskToString(initialTransportMode);
                 newSequence[1] = TransportModes.SingleMaskToString(finalTransportMode);
@@ -261,13 +243,6 @@ namespace SytyRouting
                 for(var i = 0; i < personaArray.Length; i++)
                 {
                     var persona = personaArray[i];
-
-                    //DEBUG:
-                    if(persona.Id==1790)
-                    {
-                        Console.WriteLine("Probe {0}",persona.Id);
-                    }
-                    //
 
                     try
                     {
@@ -503,13 +478,11 @@ namespace SytyRouting
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
-            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
-            //await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = true WHERE st_IsEmpty(computed_route_m_seconds);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -539,8 +512,6 @@ namespace SytyRouting
             $$;
             ";
 
-            
-
             await using (var cmd = new NpgsqlCommand(iterationString, connection))
             {
                 try
@@ -564,35 +535,6 @@ namespace SytyRouting
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
-
-        // private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
-        // {
-        //     var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-        //     var geometryFactory = new GeometryFactory(sequenceFactory);
-
-        //     if(route.Count <= 1)
-        //     {
-        //         return new LineString(null, geometryFactory);
-        //     }
-
-        //     var newRoute = route.Copy();
-        //     var newRouteCoordinates = newRoute.Coordinates;
-        //     var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
-
-        //     for(var i = 0; i < newRouteCoordinates.Length; i++)
-        //     {   
-        //         mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
-        //     }
-
-        //     var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
-        //     for(var i = 0; i < coordinateSequence.Count; i++)
-        //     {
-        //         coordinateSequence.SetM(i, mOrdinates[i].TotalSeconds);
-        //     }
-        //     coordinateSequence.ReleaseCoordinateArray();
-
-        //     return new LineString(coordinateSequence, geometryFactory);
-        // }
 
         private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
         {
