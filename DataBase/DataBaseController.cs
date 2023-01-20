@@ -32,8 +32,6 @@ namespace SytyRouting.DataBase
 
             long sourceEqualsTargetEdges = 0;
 
-            // connectionString = Configuration.ConnectionString;
-
             await using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 

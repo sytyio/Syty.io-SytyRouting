@@ -495,6 +495,78 @@ namespace SytyRouting
         }
 
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Node ValidSource/ValidTarget verification
+        
+        public static void SearchForNodesBySourceValidity(Graph _graph, bool isValidSource)
+        {
+            var nodes = _graph.GetNodes();
+        
+            List<Node> _validSourceNodes = new List<Node>();
+
+            logger.Debug("{0} Nodes in the graph", nodes.Length);
+
+            foreach(Node node in nodes)
+            {
+                if(node.ValidSource==isValidSource)
+                    _validSourceNodes.Add(node);
+            }
+
+            var validSourceNodes = nodes.Where(n => n.ValidSource==isValidSource);
+
+            logger.Debug("{0} ({1}) Nodes where ValidSource is {2} ",_validSourceNodes.Count,validSourceNodes.Count(),isValidSource);
+        }
+
+        public static void SearchForEdgesBySourceValidityAndTransportMode(Graph _graph, bool isValidSource, byte transportModes)
+        {
+            var nodes = _graph.GetNodes();
+            var validSourceNodes = nodes.Where(n=>n.ValidSource==isValidSource);
+            var outwardEdges = validSourceNodes.SelectMany(t=>t.OutwardEdges).ToArray();
+            var outwardEdgesWithSelectedTransportMode = outwardEdges.Where(oe=>(oe.TransportModes & transportModes) == transportModes);
+
+            logger.Debug("{0,10} Nodes in the graph", nodes.Length);
+            logger.Debug("{0,10} Nodes where ValidSource is {1} ",validSourceNodes.Count(),isValidSource);
+            logger.Debug("{0,10} Outward Edges in the selected Nodes",outwardEdges.Length);
+            logger.Debug("{0,10} Outward Edges in the selected Nodes with transport mode(s) '{1}'",outwardEdgesWithSelectedTransportMode.Count(),TransportModes.MaskToString(transportModes));
+            
+            // foreach(var node in validSourceNodes)
+            // {
+            //     if((node.GetAvailableOutboundTransportModes() & transportModes)==transportModes)
+            //     {
+            //         _graph.TraceOneNode(node);
+            //     }
+            // }
+        }
+
+        public static void TraceEdgesBySourceValidity(Graph _graph, bool isValidSource)
+        {
+            var nodes = _graph.GetNodes();
+            var validSourceNodes = nodes.Where(n=>n.ValidSource==isValidSource);
+            var outwardEdges = validSourceNodes.SelectMany(t=>t.OutwardEdges).ToArray();            
+
+            logger.Debug("{0,10} Nodes in the graph", nodes.Length);
+            logger.Debug("{0,10} Nodes where ValidSource is {1} ",validSourceNodes.Count(),isValidSource);
+            logger.Debug("{0,10} Outward Edges in the selected Nodes",outwardEdges.Length);
+
+            var transportModes = TransportModes.GetTransportModes();
+            foreach(var transportMode in transportModes)
+            {
+                var outwardEdgesWithSelectedTransportMode = outwardEdges.Where(oe=>(oe.TransportModes & transportMode) == transportMode);
+                logger.Debug("{0,10} Outward Edges in the selected Nodes with transport mode(s) '{1}'",outwardEdgesWithSelectedTransportMode.Count(),TransportModes.MaskToString(transportMode));
+            }
+            // foreach(var node in validSourceNodes)
+            // {
+            //     if((node.GetAvailableOutboundTransportModes() & transportModes)==transportModes)
+            //     {
+            //         _graph.TraceOneNode(node);
+            //     }
+            // }
+        }
+
+
+
         
     }
 }

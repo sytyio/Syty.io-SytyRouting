@@ -285,6 +285,13 @@ namespace SytyRouting
             TransportModes.MasksToSpeeds = transportModeMasksToSpeeds;
         }
 
+        public static byte[] GetTransportModes()
+        {
+            var transportMasks = Masks.Values.ToArray().Where(m=>m!=0).ToArray();
+            
+            return transportMasks;
+        }
+
         public static void LoadRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)
         {
             RoutingRules = TransportModes.CreateRoutingRules(transportModeRoutingRules);
