@@ -224,6 +224,20 @@ namespace SytyRouting.DataBase
                     }
                 }
             }
+
+            foreach(var n in nodesArray)
+            {
+                if(n.ValidSource == true && (n.GetAvailableOutboundTransportModes() & TransportModes.DefaultMode) != TransportModes.DefaultMode)
+                {
+                    n.ValidSource = false;
+                }
+
+                if(n.ValidTarget == true && (n.GetAvailableInboundTransportModes() & TransportModes.DefaultMode) != TransportModes.DefaultMode)
+                {
+                    n.ValidTarget = false;
+                }
+            }
+
             logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
         }
