@@ -76,13 +76,6 @@ namespace SytyRouting
             //personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();
 
-
-            //debug:
-            TestBench.SearchForNodesBySourceValidity(graph,true);
-            TestBench.SearchForEdgesBySourceValidityAndTransportMode(graph,true,TransportModes.NameToMask("Bicycle"));
-            TestBench.TraceEdgesBySourceTargetValidities(graph,true,true);
-            //
-
             // Logger flushing
             LogManager.Shutdown();
         }
