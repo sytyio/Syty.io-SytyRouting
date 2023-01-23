@@ -93,7 +93,7 @@ namespace SytyRouting
             }
 
             TransportModes.DefaultMode = Masks[1];
-            logger.Info("Default Transport Mode: {0}", MaskToString(TransportModes.DefaultMode));
+            logger.Info("Default Transport Mode (pedestrian): {0}. (First transport mode in the configuration file.)", SingleMaskToString(TransportModes.DefaultMode));
 
             return Masks;
         }
