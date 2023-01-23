@@ -142,7 +142,64 @@ namespace SytyRouting.Algorithms
             coordinateSequence.ReleaseCoordinateArray();
 
             return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        public LineString OriginToDestinationLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
+        {
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
             
+            List<Coordinate> xyCoordinates = new List<Coordinate>(2);
+            List<double> mOrdinates = new List<double>(2);
+
+            var sourcePointX = x1;
+            var sourcePointY = y1;
+            var previousTimeIntervalSeconds = initialTimeStamp.TotalSeconds;
+
+            xyCoordinates.Add(new Coordinate(x1,y1));
+            mOrdinates.Add(previousTimeIntervalSeconds);
+
+            var lengthM = Helper.GetDistance(x1,y1,x2,y2);
+            
+            double minTimeIntervalSeconds;
+            if(lengthM != 0 && TransportModes.MasksToSpeeds.ContainsKey(transportMode))
+            {
+                minTimeIntervalSeconds = lengthM / TransportModes.MasksToSpeeds[transportMode];
+            }
+            else
+            {
+                if(lengthM==0)
+                    logger.Debug("Distance between Source and Destination points is zero.");
+
+                return new LineString(null, geometryFactory);
+            }
+
+            previousTimeIntervalSeconds = minTimeIntervalSeconds + previousTimeIntervalSeconds;
+
+            xyCoordinates.Add(new Coordinate(x2, y2));
+            mOrdinates.Add(previousTimeIntervalSeconds);
+
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
+            for(var i = 0; i < coordinateSequence.Count; i++)
+            {
+                coordinateSequence.SetM(i, mOrdinates[i]);
+            }
+            coordinateSequence.ReleaseCoordinateArray();
+
+            return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        public Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode)
+        {
+            Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(2);
+            var transition = Tuple.Create<byte,int>(transportMode,-1);
+            transportModeTransitions.Add(origin.Idx,transition);
+            if(origin==destination)
+                transportModeTransitions.Add(-1,transition);
+            else
+                transportModeTransitions.Add(destination.Idx,transition);
+
+            return transportModeTransitions;
         }
 
         private bool isValidSequence(double[] m)
