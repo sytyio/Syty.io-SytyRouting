@@ -391,7 +391,7 @@ namespace SytyRouting
                 }
                 catch
                 {
-                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
+                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}. Table {1}", persona.Id, routeTable);
                     uploadFails++;
                 }
             }
@@ -400,7 +400,7 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails,  totalTime);
+            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, routeTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
         }
 
@@ -530,7 +530,7 @@ namespace SytyRouting
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database in {1} (d.hh:mm:s.ms)", personas.Count - uploadFails, totalTime);
+            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, routeTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
