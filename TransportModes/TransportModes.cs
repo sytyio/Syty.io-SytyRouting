@@ -292,6 +292,13 @@ namespace SytyRouting
             return transportMasks;
         }
 
+        public static int[] GetRouteTypes()
+        {
+            var routeTypes = RouteTypeToTransportModes.Keys.ToArray().Where(k=>k!=0).ToArray();
+            
+            return routeTypes;
+        }
+
         public static void LoadRoutingRules(TransportModeRoutingRule[] transportModeRoutingRules)
         {
             RoutingRules = TransportModes.CreateRoutingRules(transportModeRoutingRules);
