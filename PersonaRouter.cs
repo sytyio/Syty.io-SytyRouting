@@ -278,6 +278,10 @@ namespace SytyRouting
                             persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin,destination,firstMode);
 
                             persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+
+                            persona.SuccessfulRouteComputation = true;
+
+                            Interlocked.Increment(ref computedRoutes);
                         }
                         else
                         {
