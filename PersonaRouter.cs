@@ -244,6 +244,12 @@ namespace SytyRouting
                 {
                     var persona = personaArray[i];
 
+                    //debug:
+                    if(persona.Id==1977)
+                    {
+                        Console.WriteLine("Problemo ici");
+                    }
+
                     try
                     {
                         var originX = persona.HomeLocation!.X;
@@ -285,7 +291,7 @@ namespace SytyRouting
                         }
                         else
                         {
-                            route = routingAlgorithm.GetRoute(originX, originY, destinationX, destinationY, requestedTransportModes);
+                            route = routingAlgorithm.GetRoute(origin, destination, requestedTransportModes);
                         }
 
                         if(route != null)
