@@ -44,6 +44,16 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
+        public List<Node> GetRoute(Node origin, Node destination, byte[] transportModesSequence)
+        {
+            if (_graph == null)
+            {
+                throw new ArgumentException("You must initialize the routing algorithm first!");
+            }
+            
+            return RouteSearch(origin, destination, transportModesSequence);
+        }
+
         public List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, byte[] transportModesSequence)
         {
             if (_graph == null)
