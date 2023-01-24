@@ -2,6 +2,7 @@ using System.Diagnostics;
 using NetTopologySuite.Geometries;
 using NLog;
 using SytyRouting.Algorithms;
+using SytyRouting.Algorithms.Dijkstra;
 using SytyRouting.Model;
 
 namespace SytyRouting
@@ -590,6 +591,117 @@ namespace SytyRouting
             //     }
             // }
         }
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Destination not reached issue
+
+        public static void EviscerateStep(DijkstraStep step, Dictionary<int, double> bestScoreForNode)
+        {
+            if(step.PreviousStep is not null)
+            {
+                Console.WriteLine(@"Previous step :: ActiveNodeId: {0}, 
+                                                    CumulatedCost: {1}, 
+                                                    Direction: {2}, 
+                                                    SequenceIndex: {3}, 
+                                                    TransportMode: {4}, 
+                                                    OutboundRouteType: {5}",
+                                                    step.PreviousStep.ActiveNode.Idx,
+                                                    step.PreviousStep.CumulatedCost,
+                                                    step.PreviousStep.Direction,
+                                                    step.PreviousStep.TransportSequenceIndex,
+                                                    TransportModes.SingleMaskToString(step.PreviousStep.TransportMode),
+                                                    step.PreviousStep.OutboundRouteType);
+
+                TraceOneNode(step.PreviousStep.ActiveNode);
+                
+            }
+            else
+            {
+                Console.WriteLine(@"Previous step :: null"); 
+            }
+
+            Console.WriteLine(@"Current step :: ActiveNodeId: {0}, 
+                                                    CumulatedCost: {1}, 
+                                                    Direction: {2}, 
+                                                    SequenceIndex: {3}, 
+                                                    TransportMode: {4}, 
+                                                    OutboundRouteType: {5}",
+                                                    step.ActiveNode.Idx,
+                                                    step.CumulatedCost,
+                                                    step.Direction,
+                                                    step.TransportSequenceIndex,
+                                                    TransportModes.SingleMaskToString(step.TransportMode),
+                                                    step.OutboundRouteType);
+
+            TraceOneNode(step.ActiveNode);
+
+            Console.WriteLine("Node Scores:");
+            Console.WriteLine("Node: Cumulated cost");
+            // foreach(var score in bestScoreForNode)
+            // {
+            //     Console.WriteLine("{0,10}:{1,30}", score.Key,score.Value);
+            // }
+
+        }
+
+        public static void TraceOneNode(Node node)
+        {
+            logger.Info("Idx = {0}, OsmId =  {1}, nb in {2}, nb out {3}, idx {4}, coord = {5} {6}, T = {7}, s = {8}", node.Idx,
+            node.OsmID, node.InwardEdges.Count, node.OutwardEdges.Count, node.Idx, node.Y, node.X, node.ValidTarget, node.ValidSource);
+            TraceEdges(node);
+
+            var availableInboundTransportModes = TransportModes.MaskToString(node.GetAvailableInboundTransportModes());
+            var availableOutboundTransportModes = TransportModes.MaskToString(node.GetAvailableOutboundTransportModes());
+            logger.Debug("Available Inbound Transport Modes for Node {0}: {1}", node.OsmID, availableInboundTransportModes);
+            logger.Debug("Available Outbound Transport Modes for Node {0}: {1}", node.OsmID, availableOutboundTransportModes);
+            logger.Debug("\n");
+        }
+        private static void TraceEdges(Node node)
+        {
+            logger.Info("\tInward Edges in Node {0}:", node.OsmID);
+            foreach (var edge in node.InwardEdges)
+            {
+                TraceEdge(edge);
+            }
+
+            logger.Info("\tOutward Edges in Node {0}:", node.OsmID);
+            foreach (var edge in node.OutwardEdges)
+            {
+                TraceEdge(edge);
+            }
+        }
+
+        private static void TraceEdge(Edge edge)
+        {
+             logger.Info("\t\t > Edge: \tSource Id: {0} ({1},{2});\tTarget Id: {3} ({4},{5});\tTransport Modes: {6}, length = {7} (m), speed = {8} (m/2), Route type = {9}",
+                    edge.SourceNode?.Idx, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.Idx, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.LengthM,edge.MaxSpeedMPerS, edge.TagIdRouteType);
+            // logger.Info("\t\t > Edge: {0},\tcost: {1},\tSource Id: {2} ({3},{4});\tTarget Id: {5} ({6},{7});\tTransport Modes: {8} (mask: {9}) length = {10} speed = {11}",
+            //         edge.OsmID, edge.Cost, edge.SourceNode?.OsmID, edge.SourceNode?.X, edge.SourceNode?.Y, edge.TargetNode?.OsmID, edge.TargetNode?.X, edge.TargetNode?.Y, TransportModes.MaskToString(edge.TransportModes), edge.TransportModes,edge.LengthM,edge.MaxSpeedMPerS);
+
+            TraceInternalGeometry(edge);
+        }
+
+        private static void TraceInternalGeometry(Edge edge)
+        {
+            if (edge.InternalGeometry is not null)
+            {
+                logger.Debug("\t\t   Internal geometry in Edge {0}:", edge.OsmID);
+                foreach (var xymPoint in edge.InternalGeometry)
+                {
+                    logger.Debug("\t\t\tX: {0},\tY: {1},\tM: {2};",
+                        xymPoint.X, xymPoint.Y, xymPoint.M);
+                }
+            }
+            else
+            {
+                logger.Debug("\t\t   No Internal geometry in Edge {0}:", edge.OsmID);
+            }
+        }
+
+
 
 
 
