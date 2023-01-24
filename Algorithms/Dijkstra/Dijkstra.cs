@@ -28,16 +28,16 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     AddStep(null, originNode, 0, 0, transportMode, outboundEdge.TagIdRouteType);
                 }
-                else
-                {
-                    StartWithAvailableTransportModes(originNode);
-                    sequenceLength = 0;
-                }
+                // else
+                // {
+                //     StartWithAvailableTransportModes(originNode);
+                //     sequenceLength = 0;
+                // }
             }
-            else
-            {
-                StartWithAvailableTransportModes(originNode);
-            }
+            // else
+            // {
+            //     StartWithAvailableTransportModes(originNode);
+            // }
 
             Node activeNode = new Node();
 
@@ -47,14 +47,14 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                 int currentTransportIndex = currentStep.TransportSequenceIndex;
                 byte currentTransportMask;
-                if(sequenceLength>0)
-                {
+                // if(sequenceLength>0)
+                // {
                     currentTransportMask = transportModesSequence[currentTransportIndex];
-                }
-                else
-                {
-                    currentTransportMask = currentStep.TransportMode;
-                }
+                // }
+                // else
+                // {
+                //     currentTransportMask = currentStep.TransportMode;
+                // }
                 
                 if(activeNode == destinationNode)
                 {
@@ -70,8 +70,8 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         var edgeTransportModes = outwardEdge.TransportModes;
 
-                        if(sequenceLength>0)
-                        {
+                        //if(sequenceLength>0)
+                        //{
                             var transportMode = currentTransportMask;
                          
                             if((edgeTransportModes & transportMode) == transportMode)
@@ -96,24 +96,24 @@ namespace SytyRouting.Algorithms.Dijkstra
                                     AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
                                 }
                             }
-                        }
-                        else
-                        {           
-                            var key = TransportModes.RoutingRulesContainKey(currentTransportMask);         
+                        //}
+                        //else
+                        //{           
+                        //     var key = TransportModes.RoutingRulesContainKey(currentTransportMask);         
 
-                            if(key!=0)
-                            {
-                                var alternativeTransportModes = TransportModes.MaskToList(TransportModes.RoutingRules[key]);
-                                foreach(var transportMode in alternativeTransportModes)
-                                {
-                                    if((edgeTransportModes & transportMode) == transportMode)
-                                    {
-                                        var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                                        AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode, outwardEdge.TagIdRouteType);
-                                    }
-                                }
-                            }                    
-                        }
+                        //     if(key!=0)
+                        //     {
+                        //         var alternativeTransportModes = TransportModes.MaskToList(TransportModes.RoutingRules[key]);
+                        //         foreach(var transportMode in alternativeTransportModes)
+                        //         {
+                        //             if((edgeTransportModes & transportMode) == transportMode)
+                        //             {
+                        //                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
+                        //                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode, outwardEdge.TagIdRouteType);
+                        //             }
+                        //         }
+                        //     }                    
+                        // }
                     }
                 }
             }
