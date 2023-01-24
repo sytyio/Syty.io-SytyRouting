@@ -28,16 +28,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     AddStep(null, originNode, 0, 0, transportMode, outboundEdge.TagIdRouteType);
                 }
-                // else
-                // {
-                //     StartWithAvailableTransportModes(originNode);
-                //     sequenceLength = 0;
-                // }
             }
-            // else
-            // {
-            //     StartWithAvailableTransportModes(originNode);
-            // }
 
             Node activeNode = new Node();
 
@@ -47,15 +38,9 @@ namespace SytyRouting.Algorithms.Dijkstra
 
                 int currentTransportIndex = currentStep.TransportSequenceIndex;
                 byte currentTransportMask;
-                // if(sequenceLength>0)
-                // {
-                    currentTransportMask = transportModesSequence[currentTransportIndex];
-                // }
-                // else
-                // {
-                //     currentTransportMask = currentStep.TransportMode;
-                // }
-                
+             
+                currentTransportMask = transportModesSequence[currentTransportIndex];
+                             
                 if(activeNode == destinationNode)
                 {
                     ReconstructRoute(currentStep);
@@ -70,50 +55,30 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         var edgeTransportModes = outwardEdge.TransportModes;
 
-                        //if(sequenceLength>0)
-                        //{
-                            var transportMode = currentTransportMask;
-                         
-                            if((edgeTransportModes & transportMode) == transportMode)
+                        var transportMode = currentTransportMask;
+                        
+                        if((edgeTransportModes & transportMode) == transportMode)
+                        {
+                            var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode, outwardEdge.TagIdRouteType);
+                        }
+
+                        if((transportMode & TransportModes.PublicModes) != 0 && (edgeTransportModes & TransportModes.DefaultMode) == TransportModes.DefaultMode)
+                        {
+                            var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, TransportModes.DefaultMode);
+                            AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode, outwardEdge.TagIdRouteType);
+                        }
+
+                        if(currentTransportIndex>=0 && currentTransportIndex<sequenceLength-1)
+                        {
+                            byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
+
+                            if((edgeTransportModes & nextTransportMode) == nextTransportMode)
                             {
-                                var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode, outwardEdge.TagIdRouteType);
+                                var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
+                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
                             }
-
-                            if((transportMode & TransportModes.PublicModes) != 0 && (edgeTransportModes & TransportModes.DefaultMode) == TransportModes.DefaultMode)
-                            {
-                                var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, TransportModes.DefaultMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode, outwardEdge.TagIdRouteType);
-                            }
-
-                            if(currentTransportIndex>=0 && currentTransportIndex<sequenceLength-1)
-                            {
-                                byte nextTransportMode = transportModesSequence[currentTransportIndex+1];
-
-                                if((edgeTransportModes & nextTransportMode) == nextTransportMode)
-                                {
-                                    var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
-                                    AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
-                                }
-                            }
-                        //}
-                        //else
-                        //{           
-                        //     var key = TransportModes.RoutingRulesContainKey(currentTransportMask);         
-
-                        //     if(key!=0)
-                        //     {
-                        //         var alternativeTransportModes = TransportModes.MaskToList(TransportModes.RoutingRules[key]);
-                        //         foreach(var transportMode in alternativeTransportModes)
-                        //         {
-                        //             if((edgeTransportModes & transportMode) == transportMode)
-                        //             {
-                        //                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
-                        //                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, -1, transportMode, outwardEdge.TagIdRouteType);
-                        //             }
-                        //         }
-                        //     }                    
-                        // }
+                        }
                     }
                 }
             }
@@ -129,18 +94,6 @@ namespace SytyRouting.Algorithms.Dijkstra
             bestScoreForNode.Clear();
 
             return route;
-        }
-
-        private void StartWithAvailableTransportModes(Node originNode)
-        {
-            foreach(var outwardEdge in originNode.OutwardEdges)
-            {
-                var availableTransportModes = TransportModes.MaskToList(outwardEdge.TransportModes);
-                foreach(var transportMode in availableTransportModes)
-                {
-                    AddStep(null, originNode, 0, -1, transportMode, outwardEdge.TagIdRouteType);
-                }
-            }
         }
 
         private void AddStep(DijkstraStep? previousStep, Node? nextNode, double cumulatedCost, int transportSequenceIndex, byte transportMode, int outboundRouteType)
