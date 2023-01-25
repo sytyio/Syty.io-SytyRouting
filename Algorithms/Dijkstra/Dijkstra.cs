@@ -73,30 +73,17 @@ namespace SytyRouting.Algorithms.Dijkstra
                         if(sequenceLength>0)
                         {
                             var transportMode = currentTransportMask;
-                            //debug:
-                            var edgeCandidateFound=false;
-                            //
                          
                             if((edgeTransportModes & transportMode) == transportMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, transportMode);
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, transportMode, outwardEdge.TagIdRouteType);
-                                //debug:
-                                if(PersonaRouter.DebugTraceOn)
-                                    Console.WriteLine("Edge with the current TM found");
-                                edgeCandidateFound=true;
-                                //
                             }
 
                             if((transportMode & TransportModes.PublicModes) != 0 && (edgeTransportModes & TransportModes.DefaultMode) == TransportModes.DefaultMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, TransportModes.DefaultMode);
                                 AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex, TransportModes.DefaultMode, outwardEdge.TagIdRouteType);
-                                //debug:
-                                if(PersonaRouter.DebugTraceOn)
-                                    Console.WriteLine("Edge with the next pedestrian mode found");
-                                edgeCandidateFound=true;
-                                //
                             }
 
                             if(currentTransportIndex>=0 && currentTransportIndex<sequenceLength-1)
@@ -107,20 +94,8 @@ namespace SytyRouting.Algorithms.Dijkstra
                                 {
                                     var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
                                     AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
-                                    //debug:
-                                    if(PersonaRouter.DebugTraceOn)
-                                        Console.WriteLine("Edge with the next TM found");
-                                    edgeCandidateFound=true;
-                                    //
                                 }
                             }
-                            //debug:
-                            if(edgeCandidateFound==false)
-                            {
-                                if(PersonaRouter.DebugTraceOn)
-                                    Console.WriteLine("No edge candidate found.");
-                            }
-                            //
                         }
                         else
                         {           
@@ -142,18 +117,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                     }
                 }
             }
-
-            //debug:
-            if(activeNode!=destinationNode)
-            {
-                logger.Debug("!############################!");
-                logger.Debug(" Destination node not reached!");
-                logger.Debug("!############################!");
-                if(PersonaRouter.DebugTraceOn)
-                    Environment.Exit(0);
-
-            }
-            //
 
             dijkstraStepsQueue.Clear();
             bestScoreForNode.Clear();
@@ -189,11 +152,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     bestScoreForNode[nextNode.Idx] = cumulatedCost;
                 }
-
-                //debug:
-                if(PersonaRouter.DebugTraceOn)
-                    TestBench.EviscerateStep(step, bestScoreForNode);
-                //
             }
         }
 

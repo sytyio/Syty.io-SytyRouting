@@ -11,17 +11,13 @@ namespace SytyRouting
 {
     public class PersonaRouter
     {
-        //debug:
-        public static bool DebugTraceOn {get;set;} =false;
-        //
-
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private List<Persona> personas = new List<Persona>();
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = 1;//Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
@@ -79,14 +75,14 @@ namespace SytyRouting
                 int t = taskIndex;
                 routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
-            //debug://Task monitorTask = Task.Run(() => MonitorRouteCalculation());
+            Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
-            //debug://Task.WaitAll(monitorTask);
+            Task.WaitAll(monitorTask);
 
             ////await DBPersonaRoutesUploadAsync();
-            //debug://await DBRouteBenchmarkUploadAsync();
+            await DBRouteBenchmarkUploadAsync();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -122,10 +118,7 @@ namespace SytyRouting
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                        0   1              2              3
-                //<-debug:->//
                 var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
-                //var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " WHERE id = 1977 ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
-                //
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -250,17 +243,6 @@ namespace SytyRouting
                 for(var i = 0; i < personaArray.Length; i++)
                 {
                     var persona = personaArray[i];
-
-                    //debug:
-                    DebugTraceOn=false;
-                    if(persona.Id==5366) //5172) //3558) //3558) //2770) //1977)
-                    {
-                        //Console.WriteLine("Skipping computation for persona Id {0}", persona.Id);
-                        //continue;
-                        Console.WriteLine("Probe {0}", persona.Id);
-                        DebugTraceOn=true;
-                    }
-                    //
 
                     try
                     {
