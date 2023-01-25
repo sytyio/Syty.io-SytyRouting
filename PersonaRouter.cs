@@ -81,7 +81,7 @@ namespace SytyRouting
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            //await DBPersonaRoutesUploadAsync();
+            ////await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();
 
             stopWatch.Stop();
@@ -278,10 +278,14 @@ namespace SytyRouting
                             persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin,destination,firstMode);
 
                             persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+
+                            persona.SuccessfulRouteComputation = true;
+
+                            Interlocked.Increment(ref computedRoutes);
                         }
                         else
                         {
-                            route = routingAlgorithm.GetRoute(originX, originY, destinationX, destinationY, requestedTransportModes);
+                            route = routingAlgorithm.GetRoute(origin, destination, requestedTransportModes);
                         }
 
                         if(route != null)
