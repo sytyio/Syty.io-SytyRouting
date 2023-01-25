@@ -81,7 +81,7 @@ namespace SytyRouting
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            //await DBPersonaRoutesUploadAsync();
+            ////await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();
 
             stopWatch.Stop();
@@ -285,7 +285,7 @@ namespace SytyRouting
                         }
                         else
                         {
-                            route = routingAlgorithm.GetRoute(originX, originY, destinationX, destinationY, requestedTransportModes);
+                            route = routingAlgorithm.GetRoute(origin, destination, requestedTransportModes);
                         }
 
                         if(route != null)
