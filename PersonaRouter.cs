@@ -246,14 +246,14 @@ namespace SytyRouting
 
                     try
                     {
-                        var originX = persona.HomeLocation!.X;
-                        var originY = persona.HomeLocation.Y;
+                        var homeX = persona.HomeLocation!.X;
+                        var homeY = persona.HomeLocation.Y;
                         
-                        var destinationX = persona.WorkLocation!.X;
-                        var destinationY = persona.WorkLocation.Y;
+                        var workX = persona.WorkLocation!.X;
+                        var workY = persona.WorkLocation.Y;
                         
                         var requestedTransportModes = persona.RequestedTransportSequence;
-                        var firstMode = requestedTransportModes[0];
+                        //var firstMode = requestedTransportModes[0];
 
                         TimeSpan currentTime = TimeSpan.Zero;
 
@@ -266,7 +266,7 @@ namespace SytyRouting
                         {
                             logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
 
-                            persona.Route = routingAlgorithm.OriginToDestinationLineString(originX,originY,destinationX,destinationY,firstMode,currentTime);
+                            persona.Route = routingAlgorithm.TwoPointLineString(homeX, homeY, workX, workY, TransportModes.DefaultMode, currentTime);
 
                             if(persona.Route.IsEmpty)
                             {
@@ -275,7 +275,7 @@ namespace SytyRouting
                                 continue;
                             }
 
-                            persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin,destination,firstMode);
+                            persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
 
                             persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
 
@@ -292,7 +292,7 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(route, currentTime);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(homeX, homeY, workX, workY, route, currentTime);
 
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 

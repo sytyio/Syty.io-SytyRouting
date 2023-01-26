@@ -83,18 +83,22 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
-        public LineString NodeRouteToLineStringMMilliseconds(List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString NodeRouteToLineStringMMilliseconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
 
-            if(nodeRoute.Count <= 1)
+            var points = nodeRoute.Count;
+
+            if(points <= 1)
             {
                 return new LineString(null, geometryFactory);
             }
             
-            List<Coordinate> xyCoordinates = new List<Coordinate>(0);
+            List<Coordinate> xyCoordinates = new List<Coordinate>(points+2); //+1 start point (home) +1 end point (work)
             List<double> mOrdinates = new List<double>(0);
+
+            var startSegment = TwoPointLineString(startX, startY, endX, endY, TransportModes.DefaultMode, initialTimeStamp);
 
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
@@ -154,7 +158,7 @@ namespace SytyRouting.Algorithms
             return new LineString(coordinateSequence, geometryFactory);
         }
 
-        public LineString OriginToDestinationLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
+        public LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);

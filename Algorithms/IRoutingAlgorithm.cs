@@ -13,9 +13,9 @@ namespace SytyRouting.Algorithms
 
         Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions();
         
-        LineString NodeRouteToLineStringMMilliseconds(List<Node> route, TimeSpan initialTimeStamp);
+        LineString NodeRouteToLineStringMMilliseconds(double startX, double startY, double endX, double endY, List<Node> route, TimeSpan initialTimeStamp);
         
-        LineString OriginToDestinationLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp);
+        LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp);
         Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode);
 
         double GetRouteCost();
