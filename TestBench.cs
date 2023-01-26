@@ -191,8 +191,6 @@ namespace SytyRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        
-
 
         // From NetTopologySuite/src/NetTopologySuite/Algorithm/Length.cs
         public static double GeometryLength(Coordinate[] coordinates)
@@ -373,6 +371,24 @@ namespace SytyRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // M ordinate verification (time stamps)
+
+        private static bool isValidSequence(double[] m)
+        {
+            if(m.Length>0)
+            {
+                for(int i=1; i<m.Length; i++)
+                {
+                    if(m[i]<=m[i-1])
+                    {
+                        Console.WriteLine("M sequence inconsistency");
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
         public static void DisplayEdgesWithLessThanXMLength(Edge edge,double xm)
         {
             if(edge.LengthM==xm && edge.TagIdRouteType == 13)

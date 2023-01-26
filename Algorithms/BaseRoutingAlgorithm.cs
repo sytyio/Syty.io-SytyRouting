@@ -228,23 +228,6 @@ namespace SytyRouting.Algorithms
             return transportModeTransitions;
         }
 
-        private bool isValidSequence(double[] m)
-        {
-            if(m.Length>0)
-            {
-                for(int i=1; i<m.Length; i++)
-                {
-                    if(m[i]<=m[i-1])
-                    {
-                        Console.WriteLine("M sequence inconsistency");
-                        return false;
-                    }
-                }
-                return true;
-            }
-            return false;
-        }
-
         public double GetRouteCost()
         {
             return routeCost;

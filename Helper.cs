@@ -78,15 +78,6 @@ namespace SytyRouting
             return elapsedTime;
         }
 
-        public static string FormatElapsedTimeHHMMSS(TimeSpan timeSpan)
-        {
-            // Format: hh:mm:ss
-            string elapsedTime = String.Format("{0:00}:{1:00}:{2:00}",
-                timeSpan.Days*24+timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
-
-            return elapsedTime;
-        }
-
         public static double GetSquaredDistance(double x1, double y1, double x2, double y2)
         {
             return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2);
