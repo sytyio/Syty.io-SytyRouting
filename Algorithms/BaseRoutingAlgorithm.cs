@@ -83,7 +83,7 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
-        public LineString NodeRouteToLineStringMMilliseconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
@@ -102,10 +102,11 @@ namespace SytyRouting.Algorithms
 
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
-            var previousTimeIntervalMilliseconds = initialTimeStamp.TotalMilliseconds;
+            //debug: var previousTimeIntervalMilliseconds = initialTimeStamp.TotalMilliseconds;
+            var previousTimeIntervalS = initialTimeStamp.TotalSeconds;
 
             xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
-            mOrdinates.Add(previousTimeIntervalMilliseconds);
+            mOrdinates.Add(previousTimeIntervalS);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {   
@@ -119,7 +120,8 @@ namespace SytyRouting.Algorithms
                         return new LineString(null, geometryFactory);
                     }
                     
-                    var minTimeIntervalMilliseconds = edge.LengthM / edge.MaxSpeedMPerS * 1000; // [s]*[1000 ms / 1s]
+                    //debug: var minTimeIntervalMilliseconds = edge.LengthM / edge.MaxSpeedMPerS * 1000; // [s]*[1000 ms / 1s]
+                    var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
 
                     if(edge.InternalGeometry is not null)
                     {
@@ -127,7 +129,7 @@ namespace SytyRouting.Algorithms
                         {
                             var internalPointX = edge.InternalGeometry[j].X;
                             var internalPointY = edge.InternalGeometry[j].Y;
-                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalMilliseconds + previousTimeIntervalMilliseconds;
+                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalS + previousTimeIntervalS;
 
                             xyCoordinates.Add(new Coordinate(internalPointX, internalPointY));
                             mOrdinates.Add(internalPointM);
@@ -137,10 +139,10 @@ namespace SytyRouting.Algorithms
                     var targetPointX = edge.TargetNode.X;
                     var targetPointY = edge.TargetNode.Y;
 
-                    previousTimeIntervalMilliseconds = minTimeIntervalMilliseconds + previousTimeIntervalMilliseconds;
+                    previousTimeIntervalS = minTimeIntervalS + previousTimeIntervalS;
 
                     xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
-                    mOrdinates.Add(previousTimeIntervalMilliseconds);
+                    mOrdinates.Add(previousTimeIntervalS);
                 }
                 else
                 {
@@ -168,30 +170,25 @@ namespace SytyRouting.Algorithms
 
             var sourcePointX = x1;
             var sourcePointY = y1;
-            var previousTimeIntervalSeconds = initialTimeStamp.TotalSeconds;
+            var previousTimeIntervalS = initialTimeStamp.TotalSeconds;
 
             xyCoordinates.Add(new Coordinate(x1,y1));
-            mOrdinates.Add(previousTimeIntervalSeconds);
+            mOrdinates.Add(previousTimeIntervalS);
 
             var lengthM = Helper.GetDistance(x1,y1,x2,y2);
             
-            double minTimeIntervalSeconds;
-            if(lengthM != 0 && TransportModes.MasksToSpeeds.ContainsKey(transportMode))
+            if(lengthM == 0)
             {
-                minTimeIntervalSeconds = lengthM / TransportModes.MasksToSpeeds[transportMode];
-            }
-            else
-            {
-                if(lengthM==0)
-                    logger.Debug("Distance between Source and Destination points is zero.");
-
+                logger.Debug("Distance between Origin and Destination points is zero.");
                 return new LineString(null, geometryFactory);
             }
 
-            previousTimeIntervalSeconds = minTimeIntervalSeconds + previousTimeIntervalSeconds;
+            double minTimeIntervalS = GetTimeInterval(lengthM,transportMode);      
+
+            previousTimeIntervalS = minTimeIntervalS + previousTimeIntervalS;
 
             xyCoordinates.Add(new Coordinate(x2, y2));
-            mOrdinates.Add(previousTimeIntervalSeconds);
+            mOrdinates.Add(previousTimeIntervalS);
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
@@ -201,6 +198,22 @@ namespace SytyRouting.Algorithms
             coordinateSequence.ReleaseCoordinateArray();
 
             return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        private double GetTimeInterval(double distanceM, byte transportMode)
+        {
+            double timeInterval=0;
+            if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
+            {
+                timeInterval = distanceM / TransportModes.MasksToSpeeds[transportMode];
+            }
+            else
+            {
+                logger.Debug("Requested transport mode '{0}' not found.", TransportModes.SingleMaskToString(transportMode));
+                throw new Exception("Unable to calculate the requested time interval.");
+            }
+
+            return timeInterval;
         }
 
         public Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode)

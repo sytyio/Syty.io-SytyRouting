@@ -292,7 +292,7 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMMilliseconds(homeX, homeY, workX, workY, route, currentTime);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
 
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
@@ -454,21 +454,24 @@ namespace SytyRouting
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
 
-                    if(persona.Route is not null)
-                    {
-                        var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
+                    //debug:
+                    // if(persona.Route is not null)
+                    // {
+                    //      //debug: var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
 
-                        await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
-                        {
-                            Parameters =
-                            {
-                                new() { Value = persona.Id },
-                                new() { Value = routeMSeconds },
-                            }
-                        };
+                    //      var routeMSeconds = persona.Route;
+
+                    //     await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
+                    //     {
+                    //         Parameters =
+                    //         {
+                    //             new() { Value = persona.Id },
+                    //             new() { Value = routeMSeconds },
+                    //         }
+                    //     };
                     
-                        await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
-                    }
+                    //     await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
+                    // }
                         
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
@@ -497,17 +500,18 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
+             //debug: await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
+             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route_m_seconds);", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET computed_route_temporal_point = computed_route_m_seconds::tgeompoint WHERE is_valid_route = true;", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET computed_route_temporal_point = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -556,34 +560,35 @@ namespace SytyRouting
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
-        private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
-        {
-            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-            var geometryFactory = new GeometryFactory(sequenceFactory);
+        //debug:
+        // private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
+        // {
+        //     var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+        //     var geometryFactory = new GeometryFactory(sequenceFactory);
 
-            if(route.Count <= 1)
-            {
-                return new LineString(null, geometryFactory);
-            }
+        //     if(route.Count <= 1)
+        //     {
+        //         return new LineString(null, geometryFactory);
+        //     }
 
-            var newRoute = route.Copy();
-            var newRouteCoordinates = newRoute.Coordinates;
-            var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
+        //     var newRoute = route.Copy();
+        //     var newRouteCoordinates = newRoute.Coordinates;
+        //     var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
 
-            for(var i = 0; i < newRouteCoordinates.Length; i++)
-            {   
-                mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
-            }
+        //     for(var i = 0; i < newRouteCoordinates.Length; i++)
+        //     {   
+        //         mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
+        //     }
 
-            var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
-            for(var i = 0; i < coordinateSequence.Count; i++)
-            {
-                coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds / 1000.0);
-            }
-            coordinateSequence.ReleaseCoordinateArray();
+        //     var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
+        //     for(var i = 0; i < coordinateSequence.Count; i++)
+        //     {
+        //         coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds / 1000.0);
+        //     }
+        //     coordinateSequence.ReleaseCoordinateArray();
 
-            return new LineString(coordinateSequence, geometryFactory);
-        }
+        //     return new LineString(coordinateSequence, geometryFactory);
+        // }
 
         public void TracePersonaDetails(Persona persona)
         {
@@ -640,7 +645,7 @@ namespace SytyRouting
             for(var n = 0; n < routeCoordinates.Length; n++)
             {
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
-                timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[n].M)); // <- debug: check units
                 routeNodeString += String.Format(" {0,14},", node.OsmID);
                 routeTimeStampString += String.Format(" {0,14},", timeStamp);
                 if(n>2)
@@ -649,7 +654,7 @@ namespace SytyRouting
                 }  
             }
             node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
-            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
+            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M)); // <- debug: check units
             routeNodeString += String.Format(" ..., {0,14} ", node.OsmID);
             routeTimeStampString += String.Format(" ..., {0,14} ", timeStamp);
             logger.Debug(routeNodeString);
@@ -680,7 +685,7 @@ namespace SytyRouting
                 currentM = routeCoordinates[n].M;
                 node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
                 if(route.Coordinates[n].M<double.MaxValue)
-                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[n].M)); // <- debug: check units
                 else
                     timeStamp = "Inf <<<===";
                 if(previousM>=currentM)
@@ -749,7 +754,7 @@ namespace SytyRouting
                             else
                                 routeTagS      = String.Format("{0,30}","Not available");
                             routeTransportModesS = String.Format("{0,30}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
-                            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[n].M));
+                            timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[n].M)); // <- debug: check units
                             vertexS      = String.Format("{0,8}", n+1);
                             nodeS        = String.Format("{0,20}", node.OsmID);
                             timeStampS   = String.Format("{0,14}", timeStamp);
@@ -767,7 +772,7 @@ namespace SytyRouting
                         }
                     }
                     node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
-                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M));
+                    timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M)); // <- debug: check units
                     vertexS        = String.Format("{0,8}", routeCoordinates.Length);
                     nodeS          = String.Format("{0,20}", node.OsmID);
                     timeStampS     = String.Format("{0,14}", timeStamp);
@@ -834,14 +839,14 @@ namespace SytyRouting
                     if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
                         transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
                     
-                    timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[n].M)));
+                    timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
                     transportModes.Add(transportModeS);
                 } 
             }
             
             node = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
 
-            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromMilliseconds(route.Coordinates[route.Count -1].M)));
+            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); // <- debug: check units
 
             if(transitions.ContainsKey(node.Idx))
             {

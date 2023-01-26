@@ -148,10 +148,12 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route_m_seconds GEOMETRY;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            //debug:
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route_m_seconds GEOMETRY;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+            //
 
             await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;", connection))
             {
