@@ -102,7 +102,7 @@ namespace SytyRouting.Algorithms
 
             var sourcePointX = nodeRoute[0].X;
             var sourcePointY = nodeRoute[0].Y;
-            //debug: var previousTimeIntervalMilliseconds = initialTimeStamp.TotalMilliseconds;
+
             var previousTimeIntervalS = initialTimeStamp.TotalSeconds;
 
             xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
@@ -120,7 +120,6 @@ namespace SytyRouting.Algorithms
                         return new LineString(null, geometryFactory);
                     }
                     
-                    //debug: var minTimeIntervalMilliseconds = edge.LengthM / edge.MaxSpeedMPerS * 1000; // [s]*[1000 ms / 1s]
                     var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
 
                     if(edge.InternalGeometry is not null)

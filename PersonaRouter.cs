@@ -453,25 +453,6 @@ namespace SytyRouting
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
-
-                    //debug:
-                    // if(persona.Route is not null)
-                    // {
-                    //      //debug: var routeMSeconds = ConverRouteMMillisecondsToMSeconds(persona.Route);
-
-                    //      var routeMSeconds = persona.Route;
-
-                    //     await using var cmd_insert_tgeompoint = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, computed_route_m_seconds) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET computed_route_m_seconds = $2", connection)
-                    //     {
-                    //         Parameters =
-                    //         {
-                    //             new() { Value = persona.Id },
-                    //             new() { Value = routeMSeconds },
-                    //         }
-                    //     };
-                    
-                    //     await cmd_insert_tgeompoint.ExecuteNonQueryAsync();
-                    // }
                         
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
@@ -500,8 +481,7 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-             //debug: await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route_m_seconds);", connection))
-             await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -559,36 +539,6 @@ namespace SytyRouting
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
-
-        //debug:
-        // private LineString ConverRouteMMillisecondsToMSeconds(LineString route)
-        // {
-        //     var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-        //     var geometryFactory = new GeometryFactory(sequenceFactory);
-
-        //     if(route.Count <= 1)
-        //     {
-        //         return new LineString(null, geometryFactory);
-        //     }
-
-        //     var newRoute = route.Copy();
-        //     var newRouteCoordinates = newRoute.Coordinates;
-        //     var mOrdinates = new TimeSpan[newRouteCoordinates.Length];
-
-        //     for(var i = 0; i < newRouteCoordinates.Length; i++)
-        //     {   
-        //         mOrdinates[i] = TimeSpan.FromMilliseconds(newRouteCoordinates[i].M);
-        //     }
-
-        //     var coordinateSequence = new DotSpatialAffineCoordinateSequence(newRouteCoordinates, Ordinates.XYM);
-        //     for(var i = 0; i < coordinateSequence.Count; i++)
-        //     {
-        //         coordinateSequence.SetM(i, mOrdinates[i].TotalMilliseconds / 1000.0);
-        //     }
-        //     coordinateSequence.ReleaseCoordinateArray();
-
-        //     return new LineString(coordinateSequence, geometryFactory);
-        // }
 
         public void TracePersonaDetails(Persona persona)
         {
