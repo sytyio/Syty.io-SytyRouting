@@ -96,17 +96,22 @@ namespace SytyRouting.Algorithms
             }
             
             List<Coordinate> xyCoordinates = new List<Coordinate>(points+2); //+1 start point (home) +1 end point (work)
-            List<double> mOrdinates = new List<double>(0);
+            List<double> mOrdinates = new List<double>(points+2);
 
-            var startSegment = TwoPointLineString(startX, startY, endX, endY, TransportModes.DefaultMode, initialTimeStamp);
+            //var startSegment = TwoPointLineString(startX, startY, endX, endY, TransportModes.DefaultMode, initialTimeStamp);
 
-            var sourcePointX = nodeRoute[0].X;
-            var sourcePointY = nodeRoute[0].Y;
+            var firstNodeX = nodeRoute.First().X;
+            var firstNodeY = nodeRoute.First().Y;
 
-            var previousTimeIntervalS = initialTimeStamp.TotalSeconds;
+            var previousTimeInterval = initialTimeStamp.TotalSeconds;
+            
+            xyCoordinates.Add(new Coordinate(startX,startY));
+            mOrdinates.Add(previousTimeInterval);
 
-            xyCoordinates.Add(new Coordinate(sourcePointX, sourcePointY));
-            mOrdinates.Add(previousTimeIntervalS);
+            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,TransportModes.DefaultMode);
+
+            xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
+            mOrdinates.Add(previousTimeInterval);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {   
@@ -126,28 +131,36 @@ namespace SytyRouting.Algorithms
                     {
                         for(var j = 0; j < edge.InternalGeometry.Length; j++)
                         {
-                            var internalPointX = edge.InternalGeometry[j].X;
-                            var internalPointY = edge.InternalGeometry[j].Y;
-                            var internalPointM = edge.InternalGeometry[j].M * minTimeIntervalS + previousTimeIntervalS;
+                            var internalX = edge.InternalGeometry[j].X;
+                            var internalY = edge.InternalGeometry[j].Y;
+                            var internalM = edge.InternalGeometry[j].M * minTimeIntervalS + previousTimeInterval;
 
-                            xyCoordinates.Add(new Coordinate(internalPointX, internalPointY));
-                            mOrdinates.Add(internalPointM);
+                            xyCoordinates.Add(new Coordinate(internalX, internalY));
+                            mOrdinates.Add(internalM);
                         }
                     }
 
-                    var targetPointX = edge.TargetNode.X;
-                    var targetPointY = edge.TargetNode.Y;
+                    var targetX = edge.TargetNode.X;
+                    var targetY = edge.TargetNode.Y;
 
-                    previousTimeIntervalS = minTimeIntervalS + previousTimeIntervalS;
+                    previousTimeInterval = minTimeIntervalS + previousTimeInterval;
 
-                    xyCoordinates.Add(new Coordinate(targetPointX, targetPointY));
-                    mOrdinates.Add(previousTimeIntervalS);
+                    xyCoordinates.Add(new Coordinate(targetX, targetY));
+                    mOrdinates.Add(previousTimeInterval);
                 }
                 else
                 {
                     return new LineString(null, geometryFactory);
                 }
             }
+
+            var lastNodeX = nodeRoute.Last().X;
+            var lastNodeY = nodeRoute.Last().Y;
+
+            var endM = Get2PointTimeInterval(lastNodeX,lastNodeY,endX,endY,TransportModes.DefaultMode) + previousTimeInterval;
+            
+            xyCoordinates.Add(new Coordinate(endX,endY));
+            mOrdinates.Add(endM);
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
@@ -174,15 +187,7 @@ namespace SytyRouting.Algorithms
             xyCoordinates.Add(new Coordinate(x1,y1));
             mOrdinates.Add(previousTimeIntervalS);
 
-            var lengthM = Helper.GetDistance(x1,y1,x2,y2);
-            
-            if(lengthM == 0)
-            {
-                logger.Debug("Distance between Origin and Destination points is zero.");
-                return new LineString(null, geometryFactory);
-            }
-
-            double minTimeIntervalS = GetTimeInterval(lengthM,transportMode);      
+            double minTimeIntervalS = Get2PointTimeInterval(x1,y1,x2,y2,transportMode);
 
             previousTimeIntervalS = minTimeIntervalS + previousTimeIntervalS;
 
@@ -199,20 +204,35 @@ namespace SytyRouting.Algorithms
             return new LineString(coordinateSequence, geometryFactory);
         }
 
-        private double GetTimeInterval(double distanceM, byte transportMode)
+        private double Get2PointTimeInterval(double x1, double y1, double x2, double y2, byte transportMode)
         {
-            double timeInterval=0;
+            double timeInterval = 0;
+            var distance = Helper.GetDistance(x1,y1,x2,y2);
+            
+            if(distance == 0)
+            {
+                logger.Debug("Distance between Origin and Destination points is zero.");
+            }
+
             if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
             {
-                timeInterval = distanceM / TransportModes.MasksToSpeeds[transportMode];
+                timeInterval = distance / TransportModes.MasksToSpeeds[transportMode];
+
+                if(timeInterval>0)
+                {
+                    return timeInterval;
+                }
+                else
+                {
+                    logger.Debug("Time interval between Origin and Destination points is zero.");
+                }
             }
             else
             {
                 logger.Debug("Requested transport mode '{0}' not found.", TransportModes.SingleMaskToString(transportMode));
-                throw new Exception("Unable to calculate the requested time interval.");
             }
 
-            return timeInterval;
+            throw new Exception("Unable to calculate the requested time interval.");
         }
 
         public Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode)
