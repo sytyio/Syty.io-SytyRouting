@@ -95,10 +95,8 @@ namespace SytyRouting.Algorithms
                 return new LineString(null, geometryFactory);
             }
             
-            List<Coordinate> xyCoordinates = new List<Coordinate>(points+2); //+1 start point (home) +1 end point (work)
+            List<Coordinate> xyCoordinates = new List<Coordinate>(points+2); // points +1 start point (home) +1 end point (work)
             List<double> mOrdinates = new List<double>(points+2);
-
-            //var startSegment = TwoPointLineString(startX, startY, endX, endY, TransportModes.DefaultMode, initialTimeStamp);
 
             var firstNodeX = nodeRoute.First().X;
             var firstNodeY = nodeRoute.First().Y;
@@ -121,7 +119,7 @@ namespace SytyRouting.Algorithms
                 {
                     if(edge.MaxSpeedMPerS==0)
                     {
-                        Console.WriteLine("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
+                        logger.Debug("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
                         return new LineString(null, geometryFactory);
                     }
                     

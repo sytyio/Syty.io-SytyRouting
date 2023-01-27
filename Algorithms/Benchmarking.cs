@@ -195,7 +195,7 @@ namespace SytyRouting
                 }
                     
                 if(numberOfRuns > 10)
-                    Console.Write("Run {0,5}\b\b\b\b\b\b\b\b\b", i);
+                    logger.Debug("Run {0,5}\b\b\b\b\b\b\b\b\b", i);
             }
 
             stopWatch.Stop();
