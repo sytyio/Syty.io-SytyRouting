@@ -11,8 +11,9 @@ namespace SytyRouting
 
         public static int GtfsDefaultFoot = 13; // see on config file
 
-        public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();        
-        public static byte PublicModes; // mask of the public modes.
+        public static Dictionary<byte,byte> RoutingRules = new Dictionary<byte,byte>();
+        public static byte None; // 'Empty' mask to handle errors and wrong results.
+        public static byte PublicModes; // Mask of the public modes.
         public static Dictionary<int,double> RouteTypesToPenalties = new Dictionary<int,double>();
         public static Dictionary<byte,double> MasksToRoutingPenalties = new Dictionary<byte,double>();
         public static Dictionary<byte,double> MasksToSpeeds = new Dictionary<byte,double>();
@@ -80,7 +81,7 @@ namespace SytyRouting
             // Create bitmasks for the Transport Modes based on the configuration data using a Dictionary.
             try
             {
-                Masks.Add(0,0);
+                Masks.Add(0,0); // 0 -> No transport mode
                 for(int n = 0; n < transportModes.Length-1; n++)
                 {
                     var twoToTheNth = (byte)Math.Pow(2,n);
@@ -92,6 +93,7 @@ namespace SytyRouting
                 logger.Info("Transport Mode bitmask creation error: {0}", e.Message);
             }
 
+            TransportModes.None = Masks[0];
             TransportModes.DefaultMode = Masks[1];
             logger.Info("Default Transport Mode (pedestrian): {0}. (First transport mode in the configuration file.)", SingleMaskToString(TransportModes.DefaultMode));
 
