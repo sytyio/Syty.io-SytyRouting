@@ -557,6 +557,38 @@ namespace SytyRouting
             // }
         }
 
+        public static void SearchForEdgesByTargetValidityAndTransportMode(Graph _graph, bool isValidTarget, byte transportModes)
+        {
+            var nodes = _graph.GetNodes();
+            var validTargetNodes = nodes.Where(n=>n.ValidTarget==isValidTarget);
+            var inwardEdges = validTargetNodes.SelectMany(t=>t.InwardEdges).ToArray();
+            var inwardEdgesWithSelectedTransportMode = inwardEdges.Where(ie=>(ie.TransportModes & transportModes) == transportModes);
+
+            logger.Debug("{0,10} Nodes in the graph", nodes.Length);
+            logger.Debug("{0,10} Nodes where ValidTarget is {1} ",validTargetNodes.Count(),isValidTarget);
+            logger.Debug("{0,10} Inward Edges in the selected Nodes",inwardEdges.Length);
+            logger.Debug("{0,10} Inward Edges in the selected Nodes with transport mode(s) '{1}'",inwardEdgesWithSelectedTransportMode.Count(),TransportModes.MaskToString(transportModes));
+        }
+
+        public static void SearchForEdgesByOneWayStateAndTransportMode(Graph _graph, OneWayState oneWayState, byte transportModes)
+        {
+            var nodes = _graph.GetNodes();
+            var inwardEdges = nodes.SelectMany(t=>t.InwardEdges).ToArray();
+            var outwardEdges = nodes.SelectMany(t=>t.OutwardEdges).ToArray();
+            var inwardEdgesWithSelectedTransportMode = inwardEdges.Where(ie=>(ie.TransportModes & transportModes) == transportModes);
+            var outwardEdgesWithSelectedTransportMode = outwardEdges.Where(oe=>(oe.TransportModes & transportModes) == transportModes);
+            var inwardEdgesWithSelectedTransportModeAndOneWayState = inwardEdgesWithSelectedTransportMode.Where(ie=>ie.OneWayState == oneWayState);
+            var outwardEdgesWithSelectedTransportModeAndOneWayState = outwardEdgesWithSelectedTransportMode.Where(oe=>oe.OneWayState == oneWayState);
+
+            logger.Debug("{0,10} Nodes in the graph", nodes.Length);
+            logger.Debug("{0,10} Inward Edges in the graph",inwardEdges.Length);
+            logger.Debug("{0,10} Outward Edges in the graph",outwardEdges.Length);
+            logger.Debug("{0,10} Inward Edges with transport mode(s) '{1}'",inwardEdgesWithSelectedTransportMode.Count(),TransportModes.MaskToString(transportModes));
+            logger.Debug("{0,10} Outward Edges with transport mode(s) '{1}'",outwardEdgesWithSelectedTransportMode.Count(),TransportModes.MaskToString(transportModes));
+            logger.Debug("{0,10} Inward Edges with transport mode(s) '{1}' and One-way state '{2}'",inwardEdgesWithSelectedTransportModeAndOneWayState.Count(),TransportModes.MaskToString(transportModes), oneWayState);
+            logger.Debug("{0,10} Outnward Edges with transport mode(s) '{1}' and One-way state '{2}'",outwardEdgesWithSelectedTransportModeAndOneWayState.Count(),TransportModes.MaskToString(transportModes), oneWayState);
+        }
+
         public static void TraceEdgesBySourceTargetValidities(Graph _graph, bool isValidSource, bool isValidTarget)
         {
             var nodes = _graph.GetNodes();

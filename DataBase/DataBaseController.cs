@@ -18,6 +18,11 @@ namespace SytyRouting.DataBase
 
         public string EdgeTable;
 
+        //debug:
+        private int footInwardEdges = 0;
+        private int footOutwardEdges = 0;
+        //
+
         public DataBaseController(string connection, string edgeTable){
                 ConnectionString = connection;
                 EdgeTable=edgeTable;
@@ -128,37 +133,73 @@ namespace SytyRouting.DataBase
             switch (oneWayState)
             {
                 case OneWayState.Yes: // Only forward direction
-                    {
-                        var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                        var edge = new Edge { OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
-                        source.OutwardEdges.Add(edge);
-                        target.InwardEdges.Add(edge);
+                {
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
+                    var edge = new Edge { OsmID = osmID, Cost = cost, OneWayState = oneWayState, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
+                    source.OutwardEdges.Add(edge);
+                    target.InwardEdges.Add(edge);
 
-                        break;
+                    //debug:
+                    if((transportModes&TransportModes.DefaultMode)==TransportModes.DefaultMode)
+                    {
+                        footInwardEdges++;
+                        footOutwardEdges++;
+                        Console.WriteLine("TransportMode: {0} ::: OneWayState: {1} ::: In: {2} :: Out {3}",TransportModes.MaskToString(transportModes),oneWayState,footInwardEdges,footOutwardEdges);
                     }
+                    //
+
+                    break;
+                }
                 case OneWayState.Reversed: // Only backward direction
+                {
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
+                    var edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
+                    source.InwardEdges.Add(edge);
+                    target.OutwardEdges.Add(edge);
+                    
+                    //debug:
+                    if((transportModes&TransportModes.DefaultMode)==TransportModes.DefaultMode)
                     {
-                        var internalGeometry = Helper.GetInternalGeometry(geometry, oneWayState);
-                        var edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
-                        source.InwardEdges.Add(edge);
-                        target.OutwardEdges.Add(edge);
-
-                        break;
+                        footInwardEdges++;
+                        footOutwardEdges++;
+                        Console.WriteLine("TransportMode: {0} ::: OneWayState: {1} ::: In: {2} :: Out {3}",TransportModes.MaskToString(transportModes),oneWayState,footInwardEdges,footOutwardEdges);
                     }
+                    //
+
+                    break;
+                }
                 default: // Both ways
+                {
+                    var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
+                    var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
+                    source.OutwardEdges.Add(edge);
+                    target.InwardEdges.Add(edge);
+
+                    //debug:
+                    if((transportModes&TransportModes.DefaultMode)==TransportModes.DefaultMode)
                     {
-                        var internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Yes);
-                        var edge = new Edge { OsmID = osmID, Cost = cost, SourceNode = source, TargetNode = target, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_forward, TransportModes = transportModes, TagIdRouteType = tagId };
-                        source.OutwardEdges.Add(edge);
-                        target.InwardEdges.Add(edge);
-
-                        internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
-                        edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
-                        source.InwardEdges.Add(edge);
-                        target.OutwardEdges.Add(edge);
-
-                        break;
+                        footInwardEdges++;
+                        footOutwardEdges++;
+                        Console.WriteLine("TransportMode: {0} ::: OneWayState: {1} ::: In: {2} :: Out {3}",TransportModes.MaskToString(transportModes),oneWayState,footInwardEdges,footOutwardEdges);
                     }
+                    //
+
+                    internalGeometry = Helper.GetInternalGeometry(geometry, OneWayState.Reversed);
+                    edge = new Edge { OsmID = osmID, Cost = reverse_cost, SourceNode = target, TargetNode = source, LengthM = length_m, InternalGeometry = internalGeometry, MaxSpeedMPerS = maxspeed_backward, TransportModes = transportModes, TagIdRouteType = tagId };
+                    source.InwardEdges.Add(edge);
+                    target.OutwardEdges.Add(edge);
+
+                    //debug:
+                    if((transportModes&TransportModes.DefaultMode)==TransportModes.DefaultMode)
+                    {
+                        footInwardEdges++;
+                        footOutwardEdges++;
+                        Console.WriteLine("TransportMode: {0} ::: OneWayState: {1} ::: In: {2} :: Out {3}",TransportModes.MaskToString(transportModes),oneWayState,footInwardEdges,footOutwardEdges);
+                    }
+                    //
+
+                    break;
+                }
             }
         }
         

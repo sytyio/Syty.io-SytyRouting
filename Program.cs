@@ -71,7 +71,12 @@ namespace SytyRouting
             await RoutingBenchmark.CreateDataSet();
             var personaRouter = new PersonaRouter(graph);
 
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            // await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+
+            // Launch tests:
+            TestBench.SearchForEdgesBySourceValidityAndTransportMode(graph, true, TransportModes.DefaultMode);
+            TestBench.SearchForEdgesByTargetValidityAndTransportMode(graph, true, TransportModes.DefaultMode);
+            TestBench.SearchForEdgesByOneWayStateAndTransportMode(graph, OneWayState.Yes, TransportModes.DefaultMode);
     
             //personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();
