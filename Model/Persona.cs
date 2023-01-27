@@ -10,7 +10,7 @@ namespace SytyRouting.Model
         public Point? WorkLocation;
         public LineString? Route;
         public byte[] RequestedTransportSequence = null!;
-        public Dictionary<int, Tuple<byte,int>>? TransportModeTransitions;
+        public Dictionary<int, Tuple<byte,int>>? TransportModeTransitions; // <Node Idx, <Transport Mask, Route Type> 
         public Tuple<string[],DateTime[]> TTextTransitions = null!;
         public bool SuccessfulRouteComputation;
     }

@@ -766,45 +766,48 @@ namespace SytyRouting
             
             List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
             List<string> transportModes = new List<string>(transitions.Count);
-        
-            //string transportModeS = String.Format("{0,18}","Transport Mode");
-            string transportModeS = "";
-                        
-            byte currentTransportMode = 0;
-            byte previousTransportMode = 0;
-            for(var n = 0; n < coordinates.Length-1; n++)
+
+            string defaultMode = TransportModes.SingleMaskToString(TransportModes.DefaultMode);
+
+            byte previousTransportMode = TransportModes.None;
+            byte currentTransportMode = TransportModes.DefaultMode;
+
+            string transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+
+            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); // <- debug: check units
+            transportModes.Add(transportModeS);
+
+            for(var n = 1; n < coordinates.Length-1; n++)
             {
                 node = _graph.GetNodeByLongitudeLatitude(coordinates[n].X, coordinates[n].Y);
 
                 if(transitions.ContainsKey(node.Idx))
                 {
+                    previousTransportMode = currentTransportMode;
                     currentTransportMode = transitions[node.Idx].Item1;
+
+                    if(previousTransportMode!=currentTransportMode)
+                    {
+                        var routeType = transitions[node.Idx].Item2;
+                        if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                            transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
+                        else
+                            transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+                        
+                        timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
+                        transportModes.Add(transportModeS);
+                    }
                 }
-
-                if(previousTransportMode!=currentTransportMode)
-                {
-                    previousTransportMode = currentTransportMode;    
-                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
-                    var routeType = transitions[node.Idx].Item2;
-                    if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                        transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
-                    
-                    timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
-                    transportModes.Add(transportModeS);
-                } 
             }
-            
-            node = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
 
-            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); // <- debug: check units
-
-            if(transitions.ContainsKey(node.Idx))
+            if((currentTransportMode & TransportModes.DefaultMode) == 0)
             {
-                var routeType = transitions[node.Idx].Item2;
-                if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
+                timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-2].M))); // <- debug: check units
+                transportModes.Add(defaultMode);
             }
-            transportModes.Add(transportModeS);
+
+            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-1].M))); // <- debug: check units
+            transportModes.Add(defaultMode);
 
             return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
