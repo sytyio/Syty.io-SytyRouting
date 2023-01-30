@@ -18,7 +18,8 @@ namespace SytyRouting.DataBase
 
         public string EdgeTable;
 
-        public DataBaseController(string connection, string edgeTable){
+        public DataBaseController(string connection, string edgeTable)
+        {
                 ConnectionString = connection;
                 EdgeTable=edgeTable;
         }
@@ -241,5 +242,5 @@ namespace SytyRouting.DataBase
             logger.Info("Graph annotated and clean in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
         }
-        }
     }
+}

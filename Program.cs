@@ -41,6 +41,9 @@ namespace SytyRouting
             //     }
             // }
 
+            var personaRouteTable = new PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
+            await personaRouteTable.CreateDataSet();
+
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -68,8 +71,8 @@ namespace SytyRouting
 
 
             // // Persona spatial data generation
-            await RoutingBenchmark.CreateDataSet();
-            var personaRouter = new PersonaRouter(graph);
+            //await RoutingBenchmark.CreateDataSet();
+            var personaRouter = new PersonaRouter(graph, personaRouteTable.ResultTable, personaRouteTable.AuxiliaryTable);
 
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
     

@@ -169,13 +169,15 @@ namespace SytyRouting
             TransportModes.CreateMappingMasksToMaxSpeeds();
         }
 
-        public async Task GetDbData(){
-                DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTable);
-                await db.InitController();
-                NodesArray=db.GetNodes().ToArray();
+        public async Task GetDbData()
+        {
+            DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTable);
+            await db.InitController();
+            NodesArray=db.GetNodes().ToArray();
         }
 
-         public async Task GetGtfsData(){
+        public async Task GetGtfsData()
+        {
             ControllerAllGtfs gtfs = new ControllerAllGtfs(KDTree,NodesArray);
             await gtfs.InitController();
             NodesArray = gtfs.GetNodes().ToArray();
