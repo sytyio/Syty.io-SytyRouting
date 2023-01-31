@@ -442,7 +442,7 @@ namespace SytyRouting
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
             // var routeTable = Configuration.RoutingBenchmarkTable;
-            var routeTable = _auxiliaryTable;
+            var auxiliaryTable = _auxiliaryTable;
 
             int uploadFails = 0;
             foreach(var persona in personas)
@@ -460,7 +460,7 @@ namespace SytyRouting
                     // };
                     // await cmd_insert.ExecuteNonQueryAsync();
 
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
                     {
                         Parameters =
                         {
@@ -473,7 +473,7 @@ namespace SytyRouting
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
                     
-                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
                     {
                         Parameters =
                         {
@@ -492,22 +492,22 @@ namespace SytyRouting
                 }
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET computed_route_2d = st_force2d(computed_route);", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + routeTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
+            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -521,12 +521,12 @@ namespace SytyRouting
             _arr_tm text[];
             _arr_ts timestamptz[];
             BEGIN    
-                FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + routeTable + @" ORDER BY persona_id ASC
+                FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
                 LOOP
                     RAISE NOTICE 'id: %', _id;
                     RAISE NOTICE 'transport modes: %', _arr_tm;
                     RAISE NOTICE 'time stamps: %', _arr_ts;
-                    UPDATE " + routeTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+                    UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
                 END LOOP;
             END;
             $$;
@@ -550,7 +550,7 @@ namespace SytyRouting
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, routeTable, totalTime);
+            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
