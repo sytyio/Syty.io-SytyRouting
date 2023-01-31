@@ -1,7 +1,6 @@
 using NLog;
 using System.Diagnostics;
 using Npgsql;
-using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 
@@ -14,16 +13,16 @@ namespace SytyRouting
         private static Stopwatch stopWatch = new Stopwatch();
 
         public string ConnectionString;
-        public string PersonaTable;
-        public string ResultTable;
+        public string PersonaOriginTable;
+        public string RoutingResultTable;
         public string AuxiliaryTable = "";
 
 
-        public PersonaRouteTable(string personaTable, string resultTable, string connectionString)
+        public PersonaRouteTable(string personaOriginTable, string personaRouteTable, string connectionString)
         {
             ConnectionString=connectionString;
-            PersonaTable=personaTable;
-            ResultTable=resultTable;
+            PersonaOriginTable=personaOriginTable;
+            RoutingResultTable=personaRouteTable;
         }
 
         public async Task CreateDataSet()
@@ -32,13 +31,13 @@ namespace SytyRouting
             
             await SetRoutingResultTableAsync();
 
-            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(ResultTable,ConnectionString);
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(RoutingResultTable,ConnectionString);
             await personaRouteAuxTable.CreateAuxiliaryTable();
             AuxiliaryTable = personaRouteAuxTable.AuxiliaryTable;
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("{0} data set creation time :: {1}", ResultTable,totalTime);
+            logger.Info("{0} data set creation time :: {1}", RoutingResultTable,totalTime);
         }
 
         private async Task SetRoutingResultTableAsync()
@@ -47,8 +46,8 @@ namespace SytyRouting
             uploadStopWatch.Start();
 
             var connectionString = ConnectionString;
-            var personaTable=PersonaTable;
-            var personaRouteTable=ResultTable;
+            var personaOriginTable=PersonaOriginTable;
+            var routeResultTable=RoutingResultTable;
 
             List<int> personaIds = new List<int>(0);
 
@@ -120,7 +119,7 @@ namespace SytyRouting
             // var personaRouteTable = Configuration.PersonaRouteTable;
             // var additionalProbes = Configuration.AdditionalRoutingProbes;
 
-            await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + personaRouteTable + " CASCADE;", connection))
+            await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routeResultTable + " CASCADE;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -130,27 +129,27 @@ namespace SytyRouting
             //     await cmd.ExecuteNonQueryAsync();
             // }
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + personaRouteTable + " AS SELECT id, home_location, work_location FROM " + personaTable + " ORDER BY id ASC LIMIT 100;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " DROP CONSTRAINT IF EXISTS persona_route_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS persona_route_pk;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD CONSTRAINT persona_route_pk PRIMARY KEY (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT persona_route_pk PRIMARY KEY (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -170,7 +169,7 @@ namespace SytyRouting
             //     await cmd.ExecuteNonQueryAsync();
             // }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -185,7 +184,7 @@ namespace SytyRouting
             //     await cmd.ExecuteNonQueryAsync();
             // }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -283,7 +282,8 @@ namespace SytyRouting
             //     }
             // }
 
-            var queryString = "SELECT id FROM " + personaRouteTable + " ORDER BY id ASC;";
+            // Insert default transport sequence.
+            var queryString = "SELECT id FROM " + routeResultTable + " ORDER BY id ASC;";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -299,7 +299,7 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + personaRouteTable + " (id, requested_transport_sequence) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET transport_sequence = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeResultTable + " (id, requested_transport_modes) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2", connection)
                     {
                         Parameters =
                         {
@@ -319,7 +319,7 @@ namespace SytyRouting
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-            logger.Info("{0} initial dataset creation time: {1} (d.hh:mm:s.ms)", ResultTable,totalTime);
+            logger.Info("{0} initial dataset creation time: {1} (d.hh:mm:s.ms)", routeResultTable,totalTime);
             //var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTable, logger);
             //logger.Debug("{0} personas (out of {1}) failed to upload ({2} %) to the routing benchmark table", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
         }

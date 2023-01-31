@@ -122,7 +122,7 @@ namespace SytyRouting
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                        0   1              2              3
-                var queryString = "SELECT id, home_location, work_location, transport_sequence FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                var queryString = "SELECT id, home_location, work_location, requested_transport_modes FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -449,12 +449,22 @@ namespace SytyRouting
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, transport_sequence, computed_route) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_sequence = $2, computed_route = $3", connection)
+                    // await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, transport_sequence, computed_route) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_sequence = $2, computed_route = $3", connection)
+                    // {
+                    //     Parameters =
+                    //     {
+                    //         new() { Value = persona.Id },
+                    //         new() { Value = TransportModes.ArrayToNames(persona.RequestedTransportSequence)},
+                    //         new() { Value = persona.Route },
+                    //     }
+                    // };
+                    // await cmd_insert.ExecuteNonQueryAsync();
+
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
-                            new() { Value = TransportModes.ArrayToNames(persona.RequestedTransportSequence)},
                             new() { Value = persona.Route },
                         }
                     };
@@ -516,7 +526,7 @@ namespace SytyRouting
                     RAISE NOTICE 'id: %', _id;
                     RAISE NOTICE 'transport modes: %', _arr_tm;
                     RAISE NOTICE 'time stamps: %', _arr_ts;
-                    UPDATE routing_benchmark SET transport_transitions = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+                    UPDATE " + routeTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
                 END LOOP;
             END;
             $$;

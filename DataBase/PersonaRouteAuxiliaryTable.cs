@@ -1,7 +1,6 @@
 using NLog;
 using System.Diagnostics;
 using Npgsql;
-using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 
@@ -14,7 +13,6 @@ namespace SytyRouting
         private static Stopwatch stopWatch = new Stopwatch();
 
         public string ConnectionString;
-       // public string OriginTable;
         public string ResultTable;
         public string AuxiliaryTable;
 
@@ -22,7 +20,6 @@ namespace SytyRouting
         public PersonaRouteAuxiliaryTable(string resultTable, string connectionString)
         {
             ConnectionString=connectionString;
-            //OriginTable=originTable;
             ResultTable=resultTable;
             AuxiliaryTable=resultTable+"_aux";
         }
@@ -44,9 +41,7 @@ namespace SytyRouting
             uploadStopWatch.Start();
 
             var connectionString = ConnectionString;
-            //var personaTable=OriginTable;
-            var personaRouteTable=ResultTable;
-
+            var routeTable=ResultTable;
             var auxiliaryTable=AuxiliaryTable;
 
             //var routingProbes = Configuration.RoutingProbes;
@@ -127,7 +122,7 @@ namespace SytyRouting
             //     await cmd.ExecuteNonQueryAsync();
             // }
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + auxiliaryTable + " AS SELECT id FROM " + personaRouteTable + " ORDER BY id ASC LIMIT 100;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + auxiliaryTable + " AS SELECT id FROM " + routeTable + " ORDER BY id ASC LIMIT 10;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -137,17 +132,27 @@ namespace SytyRouting
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + personaRouteTable + " ADD COLUMN IF NOT EXISTS id INTEGER;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS id INTEGER;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
 
             await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS persona_route_auxiliary_fk;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT persona_route_auxiliary_fk FOREIGN KEY (persona_id) REFERENCES " + personaRouteTable + " (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT persona_route_auxiliary_fk FOREIGN KEY (persona_id) REFERENCES " + routeTable + " (id);", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS persona_route_auxiliary_pk;", connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT persona_route_auxiliary_pk PRIMARY KEY (persona_id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
@@ -293,7 +298,7 @@ namespace SytyRouting
             //         };
             //         await cmd_insert.ExecuteNonQueryAsync();
             //     }
-            //     catch
+            //     catchawait cmd_insert.ExecuteNonQueryAsync();
             //     {
             //         logger.Debug(" ==>> Unable to upload record to database. Persona Id {0}", additionalProbesIds[i]);
             //         uploadFails++;
