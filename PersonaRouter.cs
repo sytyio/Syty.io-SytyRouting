@@ -443,6 +443,7 @@ namespace SytyRouting
 
             // var routeTable = Configuration.RoutingBenchmarkTable;
             var auxiliaryTable = _auxiliaryTable;
+            var routeTable = _routeTable;
 
             int uploadFails = 0;
             foreach(var persona in personas)
@@ -541,8 +542,44 @@ namespace SytyRouting
                 catch(Exception e)
                 {
                     logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
+                }                
+            }
+
+            // await using (var cmd = new NpgsqlCommand("INSERT INTO " + routeTable + " SELECT route AS route_result, transport_sequence AS transport_sequence_result FROM " + auxiliaryTable + " ON CONFLICT ON CONSTRAINT persona_route_pk UPDATE SET route = route_result, transport_sequence = transport_sequence_result;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            //PLGSQL: Iterates over each route result to update the persona_route table
+            var updateString = @"
+            DO 
+            $$
+            DECLARE
+            _id int;
+            _r tgeompoint;
+            _ts ttext(Sequence);
+            BEGIN    
+                FOR _id, _r, _ts in SELECT persona_id, route, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+                LOOP
+                    RAISE NOTICE 'id: %', _id;
+                    RAISE NOTICE 'route: %', _r;
+                    RAISE NOTICE 'transport sequence: %', _ts;
+                    UPDATE " + routeTable + @" SET route = _r, transport_sequence = _ts WHERE id = _id;
+                END LOOP;
+            END;
+            $$;
+            ";
+
+            await using (var cmd = new NpgsqlCommand(updateString, connection))
+            {
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync();
                 }
-                
+                catch(Exception e)
+                {
+                    logger.Debug(" ==>> Unable to update routes/transport sequences on the database: {0}", e.Message);
+                }                
             }
    
             await connection.CloseAsync();
