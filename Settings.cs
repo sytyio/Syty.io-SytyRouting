@@ -48,6 +48,7 @@ namespace SytyRouting
     public sealed class TransportSettings
     {
         public TransportMode[] TransportModes {get; set;} = null!;
+        public string[] DefaultTransportSequence {get; set;} = null!;
         public string PublicTransportGroup {get; set;} = null!;
         public GtfsTypeToTransportModes[] GtfsTypeToTransportModes {get;set;}=null!;
         public OSMTags[] OSMTags  {get; set;} = null!;
@@ -91,5 +92,6 @@ namespace SytyRouting
         public int DBPersonaLoadAsyncSleepMilliseconds {get; set;}
         public int InitialDataLoadSleepMilliseconds {get; set;}
         public int RegularRoutingTaskBatchSize {get; set;}
+        public string DefaultRouteStartTime {get; set;} = null!;
     }
 }

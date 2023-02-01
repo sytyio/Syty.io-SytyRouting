@@ -110,12 +110,13 @@ namespace SytyRouting.DataBase
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeResultTable + " (id, requested_transport_modes) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeResultTable + " (id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
                     {
                         Parameters =
                         {
                             new() { Value = personaId },
-                            new() { Value = Configuration.DefaultBenchmarkSequence }
+                            new() { Value = Configuration.DefaultTransportSequence },
+                            new() { Value = Configuration.DefaultRouteStartTime }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();

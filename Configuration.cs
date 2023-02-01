@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using Npgsql;
@@ -37,6 +38,7 @@ namespace SytyRouting
         public static int DBPersonaLoadAsyncSleepMilliseconds {get;}
         public static int InitialDataLoadSleepMilliseconds {get;}
         public static int RegularRoutingTaskBatchSize {get;}
+        public static DateTime DefaultRouteStartTime {get;}
 
         // Routing benchmark:
         public static RoutingProbe[] RoutingProbes {get;}
@@ -47,6 +49,7 @@ namespace SytyRouting
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
         public static string PublicTransportGroup {get;} = null!;
+        public static string[] DefaultTransportSequence {get;} = null!;
         public static Dictionary<int,double> TransportModeSpeeds {get;}
         public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
         public static OSMTags[] OSMTags {get;} = null!;
@@ -116,6 +119,7 @@ namespace SytyRouting
                 DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
                 InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
                 RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
+                DefaultRouteStartTime = ValidateTimeStamp(routingSettings.DefaultRouteStartTime);
 
                 RoutingBenchmarkSettings? routingBenchmarkSettings = config.GetRequiredSection("RoutingBenchmarkSettings").Get<RoutingBenchmarkSettings>();
                 if(routingBenchmarkSettings != null)
@@ -136,6 +140,7 @@ namespace SytyRouting
                 PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
                 TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
                 TransportModeRoutingPenalties = ValidateTransportModeRoutingPenalties(transportSettings.TransportModes);
+                DefaultTransportSequence = transportSettings.DefaultTransportSequence;
                 TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
                 OSMTags = transportSettings.OSMTags;
                 GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;
@@ -148,35 +153,46 @@ namespace SytyRouting
         }
 
 
+        public static DateTime ValidateTimeStamp(string timeStamp)
+        {
+            DateTime timeStampResult;
+            if (DateTime.TryParse(timeStamp, CultureInfo.InvariantCulture, DateTimeStyles.None, out timeStampResult))
+                return timeStampResult;
+            else
+                return Constants.BaseDateTime;
+        }
 
-        public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks){
-                int [] tagsGtfs = Configuration.GtfsTags();
-                Dictionary<int,byte> routeTypeToTransportMode= new Dictionary<int, byte>();
-                for (var i=0;i<tagsGtfs.Length;i++){
-                    byte mask = 0;
-                    var configAllowedTransportModes=Configuration.GtfsTypeToTransportModes[i].AllowedTransportModes;
-                    foreach(var transportName in configAllowedTransportModes)
+
+
+        public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks)
+        {
+            int [] tagsGtfs = Configuration.GtfsTags();
+            Dictionary<int,byte> routeTypeToTransportMode= new Dictionary<int, byte>();
+            for (var i=0;i<tagsGtfs.Length;i++){
+                byte mask = 0;
+                var configAllowedTransportModes=Configuration.GtfsTypeToTransportModes[i].AllowedTransportModes;
+                foreach(var transportName in configAllowedTransportModes)
+            {
+                var key = TransportModes.NameToIndex(transportName);
+                if(transportModeMasks.ContainsKey(key))
                 {
-                    var key = TransportModes.NameToIndex(transportName);
-                    if(transportModeMasks.ContainsKey(key))
-                    {
-                        mask |= transportModeMasks[key];
-                    }
-                    else
-                    {
-                        logger.Info("Transport Mode '{0}' not found.",transportName);
-                    }
-                }
-                if (!routeTypeToTransportMode.ContainsKey(tagsGtfs[i]))
-                {
-                    routeTypeToTransportMode.Add(tagsGtfs[i], mask);
+                    mask |= transportModeMasks[key];
                 }
                 else
                 {
-                    logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagsGtfs[i]);
+                    logger.Info("Transport Mode '{0}' not found.",transportName);
                 }
-                }
-                return routeTypeToTransportMode;
+            }
+            if (!routeTypeToTransportMode.ContainsKey(tagsGtfs[i]))
+            {
+                routeTypeToTransportMode.Add(tagsGtfs[i], mask);
+            }
+            else
+            {
+                logger.Debug("Unable to add key to OSM-tag_id - to - Transport-Mode mapping. Tag id: {0}", tagsGtfs[i]);
+            }
+            }
+            return routeTypeToTransportMode;
         }
 
         public static bool VerifyTransportListFromGraphFile(string[] transportModes)

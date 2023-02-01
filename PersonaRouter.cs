@@ -121,8 +121,8 @@ namespace SytyRouting
                 var personaIndex = 0;
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
-                //                        0   1              2              3
-                var queryString = "SELECT id, home_location, work_location, requested_transport_modes FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                //                        0   1              2              3           4
+                var queryString = "SELECT id, home_location, work_location, start_time, requested_transport_modes FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
@@ -132,7 +132,8 @@ namespace SytyRouting
                         var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
                         var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                         var workLocation = (Point)reader.GetValue(2); // work_location (Point)
-                        var requestedSequence = reader.GetValue(3); // transport_sequence (text[])
+                        var startTime = (DateTime)reader.GetValue(3); // start_time (TIMESTAMPTZ)
+                        var requestedSequence = reader.GetValue(4); // transport_sequence (text[])
                         string[] requestedTransportSequence;
                         if(requestedSequence is not null && requestedSequence != DBNull.Value)
                         {
@@ -143,7 +144,7 @@ namespace SytyRouting
                             requestedTransportSequence = new string[] {""};
                         }
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, StartTime = startTime, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
                         
                         personas.Add(persona);
                         
@@ -259,7 +260,7 @@ namespace SytyRouting
                         var requestedTransportModes = persona.RequestedTransportSequence;
                         //var firstMode = requestedTransportModes[0];
 
-                        TimeSpan currentTime = TimeSpan.Zero;
+                        TimeSpan initialTime = TimeSpan.Zero;
 
                         List<Node> route = null!;
 
@@ -270,7 +271,7 @@ namespace SytyRouting
                         {
                             logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
 
-                            persona.Route = routingAlgorithm.TwoPointLineString(homeX, homeY, workX, workY, TransportModes.DefaultMode, currentTime);
+                            persona.Route = routingAlgorithm.TwoPointLineString(homeX, homeY, workX, workY, TransportModes.DefaultMode, initialTime);
 
                             if(persona.Route.IsEmpty)
                             {
@@ -281,7 +282,7 @@ namespace SytyRouting
 
                             persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
 
-                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartTime);
 
                             persona.SuccessfulRouteComputation = true;
 
@@ -296,11 +297,11 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime);
 
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
-                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartTime);
 
                                 persona.SuccessfulRouteComputation = true;
 
@@ -759,7 +760,7 @@ namespace SytyRouting
             }
         }
 
-        private Tuple<string[],DateTime[]> TransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
+        private Tuple<string[],DateTime[]> TransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions, DateTime startTime)
         {
             if(transitions == null || transitions.Count <1 || route.IsEmpty)
                 return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
@@ -777,7 +778,7 @@ namespace SytyRouting
 
             string transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
 
-            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); // <- debug: check units
+            timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); // <- debug: check units
             transportModes.Add(transportModeS);
 
             for(var n = 1; n < coordinates.Length-1; n++)
@@ -797,7 +798,7 @@ namespace SytyRouting
                         else
                             transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
                         
-                        timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
+                        timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
                         transportModes.Add(transportModeS);
                     }
                 }
@@ -805,17 +806,17 @@ namespace SytyRouting
 
             if((currentTransportMode & TransportModes.DefaultMode) == 0)
             {
-                timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-2].M))); // <- debug: check units
+                timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-2].M))); // <- debug: check units
                 transportModes.Add(defaultMode);
             }
 
-            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-1].M))); // <- debug: check units
+            timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-1].M))); // <- debug: check units
             transportModes.Add(defaultMode);
 
             return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
 
-        private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions)
+        private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions, DateTime startTime)
         {
             if(transitions == null || transitions.Count <1 || route.IsEmpty)
                 return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
@@ -839,13 +840,14 @@ namespace SytyRouting
                     transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
                 else if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
                     transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
-                timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); //DEBUG: CHECK UNITS!
+                timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); //DEBUG: CHECK UNITS!
                 transportModes.Add(transportModeS);                    
             }
             
             Node destination = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
 
-            timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
+            //timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
+            timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
 
             if(transitions.ContainsKey(destination.Idx))
             {
