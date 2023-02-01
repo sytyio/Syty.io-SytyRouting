@@ -19,7 +19,7 @@ namespace SytyRouting.DataBase
         {
             ConnectionString=connectionString;
             ResultTable=resultTable;
-            AuxiliaryTable=resultTable+"_aux";
+            AuxiliaryTable=resultTable+Configuration.AuxiliaryTableSuffix;
         }
 
         public async Task CreateAuxiliaryTable()

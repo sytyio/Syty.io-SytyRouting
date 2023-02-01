@@ -39,11 +39,11 @@ namespace SytyRouting
         private int sequenceValidationErrors = 0;
         private int originEqualsDestinationErrors = 0;
 
-        public PersonaRouter(Graph graph, string routeTable, string auxiliaryTable)
+        public PersonaRouter(Graph graph, string routeTable)
         {
             _graph = graph;
             _routeTable = routeTable;
-            _auxiliaryTable = auxiliaryTable;
+            _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
         }
 
         public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()

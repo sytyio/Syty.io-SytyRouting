@@ -20,6 +20,7 @@ namespace SytyRouting
         public static string PersonaTable {get;}
         public static string PersonaRouteTable {get;}
         public static string PersonaRouteAuxTable {get;}
+        public static string AuxiliaryTableSuffix {get;}
         public static string ComputedRouteTable {get;}
         public static string EdgeTable {get;}
         public static string RoutingBenchmarkTable {get;}
@@ -93,6 +94,7 @@ namespace SytyRouting
                 PersonaTable = dBTableSettings.PersonaTable;
                 PersonaRouteTable = dBTableSettings.PersonaRouteTable;
                 PersonaRouteAuxTable = dBTableSettings.PersonaRouteAuxTable;
+                AuxiliaryTableSuffix = dBTableSettings.AuxiliaryTableSuffix;
                 ComputedRouteTable = dBTableSettings.RouteTable;
                 EdgeTable = dBTableSettings.EdgeTable;
                 RoutingBenchmarkTable = dBTableSettings.RoutingBenchmarkTable;
