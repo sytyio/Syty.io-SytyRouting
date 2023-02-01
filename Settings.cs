@@ -12,6 +12,7 @@ namespace SytyRouting
         public string ConfigurationTable {get; set;} = null!;
         public string PersonaTable {get; set;} = null!;
         public string PersonaRouteTable {get; set;} = null!;
+        public string PersonaRouteAuxTable {get; set;} = null!;
         public string RouteTable {get; set;} = null!;
         public string EdgeTable {get; set;} = null!;
         public string RoutingBenchmarkTable {get; set;} = null!;
