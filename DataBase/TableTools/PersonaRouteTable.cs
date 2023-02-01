@@ -4,7 +4,7 @@ using Npgsql;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 
-namespace SytyRouting
+namespace SytyRouting.DataBase
 {
     public class PersonaRouteTable
     {
