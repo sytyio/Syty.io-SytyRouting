@@ -89,5 +89,6 @@ namespace SytyRouting
         public int DBPersonaLoadAsyncSleepMilliseconds {get; set;}
         public int InitialDataLoadSleepMilliseconds {get; set;}
         public int RegularRoutingTaskBatchSize {get; set;}
+        public string DefaultRouteStartTime {get; set;} = null!;
     }
 }
