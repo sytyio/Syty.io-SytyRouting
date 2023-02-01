@@ -18,6 +18,7 @@ namespace SytyRouting
         // DB table settings:
         public static string ConfigurationTable {get;}
         public static string PersonaTable {get;}
+        public static string PersonaRouteTable {get;}
         public static string ComputedRouteTable {get;}
         public static string EdgeTable {get;}
         public static string RoutingBenchmarkTable {get;}
@@ -89,6 +90,7 @@ namespace SytyRouting
                     throw new Exception("Config dBTableSettings are not valid.");
                 
                 PersonaTable = dBTableSettings.PersonaTable;
+                PersonaRouteTable = dBTableSettings.PersonaRouteTable;
                 ComputedRouteTable = dBTableSettings.RouteTable;
                 EdgeTable = dBTableSettings.EdgeTable;
                 RoutingBenchmarkTable = dBTableSettings.RoutingBenchmarkTable;
