@@ -115,7 +115,7 @@ namespace SytyRouting.DataBase
                         Parameters =
                         {
                             new() { Value = personaId },
-                            new() { Value = Configuration.DefaultBenchmarkSequence },
+                            new() { Value = Configuration.DefaultTransportSequence },
                             new() { Value = Configuration.DefaultRouteStartTime }
                         }
                     };

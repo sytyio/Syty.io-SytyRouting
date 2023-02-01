@@ -47,6 +47,7 @@ namespace SytyRouting
         public static Dictionary<int,string> TransportModeNames {get;}
         public static string[] PublicTransportModes {get;}
         public static string PublicTransportGroup {get;} = null!;
+        public static string[] DefaultTransportSequence {get;} = null!;
         public static Dictionary<int,double> TransportModeSpeeds {get;}
         public static Dictionary<int,double> TransportModeRoutingPenalties {get;}
         public static OSMTags[] OSMTags {get;} = null!;
@@ -135,6 +136,7 @@ namespace SytyRouting
                 PublicTransportModes = ValidatePublicTransportModes(transportSettings.TransportModes);
                 TransportModeSpeeds = ValidateTransportModeSpeeds(transportSettings.TransportModes);
                 TransportModeRoutingPenalties = ValidateTransportModeRoutingPenalties(transportSettings.TransportModes);
+                DefaultTransportSequence = transportSettings.DefaultTransportSequence;
                 TransportModeRoutingRules = transportSettings.TransportModeRoutingRules;
                 OSMTags = transportSettings.OSMTags;
                 GtfsTypeToTransportModes = transportSettings.GtfsTypeToTransportModes;
