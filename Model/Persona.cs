@@ -8,7 +8,7 @@ namespace SytyRouting.Model
         public int Id;
         public Point? HomeLocation;
         public Point? WorkLocation;
-        public DateTime StartTime;
+        public DateTime StartDateTime;
         public LineString? Route;
         public byte[] RequestedTransportSequence = null!;
         public Dictionary<int, Tuple<byte,int>>? TransportModeTransitions; // <Node Idx, <Transport Mask, Route Type> 

@@ -144,7 +144,7 @@ namespace SytyRouting
                             requestedTransportSequence = new string[] {""};
                         }
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, StartTime = startTime, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, StartDateTime = startTime, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
                         
                         personas.Add(persona);
                         
@@ -282,7 +282,7 @@ namespace SytyRouting
 
                             persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
 
-                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartTime);
+                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
 
                             persona.SuccessfulRouteComputation = true;
 
@@ -301,7 +301,7 @@ namespace SytyRouting
 
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
-                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartTime);
+                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
 
                                 persona.SuccessfulRouteComputation = true;
 
