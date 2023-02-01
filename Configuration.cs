@@ -38,7 +38,7 @@ namespace SytyRouting
         public static int DBPersonaLoadAsyncSleepMilliseconds {get;}
         public static int InitialDataLoadSleepMilliseconds {get;}
         public static int RegularRoutingTaskBatchSize {get;}
-        public static DateTime DefaultRouteStartTime {get;}
+        public static DateTime DefaultRouteStartDateTime {get;}
 
         // Routing benchmark:
         public static RoutingProbe[] RoutingProbes {get;}
@@ -119,7 +119,7 @@ namespace SytyRouting
                 DBPersonaLoadAsyncSleepMilliseconds = routingSettings.DBPersonaLoadAsyncSleepMilliseconds;
                 InitialDataLoadSleepMilliseconds = routingSettings.InitialDataLoadSleepMilliseconds;
                 RegularRoutingTaskBatchSize = routingSettings.RegularRoutingTaskBatchSize;
-                DefaultRouteStartTime = ValidateTimeStamp(routingSettings.DefaultRouteStartTime);
+                DefaultRouteStartDateTime = ValidateTimeStamp(routingSettings.DefaultRouteStartDateTime);
 
                 RoutingBenchmarkSettings? routingBenchmarkSettings = config.GetRequiredSection("RoutingBenchmarkSettings").Get<RoutingBenchmarkSettings>();
                 if(routingBenchmarkSettings != null)

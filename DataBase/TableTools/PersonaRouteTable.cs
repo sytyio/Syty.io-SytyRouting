@@ -116,7 +116,7 @@ namespace SytyRouting.DataBase
                         {
                             new() { Value = personaId },
                             new() { Value = Configuration.DefaultTransportSequence },
-                            new() { Value = Configuration.DefaultRouteStartTime }
+                            new() { Value = Configuration.DefaultRouteStartDateTime }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
