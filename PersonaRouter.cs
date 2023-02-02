@@ -86,7 +86,6 @@ namespace SytyRouting
             Task.WaitAll(monitorTask);
 
             await DBPersonaRoutesUploadAsync();
-            //await DBRouteBenchmarkUploadAsync();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -102,7 +101,6 @@ namespace SytyRouting
             await connection.OpenAsync();
 
             var personaTable = _routeTable;
-            //var personaTable = Configuration.RoutingBenchmarkTable;
 
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
@@ -258,7 +256,6 @@ namespace SytyRouting
                         var workY = persona.WorkLocation.Y;
                         
                         var requestedTransportModes = persona.RequestedTransportSequence;
-                        //var firstMode = requestedTransportModes[0];
 
                         TimeSpan initialTime = TimeSpan.Zero;
 
@@ -392,7 +389,6 @@ namespace SytyRouting
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
-            // var routeTable = Configuration.RoutingBenchmarkTable;
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
@@ -401,17 +397,6 @@ namespace SytyRouting
             {
                 try
                 {
-                    // await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeTable + " (persona_id, transport_sequence, computed_route) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_sequence = $2, computed_route = $3", connection)
-                    // {
-                    //     Parameters =
-                    //     {
-                    //         new() { Value = persona.Id },
-                    //         new() { Value = TransportModes.ArrayToNames(persona.RequestedTransportSequence)},
-                    //         new() { Value = persona.Route },
-                    //     }
-                    // };
-                    // await cmd_insert.ExecuteNonQueryAsync();
-
                     await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
                     {
                         Parameters =
@@ -495,11 +480,6 @@ namespace SytyRouting
                     logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
                 }                
             }
-
-            // await using (var cmd = new NpgsqlCommand("INSERT INTO " + routeTable + " SELECT route AS route_result, transport_sequence AS transport_sequence_result FROM " + auxiliaryTable + " ON CONFLICT ON CONSTRAINT persona_route_pk UPDATE SET route = route_result, transport_sequence = transport_sequence_result;", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
 
             //PLGSQL: Iterates over each route result to update the persona_route table
             var updateString = @"
@@ -846,7 +826,6 @@ namespace SytyRouting
             
             Node destination = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
 
-            //timeStamps.Add(Constants.BaseDateTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
             timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
 
             if(transitions.ContainsKey(destination.Idx))
