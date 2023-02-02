@@ -58,6 +58,10 @@ namespace SytyRouting
                 byte[] requestedTransportModeSequence = TransportModes.NamesToArray(routingProbes[i].TransportSequence);
 
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work, RequestedTransportSequence = requestedTransportModeSequence});
+
+                Console.WriteLine("From {0} to {1} by {2}",routingProbes[i].HomeLocation,routingProbes[i].WorkLocation,TransportModes.NamesToString(TransportModes.ArrayToNames(requestedTransportModeSequence)));
+                Console.WriteLine("{0}, {1}",routingProbes[i].HomeLatitude,routingProbes[i].HomeLongitude);
+                Console.WriteLine("{0}, {1}",routingProbes[i].WorkLatitude,routingProbes[i].WorkLongitude);
             }
 
             // For a batch selection from a bounding box on Brussels:
