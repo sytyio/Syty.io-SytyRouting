@@ -26,6 +26,116 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
+        public static byte[] CreateSequence(string[] requestedModes)
+        {
+            byte[] requestedSequence = TransportModes.NamesToArray(requestedModes);
+            
+            return CreateSequence(requestedSequence);
+        }
+
+        public static byte[] CreateSequence(byte[] requestedSequence)
+        {
+            if(requestedSequence.Length==1 && requestedSequence[0]==DefaultMode)
+            {
+                return requestedSequence;
+            }
+
+            byte[] revisedSequence = ReviseSequence(requestedSequence);
+            byte[] transportModeSequence = InsertDefaultMode(revisedSequence);
+
+            return transportModeSequence;
+        }
+
+        private static byte[] ReviseSequence(byte[] requestedSequence)
+        {
+            byte[] cleanedSequence = RemoveConsecutiveDuplicates(
+                                        RemoveDefaultMode(requestedSequence));
+
+            List<byte> sequence = new List<byte>(0);
+            if(cleanedSequence.Length>0)
+            {
+                sequence.Add(cleanedSequence[0]);
+                int index=0;
+                while(index<cleanedSequence.Length)
+                {
+                    byte currentMode=cleanedSequence[index++];
+                    for(int i=index; i<cleanedSequence.Length; i++)
+                    {
+                        byte nextMode=cleanedSequence[index++];
+                        if(RoutingRules.ContainsKey(currentMode))
+                        {
+                            byte alternativeModes=RoutingRules[currentMode];
+                            if((nextMode & alternativeModes)==nextMode)
+                            {
+                                sequence.Add(nextMode);
+                                index=i;
+                                break;
+                            }
+                            else
+                            {
+                                logger.Debug("Invalid Transport Mode Sequence: {0} ---> {1}. Skipping {1}.\b",SingleMaskToString(currentMode),SingleMaskToString(nextMode));
+                            }
+                        }
+                    }
+                }
+            }
+
+            return RemoveConsecutiveDuplicates(sequence.ToArray()).ToArray();
+        }
+
+        private static byte[] RemoveDefaultMode(byte[] sequence)
+        {
+            List<byte> newSequence = new List<byte>(0);
+            for(int i = 0; i < sequence.Length; i++)
+            {
+                if((sequence[i] & TransportModes.DefaultMode) != TransportModes.DefaultMode)
+                {
+                    newSequence.Add(sequence[i]);
+                }
+            }
+
+            return newSequence.ToArray();
+        }
+
+        private static byte[] RemoveConsecutiveDuplicates(byte[] sequence)
+        {
+            List<byte> newSequence = new List<byte>(0);
+            if(sequence.Length>0)
+            {
+                newSequence.Add(sequence[0]);
+                for(int i = 1; i < sequence.Length; i++)
+                {
+                    if(sequence[i] != sequence[i-1])
+                    {
+                        newSequence.Add(sequence[i]);
+                    }
+                }
+            }
+
+            return newSequence.ToArray();
+        }
+
+        private static byte[] InsertDefaultMode(byte[] sequence)
+        {
+            byte[] newSequence = new byte[2*sequence.Length+1];
+
+            if(sequence.Length>0)
+            {
+         
+                int j=0;
+                for(int i=0; i<sequence.Length; i++)
+                {
+                    newSequence[j]=DefaultMode;
+                    newSequence[j+1]=sequence[i];
+                    j+=2;
+                }
+
+                newSequence[newSequence.Length-1]=DefaultMode;
+            }
+
+            return newSequence;
+        }
+
         public static byte ArrayToMask(byte[] transportModes)
         {
             byte result = 0;
@@ -285,6 +395,14 @@ namespace SytyRouting
             }
 
             TransportModes.MasksToSpeeds = transportModeMasksToSpeeds;
+        }
+
+        public static void DisplayMaskMap()
+        {
+            foreach(var mask in Masks)
+            {
+                logger.Debug("{0,1} :: {1,3} :: {2,-20}", mask.Key, mask.Value, SingleMaskToString(mask.Value));
+            }
         }
 
         public static byte[] GetTransportModes()
