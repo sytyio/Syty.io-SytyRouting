@@ -453,17 +453,28 @@ namespace SytyRouting
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
+
+                    var route = persona.Route;
+                    double lastTime = -1.0;
+                    if(route is not null)
+                    {
+                        var routeCoordinates=route.Coordinates;
+                        lastTime = routeCoordinates.Last().M;
+                    }
                         
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
+                    var interval = TimeSpan.FromSeconds(lastTime);
                     
-                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps, total_time, total_time_interval) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3, total_time = $4, total_time_interval = $5", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
                             new() { Value = transportModes },
                             new() { Value = timeStampsTZ },
+                            new() { Value = timeStampsTZ.Last() },
+                            new() { Value = interval },
                         }
                     };
                 
