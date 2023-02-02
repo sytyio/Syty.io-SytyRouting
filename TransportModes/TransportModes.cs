@@ -26,8 +26,6 @@ namespace SytyRouting
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-
-        /*-------------------------------------------------------------------------- OLD-SCHOOL COMMENTS ----------------------------------------------------------------------------*/
         public static byte[] CreateSequence(string[] requestedModes)
         {
             byte[] requestedSequence = TransportModes.NamesToArray(requestedModes);
@@ -50,10 +48,8 @@ namespace SytyRouting
 
         private static byte[] ReviseSequence(byte[] requestedSequence)
         {
-            byte[] cleanedSequence = //MergePublicTransport(
-                                        RemoveConsecutiveDuplicates(
-                                        RemoveDefaultMode(requestedSequence//)
-                                        ));
+            byte[] cleanedSequence = RemoveConsecutiveDuplicates(
+                                        RemoveDefaultMode(requestedSequence));
 
             List<byte> sequence = new List<byte>(0);
             if(cleanedSequence.Length>0)
@@ -85,93 +81,6 @@ namespace SytyRouting
             }
 
             return RemoveConsecutiveDuplicates(sequence.ToArray()).ToArray();
-        }
-
-        public static bool ValidateTransportModeSequence(Node origin, Node destination, byte[] transportModeSequence)
-        {
-            bool theRouteEndsAreValid = RouteEndsAreValid(origin, destination, transportModeSequence);
-
-            if(theRouteEndsAreValid)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool RouteEndsAreValid(Node origin, Node destination, byte[] transportModesSequence)
-        {
-            bool theOriginIsValid = origin.IsAValidRouteStart(transportModesSequence);
-            bool theDestinationIsValid = destination.IsAValidRouteEnd(transportModesSequence);
-
-            if(theOriginIsValid && theDestinationIsValid)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        // private static byte[] MergePublicTransport(byte[] sequence)
-        // {
-        //     List<byte> newSequence = new List<byte>(0);
-
-        //     for(int i = 0; i < sequence.Length; i++)
-        //     {
-        //         byte currentMask = sequence[i];
-        //         if((currentMask & PublicModes) == currentMask || (currentMask & DefaultMode) == currentMask)
-        //         {
-        //             currentMask |= DefaultMode;
-        //             i++;
-        //             for(; i < sequence.Length; i++)
-        //             {
-        //                 byte nextTransportMask = sequence[i];
-        //                 if((nextTransportMask & PublicModes) == nextTransportMask || nextTransportMask == DefaultMode)
-        //                 {
-        //                     currentMask |= nextTransportMask;
-        //                 }
-        //                 else
-        //                 {
-        //                     break;
-        //                 }
-        //             }
-        //             i--;
-        //         }
-        //         newSequence.Add(currentMask);
-        //     }
-
-        //     return newSequence.ToArray();
-        // }
-
-        private static byte[] MergePublicTransport(byte[] sequence)
-        {
-            List<byte> newSequence = new List<byte>(0);
-
-            for(int i = 0; i < sequence.Length; i++)
-            {
-                byte currentMask = sequence[i];
-                if((currentMask & PublicModes) == currentMask)
-                {
-                    //currentMask |= DefaultMode;
-                    i++;
-                    for(; i < sequence.Length; i++)
-                    {
-                        byte nextTransportMask = sequence[i];
-                        if((nextTransportMask & PublicModes) == nextTransportMask)
-                        {
-                            currentMask |= nextTransportMask;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    i--;
-                }
-                newSequence.Add(currentMask);
-            }
-
-            return newSequence.ToArray();
         }
 
         private static byte[] RemoveDefaultMode(byte[] sequence)
@@ -206,73 +115,26 @@ namespace SytyRouting
             return newSequence.ToArray();
         }
 
-        // private static byte[] InsertDefaultMode(byte[] sequence)
-        // {
-        //     byte[] newSequence = new byte[sequence.Length];
-        //     if(sequence.Length>0)
-        //     {
-        //         if(sequence[0]!=TransportModes.DefaultMode)
-        //         {
-        //             Array.Resize(ref newSequence,newSequence.Length+1);
-        //             newSequence[0]=TransportModes.DefaultMode;
-        //             for(int i=0; i<sequence.Length; i++)
-        //             {
-        //                 newSequence[i+1]=sequence[i];
-        //             }
-        //         }
-        //         if(sequence.Last()!=TransportModes.DefaultMode)
-        //         {
-        //             Array.Resize(ref newSequence,newSequence.Length+1);
-        //             newSequence[newSequence.Length-1]=TransportModes.DefaultMode;
-        //         }
-        //     }
-
-        //     return newSequence;
-        // }
-
         private static byte[] InsertDefaultMode(byte[] sequence)
         {
             byte[] newSequence = new byte[2*sequence.Length+1];
 
             if(sequence.Length>0)
             {
-                //if(sequence[0]!=TransportModes.DefaultMode)
-                //{
-                    //Array.Resize(ref newSequence,newSequence.Length+1);
-                    //newSequence[0]=TransportModes.DefaultMode;
-                    int j=0;
-                    for(int i=0; i<sequence.Length; i++)
-                    {
-                        newSequence[j]=DefaultMode;
-                        newSequence[j+1]=sequence[i];
-                        j+=2;
-                    }
-                //}
-                //if(sequence.Last()!=TransportModes.DefaultMode)
-                //{
-                    //Array.Resize(ref newSequence,newSequence.Length+1);
-                    newSequence[newSequence.Length-1]=DefaultMode;
-                //}
+         
+                int j=0;
+                for(int i=0; i<sequence.Length; i++)
+                {
+                    newSequence[j]=DefaultMode;
+                    newSequence[j+1]=sequence[i];
+                    j+=2;
+                }
+
+                newSequence[newSequence.Length-1]=DefaultMode;
             }
 
             return newSequence;
         }
-
-
-        /*-------------------------------------------------------------------------- OLD-SCHOOL COMMENTS ----------------------------------------------------------------------------*/
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static byte ArrayToMask(byte[] transportModes)
         {
