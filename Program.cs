@@ -44,8 +44,8 @@ namespace SytyRouting
             //////////////////////////////////////////////
             // // // Create a new table for route results
             /////////////////////////////////////////////
-            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            // var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
+            // await personaRouteTable.CreateDataSet();
             /////////////////////////////////////////////
 
 
@@ -75,11 +75,25 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
+            TransportModes.DisplayMaskMap();
+
+            //string[] requestedSequence = new string[] {"Foot"};
+            //string[] requestedSequence = new string[] {"Bicycle","Foot", "Tram"};
+            //string[] requestedSequence = new string[] {"Foot", "Public Transport"};
+            //string[] requestedSequence = new string[] {"Car", "Public Transport"};
+            //string[] requestedSequence = new string[] {"Car", "Foot", "Foot", "Bicycle", "Bicycle", "Public Transport", "Metro", "Public Transport"};
+            string[] requestedSequence = new string[] {"Car", "Foot", "Foot", "Bicycle", "Bicycle", "Public Transport", "Metro", "Public Transport", "Car", "Tram", "Public Transport"};
+
+            byte[] createdSequence = TransportModes.CreateSequence(requestedSequence);
+            logger.Debug("Requested sequence: {0}", TransportModes.NamesToString(requestedSequence));
+            logger.Debug("Created sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(createdSequence)));
+
+
             // // Persona spatial data generation
             //await RoutingBenchmark.CreateDataSet();
-            var personaRouter = new PersonaRouter(graph, Configuration.PersonaRouteTable);
+            //var personaRouter = new PersonaRouter(graph, Configuration.PersonaRouteTable);
 
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            //await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
     
             //personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();
