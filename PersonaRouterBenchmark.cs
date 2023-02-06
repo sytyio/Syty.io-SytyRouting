@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = 1;//Environment.ProcessorCount;
 
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
@@ -292,9 +292,9 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
-
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
 
                                 persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
 

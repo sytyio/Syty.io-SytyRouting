@@ -111,19 +111,34 @@ namespace SytyRouting.Algorithms
             xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
             mOrdinates.Add(previousTimeInterval);
 
+            byte previousTransportMode = TransportModes.None;
+            byte currentTransportMode = TransportModes.None;
+
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {   
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
 
                 if(edge is not null)
                 {
-                    if(edge.MaxSpeedMPerS==0)
+                    // if(edge.MaxSpeedMPerS==0)
+                    // {
+                    //     logger.Debug("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
+                    //     return new LineString(null, geometryFactory);
+                    // }
+
+                    var selectedTransportMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
+                    if(selectedTransportMode!=currentTransportMode && selectedTransportMode!=TransportModes.None && selectedTransportMode!=currentTransportMode)
                     {
-                        logger.Debug("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
-                        return new LineString(null, geometryFactory);
+                        previousTransportMode = currentTransportMode;
+                        currentTransportMode = selectedTransportMode;
                     }
+
+                    var speed = Helper.ComputeSpeed(edge, currentTransportMode);
                     
-                    var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
+                    //var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
+                    var minTimeIntervalS = edge.LengthM / speed; // [s]
+
+                    minTimeIntervalS = Helper.ApplyRoutingPenalties(edge, currentTransportMode, minTimeIntervalS);
 
                     if(edge.InternalGeometry is not null)
                     {
@@ -244,6 +259,22 @@ namespace SytyRouting.Algorithms
                 transportModeTransitions.Add(destination.Idx,transition);
 
             return transportModeTransitions;
+        }
+
+        private byte SelectTransportMode(int nodeIdx, Dictionary<int,Tuple<byte,int>> transitions)
+        {
+            byte transportMode = TransportModes.None;
+
+            if(transitions.ContainsKey(nodeIdx))
+            {
+                var routeType = transitions[nodeIdx].Item2;
+                if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                    transportMode = TransportModes.TagIdToTransportModes(routeType);
+                else
+                    transportMode = transitions[nodeIdx].Item1;
+            }           
+
+            return transportMode;
         }
 
         public double GetRouteCost()
