@@ -722,6 +722,50 @@ namespace SytyRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // Pedestrian-Metro timing issue
 
+        public static void ExposeTransportTransitions(List<Node> nodeRoute, Persona persona)
+        {
+            LineString pointRoute = persona.Route!;
+            Dictionary<int,Tuple<byte,int>> bTransitions = persona.TransportModeTransitions!;
+            Tuple<string[],DateTime[]> tTransitions = persona.TTextTransitions;
+
+            Node[] nodes = nodeRoute.ToArray();
+
+            int tTransition=0;
+            string[] modes = tTransitions.Item1;
+            DateTime[] stamps = tTransitions.Item2;
+
+            Console.WriteLine("Nodes:\tTransport Mode:\tRoute Type:");
+            foreach(Node node in nodeRoute)
+            {
+                string transportMode = "";
+                int routeType = 0;
+                if(bTransitions.ContainsKey(node.Idx))
+                {
+                    transportMode = TransportModes.SingleMaskToString(bTransitions[node.Idx].Item1);
+                    routeType = bTransitions[node.Idx].Item2;
+                    Console.WriteLine("{0}\t{1}\t\t{2}",node.Idx,transportMode,routeType);
+                }
+            }
+            
+            Console.WriteLine("Coordinates:");
+            Console.WriteLine("X:\tY:\tM:\t\tT:\t\t\tTime Stamp:\tTransport Mode:");
+            Coordinate[] points = pointRoute.Coordinates;
+            for(int i=0; i<points.Length; i++)
+            {
+                string timeStampS = "";
+                string transportModeS = "";
+                DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(points[i].M));
+                if(stamps[tTransition]==timeStamp)
+                {
+                    timeStampS = stamps[tTransition].ToString();
+                    transportModeS = modes[tTransition].ToString();
+                    tTransition++;
+                }
+                Console.WriteLine("{0:0.0000}\t{1:00.0000}\t{2:0000.0000}\t{3}\t{4}\t{5}",points[i].X,points[i].Y,points[i].M,timeStamp,timeStampS,transportModeS);
+
+            }
+            
+        }
 
 
 

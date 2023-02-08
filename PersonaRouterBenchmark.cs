@@ -312,6 +312,18 @@ namespace SytyRouting
                                 //
                             }
                         }
+
+                        //debug:
+                        var transports = persona.TTextTransitions.Item1;
+                        var timestamps = persona.TTextTransitions.Item2;
+                        logger.Debug("timestamp:\ttransport:");
+                        for(int j=0; j<transports.Length; j++)
+                        {
+                            logger.Debug("{0}\t{1}",timestamps[j],transports[j]);
+                        }
+
+                        TestBench.ExposeTransportTransitions(route!,persona);
+                        //
                     }
                     catch (Exception e)
                     {

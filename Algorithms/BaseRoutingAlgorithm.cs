@@ -284,6 +284,7 @@ namespace SytyRouting.Algorithms
 
         public Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions()
         {
+            //make a copy
             Dictionary<int,Tuple<byte,int>> tmTransitions =  new Dictionary<int,Tuple<byte,int>>(transportModeTransitions.Count);
             var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
             var tmTransitionsValues = transportModeTransitions.Values.ToArray();
