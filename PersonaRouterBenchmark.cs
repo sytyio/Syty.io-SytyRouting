@@ -129,17 +129,17 @@ namespace SytyRouting
                         var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
                         var workLocation = (Point)reader.GetValue(2); // work_location (Point)
                         var requestedSequence = reader.GetValue(3); // transport_sequence (text[])
-                        string[] requestedTransportSequence;
+                        byte[] requestedTransportSequence;
                         if(requestedSequence is not null && requestedSequence != DBNull.Value)
                         {
                              requestedTransportSequence = ValidateTransportSequence(id, homeLocation, workLocation, (string[])requestedSequence);
                         }
                         else
                         {
-                            requestedTransportSequence = new string[] {""};
+                            requestedTransportSequence = new byte[0];
                         }
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = TransportModes.NamesToArray(requestedTransportSequence)};
+                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, RequestedTransportSequence = requestedTransportSequence};
                         
                         personas.Add(persona);
                         
@@ -165,10 +165,14 @@ namespace SytyRouting
             await connection.CloseAsync();
         }
 
-        private string[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
+        private byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
         {
-            byte initialTransportMode = TransportModes.NameToMask(transportSequence.First());
-            byte finalTransportMode = TransportModes.NameToMask(transportSequence.Last());
+            byte[] formattedSequence = TransportModes.CreateSequence(transportSequence);
+            logger.Debug("Requested sequence: {0}", TransportModes.NamesToString(transportSequence));
+            logger.Debug("Formatted sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(formattedSequence)));
+
+            byte initialTransportMode = formattedSequence.First();
+            byte finalTransportMode = formattedSequence.Last();
 
             var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
@@ -178,7 +182,7 @@ namespace SytyRouting
 
             if(outboundEdge != null && inboundEdge != null)
             {
-                return transportSequence;
+                return formattedSequence;
             }
             else
             {
@@ -224,10 +228,10 @@ namespace SytyRouting
                     finalTransportMode = TransportModes.MaskToArray(inboundTransportModes).First();
                 }
             
-                var newSequence = new string[2];
-                newSequence[0] = TransportModes.SingleMaskToString(initialTransportMode);
-                newSequence[1] = TransportModes.SingleMaskToString(finalTransportMode);
-                logger.Debug(" Requested transport sequence overridden to: {0}", TransportModes.NamesToString(newSequence));
+                var newSequence = new byte[2];
+                newSequence[0] = initialTransportMode;
+                newSequence[1] = finalTransportMode;
+                logger.Debug(" Requested transport sequence overridden to: {0}", TransportModes.ArrayToNames(newSequence));
                 
                 return newSequence;
             }
