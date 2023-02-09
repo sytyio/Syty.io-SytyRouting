@@ -43,7 +43,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                              
                 if(activeNode == destinationNode)
                 {
-                    ReconstructRoute(currentStep);
+                    ReconstructRoute(currentStep,0);
                     routeCost = currentStep.CumulatedCost;
                     
                     break;
@@ -115,7 +115,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             }
         }
 
-        private void ReconstructRoute(DijkstraStep? currentStep)
+        private void ReconstructRoute(DijkstraStep? currentStep, int count)
         {
             if (currentStep != null)
             {
@@ -125,15 +125,24 @@ namespace SytyRouting.Algorithms.Dijkstra
                     {
                         var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
                         transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
+                        //debug:
+                        Console.WriteLine("{0,3}   transition::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",count,currentStep.ActiveNode.Idx,TransportModes.SingleMaskToString(transition.Item1),transition.Item2);
+                        //
                     }
                 }
                 else
                 {
                     var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
                     transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
+                    //debug:
+                    Console.WriteLine("{0,3}   transition::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",count,currentStep.ActiveNode.Idx,TransportModes.SingleMaskToString(transition.Item1),transition.Item2);
+                    //
                 }
-                ReconstructRoute(currentStep.PreviousStep);
+                ReconstructRoute(currentStep.PreviousStep, count+1);
                 route.Add(currentStep.ActiveNode!);
+                //debug:
+                Console.WriteLine("{0,3}        route::: idx: {1,7} :: tm: {2,10}",count,currentStep.ActiveNode.Idx,TransportModes.SingleMaskToString(currentStep.TransportMode));
+                //
             }
         }
     }

@@ -102,21 +102,53 @@ namespace SytyRouting.Algorithms
             var firstNodeY = nodeRoute.First().Y;
 
             var previousTimeInterval = initialTimeStamp.TotalSeconds;
+
+            byte previousTransportMode = TransportModes.None;
+            byte currentTransportMode = TransportModes.DefaultMode;
             
             xyCoordinates.Add(new Coordinate(startX,startY));
             mOrdinates.Add(previousTimeInterval);
 
-            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,TransportModes.DefaultMode);
+            //debug:
+            int step=0;
+            int ni=-1;
+            int nj=-1;
+            double x=startX;
+            double y=startY;
+            double m=previousTimeInterval;
+            int idx=-1;
+            byte ptm=TransportModes.None;
+            byte stm=TransportModes.None;
+            byte ctm=TransportModes.DefaultMode;
+            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,ptm,stm,ctm);
+            //
+
+            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,currentTransportMode);
 
             xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
             mOrdinates.Add(previousTimeInterval);
 
-            byte previousTransportMode = TransportModes.None;
-            byte currentTransportMode = TransportModes.None;
+            //debug:
+            x=firstNodeX;
+            y=firstNodeY;
+            m=previousTimeInterval;
+            idx=nodeRoute.First().Idx;
+            ni=0;
+            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,ptm,stm,ctm);
+            //
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
-            {   
+            {
                 var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
+                //debug:
+                var edge2 = FindEdge(nodeRoute[i], nodeRoute[i+1], currentTransportMode);
+                Console.WriteLine("edges: {0}:{1}",edge!.OsmID,edge2.OsmID);
+                //
+
+                //debug:
+                ni=i+1;
+                idx=nodeRoute[i+1].Idx;
+                //
 
                 if(edge is not null)
                 {
@@ -127,10 +159,18 @@ namespace SytyRouting.Algorithms
                     // }
 
                     var selectedTransportMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
+                    //debug:
+                    stm=selectedTransportMode;
+                    //
                     if(selectedTransportMode!=currentTransportMode && selectedTransportMode!=TransportModes.None && selectedTransportMode!=currentTransportMode)
                     {
                         previousTransportMode = currentTransportMode;
                         currentTransportMode = selectedTransportMode;
+
+                        //debug:
+                        ptm=previousTransportMode;
+                        ctm=currentTransportMode;
+                        //
                     }
 
                     var speed = Helper.ComputeSpeed(edge, currentTransportMode);
@@ -144,13 +184,26 @@ namespace SytyRouting.Algorithms
                     {
                         for(var j = 0; j < edge.InternalGeometry.Length; j++)
                         {
+                            //debug:
+                            nj=j;
+                            //
                             var internalX = edge.InternalGeometry[j].X;
                             var internalY = edge.InternalGeometry[j].Y;
                             var internalM = edge.InternalGeometry[j].M * minTimeIntervalS + previousTimeInterval;
 
                             xyCoordinates.Add(new Coordinate(internalX, internalY));
                             mOrdinates.Add(internalM);
+
+                            //debug:
+                            x=internalX;
+                            y=internalY;
+                            m=internalM;
+                            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,ptm,stm,ctm);
+                            //
                         }
+                        //debug:
+                        nj=-1;
+                        //
                     }
 
                     var targetX = edge.TargetNode.X;
@@ -160,20 +213,47 @@ namespace SytyRouting.Algorithms
 
                     xyCoordinates.Add(new Coordinate(targetX, targetY));
                     mOrdinates.Add(previousTimeInterval);
+
+                    //debug:
+                    x=targetX;
+                    y=targetY;
+                    m=previousTimeInterval;
+                    idx=edge.TargetNode.Idx;
+                    // ptm=previousTransportMode;
+                    // stm=TransportModes.None;
+                    // ctm=currentTransportMode;
+                    TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,ptm,stm,ctm);
+                    //
                 }
                 else
                 {
                     return new LineString(null, geometryFactory);
                 }
+                //debug:
+                stm=TransportModes.None;
+                //
             }
 
             var lastNodeX = nodeRoute.Last().X;
             var lastNodeY = nodeRoute.Last().Y;
 
+            //debug:
+            ni=nodeRoute.Count-1;
+            //
+
             var endM = Get2PointTimeInterval(lastNodeX,lastNodeY,endX,endY,TransportModes.DefaultMode) + previousTimeInterval;
             
             xyCoordinates.Add(new Coordinate(endX,endY));
             mOrdinates.Add(endM);
+
+            //debug:
+            x=lastNodeX;
+            y=lastNodeY;
+            m=endM;
+            idx=nodeRoute.Last().Idx;
+            ctm=TransportModes.DefaultMode;
+            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,ptm,stm,ctm);
+            //
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
@@ -183,6 +263,37 @@ namespace SytyRouting.Algorithms
             coordinateSequence.ReleaseCoordinateArray();
 
             return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        private Edge FindEdge(Node baseNode, Node targetNode, byte transportMode)
+        {
+            Edge minLengthEdge = null!; // = baseNode.OutwardEdges.Find(e => e.TargetNode.Idx == targetNode.Idx);
+
+            var edges = baseNode.GetOutboundEdges(transportMode);
+            if(edges.Count > 0)
+            {
+                double minLength = Double.PositiveInfinity;
+                foreach(var edge in edges)
+                {
+                    if(edge.TargetNode.Idx == targetNode.Idx && minLength > edge.LengthM)
+                    {
+                        minLength = edge.LengthM;
+                        minLengthEdge = edge;
+                    }
+                }
+            }
+            else
+            {
+                logger.Debug("Edges not found. Base node: {0}, target node: {1}, transport mode: {2}",baseNode.Idx,targetNode.Idx,transportMode);
+                _graph.TraceOneNode(baseNode);
+            }
+
+            if(minLengthEdge == null)
+            {
+                logger.Debug("Edge not found");
+            }
+
+            return minLengthEdge;
         }
 
         public LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)

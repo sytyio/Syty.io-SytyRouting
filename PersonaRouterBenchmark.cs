@@ -294,6 +294,14 @@ namespace SytyRouting
                             {
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
+                                //debug:
+                                int count=0;
+                                foreach(var transition in persona.TransportModeTransitions)
+                                {
+                                    Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",count++,transition.Key,TransportModes.SingleMaskToString(transition.Value.Item1),transition.Value.Item2);
+                                }
+                                //
+
                                 persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
 
                                 persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
@@ -320,8 +328,9 @@ namespace SytyRouting
                         for(int j=0; j<transports.Length; j++)
                         {
                             logger.Debug("{0}\t{1}",timestamps[j],transports[j]);
-                        }
-
+                        }                        
+                        // TestBench.ExposeTransportTransitionsNodeSeries(route!,persona);
+                        // TestBench.ExposeTransportTransitionsTimeSeries(route!,persona);
                         TestBench.ExposeTransportTransitions(route!,persona);
                         //
                     }

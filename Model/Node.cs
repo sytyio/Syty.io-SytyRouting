@@ -102,6 +102,29 @@ namespace SytyRouting.Model
             return edge;
         }
 
+        public List<Edge> GetOutboundEdges(byte transportMode)
+        {
+            Edge edge = null!;
+            List<Edge> edges = new List<Edge>(0);
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                if((outwardEdge.TransportModes & transportMode) == transportMode)
+                {
+                    edge = outwardEdge;
+                    edges.Add(edge);
+                }
+            }
+
+            //debug:
+            if(edge == null)
+            {
+                Console.WriteLine("Edge not found");
+            }
+            //
+
+            return edges;
+        }
+
         public Edge GetInboundEdge(byte transportMode)
         {
             Edge edge = null!;
