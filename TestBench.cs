@@ -824,17 +824,19 @@ namespace SytyRouting
             
         }
 
-        public static void ExposeNodeToLineStringStep(int s, double x, double y, double m, int idx, int ni, int nj, byte ptm, byte stm, byte ctm)
+        public static void ExposeNodeToLineStringStep(int s, double x, double y, double m, int idx, int ni, int nj, byte aitm, byte aotm, byte ptm, byte stm, byte ctm)
         {
             DateTime ts = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(m));
             string idxS = idx>=0?idx.ToString():"-------";
             string niS = ni>=0?ni.ToString():"---";
             string njS = nj>=0?nj.ToString():"---";
-            Console.WriteLine("{0:###0}\t{1:0.0000000}\t{2:00.0000000}\t{3:0000.000}\t{4}\t{5,7} ({6,3})[{7,3}]:: \t{8}\t{9}\t{10}",
+            Console.WriteLine("{0:###0}\t{1:0.0000000}\t{2:00.0000000}\t{3:0000.000}\t{4}\t{5,7} ({6,3})[{7,3}]::{8,50}->{9,50}:\t{10}\t{11}\t{12}",
                                 s,        x,             y,              m,            ts,  idxS,  niS,   njS,
-                                                                                  TransportModes.SingleMaskToString(ptm),
-                                                                                       TransportModes.SingleMaskToString(stm),
-                                                                                             TransportModes.SingleMaskToString(ctm));
+                                                                                    TransportModes.MaskToString(aitm),
+                                                                                            TransportModes.MaskToString(aotm),
+                                                                                                TransportModes.SingleMaskToString(ptm),
+                                                                                                        TransportModes.SingleMaskToString(stm),
+                                                                                                            TransportModes.SingleMaskToString(ctm));
         }
 
 

@@ -75,11 +75,11 @@ namespace SytyRouting
                 int t = taskIndex;
                 routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
-            Task monitorTask = Task.Run(() => MonitorRouteCalculation());
+            //debug: Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
-            Task.WaitAll(monitorTask);
+            //debug: Task.WaitAll(monitorTask);
 
             ////await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();
@@ -173,8 +173,8 @@ namespace SytyRouting
             var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
 
-            Edge outboundEdge = originNode.GetOutboundEdge(initialTransportMode);
-            Edge inboundEdge = destinationNode.GetInboundEdge(finalTransportMode);
+            Edge outboundEdge = originNode.GetFirstOutboundEdge(initialTransportMode);
+            Edge inboundEdge = destinationNode.GetFirstInboundEdge(finalTransportMode);
 
             if(outboundEdge != null && inboundEdge != null)
             {

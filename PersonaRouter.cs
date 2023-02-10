@@ -178,8 +178,8 @@ namespace SytyRouting
             var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
 
-            Edge outboundEdge = originNode.GetOutboundEdge(initialTransportMode);
-            Edge inboundEdge = destinationNode.GetInboundEdge(finalTransportMode);
+            Edge outboundEdge = originNode.GetFirstOutboundEdge(initialTransportMode);
+            Edge inboundEdge = destinationNode.GetFirstInboundEdge(finalTransportMode);
 
             if(outboundEdge != null && inboundEdge != null)
             {

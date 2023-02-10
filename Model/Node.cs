@@ -87,7 +87,7 @@ namespace SytyRouting.Model
             return transportModes;
         }
 
-        public Edge GetOutboundEdge(byte transportMode)
+        public Edge GetFirstOutboundEdge(byte transportMode)
         {
             Edge edge = null!;
             foreach(var outwardEdge in OutwardEdges)
@@ -106,6 +106,12 @@ namespace SytyRouting.Model
         {
             Edge edge = null!;
             List<Edge> edges = new List<Edge>(0);
+            //debug:
+            if(Idx==1562550)
+            {
+                Console.WriteLine("Probe 1562550");
+            }
+            //
             foreach(var outwardEdge in OutwardEdges)
             {
                 if((outwardEdge.TransportModes & transportMode) == transportMode)
@@ -118,14 +124,14 @@ namespace SytyRouting.Model
             //debug:
             if(edge == null)
             {
-                Console.WriteLine("Edge not found");
+                Console.WriteLine("No edge found with the '{0}' transport mode at node {1}.", TransportModes.SingleMaskToString(transportMode), Idx);
             }
             //
 
             return edges;
         }
 
-        public Edge GetInboundEdge(byte transportMode)
+        public Edge GetFirstInboundEdge(byte transportMode)
         {
             Edge edge = null!;
             foreach(var inwardEdge in InwardEdges)
