@@ -63,9 +63,11 @@ namespace SytyRouting.Algorithms.Dijkstra
                         var currentMode = currentTransportMask;
 
                         //debug:
-                        if(activeNode.Idx==1558840)
+                        // var probe=1558840;
+                        var probe=1562550;
+                        if(activeNode.Idx==probe)
                         {
-                            Console.WriteLine("Outward edge transport modes: {0}",TransportModes.MaskToString(outboundModes));
+                            Console.WriteLine("Probe {0}: Outward edge {1}: transport modes: {2} Target: {3}",probe,outwardEdge.OsmID,TransportModes.MaskToString(outboundModes),outwardEdge.TargetNode.Idx);
                         }
                         //
                         
@@ -88,7 +90,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                             if((outboundModes & nextTransportMode) == nextTransportMode)
                             {
                                 var cost = Helper.ComputeEdgeCost(CostCriteria.MinimalTravelTime, outwardEdge, nextTransportMode);
-                                AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
+                                AddStep(currentStep.PreviousStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, nextTransportMode, outwardEdge.TagIdRouteType);
                                 //AddStep(currentStep, outwardEdge.TargetNode, currentStep.CumulatedCost + cost, currentTransportIndex+1, transportMode, outwardEdge.TagIdRouteType);
                             }
                         }
