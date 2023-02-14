@@ -148,7 +148,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode, OutboundRouteType = outboundRouteType };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode, InboundRouteType = outboundRouteType };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -170,13 +170,13 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
                         transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                     }
                 }
                 else
                 {
-                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
                     transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                 }
                 ReconstructRoute(currentStep.PreviousStep);

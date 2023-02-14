@@ -144,13 +144,13 @@ namespace SytyRouting.Algorithms.Dijkstra
                 {
                     if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
                         transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                     }
                 }
                 else
                 {
-                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
                     transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                 }
                 ReconstructRoute(currentStep.PreviousStep);

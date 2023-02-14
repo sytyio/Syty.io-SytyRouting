@@ -629,7 +629,7 @@ namespace SytyRouting
                                                     step.PreviousStep.Direction,
                                                     step.PreviousStep.TransportSequenceIndex,
                                                     TransportModes.SingleMaskToString(step.PreviousStep.TransportMode),
-                                                    step.PreviousStep.OutboundRouteType);
+                                                    step.PreviousStep.InboundRouteType);
 
                 TraceOneNode(step.PreviousStep.ActiveNode);
                 
@@ -650,7 +650,7 @@ namespace SytyRouting
                                                     step.Direction,
                                                     step.TransportSequenceIndex,
                                                     TransportModes.SingleMaskToString(step.TransportMode),
-                                                    step.OutboundRouteType);
+                                                    step.InboundRouteType);
 
             TraceOneNode(step.ActiveNode);
 
