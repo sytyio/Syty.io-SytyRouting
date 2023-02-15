@@ -53,7 +53,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 }
                 else
                 {
-                    currentTransportMask = currentStep.TransportMode;
+                    currentTransportMask = currentStep.InboundTransportMode;
                 }
                 
                 if(activeNode == destinationNode)
@@ -152,7 +152,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode, InboundRouteType = outboundRouteType };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, InboundTransportMode = transportMode, InboundRouteType = outboundRouteType };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -172,15 +172,15 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 if(currentStep.PreviousStep != null)
                 {
-                    if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
+                    if(currentStep.PreviousStep.InboundTransportMode != currentStep.InboundTransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
+                        var transition = Tuple.Create<byte,int>(currentStep.InboundTransportMode,currentStep.InboundRouteType);
                         transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                     }
                 }
                 else
                 {
-                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.InboundRouteType);
+                    var transition = Tuple.Create<byte,int>(currentStep.InboundTransportMode,currentStep.InboundRouteType);
                     transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                 }
                 ReconstructRoute(currentStep.PreviousStep);

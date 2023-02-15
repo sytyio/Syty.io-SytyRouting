@@ -8,7 +8,7 @@ namespace SytyRouting
         public const string NoTransportMode = "None";
         public const int MaxNumberOfTransportModes = sizeof(byte) * 8; // Number of bits to be used to identify the Transport Modes.
         public static byte DefaultMode;
-        public static int DefaultRouteType = -1;
+        public static int NoRouteType = 0;
 
         public static int GtfsDefaultFoot = 13; // see on config file
 

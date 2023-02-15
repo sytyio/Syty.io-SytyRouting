@@ -628,7 +628,7 @@ namespace SytyRouting
                                                     step.PreviousStep.CumulatedCost,
                                                     step.PreviousStep.Direction,
                                                     step.PreviousStep.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.PreviousStep.TransportMode),
+                                                    TransportModes.SingleMaskToString(step.PreviousStep.InboundTransportMode),
                                                     step.PreviousStep.InboundRouteType);
 
                 TraceOneNode(step.PreviousStep.ActiveNode);
@@ -649,7 +649,7 @@ namespace SytyRouting
                                                     step.CumulatedCost,
                                                     step.Direction,
                                                     step.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.TransportMode),
+                                                    TransportModes.SingleMaskToString(step.InboundTransportMode),
                                                     step.InboundRouteType);
 
             TraceOneNode(step.ActiveNode);
@@ -827,17 +827,80 @@ namespace SytyRouting
         public static void ExposeNodeToLineStringStep(int s, double x, double y, double m, int idx, int ni, int nj, byte aitm, byte aotm, byte ptm, byte stm, byte ctm)
         {
             DateTime ts = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(m));
-            string idxS = idx>=0?idx.ToString():"-------";
+            string idxS = idx>=0?idx.ToString():"--------";
             string niS = ni>=0?ni.ToString():"---";
             string njS = nj>=0?nj.ToString():"---";
-            Console.WriteLine("{0:###0}\t{1:0.0000000}\t{2:00.0000000}\t{3:0000.000}\t{4}\t{5,7} ({6,3})[{7,3}]::{8,50}->{9,50}:\t{10}\t{11}\t{12}",
+            Console.WriteLine("{0:###0}\t{1:0.0000000}\t{2:00.0000000}\t{3:0000.000}\t{4}\t{5,8} ({6,3})[{7,3}]::{8,50} {9,50}:\t{10}\t\t{11}\t\t{12}",
                                 s,        x,             y,              m,            ts,  idxS,  niS,   njS,
                                                                                     TransportModes.MaskToString(aitm),
                                                                                             TransportModes.MaskToString(aotm),
                                                                                                 TransportModes.SingleMaskToString(ptm),
                                                                                                         TransportModes.SingleMaskToString(stm),
                                                                                                             TransportModes.SingleMaskToString(ctm));
+            //Environment.Exit(0);                                                                                                            
         }
+
+        public static void DisplayRouteReconstruction(DijkstraStep? lastStep)
+        {
+            Console.WriteLine("Route reconstruction step by step (backwards):");
+            List<DijkstraStep> steps = new List<DijkstraStep>(0);
+            DijkstraStep step = lastStep!;
+            List<Node> nodes = new List<Node>(0);
+            Node node = step.ActiveNode;
+            nodes.Add(node);
+
+            steps.Add(step);
+
+            while(step.PreviousStep!=null)
+            {
+                step=step.PreviousStep;
+                node=step.ActiveNode;
+                steps.Add(step);
+                nodes.Add(node);
+            }
+            Console.WriteLine("Route reconstruction step by step (backwards): done.");
+
+            int count=0;
+            Console.WriteLine("{0,3}\t{1,14}\t{2,16}\t{3,20}\t{4,25}\t{5,20}\t{6,15}",
+                        "count",
+                        "ActiveNode.Idx",
+                        "PreviousNode.Idx",
+                        "CumulatedCost",
+                        "TransportSequenceIndex",
+                        "InboundTransportMode",
+                        "InboundRouteType"
+                        );
+            foreach(var s in steps)
+            {
+                Console.WriteLine("{0,3}\t{1,14}\t{2,16}\t{3,20}\t{4,25}\t{5,20}\t{6,15}",
+                    count++,
+                    s.ActiveNode.Idx,
+                    s.PreviousStep!=null?s.PreviousStep.ActiveNode.Idx:"--------",
+                    s.CumulatedCost,
+                    s.TransportSequenceIndex,
+                    s.InboundTransportMode,
+                    s.InboundRouteType);
+            }
+            Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("{0,3}\t{1,8}\t{2,50}\t{3,50}",
+                        "count",
+                        "Idx",
+                        "Available inbound modes",
+                        "Available outbound modes"
+                        );
+            foreach(var n in nodes)
+            {
+                Console.WriteLine("{0,3}\t{1,8}\t{2,50}\t{3,50}",
+                    --count,
+                    n.Idx,
+                    TransportModes.MaskToString(n.GetAvailableInboundTransportModes()),
+                    TransportModes.MaskToString(n.GetAvailableOutboundTransportModes()));
+            }
+            Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------------");
+
+            //Environment.Exit(0);
+        }
+
 
 
 

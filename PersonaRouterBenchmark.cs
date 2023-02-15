@@ -295,10 +295,15 @@ namespace SytyRouting
                                 persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                                 //debug:
+                                Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------");
                                 int count=0;
                                 foreach(var transition in persona.TransportModeTransitions)
                                 {
-                                    Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",count++,transition.Key,TransportModes.SingleMaskToString(transition.Value.Item1),transition.Value.Item2);
+                                    Console.WriteLine("count: {0,3}   TRANSITION::: node idx: {1,7} :: outbound transport mode(s): {2,10} :: outbound route type: {3,3}",
+                                    //Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",
+                                                            count++,                 transition.Key,
+                                                                                TransportModes.SingleMaskToString(transition.Value.Item1),
+                                                                                                                                                transition.Value.Item2);
                                 }
                                 //
 

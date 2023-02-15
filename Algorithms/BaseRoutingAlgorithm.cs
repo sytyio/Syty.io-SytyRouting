@@ -306,6 +306,17 @@ namespace SytyRouting.Algorithms
             mOrdinates.Add(previousTimeInterval);
 
             //debug:
+            Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("{0:###0}\t{1:0.0000000}\t\t{2:00.0000000}\t\t{3:0000.000}\t\t{4}\t\t{5,8} ({6,3})[{7,3}]::{8,50} {9,50}:\t{10}\t{11}\t{12}",
+                                "STEP",   "X",             "Y",              "M",            "TIME STAMP",
+                                                                                                    "NODE IDX",
+                                                                                                           "node count (i)",
+                                                                                                                  "internal geometry count (j)",
+                                                                                                                          "AVAILABLE INBOUND MODES",
+                                                                                                                                 "AVAILABLE OUTBOUND MODES",
+                                                                                                                                           "PREVIOUS MODE",
+                                                                                                                                                 "SELECTED MODE",
+                                                                                                                                                       "CURRENT MODE");
             int step=0;
             int ni=-1;
             int nj=-1;
