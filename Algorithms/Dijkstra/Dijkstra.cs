@@ -23,13 +23,13 @@ namespace SytyRouting.Algorithms.Dijkstra
             if(sequenceLength>0)
             {
                 //debug: byte transportMode = transportModesSequence[0];
-                byte inboundMode = TransportModes.DefaultMode; // inbound transport mode
+                byte inboundMode = TransportModes.None; // inbound transport mode
                 byte outboundMode  = transportModesSequence.First(); // requested mode
                 Edge outboundEdge = originNode.GetFirstOutboundEdge(outboundMode);
                 if(outboundEdge != null)
                 {
                     //debug: AddStep(null, originNode, 0, 0, transportMode, outboundEdge.TagIdRouteType);
-                    AddStep(null, originNode, 0, 0, inboundMode, TransportModes.DefaultRouteType);
+                    AddStep(null, originNode, 0, 0, inboundMode, 0);
                 }
             }
 
