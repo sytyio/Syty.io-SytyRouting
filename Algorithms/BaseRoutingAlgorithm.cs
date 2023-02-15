@@ -299,24 +299,24 @@ namespace SytyRouting.Algorithms
 
             var previousTimeInterval = initialTimeStamp.TotalSeconds;
 
-            byte previousTransportMode = TransportModes.None;
-            byte currentTransportMode = TransportModes.DefaultMode;
+            byte inboundMode = TransportModes.None;
+            byte outboundMode = TransportModes.DefaultMode; // Assuming the user starts the journey as a 'Pedestrian'
             
             xyCoordinates.Add(new Coordinate(startX,startY));
             mOrdinates.Add(previousTimeInterval);
 
             //debug:
-            Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-            Console.WriteLine("{0:###0}\t{1:0.0000000}\t\t{2:00.0000000}\t\t{3:0000.000}\t\t{4}\t\t{5,8} ({6,3})[{7,3}]::{8,50} {9,50}:\t{10}\t{11}\t{12}",
+            Console.WriteLine("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("{0:###0}\t{1:0.0000000}\t\t{2:00.0000000}\t\t{3:0000.000}\t\t{4}\t\t{5,8} ({6,6})[{7,15}]::{8,50} {9,50}\t{10}\t{11}\t{12}",
                                 "STEP",   "X",             "Y",              "M",            "TIME STAMP",
                                                                                                     "NODE IDX",
-                                                                                                           "node count (i)",
-                                                                                                                  "internal geometry count (j)",
+                                                                                                           "node i",
+                                                                                                                  "int. geometry j",
                                                                                                                           "AVAILABLE INBOUND MODES",
                                                                                                                                  "AVAILABLE OUTBOUND MODES",
-                                                                                                                                           "PREVIOUS MODE",
-                                                                                                                                                 "SELECTED MODE",
-                                                                                                                                                       "CURRENT MODE");
+                                                                                                                                           "INBOUND MODE",
+                                                                                                                                                 "NEW OUTBOUND MODE",
+                                                                                                                                                       "OUTBOUND MODE");
             int step=0;
             int ni=-1;
             int nj=-1;
@@ -326,16 +326,16 @@ namespace SytyRouting.Algorithms
             int idx=-1;
             byte aitm=0;
             byte aotm=0;
-            byte ptm=previousTransportMode;
-            byte stm=TransportModes.None;
-            byte ctm=currentTransportMode;
-            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,ptm,stm,ctm);
+            byte itm=inboundMode;
+            byte notm=outboundMode;
+            byte otm=outboundMode;
+            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
             //
 
             var firstNodeX = nodeRoute.First().X;
             var firstNodeY = nodeRoute.First().Y;
 
-            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,currentTransportMode);
+            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,outboundMode);
 
             xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
             mOrdinates.Add(previousTimeInterval);
@@ -347,40 +347,50 @@ namespace SytyRouting.Algorithms
             idx=nodeRoute.First().Idx;
             aitm=nodeRoute.First().GetAvailableInboundTransportModes();
             aotm=nodeRoute.First().GetAvailableOutboundTransportModes();
-            ni=0;
-            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,ptm,stm,ctm);
+            itm=otm;
+            // ni=0;
+            // TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
             //
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {
-                var selectedTransportMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
+                inboundMode = outboundMode;
+
                 //debug:
-                stm=selectedTransportMode;
+                ni=i;
+                itm=inboundMode;
                 //
 
-                if(selectedTransportMode!=TransportModes.None && selectedTransportMode!=currentTransportMode)
+                var newOutboundMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
+                
+                //debug:
+                notm=newOutboundMode;
+                //
+
+                if(newOutboundMode!=TransportModes.None && newOutboundMode!=outboundMode)
                 {
-                    previousTransportMode = currentTransportMode;
-                    currentTransportMode = selectedTransportMode;
+                    outboundMode = newOutboundMode;
 
                     //debug:
-                    ptm=previousTransportMode;
-                    ctm=currentTransportMode;
+                    otm=outboundMode;
                     //
                 }
 
-                var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
+                //
+                TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
+                //
+
+                var outboundEdge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
                 //debug:
-                var edge2 = FindEdge(nodeRoute[i], nodeRoute[i+1], currentTransportMode);
-                try
-                {
-                    Console.WriteLine("edges: {0}:{1}::{2}",edge!.OsmID,edge2.OsmID,edge!.OsmID==edge2.OsmID?"COMPUTER OK":"!!!COMPUTER NOT OK!!!");
-                }
-                catch
-                {
-                    Console.WriteLine("edge: {0}, type: {1}",edge!.OsmID,edge.TagIdRouteType);
-                }
-                
+                // var edge2 = FindEdge(nodeRoute[i], nodeRoute[i+1], currentTransportMode);
+                // try
+                // {
+                //     Console.WriteLine("edges: {0}:{1}::{2}",edge!.OsmID,edge2.OsmID,edge!.OsmID==edge2.OsmID?"COMPUTER OK":"!!!COMPUTER NOT OK!!!");
+                // }
+                // catch
+                // {
+                //     Console.WriteLine("edge: {0}, type: {1}",edge!.OsmID,edge.TagIdRouteType);
+                // }                
                 //
 
                 //debug:
@@ -390,7 +400,7 @@ namespace SytyRouting.Algorithms
                 aotm=nodeRoute[i+1].GetAvailableOutboundTransportModes();
                 //
 
-                if(edge is not null)
+                if(outboundEdge is not null)
                 {
                     // if(edge.MaxSpeedMPerS==0)
                     // {
@@ -398,23 +408,28 @@ namespace SytyRouting.Algorithms
                     //     return new LineString(null, geometryFactory);
                     // }
 
-                    var speed = Helper.ComputeSpeed(edge, currentTransportMode);
+                    var speed = Helper.ComputeSpeed(outboundEdge,outboundMode);
                     
                     //var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
-                    var minTimeInterval = edge.LengthM / speed; // [s]
+                    var minTimeInterval = outboundEdge.LengthM / speed; // [s]
 
-                    minTimeInterval = Helper.ApplyRoutingPenalties(edge, currentTransportMode, minTimeInterval);
+                    minTimeInterval = Helper.ApplyRoutingPenalties(outboundEdge,outboundMode, minTimeInterval);
 
-                    if(edge.InternalGeometry is not null)
+                    if(outboundEdge.InternalGeometry is not null)
                     {
-                        for(var j = 0; j < edge.InternalGeometry.Length; j++)
+                        for(var j = 0; j < outboundEdge.InternalGeometry.Length; j++)
                         {
                             //debug:
                             nj=j;
+                            // aitm=0;
+                            // aotm=0;
+                            // itm=0;
+                            // notm=0;
+                            // otm=0;
                             //
-                            var internalX = edge.InternalGeometry[j].X;
-                            var internalY = edge.InternalGeometry[j].Y;
-                            var internalM = edge.InternalGeometry[j].M * minTimeInterval + previousTimeInterval;
+                            var internalX = outboundEdge.InternalGeometry[j].X;
+                            var internalY = outboundEdge.InternalGeometry[j].Y;
+                            var internalM = outboundEdge.InternalGeometry[j].M * minTimeInterval + previousTimeInterval;
 
                             xyCoordinates.Add(new Coordinate(internalX, internalY));
                             mOrdinates.Add(internalM);
@@ -423,7 +438,9 @@ namespace SytyRouting.Algorithms
                             x=internalX;
                             y=internalY;
                             m=internalM;
-                            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,ptm,stm,ctm);
+                            // if(j>0)
+                            //     notm=0;
+                            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
                             //
                         }
                         //debug:
@@ -431,8 +448,8 @@ namespace SytyRouting.Algorithms
                         //
                     }
 
-                    var targetX = edge.TargetNode.X;
-                    var targetY = edge.TargetNode.Y;
+                    var targetX = outboundEdge.TargetNode.X;
+                    var targetY = outboundEdge.TargetNode.Y;
 
                     previousTimeInterval = minTimeInterval + previousTimeInterval;
 
@@ -443,11 +460,11 @@ namespace SytyRouting.Algorithms
                     x=targetX;
                     y=targetY;
                     m=previousTimeInterval;
-                    idx=edge.TargetNode.Idx;
+                    idx=outboundEdge.TargetNode.Idx;
                     // ptm=previousTransportMode;
-                    // stm=TransportModes.None;
+                    // otm=TransportModes.None;
                     // ctm=currentTransportMode;
-                    TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,ptm,stm,ctm);
+                    //TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
                     //
                 }
                 else
@@ -455,7 +472,7 @@ namespace SytyRouting.Algorithms
                     return new LineString(null, geometryFactory);
                 }
                 //debug:
-                //stm=TransportModes.None;
+                //otm=TransportModes.None;
                 //
             }
 
@@ -478,8 +495,9 @@ namespace SytyRouting.Algorithms
             y=lastNodeY;
             m=endM;
             idx=nodeRoute.Last().Idx;
-            ctm=TransportModes.DefaultMode;
-            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,ptm,stm,ctm);
+            otm=TransportModes.DefaultMode;
+            TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
+            Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
             //
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
@@ -488,6 +506,10 @@ namespace SytyRouting.Algorithms
                 coordinateSequence.SetM(i, mOrdinates[i]);
             }
             coordinateSequence.ReleaseCoordinateArray();
+
+            //debug:
+            //Environment.Exit(0);
+            //
 
             return new LineString(coordinateSequence, geometryFactory);
         }
