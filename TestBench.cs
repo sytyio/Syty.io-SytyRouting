@@ -736,34 +736,42 @@ namespace SytyRouting
 
             Console.WriteLine("Nodes:");
             Console.WriteLine("\tIdx:\tTransport Mode:\tRoute Type:");
-            for(int n=0; n<nodes.Length; n++)
+            try
             {
-                string transportMode = "";
-                int routeType = 0;
-                if(bTransitions.ContainsKey(nodes[n].Idx))
+                for(int n=0; n<nodes.Length; n++)
                 {
-                    transportMode = TransportModes.SingleMaskToString(bTransitions[nodes[n].Idx].Item1);
-                    routeType = bTransitions[nodes[n].Idx].Item2;
-                    Console.WriteLine("{0}\t{1}\t{2}\t\t{3}",n,nodes[n].Idx,transportMode,routeType);
+                    string transportMode = "";
+                    int routeType = 0;
+                    if(bTransitions.ContainsKey(nodes[n].Idx))
+                    {
+                        transportMode = TransportModes.SingleMaskToString(bTransitions[nodes[n].Idx].Item1);
+                        routeType = bTransitions[nodes[n].Idx].Item2;
+                        Console.WriteLine("{0}\t{1}\t{2}\t\t{3}",n,nodes[n].Idx,transportMode,routeType);
+                    }
+                }
+                Console.WriteLine("Coordinates:");
+                Console.WriteLine("\tX:\tY:\tM:\t\tDate-Time:\t\tTime Stamp:\t\tTransport Mode:");
+                Coordinate[] points = pointRoute.Coordinates;
+                for(int i=0; i<points.Length; i++)
+                {
+                    string timeStampS = "";
+                    string transportModeS = "";
+                    DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(points[i].M));
+                    if(stamps[tTransition]==timeStamp)
+                    {
+                        timeStampS = stamps[tTransition].ToString();
+                        transportModeS = modes[tTransition].ToString();
+                        tTransition++;
+                    }
+                    Console.WriteLine("{0:###0}\t{1:0.0000}\t{2:00.0000}\t{3:0000.0000}\t{4}\t{5}\t{6}",i,points[i].X,points[i].Y,points[i].M,timeStamp,timeStampS,transportModeS);
+
                 }
             }
-            Console.WriteLine("Coordinates:");
-            Console.WriteLine("\tX:\tY:\tM:\t\tDate-Time:\t\tTime Stamp:\t\tTransport Mode:");
-            Coordinate[] points = pointRoute.Coordinates;
-            for(int i=0; i<points.Length; i++)
+            catch(Exception e)
             {
-                string timeStampS = "";
-                string transportModeS = "";
-                DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(points[i].M));
-                if(stamps[tTransition]==timeStamp)
-                {
-                    timeStampS = stamps[tTransition].ToString();
-                    transportModeS = modes[tTransition].ToString();
-                    tTransition++;
-                }
-                Console.WriteLine("{0:###0}\t{1:0.0000}\t{2:00.0000}\t{3:0000.0000}\t{4}\t{5}\t{6}",i,points[i].X,points[i].Y,points[i].M,timeStamp,timeStampS,transportModeS);
-
-            } 
+                Console.WriteLine("Error: {0}",e.Message);
+            }
+             
         }
 
         public static void ExposeTransportTransitionsNodeSeries(List<Node> nodeRoute, Persona persona)

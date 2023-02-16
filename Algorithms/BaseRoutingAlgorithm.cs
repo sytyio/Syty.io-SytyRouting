@@ -12,6 +12,7 @@ namespace SytyRouting.Algorithms
         protected Graph? _graph = null!;
         protected List<Node> route = new List<Node>();
         protected Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(1);
+        public List<Tuple<string,DateTime>> transitions = new List<Tuple<string,DateTime>>(2);
         protected double routeCost;
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -284,6 +285,8 @@ namespace SytyRouting.Algorithms
 
         public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
+            transitions.Clear();
+
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
 
@@ -332,6 +335,8 @@ namespace SytyRouting.Algorithms
             TestBench.ExposeNodeToLineStringStep(step++,x,y,m,idx,ni,nj,aitm,aotm,itm,notm,otm);
             //
 
+            AddTransition(outboundMode,previousTimeInterval);
+
             var firstNodeX = nodeRoute.First().X;
             var firstNodeY = nodeRoute.First().Y;
 
@@ -374,6 +379,8 @@ namespace SytyRouting.Algorithms
                     //debug:
                     otm=outboundMode;
                     //
+
+                    AddTransition(outboundMode,previousTimeInterval);
                 }
 
                 //
@@ -500,6 +507,8 @@ namespace SytyRouting.Algorithms
             Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
             //
 
+            AddTransition(TransportModes.DefaultMode,endM);
+
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
             {
@@ -577,6 +586,14 @@ namespace SytyRouting.Algorithms
             return new LineString(coordinateSequence, geometryFactory);
         }
 
+        private void AddTransition(byte transportMode, double mOrdinate)
+        {
+            DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(mOrdinate));
+            String transportModeName = TransportModes.SingleMaskToString(transportMode);
+            var transition = new Tuple<string,DateTime>(transportModeName,timeStamp);
+            transitions.Add(transition);
+        }
+
         private double Get2PointTimeInterval(double x1, double y1, double x2, double y2, byte transportMode)
         {
             double timeInterval = 0;
@@ -642,19 +659,33 @@ namespace SytyRouting.Algorithms
             return routeCost;
         }
 
-        public Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions()
-        {
-            //make a copy
-            Dictionary<int,Tuple<byte,int>> tmTransitions =  new Dictionary<int,Tuple<byte,int>>(transportModeTransitions.Count);
-            var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
-            var tmTransitionsValues = transportModeTransitions.Values.ToArray();
+        // public Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions()
+        // {
+        //     //make a copy
+        //     Dictionary<int,Tuple<byte,int>> tmTransitions =  new Dictionary<int,Tuple<byte,int>>(transportModeTransitions.Count);
+        //     var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
+        //     var tmTransitionsValues = transportModeTransitions.Values.ToArray();
 
-            for(int i = 0; i < tmTransitionsKeys.Length; i++)
+        //     for(int i = 0; i < tmTransitionsKeys.Length; i++)
+        //     {
+        //         tmTransitions.Add(tmTransitionsKeys[i],tmTransitionsValues[i]);
+        //     }
+
+        //     return tmTransitions;
+        // }
+
+        public Tuple<string[],DateTime[]> GetTransportModeTransitions()
+        {
+            string[] transportModes = new string[transitions.Count];
+            DateTime[] timeStamps = new DateTime[transitions.Count];
+
+            for(int i = 0; i < transitions.Count; i++)
             {
-                tmTransitions.Add(tmTransitionsKeys[i],tmTransitionsValues[i]);
+                transportModes[i]=transitions[i].Item1;
+                timeStamps[i]=transitions[i].Item2;
             }
 
-            return tmTransitions;
+            return Tuple.Create<string[],DateTime[]>(transportModes,timeStamps);
         }
 
         // Routing algorithm implementation

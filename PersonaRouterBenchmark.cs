@@ -262,6 +262,12 @@ namespace SytyRouting
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
 
+                        //debug:
+                        Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
+                        Console.WriteLine("Origin: {0} :: Destination: {1}", origin.Idx,destination.Idx);
+                        Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
+                        //
+
                         if(origin == destination)
                         {
                             logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
@@ -292,24 +298,26 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+                                //persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                                 //debug:
                                 Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------");
-                                int count=0;
-                                foreach(var transition in persona.TransportModeTransitions)
-                                {
-                                    Console.WriteLine("count: {0,3}   TRANSITION::: node idx: {1,7} :: outbound transport mode(s): {2,10} :: outbound route type: {3,3}",
-                                    //Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",
-                                                            count++,                 transition.Key,
-                                                                                TransportModes.SingleMaskToString(transition.Value.Item1),
-                                                                                                                                                transition.Value.Item2);
-                                }
+                                //int count=0;
+                                // foreach(var transition in persona.TransportModeTransitions)
+                                // {
+                                //     Console.WriteLine("count: {0,3}   TRANSITION::: node idx: {1,7} :: outbound transport mode(s): {2,10} :: outbound route type: {3,3}",
+                                //     //Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",
+                                //                             count++,                 transition.Key,
+                                //                                                 TransportModes.SingleMaskToString(transition.Value.Item1),
+                                //                                                                                                                 transition.Value.Item2);
+                                // }
                                 //
 
                                 persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
 
-                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                                //persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                                
+                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                                 persona.SuccessfulRouteComputation = true;
 

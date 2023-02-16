@@ -299,9 +299,9 @@ namespace SytyRouting
                             {
                                 persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime);
 
-                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
+                                //persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
 
-                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
+                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions(); //TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
 
                                 persona.SuccessfulRouteComputation = true;
 
