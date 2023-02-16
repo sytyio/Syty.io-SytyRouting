@@ -50,7 +50,7 @@ namespace SytyRouting
                 testRoute[i].OutwardEdges.Add(edge);
             }
 
-            var lineStringRoute = routingAlgorithm.NodeRouteToLineStringMSeconds(0,0,0,0, testRoute, TimeSpan.Zero);
+            var lineStringRoute = routingAlgorithm.NodeRouteToLineStringMSeconds(0,0,0,0, testRoute, TimeSpan.Zero, Constants.BaseDateTime);
 
             logger.Debug("Test Route comparison of M ordinates: Reference :: ComputedRoute");
             var lineStringRouteCoordinates = lineStringRoute.Coordinates;

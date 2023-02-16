@@ -14,7 +14,7 @@ namespace SytyRouting.Algorithms
         //Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions();
         Tuple<string[],DateTime[]> GetTransportModeTransitions();
         
-        LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> route, TimeSpan initialTimeStamp);
+        LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> route, TimeSpan initialTimeStamp, DateTime startTime);
         
         LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp);
         Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode);
