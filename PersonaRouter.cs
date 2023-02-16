@@ -296,11 +296,9 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime, persona.StartDateTime);
 
-                                //persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
-
-                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions(); //TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
+                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                                 persona.SuccessfulRouteComputation = true;
 
@@ -309,11 +307,6 @@ namespace SytyRouting
                             else
                             {
                                 logger.Debug("Route is empty for Persona Id {0}", persona.Id);
-                                
-                                //DEBUG:
-                                TracePersonaDetails(persona);
-                                logger.Debug("");
-                                //
                             }
                         }
                     }

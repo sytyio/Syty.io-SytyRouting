@@ -295,7 +295,7 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
+                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime, Constants.BaseDateTime);
                                 
                                 persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
 

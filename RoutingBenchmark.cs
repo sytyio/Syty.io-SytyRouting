@@ -59,9 +59,9 @@ namespace SytyRouting
 
                 realBrusselVloms.Add(new Persona {Id = i+1, HomeLocation = home, WorkLocation = work, RequestedTransportSequence = requestedTransportModeSequence});
 
-                Console.WriteLine("From {0} to {1} by {2}",routingProbes[i].HomeLocation,routingProbes[i].WorkLocation,TransportModes.NamesToString(TransportModes.ArrayToNames(requestedTransportModeSequence)));
-                Console.WriteLine("{0}, {1}",routingProbes[i].HomeLatitude,routingProbes[i].HomeLongitude);
-                Console.WriteLine("{0}, {1}",routingProbes[i].WorkLatitude,routingProbes[i].WorkLongitude);
+                // logger.Debug("From {0} to {1} by {2}",routingProbes[i].HomeLocation,routingProbes[i].WorkLocation,TransportModes.NamesToString(TransportModes.ArrayToNames(requestedTransportModeSequence)));
+                // logger.Debug("{0}, {1}",routingProbes[i].HomeLatitude,routingProbes[i].HomeLongitude);
+                // logger.Debug("{0}, {1}",routingProbes[i].WorkLatitude,routingProbes[i].WorkLongitude);
             }
 
             // For a batch selection from a bounding box on Brussels:

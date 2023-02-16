@@ -84,7 +84,7 @@ namespace SytyRouting.Algorithms
             return RouteSearch(originNode, destinationNode, transportModesSequence);
         }
 
-        public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
+        public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp, DateTime startTime)
         {
             transitions.Clear();
 
@@ -109,7 +109,7 @@ namespace SytyRouting.Algorithms
             xyCoordinates.Add(new Coordinate(startX,startY));
             mOrdinates.Add(previousTimeInterval);
 
-            AddTransition(outboundMode,previousTimeInterval);
+            AddTransition(outboundMode,previousTimeInterval,startTime);
 
             var firstNodeX = nodeRoute.First().X;
             var firstNodeY = nodeRoute.First().Y;
@@ -128,7 +128,7 @@ namespace SytyRouting.Algorithms
                 if(newOutboundMode!=TransportModes.None && newOutboundMode!=outboundMode)
                 {
                     outboundMode = newOutboundMode;
-                    AddTransition(outboundMode,previousTimeInterval);
+                    AddTransition(outboundMode,previousTimeInterval,startTime);
                 }
 
                 var outboundEdge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
@@ -176,7 +176,7 @@ namespace SytyRouting.Algorithms
             xyCoordinates.Add(new Coordinate(endX,endY));
             mOrdinates.Add(endM);
 
-            AddTransition(TransportModes.DefaultMode,endM);
+            AddTransition(TransportModes.DefaultMode,endM,startTime);
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
@@ -251,9 +251,9 @@ namespace SytyRouting.Algorithms
             return new LineString(coordinateSequence, geometryFactory);
         }
 
-        private void AddTransition(byte transportMode, double mOrdinate)
+        private void AddTransition(byte transportMode, double mOrdinate, DateTime startTime)
         {
-            DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(mOrdinate));
+            DateTime timeStamp = startTime.Add(TimeSpan.FromSeconds(mOrdinate));
             String transportModeName = TransportModes.SingleMaskToString(transportMode);
             var transition = new Tuple<string,DateTime>(transportModeName,timeStamp);
             transitions.Add(transition);
