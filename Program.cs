@@ -76,8 +76,9 @@ namespace SytyRouting
 
 
             // // Persona spatial data generation
-            //await RoutingBenchmark.CreateDataSet();
-            var personaRouter = new PersonaRouter(graph, Configuration.PersonaRouteTable);
+            await RoutingBenchmark.CreateDataSet();
+            //var personaRouter = new PersonaRouter(graph, Configuration.PersonaRouteTable);
+            var personaRouter = new PersonaRouterBenchmark(graph);
 
             await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
     

@@ -11,7 +11,8 @@ namespace SytyRouting.Algorithms.Dijkstra
         public double CumulatedCost;
         public StepDirection Direction;
         public int TransportSequenceIndex;
-        public byte TransportMode;
-        public int OutboundRouteType;
+        public byte InboundTransportMode;
+        public int InboundRouteType;
+        //
     }
 }

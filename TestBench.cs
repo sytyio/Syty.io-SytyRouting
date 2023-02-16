@@ -628,8 +628,8 @@ namespace SytyRouting
                                                     step.PreviousStep.CumulatedCost,
                                                     step.PreviousStep.Direction,
                                                     step.PreviousStep.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.PreviousStep.TransportMode),
-                                                    step.PreviousStep.OutboundRouteType);
+                                                    TransportModes.SingleMaskToString(step.PreviousStep.InboundTransportMode),
+                                                    step.PreviousStep.InboundRouteType);
 
                 TraceOneNode(step.PreviousStep.ActiveNode);
                 
@@ -649,8 +649,8 @@ namespace SytyRouting
                                                     step.CumulatedCost,
                                                     step.Direction,
                                                     step.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.TransportMode),
-                                                    step.OutboundRouteType);
+                                                    TransportModes.SingleMaskToString(step.InboundTransportMode),
+                                                    step.InboundRouteType);
 
             TraceOneNode(step.ActiveNode);
 
@@ -715,6 +715,198 @@ namespace SytyRouting
             {
                 logger.Debug("\t\t   No Internal geometry in Edge {0}:", edge.OsmID);
             }
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Pedestrian-Metro timing issue
+
+        public static void ExposeTransportTransitions(List<Node> nodeRoute, Persona persona)
+        {
+            LineString pointRoute = persona.Route!;
+            Dictionary<int,Tuple<byte,int>> bTransitions = persona.TransportModeTransitions!;
+            Tuple<string[],DateTime[]> tTransitions = persona.TTextTransitions;
+
+            Node[] nodes = nodeRoute.ToArray();
+
+            int tTransition=0;
+            string[] modes = tTransitions.Item1;
+            DateTime[] stamps = tTransitions.Item2;
+
+            Console.WriteLine("Nodes:");
+            Console.WriteLine("\tIdx:\tTransport Mode:\tRoute Type:");
+            try
+            {
+                for(int n=0; n<nodes.Length; n++)
+                {
+                    string transportMode = "";
+                    int routeType = 0;
+                    if(bTransitions.ContainsKey(nodes[n].Idx))
+                    {
+                        transportMode = TransportModes.SingleMaskToString(bTransitions[nodes[n].Idx].Item1);
+                        routeType = bTransitions[nodes[n].Idx].Item2;
+                        Console.WriteLine("{0}\t{1}\t{2}\t\t{3}",n,nodes[n].Idx,transportMode,routeType);
+                    }
+                }
+                Console.WriteLine("Coordinates:");
+                Console.WriteLine("\tX:\tY:\tM:\t\tDate-Time:\t\tTime Stamp:\t\tTransport Mode:");
+                Coordinate[] points = pointRoute.Coordinates;
+                for(int i=0; i<points.Length; i++)
+                {
+                    string timeStampS = "";
+                    string transportModeS = "";
+                    DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(points[i].M));
+                    if(stamps[tTransition]==timeStamp)
+                    {
+                        timeStampS = stamps[tTransition].ToString();
+                        transportModeS = modes[tTransition].ToString();
+                        tTransition++;
+                    }
+                    Console.WriteLine("{0:###0}\t{1:0.0000}\t{2:00.0000}\t{3:0000.0000}\t{4}\t{5}\t{6}",i,points[i].X,points[i].Y,points[i].M,timeStamp,timeStampS,transportModeS);
+
+                }
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Error: {0}",e.Message);
+            }
+             
+        }
+
+        public static void ExposeTransportTransitionsNodeSeries(List<Node> nodeRoute, Persona persona)
+        {
+            LineString pointRoute = persona.Route!;
+            Dictionary<int,Tuple<byte,int>> bTransitions = persona.TransportModeTransitions!;
+            Tuple<string[],DateTime[]> tTransitions = persona.TTextTransitions;
+
+            Node[] nodes = nodeRoute.ToArray();
+
+            string[] modes = tTransitions.Item1;
+            DateTime[] stamps = tTransitions.Item2;
+
+            Console.WriteLine("Nodes:");
+            Console.WriteLine("\tIdx:\tTransport Mode:\tRoute Type:");
+            for(int n=0; n<nodes.Length; n++)
+            {
+                string transportMode = "";
+                int routeType = 0;
+                if(bTransitions.ContainsKey(nodes[n].Idx))
+                {
+                    transportMode = TransportModes.SingleMaskToString(bTransitions[nodes[n].Idx].Item1);
+                    routeType = bTransitions[nodes[n].Idx].Item2;
+                    Console.WriteLine("{0}\t{1}\t{2}\t\t{3}",n,nodes[n].Idx,transportMode,routeType);
+                }
+            } 
+        }
+
+        public static void ExposeTransportTransitionsTimeSeries(List<Node> nodeRoute, Persona persona)
+        {
+            LineString pointRoute = persona.Route!;
+            Dictionary<int,Tuple<byte,int>> bTransitions = persona.TransportModeTransitions!;
+            Tuple<string[],DateTime[]> tTransitions = persona.TTextTransitions;
+
+            Node[] nodes = nodeRoute.ToArray();
+
+            int tTransition=0;
+            string[] modes = tTransitions.Item1;
+            DateTime[] stamps = tTransitions.Item2;
+            
+            Console.WriteLine("Coordinates:");
+            Console.WriteLine("\tX:\tY:\tM:\t\tDate-Time:\t\tTime Stamp:\t\tTransport Mode:");
+            Coordinate[] points = pointRoute.Coordinates;
+            for(int i=0; i<points.Length; i++)
+            {
+                string timeStampS = "";
+                string transportModeS = "";
+                DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(points[i].M));
+                if(stamps[tTransition]==timeStamp)
+                {
+                    timeStampS = stamps[tTransition].ToString();
+                    transportModeS = modes[tTransition].ToString();
+                    tTransition++;
+                }
+                Console.WriteLine("{0:###0}\t{1:0.0000}\t{2:00.0000}\t{3:0000.0000}\t{4}\t{5}\t{6}",i,points[i].X,points[i].Y,points[i].M,timeStamp,timeStampS,transportModeS);
+
+            }
+            
+        }
+
+        public static void ExposeNodeToLineStringStep(int s, double x, double y, double m, int idx, int ni, int nj, byte aitm, byte aotm, byte itm, byte notm, byte otm)
+        {
+            DateTime ts = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(m));
+            string idxS = idx>=0?idx.ToString():"--------";
+            string niS = ni>=0?ni.ToString():"---";
+            string njS = nj>=0?nj.ToString():"---";
+            Console.WriteLine("{0:###0}\t{1:0.0000000}\t{2:00.0000000}\t{3:0000.000}\t{4}\t{5,8} ({6,6})[{7,15}]::{8,50} {9,50}\t{10}\t\t{11}\t\t\t{12}",
+                                s,        x,             y,              m,            ts,  idxS,  niS,   njS,
+                                                                                    TransportModes.MaskToString(aitm),
+                                                                                            TransportModes.MaskToString(aotm),
+                                                                                                TransportModes.SingleMaskToString(itm),
+                                                                                                        TransportModes.SingleMaskToString(notm),
+                                                                                                            TransportModes.SingleMaskToString(otm));
+            //Environment.Exit(0);                                                                                                            
+        }
+
+        public static void DisplayRouteReconstruction(DijkstraStep? lastStep)
+        {
+            Console.WriteLine("Route reconstruction step by step (backwards):");
+            List<DijkstraStep> steps = new List<DijkstraStep>(0);
+            DijkstraStep step = lastStep!;
+            List<Node> nodes = new List<Node>(0);
+            Node node = step.ActiveNode;
+            nodes.Add(node);
+
+            steps.Add(step);
+
+            while(step.PreviousStep!=null)
+            {
+                step=step.PreviousStep;
+                node=step.ActiveNode;
+                steps.Add(step);
+                nodes.Add(node);
+            }
+            Console.WriteLine("Route reconstruction step by step (backwards): done.");
+
+            int count=0;
+            Console.WriteLine("{0,3}\t{1,14}\t{2,16}\t{3,20}\t{4,25}\t{5,20}\t{6,15}",
+                        "count",
+                        "ActiveNode.Idx",
+                        "PreviousNode.Idx",
+                        "CumulatedCost",
+                        "TransportSequenceIndex",
+                        "InboundTransportMode",
+                        "InboundRouteType"
+                        );
+            foreach(var s in steps)
+            {
+                Console.WriteLine("{0,3}\t{1,14}\t{2,16}\t{3,20}\t{4,25}\t{5,20}\t{6,15}",
+                    count++,
+                    s.ActiveNode.Idx,
+                    s.PreviousStep!=null?s.PreviousStep.ActiveNode.Idx:"--------",
+                    s.CumulatedCost,
+                    s.TransportSequenceIndex,
+                    s.InboundTransportMode,
+                    s.InboundRouteType);
+            }
+            Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
+            Console.WriteLine("{0,3}\t{1,8}\t{2,50}\t{3,50}",
+                        "count",
+                        "Idx",
+                        "Available inbound modes",
+                        "Available outbound modes"
+                        );
+            foreach(var n in nodes)
+            {
+                Console.WriteLine("{0,3}\t{1,8}\t{2,50}\t{3,50}",
+                    --count,
+                    n.Idx,
+                    TransportModes.MaskToString(n.GetAvailableInboundTransportModes()),
+                    TransportModes.MaskToString(n.GetAvailableOutboundTransportModes()));
+            }
+            Console.WriteLine("---------------------------------------------------------------------------------------------------------------------------------------");
+
+            //Environment.Exit(0);
         }
 
 

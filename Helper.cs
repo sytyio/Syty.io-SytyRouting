@@ -272,30 +272,7 @@ namespace SytyRouting
             {
                 case CostCriteria.MinimalTravelTime:
                 {
-                    double speed = 0;
-                    double transportModeSpeed = -1;
-                    if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
-                    {
-                        transportModeSpeed = TransportModes.MasksToSpeeds[transportMode];
-                        if(edge.MaxSpeedMPerS>transportModeSpeed && transportModeSpeed>0)
-                        {
-                            speed = transportModeSpeed;
-                        }
-                        else if(edge.MaxSpeedMPerS>0)
-                        {
-                            speed = edge.MaxSpeedMPerS;
-                        }
-                    }
-                    else if(edge.MaxSpeedMPerS>0)
-                    {
-                        speed = edge.MaxSpeedMPerS;
-                    }
-
-                    if(speed==0)
-                    {
-                        logger.Debug("Cost criteria: {0} :: Edge OSM ID: {1} :: Edge speed: {2} [m/s] :: Transport Mode: {3} :: Transport Mode: speed {4} [m/s]", costCriteria.ToString(), edge.OsmID, edge.MaxSpeedMPerS, TransportModes.MaskToString(transportMode), transportModeSpeed);
-                        throw new Exception("Unable to compute cost: Segment speed is zero.");
-                    }
+                    var speed = ComputeSpeed(edge,transportMode);
                     cost =  edge.LengthM / speed;
                     break;
                 }                
@@ -311,6 +288,13 @@ namespace SytyRouting
                 cost = -1*cost;                
             }
 
+            cost = ApplyRoutingPenalties(edge, transportMode, cost);
+
+            return cost;
+        }
+
+        public static double ApplyRoutingPenalties(Edge edge, byte transportMode, double cost)
+        {
             if(TransportModes.RouteTypesToPenalties.ContainsKey(edge.TagIdRouteType))
             {
                 var routingPenalty = TransportModes.RouteTypesToPenalties[edge.TagIdRouteType];
@@ -324,6 +308,36 @@ namespace SytyRouting
             }
 
             return cost;
+        }
+
+        public static double ComputeSpeed(Edge edge, byte transportMode)
+        {
+            double speed = 0;
+            double transportModeSpeed = 0;
+            if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
+            {
+                transportModeSpeed = TransportModes.MasksToSpeeds[transportMode];
+                if(edge.MaxSpeedMPerS>transportModeSpeed && transportModeSpeed>0)
+                {
+                    speed = transportModeSpeed;
+                }
+                else if(edge.MaxSpeedMPerS>0)
+                {
+                    speed = edge.MaxSpeedMPerS;
+                }
+            }
+            else if(edge.MaxSpeedMPerS>0)
+            {
+                speed = edge.MaxSpeedMPerS;
+            }
+
+            if(speed==0)
+            {
+                logger.Debug("Edge OSM ID: {1} :: Edge speed: {2} [m/s] :: Transport Mode: {3} :: Transport Mode: speed {4} [m/s]", edge.OsmID, edge.MaxSpeedMPerS, TransportModes.MaskToString(transportMode), transportModeSpeed);
+                throw new Exception("Unable to compute cost: Segment speed is zero.");
+            }
+
+            return speed;
         }
     }
 }

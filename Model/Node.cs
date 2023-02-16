@@ -87,7 +87,7 @@ namespace SytyRouting.Model
             return transportModes;
         }
 
-        public Edge GetOutboundEdge(byte transportMode)
+        public Edge GetFirstOutboundEdge(byte transportMode)
         {
             Edge edge = null!;
             foreach(var outwardEdge in OutwardEdges)
@@ -102,7 +102,24 @@ namespace SytyRouting.Model
             return edge;
         }
 
-        public Edge GetInboundEdge(byte transportMode)
+        public List<Edge> GetOutboundEdges(byte transportMode)
+        {
+            Edge edge = null!;
+            List<Edge> edges = new List<Edge>(0);
+
+            foreach(var outwardEdge in OutwardEdges)
+            {
+                if((outwardEdge.TransportModes & transportMode) == transportMode)
+                {
+                    edge = outwardEdge;
+                    edges.Add(edge);
+                }
+            }
+
+            return edges;
+        }
+
+        public Edge GetFirstInboundEdge(byte transportMode)
         {
             Edge edge = null!;
             foreach(var inwardEdge in InwardEdges)

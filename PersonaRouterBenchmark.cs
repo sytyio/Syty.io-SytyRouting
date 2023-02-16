@@ -177,8 +177,8 @@ namespace SytyRouting
             var originNode = _graph.GetNodeByLongitudeLatitude(homeLocation.X, homeLocation.Y, isSource: true);
             var destinationNode = _graph.GetNodeByLongitudeLatitude(workLocation.X, workLocation.Y, isTarget: true);
 
-            Edge outboundEdge = originNode.GetOutboundEdge(initialTransportMode);
-            Edge inboundEdge = destinationNode.GetInboundEdge(finalTransportMode);
+            Edge outboundEdge = originNode.GetFirstOutboundEdge(initialTransportMode);
+            Edge inboundEdge = destinationNode.GetFirstInboundEdge(finalTransportMode);
 
             if(outboundEdge != null && inboundEdge != null)
             {
@@ -257,7 +257,6 @@ namespace SytyRouting
                         var workY = persona.WorkLocation.Y;
                         
                         var requestedTransportModes = persona.RequestedTransportSequence;
-                        //var firstMode = requestedTransportModes[0];
 
                         TimeSpan currentTime = TimeSpan.Zero;
 
@@ -297,10 +296,8 @@ namespace SytyRouting
                             if(route.Count > 0)
                             {
                                 persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
-
-                                persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
-
-                                persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                                
+                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
 
                                 persona.SuccessfulRouteComputation = true;
 
@@ -457,17 +454,28 @@ namespace SytyRouting
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
+
+                    var route = persona.Route;
+                    double lastTime = -1.0;
+                    if(route is not null)
+                    {
+                        var routeCoordinates=route.Coordinates;
+                        lastTime = routeCoordinates.Last().M;
+                    }
                         
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
+                    var interval = TimeSpan.FromSeconds(lastTime);
                     
-                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + routeTable + " (id, transport_modes, time_stamps, total_time, total_time_interval) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET transport_modes = $2, time_stamps = $3, total_time = $4, total_time_interval = $5", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
                             new() { Value = transportModes },
                             new() { Value = timeStampsTZ },
+                            new() { Value = timeStampsTZ.Last() },
+                            new() { Value = interval },
                         }
                     };
                 

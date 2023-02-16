@@ -12,6 +12,7 @@ namespace SytyRouting.Algorithms
         protected Graph? _graph = null!;
         protected List<Node> route = new List<Node>();
         protected Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(1);
+        public List<Tuple<string,DateTime>> transitions = new List<Tuple<string,DateTime>>(2);
         protected double routeCost;
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -85,63 +86,79 @@ namespace SytyRouting.Algorithms
 
         public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp)
         {
+            transitions.Clear();
+
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             var geometryFactory = new GeometryFactory(sequenceFactory);
 
-            var points = nodeRoute.Count;
+            var numberOfNodes = nodeRoute.Count;
 
-            if(points <= 1)
+            if(numberOfNodes <= 1)
             {
                 return new LineString(null, geometryFactory);
             }
             
-            List<Coordinate> xyCoordinates = new List<Coordinate>(points+2); // points +1 start point (home) +1 end point (work)
-            List<double> mOrdinates = new List<double>(points+2);
-
-            var firstNodeX = nodeRoute.First().X;
-            var firstNodeY = nodeRoute.First().Y;
+            List<Coordinate> xyCoordinates = new List<Coordinate>(numberOfNodes+2); // number of nodes +1 start point (home) +1 end point (work)
+            List<double> mOrdinates = new List<double>(numberOfNodes+2);
 
             var previousTimeInterval = initialTimeStamp.TotalSeconds;
+
+            byte inboundMode = TransportModes.None;
+            byte outboundMode = TransportModes.DefaultMode; // Assuming the user starts the journey as a 'Pedestrian'
             
             xyCoordinates.Add(new Coordinate(startX,startY));
             mOrdinates.Add(previousTimeInterval);
 
-            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,TransportModes.DefaultMode);
+            AddTransition(outboundMode,previousTimeInterval);
+
+            var firstNodeX = nodeRoute.First().X;
+            var firstNodeY = nodeRoute.First().Y;
+
+            previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,outboundMode);
 
             xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
             mOrdinates.Add(previousTimeInterval);
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
-            {   
-                var edge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
+            {
+                inboundMode = outboundMode;
 
-                if(edge is not null)
+                var newOutboundMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
+
+                if(newOutboundMode!=TransportModes.None && newOutboundMode!=outboundMode)
                 {
-                    if(edge.MaxSpeedMPerS==0)
-                    {
-                        logger.Debug("Edge speed is zero. (Node Idx: {0})", nodeRoute[i].Idx);
-                        return new LineString(null, geometryFactory);
-                    }
-                    
-                    var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
+                    outboundMode = newOutboundMode;
+                    AddTransition(outboundMode,previousTimeInterval);
+                }
 
-                    if(edge.InternalGeometry is not null)
+                var outboundEdge = nodeRoute[i].OutwardEdges.Find(e => e.TargetNode.Idx == nodeRoute[i+1].Idx);
+
+                if(outboundEdge is not null)
+                {
+                    var speed = Helper.ComputeSpeed(outboundEdge,outboundMode);
+                    
+                    //var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
+                    var minTimeInterval = outboundEdge.LengthM / speed; // [s]
+
+                    minTimeInterval = Helper.ApplyRoutingPenalties(outboundEdge,outboundMode, minTimeInterval);
+
+                    if(outboundEdge.InternalGeometry is not null)
                     {
-                        for(var j = 0; j < edge.InternalGeometry.Length; j++)
+                        for(var j = 0; j < outboundEdge.InternalGeometry.Length; j++)
                         {
-                            var internalX = edge.InternalGeometry[j].X;
-                            var internalY = edge.InternalGeometry[j].Y;
-                            var internalM = edge.InternalGeometry[j].M * minTimeIntervalS + previousTimeInterval;
+                            var internalX = outboundEdge.InternalGeometry[j].X;
+                            var internalY = outboundEdge.InternalGeometry[j].Y;
+                            var internalM = outboundEdge.InternalGeometry[j].M * minTimeInterval + previousTimeInterval;
 
                             xyCoordinates.Add(new Coordinate(internalX, internalY));
                             mOrdinates.Add(internalM);
                         }
                     }
 
-                    var targetX = edge.TargetNode.X;
-                    var targetY = edge.TargetNode.Y;
+                    var targetX = outboundEdge.TargetNode.X;
+                    var targetY = outboundEdge.TargetNode.Y;
 
-                    previousTimeInterval = minTimeIntervalS + previousTimeInterval;
+                    previousTimeInterval = minTimeInterval + previousTimeInterval;
 
                     xyCoordinates.Add(new Coordinate(targetX, targetY));
                     mOrdinates.Add(previousTimeInterval);
@@ -154,11 +171,12 @@ namespace SytyRouting.Algorithms
 
             var lastNodeX = nodeRoute.Last().X;
             var lastNodeY = nodeRoute.Last().Y;
-
             var endM = Get2PointTimeInterval(lastNodeX,lastNodeY,endX,endY,TransportModes.DefaultMode) + previousTimeInterval;
             
             xyCoordinates.Add(new Coordinate(endX,endY));
             mOrdinates.Add(endM);
+
+            AddTransition(TransportModes.DefaultMode,endM);
 
             var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
             for(var i = 0; i < coordinateSequence.Count; i++)
@@ -168,6 +186,37 @@ namespace SytyRouting.Algorithms
             coordinateSequence.ReleaseCoordinateArray();
 
             return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        private Edge FindEdge(Node baseNode, Node targetNode, byte transportMode)
+        {
+            Edge minLengthEdge = null!; // = baseNode.OutwardEdges.Find(e => e.TargetNode.Idx == targetNode.Idx);
+
+            var edges = baseNode.GetOutboundEdges(transportMode);
+            if(edges.Count > 0)
+            {
+                double minLength = Double.PositiveInfinity;
+                foreach(var edge in edges)
+                {
+                    if(edge.TargetNode.Idx == targetNode.Idx && minLength > edge.LengthM)
+                    {
+                        minLength = edge.LengthM;
+                        minLengthEdge = edge;
+                    }
+                }
+            }
+            else
+            {
+                logger.Debug("Edges not found. Source node: {0}, target node: {1}, transport mode: {2}",baseNode.Idx,targetNode.Idx,TransportModes.MaskToString(transportMode));
+                _graph.TraceOneNode(baseNode);
+            }
+
+            if(minLengthEdge == null)
+            {
+                logger.Debug("Edge not found");
+            }
+
+            return minLengthEdge;
         }
 
         public LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
@@ -200,6 +249,14 @@ namespace SytyRouting.Algorithms
             coordinateSequence.ReleaseCoordinateArray();
 
             return new LineString(coordinateSequence, geometryFactory);
+        }
+
+        private void AddTransition(byte transportMode, double mOrdinate)
+        {
+            DateTime timeStamp = Constants.BaseDateTime.Add(TimeSpan.FromSeconds(mOrdinate));
+            String transportModeName = TransportModes.SingleMaskToString(transportMode);
+            var transition = new Tuple<string,DateTime>(transportModeName,timeStamp);
+            transitions.Add(transition);
         }
 
         private double Get2PointTimeInterval(double x1, double y1, double x2, double y2, byte transportMode)
@@ -246,23 +303,39 @@ namespace SytyRouting.Algorithms
             return transportModeTransitions;
         }
 
+        private byte SelectTransportMode(int nodeIdx, Dictionary<int,Tuple<byte,int>> transitions)
+        {
+            byte transportMode = TransportModes.None;
+
+            if(transitions.ContainsKey(nodeIdx))
+            {
+                var routeType = transitions[nodeIdx].Item2;
+                if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                    transportMode = TransportModes.TagIdToTransportModes(routeType);
+                else
+                    transportMode = transitions[nodeIdx].Item1;
+            }           
+
+            return transportMode;
+        }
+
         public double GetRouteCost()
         {
             return routeCost;
         }
 
-        public Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions()
+        public Tuple<string[],DateTime[]> GetTransportModeTransitions()
         {
-            Dictionary<int,Tuple<byte,int>> tmTransitions =  new Dictionary<int,Tuple<byte,int>>(transportModeTransitions.Count);
-            var tmTransitionsKeys = transportModeTransitions.Keys.ToArray();
-            var tmTransitionsValues = transportModeTransitions.Values.ToArray();
+            string[] transportModes = new string[transitions.Count];
+            DateTime[] timeStamps = new DateTime[transitions.Count];
 
-            for(int i = 0; i < tmTransitionsKeys.Length; i++)
+            for(int i = 0; i < transitions.Count; i++)
             {
-                tmTransitions.Add(tmTransitionsKeys[i],tmTransitionsValues[i]);
+                transportModes[i]=transitions[i].Item1;
+                timeStamps[i]=transitions[i].Item2;
             }
 
-            return tmTransitions;
+            return Tuple.Create<string[],DateTime[]>(transportModes,timeStamps);
         }
 
         // Routing algorithm implementation

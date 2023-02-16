@@ -23,7 +23,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             if(sequenceLength>0)
             {
                 byte transportMode = transportModesSequence[0];
-                Edge outboundEdge = originNode.GetOutboundEdge(transportMode);
+                Edge outboundEdge = originNode.GetFirstOutboundEdge(transportMode);
                 if(outboundEdge != null)
                 {
                     AddStep(null, originNode, 0, 0, transportMode, outboundEdge.TagIdRouteType);
@@ -53,7 +53,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 }
                 else
                 {
-                    currentTransportMask = currentStep.TransportMode;
+                    currentTransportMask = currentStep.InboundTransportMode;
                 }
                 
                 if(activeNode == destinationNode)
@@ -148,7 +148,7 @@ namespace SytyRouting.Algorithms.Dijkstra
             var exist = bestScoreForNode.ContainsKey(nextNode!.Idx);
             if (!exist || bestScoreForNode[nextNode.Idx] > cumulatedCost)
             {
-                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, TransportMode = transportMode, OutboundRouteType = outboundRouteType };
+                var step = new DijkstraStep { PreviousStep = previousStep, ActiveNode = nextNode, CumulatedCost = cumulatedCost, TransportSequenceIndex = transportSequenceIndex, InboundTransportMode = transportMode, InboundRouteType = outboundRouteType };
                 dijkstraStepsQueue.Enqueue(step, cumulatedCost);
 
                 if(!exist)
@@ -168,15 +168,15 @@ namespace SytyRouting.Algorithms.Dijkstra
             {
                 if(currentStep.PreviousStep != null)
                 {
-                    if(currentStep.PreviousStep.TransportMode != currentStep.TransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
+                    if(currentStep.PreviousStep.InboundTransportMode != currentStep.InboundTransportMode && !transportModeTransitions.ContainsKey(currentStep.ActiveNode.Idx))
                     {
-                        var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                        var transition = Tuple.Create<byte,int>(currentStep.InboundTransportMode,currentStep.InboundRouteType);
                         transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                     }
                 }
                 else
                 {
-                    var transition = Tuple.Create<byte,int>(currentStep.TransportMode,currentStep.OutboundRouteType);
+                    var transition = Tuple.Create<byte,int>(currentStep.InboundTransportMode,currentStep.InboundRouteType);
                     transportModeTransitions.Add(currentStep.ActiveNode.Idx, transition);
                 }
                 ReconstructRoute(currentStep.PreviousStep);

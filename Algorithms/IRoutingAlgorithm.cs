@@ -11,7 +11,8 @@ namespace SytyRouting.Algorithms
         List<Node> GetRoute(long originNodeOsmId, long destinationNodeOsmId, byte[] transportModesSequence);
         List<Node> GetRoute(Node origin, Node destination, byte[] transportModesSequence);
 
-        Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions();
+        //Dictionary<int,Tuple<byte,int>> GetTransportModeTransitions();
+        Tuple<string[],DateTime[]> GetTransportModeTransitions();
         
         LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> route, TimeSpan initialTimeStamp);
         
