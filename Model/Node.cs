@@ -106,12 +106,7 @@ namespace SytyRouting.Model
         {
             Edge edge = null!;
             List<Edge> edges = new List<Edge>(0);
-            //debug:
-            if(Idx==1562550)
-            {
-                Console.WriteLine("Probe 1562550");
-            }
-            //
+
             foreach(var outwardEdge in OutwardEdges)
             {
                 if((outwardEdge.TransportModes & transportMode) == transportMode)
@@ -120,13 +115,6 @@ namespace SytyRouting.Model
                     edges.Add(edge);
                 }
             }
-
-            //debug:
-            if(edge == null)
-            {
-                Console.WriteLine("No edge found with the '{0}' transport mode at node {1}.", TransportModes.SingleMaskToString(transportMode), Idx);
-            }
-            //
 
             return edges;
         }

@@ -17,7 +17,7 @@ namespace SytyRouting
         
         private Graph _graph;
 
-        private static int simultaneousRoutingTasks = 1;//Environment.ProcessorCount;
+        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
@@ -75,11 +75,11 @@ namespace SytyRouting
                 int t = taskIndex;
                 routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
             }
-            //debug: Task monitorTask = Task.Run(() => MonitorRouteCalculation());
+            Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
-            //debug: Task.WaitAll(monitorTask);
+            Task.WaitAll(monitorTask);
 
             ////await DBPersonaRoutesUploadAsync();
             await DBRouteBenchmarkUploadAsync();
@@ -253,7 +253,6 @@ namespace SytyRouting
                         var workY = persona.WorkLocation.Y;
                         
                         var requestedTransportModes = persona.RequestedTransportSequence;
-                        //var firstMode = requestedTransportModes[0];
 
                         TimeSpan currentTime = TimeSpan.Zero;
 
@@ -261,12 +260,6 @@ namespace SytyRouting
 
                         var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
                         var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
-
-                        //debug:
-                        Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
-                        Console.WriteLine("Origin: {0} :: Destination: {1}", origin.Idx,destination.Idx);
-                        Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
-                        //
 
                         if(origin == destination)
                         {
@@ -298,24 +291,7 @@ namespace SytyRouting
                         {
                             if(route.Count > 0)
                             {
-                                //persona.TransportModeTransitions = routingAlgorithm.GetTransportModeTransitions();
-
-                                //debug:
-                                Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------");
-                                //int count=0;
-                                // foreach(var transition in persona.TransportModeTransitions)
-                                // {
-                                //     Console.WriteLine("count: {0,3}   TRANSITION::: node idx: {1,7} :: outbound transport mode(s): {2,10} :: outbound route type: {3,3}",
-                                //     //Console.WriteLine("{0,3}   TRANSITION::: idx: {1,7} :: tm: {2,10} :: rt: {3,3}",
-                                //                             count++,                 transition.Key,
-                                //                                                 TransportModes.SingleMaskToString(transition.Value.Item1),
-                                //                                                                                                                 transition.Value.Item2);
-                                // }
-                                //
-
                                 persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, currentTime);
-
-                                //persona.TTextTransitions = TransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
                                 
                                 persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
 
@@ -333,19 +309,6 @@ namespace SytyRouting
                                 //
                             }
                         }
-
-                        //debug:
-                        var transports = persona.TTextTransitions.Item1;
-                        var timestamps = persona.TTextTransitions.Item2;
-                        logger.Debug("timestamp:\ttransport:");
-                        for(int j=0; j<transports.Length; j++)
-                        {
-                            logger.Debug("{0}\t{1}",timestamps[j],transports[j]);
-                        }                        
-                        // TestBench.ExposeTransportTransitionsNodeSeries(route!,persona);
-                        // TestBench.ExposeTransportTransitionsTimeSeries(route!,persona);
-                        TestBench.ExposeTransportTransitions(route!,persona);
-                        //
                     }
                     catch (Exception e)
                     {

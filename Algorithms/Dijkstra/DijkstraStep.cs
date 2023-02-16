@@ -12,7 +12,6 @@ namespace SytyRouting.Algorithms.Dijkstra
         public StepDirection Direction;
         public int TransportSequenceIndex;
         public byte InboundTransportMode;
-        //debug: public int OutboundRouteType;
         public int InboundRouteType;
         //
     }
