@@ -188,37 +188,6 @@ namespace SytyRouting.Algorithms
             return new LineString(coordinateSequence, geometryFactory);
         }
 
-        private Edge FindEdge(Node baseNode, Node targetNode, byte transportMode)
-        {
-            Edge minLengthEdge = null!; // = baseNode.OutwardEdges.Find(e => e.TargetNode.Idx == targetNode.Idx);
-
-            var edges = baseNode.GetOutboundEdges(transportMode);
-            if(edges.Count > 0)
-            {
-                double minLength = Double.PositiveInfinity;
-                foreach(var edge in edges)
-                {
-                    if(edge.TargetNode.Idx == targetNode.Idx && minLength > edge.LengthM)
-                    {
-                        minLength = edge.LengthM;
-                        minLengthEdge = edge;
-                    }
-                }
-            }
-            else
-            {
-                logger.Debug("Edges not found. Source node: {0}, target node: {1}, transport mode: {2}",baseNode.Idx,targetNode.Idx,TransportModes.MaskToString(transportMode));
-                _graph.TraceOneNode(baseNode);
-            }
-
-            if(minLengthEdge == null)
-            {
-                logger.Debug("Edge not found");
-            }
-
-            return minLengthEdge;
-        }
-
         public LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
         {
             var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
