@@ -909,6 +909,87 @@ namespace SytyRouting
             //Environment.Exit(0);
         }
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////// Orphaned methods /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        ///////////////////////////
+        // PersonaRouter.cs ///////
+        ///////////////////////////
+        // private Tuple<string[],DateTime[]> TransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions, DateTime startTime)
+        // {
+        //     if(transitions == null || transitions.Count <1 || route.IsEmpty)
+        //         return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+
+        //     var coordinates = route.Coordinates;
+        //     Node node;
+            
+        //     List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
+        //     List<string> transportModes = new List<string>(transitions.Count);
+
+        //     string defaultMode = TransportModes.SingleMaskToString(TransportModes.DefaultMode);
+
+        //     byte previousTransportMode = TransportModes.None;
+        //     byte currentTransportMode = TransportModes.DefaultMode;
+
+        //     string transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+
+        //     timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); // <- debug: check units
+        //     transportModes.Add(transportModeS);
+
+        //     for(var n = 1; n < coordinates.Length-1; n++)
+        //     {
+        //         node = _graph.GetNodeByLongitudeLatitude(coordinates[n].X, coordinates[n].Y);
+
+        //         if(transitions.ContainsKey(node.Idx))
+        //         {
+        //             previousTransportMode = currentTransportMode;
+        //             currentTransportMode = transitions[node.Idx].Item1;
+
+        //             if(previousTransportMode!=currentTransportMode)
+        //             {
+        //                 var routeType = transitions[node.Idx].Item2;
+        //                 if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+        //                     transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
+        //                 else
+        //                     transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+                        
+        //                 timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[n].M))); // <- debug: check units
+        //                 transportModes.Add(transportModeS);
+        //             }
+        //         }
+        //     }
+
+        //     if((currentTransportMode & TransportModes.DefaultMode) == 0)
+        //     {
+        //         timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-2].M))); // <- debug: check units
+        //         transportModes.Add(defaultMode);
+        //     }
+
+        //     timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count-1].M))); // <- debug: check units
+        //     transportModes.Add(defaultMode);
+
+        //     return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
+        // }
+
+        // private bool OriginAndDestinationAreValid(Node origin, Node destination, int personaId)
+        // {
+        //     if(origin == null || destination == null)
+        //     {
+        //         logger.Debug(" ==>> Unable to compute route: Persona Id {0}: origin and/or destination nodes are invalid", personaId);
+        //         return false;
+        //     }
+        //     else if(origin.Idx == destination.Idx)
+        //     {
+        //         logger.Debug("Origin and Destination Nodes are equal for Persona Id {0}", personaId);
+        //         return false;
+        //     }
+
+        //     return true;
+        // }
+
 
 
 

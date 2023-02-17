@@ -3,6 +3,7 @@ using Npgsql;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
+using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
@@ -13,6 +14,9 @@ namespace SytyRouting.DataBase
 
         public override async Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas)
         {
+            Stopwatch stopWatch = new Stopwatch();
+
+            stopWatch.Start();
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
@@ -141,6 +145,10 @@ namespace SytyRouting.DataBase
             }
    
             await connection.CloseAsync();
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("Route uploading execution time :: {0}", totalTime);
 
             return uploadFails;
         }
