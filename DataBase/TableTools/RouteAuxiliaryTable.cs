@@ -6,7 +6,7 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.DataBase
 {
-    public class PersonaRouteAuxiliaryTable
+    public class RouteAuxiliaryTable
     {
         public string ConnectionString;
         public string ResultTable;
@@ -15,7 +15,7 @@ namespace SytyRouting.DataBase
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
 
-        public PersonaRouteAuxiliaryTable(string resultTable, string connectionString)
+        public RouteAuxiliaryTable(string resultTable, string connectionString)
         {
             ConnectionString=connectionString;
             ResultTable=resultTable;
