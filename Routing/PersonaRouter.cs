@@ -7,7 +7,7 @@ using SytyRouting.Algorithms;
 using System.Collections.Concurrent;
 //using NetTopologySuite.Geometries.Implementation;
 
-namespace SytyRouting
+namespace SytyRouting.Routing
 {
     public class PersonaRouter
     {

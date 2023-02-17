@@ -5,7 +5,7 @@ using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 
-namespace SytyRouting
+namespace SytyRouting.Routing
 {
     public static class RoutingBenchmark
     {
