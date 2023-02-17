@@ -30,13 +30,13 @@ namespace SytyRouting.DataBase
 
             // // Persona spatial data generation
             //await RoutingBenchmark.CreateDataSet();
-            var personaRouter = new PersonaRouter(graph, routeTable);
+            var router = new Routing.RouterOneTimeAllUpload(graph, routeTable);
             //var personaRouter = new PersonaRouterBenchmark(graph);
 
-            await personaRouter.StartRouting<T>();
+            await router.StartRouting<T>();
 
-            var personas = personaRouter.Personas;
-            var computedRoutes = personaRouter.ComputedRoutes;
+            var personas = router.Personas;
+            var computedRoutes = router.ComputedRoutes;
 
             await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
     
