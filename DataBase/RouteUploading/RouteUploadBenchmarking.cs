@@ -35,7 +35,9 @@ namespace SytyRouting.DataBase
             
             benchmarkStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
+            logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
             logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(T).Name);
+            logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
         }
 
         private static async Task CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)

@@ -75,12 +75,24 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
-            /////
-
-            var routeTable = Configuration.PersonaRouteTable;
+            /////////////
+            var routeTable = Configuration.PersonaRouteTable + "_T70";
             var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
+            await personaRouteTable.CreateDataSet();
+
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            
+            //////////////
+            routeTable = Configuration.PersonaRouteTable + "_T71";
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
+            await personaRouteTable.CreateDataSet();
+
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+
+            //////////////
+
 
             // Logger flushing
             LogManager.Shutdown();

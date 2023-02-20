@@ -320,35 +320,49 @@ namespace SytyRouting.Routing
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
+        // private async Task DBPersonaRouteUploadAsync(Persona persona)
+        // {
+        //     var connectionString = Configuration.ConnectionString; // Local DB for testing
+        //                                                            // var connectionString = Constants.ConnectionString;
+
+        //     await using var connection = new NpgsqlConnection(connectionString);
+        //     await connection.OpenAsync();
+        //     connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+
+        //     try
+        //     {
+        //         await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + _auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
+        //         {
+        //             Parameters =
+        //             {
+        //                 new() { Value = persona.Id },
+        //                 new() { Value = persona.Route },
+        //             }
+        //         };
+        //         await cmd_insert.ExecuteNonQueryAsync();
+        //         Interlocked.Increment(ref uploadedRoutes);
+        //     }
+        //     catch
+        //     {
+        //         logger.Info("Unable to upload route to database");
+        //         logger.Debug("> Persona Id {0}", persona.Id);
+        //     }
+
+        //     await connection.CloseAsync();
+        // }
+
         private async Task DBPersonaRouteUploadAsync(Persona persona)
         {
-            var connectionString = Configuration.ConnectionString; // Local DB for testing
-                                                                   // var connectionString = Constants.ConnectionString;
+            var connectionString = Configuration.ConnectionString;
 
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-            connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+            var uploader = new DataBase.SingleRouteUpload();
 
-            try
-            {
-                await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + _auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
-                {
-                    Parameters =
-                    {
-                        new() { Value = persona.Id },
-                        new() { Value = persona.Route },
-                    }
-                };
-                await cmd_insert.ExecuteNonQueryAsync();
+            var uploadFails = await uploader.UploadRouteAsync(connectionString,_auxiliaryTable,_routeTable,persona);
+
+            if(uploadFails==0)
                 Interlocked.Increment(ref uploadedRoutes);
-            }
-            catch
-            {
-                logger.Info("Unable to upload route to database");
-                logger.Debug("> Persona Id {0}", persona.Id);
-            }
 
-            await connection.CloseAsync();
+
         }
     }
 }
