@@ -15,26 +15,21 @@ namespace SytyRouting.DataBase
         //private string _routeTable;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public static async Task Start<T, U>(Graph graph) where T: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        public static async Task Start<T, U, V>(Graph graph, string routeTable, string auxiliaryTable) where T: IRoutingAlgorithm, new() where U: IRouteUploader, new() where V: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
             _graph = graph;
 
-            var algorithm = new T();
             var uploader = new U();
+            var router = new V();
 
-            //algorithm.Initialize(graph);
-            
-            var routeTable = Configuration.PersonaRouteTable;
-            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-
-            var router = new Routing.RouterOneTimeAllUpload(graph, routeTable);
+            router.Initialize(graph, routeTable, auxiliaryTable);
             await router.StartRouting<T>();
 
-            var personas = router.Personas;
-            var computedRoutes = router.ComputedRoutes;
+            var personas = router.GetPersonas();
+            var computedRoutes = router.GetComputedRoutesCount();
 
             await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
             

@@ -12,13 +12,13 @@ namespace SytyRouting.Routing
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public List<Persona> Personas {private set; get;} = null!;
+        //public List<Persona> Personas {private set; get;} = null!;
 
         private List<Persona> personas = new List<Persona>();
         
         //private Graph _graph;
-        private string _routeTable;
-        private string _auxiliaryTable;
+        // private string _routeTable;
+        // private string _auxiliaryTable;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
@@ -30,7 +30,7 @@ namespace SytyRouting.Routing
 
         private int elementsToProcess = 0;
         private int processedDbElements = 0;
-        public int ComputedRoutes {private set; get;} = 0;
+//        public int ComputedRoutes {private set; get;} = 0;
         private static int computedRoutes = 0;
         private bool routingTasksHaveEnded = false;
     
@@ -40,12 +40,12 @@ namespace SytyRouting.Routing
 
         private int originEqualsDestinationErrors = 0;
 
-        public RouterOneTimeAllUpload(Graph graph, string routeTable) : base(graph,routeTable)
-        {
-            _graph = graph;
-            _routeTable = routeTable;
-            _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-        }
+        // public RouterOneTimeAllUpload(Graph graph, string routeTable) : base(graph,routeTable)
+        // {
+        //     _graph = graph;
+        //     _routeTable = routeTable;
+        //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+        // }
 
         public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
         {
@@ -86,7 +86,7 @@ namespace SytyRouting.Routing
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            ComputedRoutes = computedRoutes;
+            ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
             await UploadRoutesAsync();

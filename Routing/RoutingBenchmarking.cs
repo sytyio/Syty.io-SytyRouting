@@ -44,13 +44,15 @@ namespace SytyRouting.DataBase
             //var personaRouter = new PersonaRouterBenchmark(graph);
 
 
-            var router = new Routing.RouterOneTimeAllUpload(graph, routeTable);
-            await router.StartRouting<T>();
+            // debug:
+            // var router = new Routing.RouterOneTimeAllUpload(graph, routeTable);
+            // await router.StartRouting<T>();
 
-            var personas = router.Personas;
-            var computedRoutes = router.ComputedRoutes;
+            // var personas = router.Personas;
+            // var computedRoutes = router.ComputedRoutes;
 
-            await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
+            // await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
+            //
     
             //personaRouter.TracePersonas();
             // // personaRouter.TracePersonasRouteResult();

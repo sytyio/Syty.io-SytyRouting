@@ -77,8 +77,10 @@ namespace SytyRouting
 
             /////
 
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
+            var routeTable = Configuration.PersonaRouteTable;
+            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
 
             // Logger flushing
             LogManager.Shutdown();

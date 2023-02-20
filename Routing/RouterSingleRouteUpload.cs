@@ -12,13 +12,13 @@ namespace SytyRouting.Routing
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public List<Persona> Personas {private set; get;} = null!;
+        //public List<Persona> Personas {private set; get;} = null!;
 
         private List<Persona> personas = new List<Persona>();
         
         //private Graph _graph;
-        private string _routeTable;
-        private string _auxiliaryTable;
+        // private string _routeTable;
+        // private string _auxiliaryTable;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
@@ -30,11 +30,11 @@ namespace SytyRouting.Routing
 
         private int elementsToProcess = 0;
         private int processedDbElements = 0;
-        public int ComputedRoutes {private set; get;} = 0;
+        //public int ComputedRoutes {private set; get;} = 0;
         private static int computedRoutes = 0;
 
         private static int uploadedRoutes = 0;
-        
+
         private bool routingTasksHaveEnded = false;
     
         private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
@@ -43,12 +43,12 @@ namespace SytyRouting.Routing
 
         private int originEqualsDestinationErrors = 0;
 
-        public RouterSingleRouteUpload(Graph graph, string routeTable) : base(graph,routeTable)
-        {
-            _graph = graph;
-            _routeTable = routeTable;
-            _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-        }
+        // public RouterSingleRouteUpload(Graph graph, string routeTable) : base(graph,routeTable)
+        // {
+        //     _graph = graph;
+        //     _routeTable = routeTable;
+        //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+        // }
 
         public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
         {
@@ -90,7 +90,7 @@ namespace SytyRouting.Routing
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            ComputedRoutes = computedRoutes;
+            ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
             //await UploadRoutesAsync();
@@ -331,7 +331,7 @@ namespace SytyRouting.Routing
 
             try
             {
-                await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + _auxiliaryTable + " (persona_id, route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET route = $2", connection)
+                await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + _auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
                 {
                     Parameters =
                     {

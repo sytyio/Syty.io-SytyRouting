@@ -11,12 +11,33 @@ namespace SytyRouting.Routing
     {
         [NotNull]
         protected Graph? _graph = null!;
+        protected string _routeTable = null!;
+        protected string _auxiliaryTable = null!;
+        protected List<Persona> Personas = null!;
+        protected int ComputedRoutesCount = 0;
         protected int sequenceValidationErrors = 0;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public BaseRouter(Graph graph, string routeTable)
+        // public BaseRouter(Graph graph, string routeTable)
+        // {
+        //     _graph = graph;
+        // }
+
+        public void Initialize(Graph graph, string routeTable, string auxiliaryTable)
         {
             _graph = graph;
+            _routeTable = routeTable;
+            _auxiliaryTable = auxiliaryTable;
+        }
+
+        public List<Persona> GetPersonas()
+        {
+            return Personas;
+        }
+
+        public int GetComputedRoutesCount()
+        {
+            return ComputedRoutesCount;
         }
 
         protected byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
