@@ -25,7 +25,7 @@ namespace SytyRouting.DataBase
             var algorithm = new T();
             var uploader = new U();
 
-            algorithm.Initialize(graph);
+            //algorithm.Initialize(graph);
             
             var routeTable = Configuration.PersonaRouteTable;
             var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
@@ -38,10 +38,9 @@ namespace SytyRouting.DataBase
 
             await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
             
-
             benchmarkStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
-            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, algorithm.GetType().Name);
+            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(T).Name);
         }
 
         private static async Task CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)

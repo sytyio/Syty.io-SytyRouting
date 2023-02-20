@@ -78,6 +78,7 @@ namespace SytyRouting
             /////
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
 
             // Logger flushing
             LogManager.Shutdown();
