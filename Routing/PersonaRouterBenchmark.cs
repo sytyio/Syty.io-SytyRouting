@@ -278,9 +278,10 @@ namespace SytyRouting.Routing
                                 continue;
                             }
 
-                            persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
+                            //persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
 
-                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
+                            persona.TTextTransitions = routingAlgorithm.SingleTransportModeTransition(persona, origin, destination, TransportModes.DefaultMode);
+                            //SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions);
 
                             persona.SuccessfulRouteComputation = true;
 

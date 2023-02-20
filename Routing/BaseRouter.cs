@@ -3,6 +3,7 @@ using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
+using SytyRouting.Algorithms;
 
 namespace SytyRouting.Routing
 {
@@ -18,7 +19,7 @@ namespace SytyRouting.Routing
             _graph = graph;
         }
 
-        public byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
+        protected byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
         {
             byte[] formattedSequence = TransportModes.CreateSequence(transportSequence);
 
@@ -88,8 +89,17 @@ namespace SytyRouting.Routing
             }
         }
 
-        // Routing algorithm implementation
-        protected virtual List<Node> RouteSearch(Node origin, Node destination, byte[] transportModesSequence)
+        public virtual Task StartRouting<T>() where T: IRoutingAlgorithm, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task UploadRoutesAsync()
         {
             throw new NotImplementedException();
         }

@@ -47,7 +47,7 @@ namespace SytyRouting.Routing
             _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
         }
 
-        public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
+        public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -67,7 +67,7 @@ namespace SytyRouting.Routing
                 simultaneousRoutingTasks = elementsToProcess;
             }
             
-            Task loadingTask = Task.Run(() => DBPersonaDownloadAsync());
+            Task downloadTask = Task.Run(() => DownloadPersonaDataAsync());
             Thread.Sleep(initialDataLoadSleepMilliseconds);
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
             {
@@ -96,7 +96,7 @@ namespace SytyRouting.Routing
             logger.Info("StartRouting execution time :: {0}", totalTime);
         }
 
-        private async Task DBPersonaDownloadAsync()
+        private async Task DownloadPersonaDataAsync()
         {
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
@@ -172,7 +172,7 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<T>(int taskIndex) //where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -213,9 +213,7 @@ namespace SytyRouting.Routing
                                 continue;
                             }
 
-                            persona.TransportModeTransitions = routingAlgorithm.SingleTransportModeTransition(origin, destination, TransportModes.DefaultMode);
-
-                            persona.TTextTransitions = SingleTransportTransitionsToTTEXTSequence(persona.Route, persona.TransportModeTransitions, persona.StartDateTime);
+                            persona.TTextTransitions = routingAlgorithm.SingleTransportModeTransition(persona, origin, destination, TransportModes.DefaultMode);
 
                             persona.SuccessfulRouteComputation = true;
 
@@ -290,7 +288,7 @@ namespace SytyRouting.Routing
             return batchPartition;
         }
 
-        private async Task UploadRoutesAsync()
+        protected override async Task UploadRoutesAsync()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -312,51 +310,6 @@ namespace SytyRouting.Routing
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
-        }
-
-        private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions, DateTime startTime)
-        {
-            if(transitions == null || transitions.Count <1 || route.IsEmpty)
-                return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
-
-            var coordinates = route.Coordinates;
-
-            List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
-            List<string> transportModes = new List<string>(transitions.Count);
-
-            Node origin = _graph.GetNodeByLongitudeLatitude(coordinates[0].X, coordinates[0].Y);
-        
-            string transportModeS = "";
-                        
-            byte currentTransportMode = 0;    
-
-            if(transitions.ContainsKey(origin.Idx))
-            {
-                currentTransportMode = transitions[origin.Idx].Item1;
-                var routeType = transitions[origin.Idx].Item2;
-                if(routeType==-1)
-                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
-                else if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
-                timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); //DEBUG: CHECK UNITS!
-                transportModes.Add(transportModeS);                    
-            }
-            
-            Node destination = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
-
-            timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
-
-            if(transitions.ContainsKey(destination.Idx))
-            {
-                var routeType = transitions[destination.Idx].Item2;
-                if(routeType==-1)
-                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
-                else if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
-            }
-            transportModes.Add(transportModeS);
-
-            return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
     }
 }
