@@ -40,7 +40,7 @@ namespace SytyRouting.DataBase
             logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
         }
 
-        private static async Task CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)
+        public static async Task CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)
         {
             logger.Info("DB uploaded routes integrity check:");
             int numberOfFailures = 0;
@@ -108,6 +108,107 @@ namespace SytyRouting.DataBase
                 result = "SUCCEEDED";
 
             logger.Info("DB uploaded route integrity check {0}.", result);
+
+            await connection.CloseAsync();
+        }
+
+        public static async Task CompareUploadedRoutesAsync(string firstRouteTable, string secondRouteTable)
+        {
+            Stopwatch benchmarkStopWatch = new Stopwatch();
+            benchmarkStopWatch.Start();
+            logger.Info("--------------------------------------------------------------------------------------------------------------");
+            logger.Info("DB uploaded routes comparison (LineString)");
+            logger.Info("Route tables: {0} vs. {1}",firstRouteTable,secondRouteTable);
+            logger.Info("--------------------------------------------------------------------------------------------------------------");
+            
+            int numberOfFailures = 0;
+
+            var elementsFirstTable = await Helper.DbTableRowCount(firstRouteTable, logger);
+            var elementsSecondTable = await Helper.DbTableRowCount(secondRouteTable, logger);
+
+            if(elementsFirstTable!=elementsSecondTable)
+            {
+                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+            }
+            else
+            {
+                logger.Info("{0} routes to compare",elementsFirstTable);
+            }
+
+            //var connectionString = Configuration.X270ConnectionString; // Local DB for testing
+            var connectionString = Configuration.ConnectionString;
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            LineString[] routesFirstTable = new LineString[elementsFirstTable];
+            LineString[] routesSecondTable = new LineString[elementsSecondTable];
+
+            // Read location data from 'persona routes'
+            //                     0              1             
+            var queryString = "SELECT persona_id, computed_route FROM " + firstRouteTable + " ORDER BY persona_id ASC";
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                int i=0;
+                while (await reader.ReadAsync())
+                {
+                    var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
+                    var route = (LineString)reader.GetValue(1); // route (Point)
+                    try
+                    {
+                        routesFirstTable[i++] = route;
+                    }
+                    catch
+                    {
+                        logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                    }
+                }
+            }
+
+            // Read location data from 'persona routes'
+            //                     0              1             
+            queryString = "SELECT persona_id, computed_route FROM " + secondRouteTable + " ORDER BY persona_id ASC";
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                int i=0;
+                while (await reader.ReadAsync())
+                {
+                    var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
+                    var route = (LineString)reader.GetValue(1); // route (Point)
+                    try
+                    {
+                        routesSecondTable[i++] = route;
+                    }
+                    catch
+                    {
+                        logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                    }
+                }
+            }
+
+            for(int i=0; i<elementsFirstTable; i++)
+            {
+                try
+                {
+                    Assert.IsEquals(firstRouteTable[i], secondRouteTable[i], "Test failed. Uploaded Routes are not equal");
+                }
+                catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                {
+                    logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
+                    numberOfFailures++;
+                }
+            }
+            string result;
+            if (numberOfFailures != 0)
+                result = "FAILED";
+            else
+                result = "SUCCEEDED";
+
+            logger.Info("DB uploaded routes integrity check {0}.", result);
 
             await connection.CloseAsync();
         }

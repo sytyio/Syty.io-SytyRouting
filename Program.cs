@@ -83,6 +83,7 @@ namespace SytyRouting
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             
+            var auxiliaryTable1 = auxiliaryTable;
             //////////////
             routeTable = Configuration.PersonaRouteTable + "_T71";
             auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
@@ -90,6 +91,11 @@ namespace SytyRouting
             await personaRouteTable.CreateDataSet();
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+
+            var auxiliaryTable2 = auxiliaryTable;
+            //////////////
+
+            await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable1,auxiliaryTable2);
 
             //////////////
 
