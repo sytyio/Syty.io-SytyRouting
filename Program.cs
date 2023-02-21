@@ -1,5 +1,6 @@
 ﻿using NLog;
 using Npgsql;
+using SytyRouting.Routing;
 
 namespace SytyRouting
 {
@@ -75,9 +76,20 @@ namespace SytyRouting
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
 
+            // // Persona spatial data generation
+            await RoutingBenchmark.CreateDataSet();
+            var personaRouter = new PersonaRouterBenchmark(graph);
+            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            // //
+
+
+
             /////
 
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
+            // await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
+
+            /////
+
 
             // Logger flushing
             LogManager.Shutdown();
