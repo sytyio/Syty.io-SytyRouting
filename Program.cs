@@ -99,6 +99,20 @@ namespace SytyRouting
 
             //////////////
 
+            routeTable = Configuration.PersonaRouteTable + "_T74";
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
+            await personaRouteTable.CreateDataSet();
+
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.BatchUpload,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+
+            var auxiliaryTable3 = auxiliaryTable;
+            //////////////
+
+            await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable1,auxiliaryTable3);
+
+            //////////////
+
 
             // Logger flushing
             LogManager.Shutdown();
