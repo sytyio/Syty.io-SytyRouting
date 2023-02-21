@@ -38,6 +38,8 @@ namespace SytyRouting.DataBase
             var connectionString = ConnectionString;
             var routeTable=ResultTable;
             var auxiliaryTable=AuxiliaryTable;
+            var auxiliaryTableTablePK=auxiliaryTable+Configuration.PKConstraintSuffix;
+            var auxiliaryTableTableFK = Configuration.FKConstraintSuffix;
 
             // Create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();
@@ -61,22 +63,22 @@ namespace SytyRouting.DataBase
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS persona_route_auxiliary_fk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTableTableFK + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT persona_route_auxiliary_fk FOREIGN KEY (persona_id) REFERENCES " + routeTable + " (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT " + auxiliaryTableTableFK + " FOREIGN KEY (persona_id) REFERENCES " + routeTable + " (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS persona_route_auxiliary_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTableTablePK + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT persona_route_auxiliary_pk PRIMARY KEY (persona_id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT " + auxiliaryTableTablePK + " PRIMARY KEY (persona_id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }

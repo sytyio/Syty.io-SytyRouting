@@ -43,6 +43,7 @@ namespace SytyRouting.DataBase
             var connectionString = ConnectionString;
             var personaOriginTable=PersonaOriginTable;
             var routeResultTable=RoutingResultTable;
+            var routeResultTablePK=routeResultTable+Configuration.PKConstraintSuffix;
 
             List<int> personaIds = new List<int>(0);
 
@@ -63,12 +64,12 @@ namespace SytyRouting.DataBase
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS persona_route_pk;", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS " + routeResultTablePK + ";", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT persona_route_pk PRIMARY KEY (id);", connection))
+            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT " + routeResultTablePK + " PRIMARY KEY (id);", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
