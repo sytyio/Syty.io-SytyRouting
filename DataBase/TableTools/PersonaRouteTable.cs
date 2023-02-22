@@ -54,45 +54,67 @@ namespace SytyRouting.DataBase
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
+            //debug: (To be removed once the table gets its definite form)
             await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routeResultTable + " CASCADE;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
+            //
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;", connection))
+            // await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS " + routeResultTablePK + ";", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT " + routeResultTablePK + " PRIMARY KEY (id);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            // await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            await using var batch = new NpgsqlBatch(connection)
             {
-                await cmd.ExecuteNonQueryAsync();
+                BatchCommands =
+                {
+                    new("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;"),
+                    new("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS " + routeResultTablePK + ";"),
+                    new("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT " + routeResultTablePK + " PRIMARY KEY (id);"),
+                    new("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];"),
+                    new("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;"),
+                    new("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
+                    new("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
+                }
+            };
+
+            await using (var reader = await batch.ExecuteReaderAsync())
+            {
+                logger.Debug("{0} table creation",routeResultTable);
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS " + routeResultTablePK + ";", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT " + routeResultTablePK + " PRIMARY KEY (id);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
 
             // Insert default transport sequence.
             var queryString = "SELECT id FROM " + routeResultTable + " ORDER BY id ASC;";

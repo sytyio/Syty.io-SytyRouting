@@ -4,6 +4,7 @@ using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
 using SytyRouting.Algorithms;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -110,17 +111,22 @@ namespace SytyRouting.Routing
             }
         }
 
-        public virtual Task StartRouting<T>() where T: IRoutingAlgorithm, new()
+        public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
         {
             throw new NotImplementedException();
         }
 
-        protected virtual void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
+        protected virtual void CalculateRoutes<A>(int taskIndex) where A: IRoutingAlgorithm, new()
         {
             throw new NotImplementedException();
         }
 
-        protected virtual Task UploadRoutesAsync()
+        protected virtual void CalculateRoutes<A,U>(int taskIndex) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task UploadRoutesAsync<U>() where U: IRouteUploader, new()
         {
             throw new NotImplementedException();
         }
