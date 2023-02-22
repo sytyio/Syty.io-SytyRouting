@@ -47,7 +47,7 @@ namespace SytyRouting.Routing
         //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
         // }
 
-        public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
+        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
         {
             stopWatch.Start();
 
@@ -78,18 +78,19 @@ namespace SytyRouting.Routing
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<A>(t));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
+            Task.WaitAll(downloadTask); //debug <-
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
-            await UploadRoutesAsync();
+            await UploadRoutesAsync<U>();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -172,9 +173,9 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<T>(int taskIndex) //where T: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
-            var routingAlgorithm = new T();
+            var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
             
             while(personaTaskArraysQueue.TryDequeue(out Persona[]? personaArray))
@@ -288,7 +289,7 @@ namespace SytyRouting.Routing
             return batchPartition;
         }
 
-        protected override async Task UploadRoutesAsync()
+        protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -299,7 +300,8 @@ namespace SytyRouting.Routing
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
-            var uploader = new DataBase.OneTimeAllUpload();
+            //var uploader = new DataBase.OneTimeAllUpload();
+            var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
 

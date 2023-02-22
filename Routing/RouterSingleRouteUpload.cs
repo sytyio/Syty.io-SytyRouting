@@ -5,6 +5,7 @@ using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using System.Collections.Concurrent;
 using NetTopologySuite.Geometries.Implementation;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -50,7 +51,7 @@ namespace SytyRouting.Routing
         //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
         // }
 
-        public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
+        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -81,7 +82,7 @@ namespace SytyRouting.Routing
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<A,U>(t));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -176,9 +177,13 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<T>(int taskIndex) //where T: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
-            var routingAlgorithm = new T();
+        }
+
+        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        {
+            var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
             
             while(personaTaskArraysQueue.TryDequeue(out Persona[]? personaArray))
@@ -246,7 +251,7 @@ namespace SytyRouting.Routing
                             }
                         }
 
-                        Task uploadTask = Task.Run(() => DBPersonaRouteUploadAsync(persona));
+                        Task uploadTask = Task.Run(() => DBPersonaRouteUploadAsync<U>(persona));
                         Task.WaitAll(uploadTask);
                     }
                     catch (Exception e)
@@ -296,7 +301,7 @@ namespace SytyRouting.Routing
             return batchPartition;
         }
 
-        protected override async Task UploadRoutesAsync()
+        protected override async Task UploadRoutesAsync<U>()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -307,7 +312,7 @@ namespace SytyRouting.Routing
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
-            var uploader = new DataBase.OneTimeAllUpload();
+            var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
 
@@ -351,11 +356,12 @@ namespace SytyRouting.Routing
         //     await connection.CloseAsync();
         // }
 
-        private async Task DBPersonaRouteUploadAsync(Persona persona)
+        private async Task DBPersonaRouteUploadAsync<U>(Persona persona) where U: IRouteUploader, new()
         {
             var connectionString = Configuration.ConnectionString;
 
-            var uploader = new DataBase.SingleRouteUpload();
+            //var uploader = new DataBase.SingleRouteUpload();
+            var uploader = new U();
 
             var uploadFails = await uploader.UploadRouteAsync(connectionString,_auxiliaryTable,_routeTable,persona);
 

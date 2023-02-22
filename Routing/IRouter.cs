@@ -1,12 +1,13 @@
 using SytyRouting.Algorithms;
 using SytyRouting.Model;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
     public interface IRouter
     {
         void Initialize(Graph graph, string routeTable, string auxiliaryTable);
-        Task StartRouting<T>() where T: IRoutingAlgorithm, new();
+        Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new();
         List<Persona> GetPersonas();
         int GetComputedRoutesCount();
     }

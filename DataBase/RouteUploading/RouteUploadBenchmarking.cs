@@ -15,7 +15,7 @@ namespace SytyRouting.DataBase
         //private string _routeTable;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public static async Task Start<T, U, V>(Graph graph, string routeTable, string auxiliaryTable) where T: IRoutingAlgorithm, new() where U: IRouteUploader, new() where V: IRouter, new()
+        public static async Task Start<A, U, R>(Graph graph, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
@@ -23,10 +23,10 @@ namespace SytyRouting.DataBase
             _graph = graph;
 
             var uploader = new U();
-            var router = new V();
+            var router = new R();
 
             router.Initialize(graph, routeTable, auxiliaryTable);
-            await router.StartRouting<T>();
+            await router.StartRouting<A,U>();
 
             var personas = router.GetPersonas();
             var computedRoutes = router.GetComputedRoutesCount();
@@ -36,7 +36,7 @@ namespace SytyRouting.DataBase
             benchmarkStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
             logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(T).Name);
+            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(A).Name);
             logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
         }
 
@@ -62,14 +62,15 @@ namespace SytyRouting.DataBase
                 while (await reader.ReadAsync())
                 {
                     var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
-                    var route = (LineString)reader.GetValue(1); // route (Point)
                     try
                     {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
                         uploadedPersonas.Add(persona_id, route);
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
                     }
                 }
             }
@@ -107,7 +108,9 @@ namespace SytyRouting.DataBase
             else
                 result = "SUCCEEDED";
 
+            logger.Info("---------------------------------------------");
             logger.Info("DB uploaded route integrity check {0}.", result);
+            logger.Info("---------------------------------------------");
 
             await connection.CloseAsync();
         }
@@ -155,14 +158,15 @@ namespace SytyRouting.DataBase
                 while (await reader.ReadAsync())
                 {
                     var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
-                    var route = (LineString)reader.GetValue(1); // route (Point)
                     try
                     {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
                         routesFirstTable[i++] = route;
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
                     }
                 }
             }
@@ -178,14 +182,15 @@ namespace SytyRouting.DataBase
                 while (await reader.ReadAsync())
                 {
                     var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
-                    var route = (LineString)reader.GetValue(1); // route (Point)
                     try
                     {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
                         routesSecondTable[i++] = route;
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
                     }
                 }
             }
@@ -208,7 +213,9 @@ namespace SytyRouting.DataBase
             else
                 result = "SUCCEEDED";
 
+            logger.Info("---------------------------------------------");
             logger.Info("DB uploaded routes integrity check {0}.", result);
+            logger.Info("---------------------------------------------");
 
             await connection.CloseAsync();
         }

@@ -5,6 +5,7 @@ using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using SytyRouting.Algorithms;
 using System.Collections.Concurrent;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -32,6 +33,9 @@ namespace SytyRouting.Routing
         private int processedDbElements = 0;
 //        public int ComputedRoutes {private set; get;} = 0;
         private static int computedRoutes = 0;
+
+        private static int uploadedRoutes = 0;
+
         private bool routingTasksHaveEnded = false;
     
         private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
@@ -47,7 +51,7 @@ namespace SytyRouting.Routing
         //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
         // }
 
-        public override async Task StartRouting<T>() //where T: IRoutingAlgorithm, new()
+        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
 
@@ -78,18 +82,19 @@ namespace SytyRouting.Routing
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<T>(t));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<A,U>(t));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
             Task.WaitAll(routingTasks);
+            Task.WaitAll(downloadTask); //debug <-
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
-            await UploadRoutesAsync();
+            //await UploadRoutesAsync();
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -172,9 +177,13 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<T>(int taskIndex) //where T: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
-            var routingAlgorithm = new T();
+        }
+
+        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        {
+            var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
             
             while(personaTaskArraysQueue.TryDequeue(out Persona[]? personaArray))
@@ -247,19 +256,18 @@ namespace SytyRouting.Routing
                         persona.SuccessfulRouteComputation = false;
                         logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
                     }
-
-                    //debug:
-                    try
-                    {
-                        Task uploadTask = Task.Run(() => UploadRoutesAsync2(personaArray));
-                        Task.WaitAll(uploadTask);
-                    }
-                    catch(Exception e)
-                    {
-                        logger.Debug("Error uploading routes by batches: {0}",e.Message);
-                    }
-                    //
                 }
+                //debug:
+                try
+                {
+                    Task uploadTask = Task.Run(() => UploadRoutesAsync2<U>(personaArray));
+                    Task.WaitAll(uploadTask);
+                }
+                catch(Exception e)
+                {
+                    logger.Debug("Error uploading routes by batches: {0}",e.Message);
+                }
+                //
             }
         }
 
@@ -280,6 +288,7 @@ namespace SytyRouting.Routing
                     {
                         logger.Info(" ==>> Inconsistent number of processed elements.");
                     }
+                    logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, 100 * uploadedRoutes / personas.Count);
                     return;
                 }
 
@@ -300,7 +309,7 @@ namespace SytyRouting.Routing
             return batchPartition;
         }
 
-        protected override async Task UploadRoutesAsync()
+        protected override async Task UploadRoutesAsync<U>()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -311,7 +320,8 @@ namespace SytyRouting.Routing
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
-            var uploader = new DataBase.BatchUpload();
+            //var uploader = new DataBase.SeveralRoutesUpload();
+            var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
 
@@ -324,7 +334,7 @@ namespace SytyRouting.Routing
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
-        private async Task UploadRoutesAsync2(Persona[] personaArray)
+        private async Task UploadRoutesAsync2<U>(Persona[] personaArray) where U: IRouteUploader, new()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -332,17 +342,17 @@ namespace SytyRouting.Routing
             // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
             var connectionString = Configuration.ConnectionString;       
 
-            var auxiliaryTable = _auxiliaryTable;
-            var routeTable = _routeTable;
+            // var auxiliaryTable = _auxiliaryTable;
+            // var routeTable = _routeTable;
 
-            var uploader = new DataBase.BatchUpload();
+            var uploader = new U();
 
-            int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personaArray.ToList());
+            int uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,personaArray.ToList());
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
+            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, _auxiliaryTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);

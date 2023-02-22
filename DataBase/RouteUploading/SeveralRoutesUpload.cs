@@ -7,10 +7,9 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class BatchUpload : BaseRouteUploader
+    public class SeveralRoutesUpload : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
 
         public override async Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas)
         {
@@ -28,56 +27,74 @@ namespace SytyRouting.DataBase
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route) VALUES ($1, $2) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2", connection)
+                    var transportModes = persona.TTextTransitions.Item1;
+                    var timeStampsTZ = persona.TTextTransitions.Item2;
+
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ($1, $2, $3, $4) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2, transport_modes = $3, time_stamps = $4", connection)
                     {
                         Parameters =
                         {
                             new() { Value = persona.Id },
                             new() { Value = persona.Route },
+                            new() { Value = transportModes },
+                            new() { Value = timeStampsTZ }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
-                        
-                    var transportModes = persona.TTextTransitions.Item1;
-                    var timeStampsTZ = persona.TTextTransitions.Item2;
                     
-                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
-                    {
-                        Parameters =
-                        {
-                            new() { Value = persona.Id },
-                            new() { Value = transportModes },
-                            new() { Value = timeStampsTZ },
-                        }
-                    };
+                    // await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
+                    // {
+                    //     Parameters =
+                    //     {
+                    //         new() { Value = persona.Id },
+                    //         new() { Value = transportModes },
+                    //         new() { Value = timeStampsTZ },
+                    //     }
+                    // };
                 
-                    await cmd_insert_ttext.ExecuteNonQueryAsync();
+                    // await cmd_insert_ttext.ExecuteNonQueryAsync();
                 }
                 catch
                 {
-                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
+                    logger.Debug(" ==>> Unable to upload route data to database. Persona Id {0}", persona.Id);
                     uploadFails++;
                 }
             }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
+            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
 
-            await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
+            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
+            // {
+            //     await cmd.ExecuteNonQueryAsync();
+            // }
+
+            await using var batch = new NpgsqlBatch(connection)
             {
-                await cmd.ExecuteNonQueryAsync();
+                BatchCommands =
+                {
+                    new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"),
+                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
+                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
+                    new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;")
+                }
+            };
+
+            await using (var reader = await batch.ExecuteReaderAsync())
+            {
+                logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
 
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
@@ -109,6 +126,7 @@ namespace SytyRouting.DataBase
                 catch(Exception e)
                 {
                     logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
+                    uploadFails++;
                 }                
             }
 
@@ -141,6 +159,7 @@ namespace SytyRouting.DataBase
                 catch(Exception e)
                 {
                     logger.Debug(" ==>> Unable to update routes/transport sequences on the database: {0}", e.Message);
+                    uploadFails++;
                 }                
             }
    
