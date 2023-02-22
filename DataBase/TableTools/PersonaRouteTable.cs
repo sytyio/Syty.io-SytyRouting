@@ -112,7 +112,9 @@ namespace SytyRouting.DataBase
 
             await using (var reader = await batch.ExecuteReaderAsync())
             {
-                logger.Debug("{0} table creation",routeResultTable);
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++");
+                logger.Debug("   {0} table creation   ",routeResultTable);
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++");
             }
 
 
