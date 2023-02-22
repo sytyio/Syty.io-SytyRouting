@@ -7,7 +7,7 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.Routing
 {
-    public static class RoutingBenchmark
+    public static class MultiModalBenchmarkDataSet
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 

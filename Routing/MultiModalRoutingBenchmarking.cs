@@ -9,7 +9,7 @@ using SytyRouting.Routing;
 
 namespace SytyRouting.DataBase
 {
-    public class RoutingBenchmarking
+    public class MultiModalRoutingBenchmarking
     {
         private static Graph _graph = null!;
         //private string _routeTable;
@@ -40,7 +40,7 @@ namespace SytyRouting.DataBase
             var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
 
             // // Persona spatial data generation
-            await RoutingBenchmark.CreateDataSet();
+            await MultiModalBenchmarkDataSet.CreateDataSet();
             //var personaRouter = new PersonaRouterBenchmark(graph);
 
 
