@@ -9,42 +9,44 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.Routing
 {
-    public class PersonaRouterBenchmark
+    public class MultiModalRouter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        private List<Persona> personas = new List<Persona>();
+        private static List<Persona> personas = new List<Persona>();
         
-        private Graph _graph;
+        private static Graph _graph = null!;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
-        private Task[] routingTasks = new Task[simultaneousRoutingTasks];
+        private static Task[] routingTasks = new Task[simultaneousRoutingTasks];
 
-        private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
+        private static ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
 
-        private int taskArraysQueueThreshold = simultaneousRoutingTasks;
+        private static int taskArraysQueueThreshold = simultaneousRoutingTasks;
 
-        private int elementsToProcess = 0;
-        private int processedDbElements = 0;
+        private static int elementsToProcess = 0;
+        private static int processedDbElements = 0;
         private static int computedRoutes = 0;
-        private bool routingTasksHaveEnded = false;
+        private static bool routingTasksHaveEnded = false;
     
-        private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
+        private static int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
 
-        private Stopwatch stopWatch = new Stopwatch();
+        private static Stopwatch stopWatch = new Stopwatch();
 
-        private int sequenceValidationErrors = 0;
-        private int originEqualsDestinationErrors = 0;
+        private static int sequenceValidationErrors = 0;
+        private static int originEqualsDestinationErrors = 0;
 
-        public PersonaRouterBenchmark(Graph graph)
+        public MultiModalRouter(Graph graph)
         {
             _graph = graph;
         }
 
-        public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
+        public static async Task StartRouting<T>(Graph graph) where T: IRoutingAlgorithm, new()
         {
             stopWatch.Start();
+
+            _graph = graph;
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
@@ -89,7 +91,7 @@ namespace SytyRouting.Routing
             logger.Info("StartRouting execution time :: {0}", totalTime);
         }
 
-        private async Task DBPersonaDownloadAsync()
+        private static async Task DBPersonaDownloadAsync()
         {
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
@@ -165,11 +167,11 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        private byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
+        private static byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
         {
             byte[] formattedSequence = TransportModes.CreateSequence(transportSequence);
-            logger.Debug("Requested sequence: {0}", TransportModes.NamesToString(transportSequence));
-            logger.Debug("Formatted sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(formattedSequence)));
+            //logger.Debug("Requested sequence: {0}", TransportModes.NamesToString(transportSequence));
+            //logger.Debug("Formatted sequence: {0}", TransportModes.NamesToString(TransportModes.ArrayToNames(formattedSequence)));
 
             byte initialTransportMode = formattedSequence.First();
             byte finalTransportMode = formattedSequence.Last();
@@ -237,7 +239,7 @@ namespace SytyRouting.Routing
             }
         }
 
-        private void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
+        private static void CalculateRoutes<T>(int taskIndex) where T: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new T();
             routingAlgorithm.Initialize(_graph);
@@ -340,7 +342,7 @@ namespace SytyRouting.Routing
             return true;
         }
 
-        private void MonitorRouteCalculation()
+        private static void MonitorRouteCalculation()
         {
             int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
             while(true)
@@ -364,7 +366,7 @@ namespace SytyRouting.Routing
             }
         }
 
-        private int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
+        private static int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
         {
             int lastSlice = whole - regularSlice * (numberOfSlices - 1);
             int[] batchPartition = new int[numberOfSlices];
@@ -426,7 +428,7 @@ namespace SytyRouting.Routing
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100 * uploadFails / personas.Count);
         }
 
-        private async Task DBRouteBenchmarkUploadAsync()
+        private static async Task DBRouteBenchmarkUploadAsync()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
@@ -553,7 +555,7 @@ namespace SytyRouting.Routing
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
-        public void TracePersonaDetails(Persona persona)
+        public static void TracePersonaDetails(Persona persona)
         {
             var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y);
             var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y);
@@ -568,7 +570,7 @@ namespace SytyRouting.Routing
             logger.Debug("Requested transport modes: {0} ({1})", TransportModes.NamesToString(TransportModes.ArrayToNames(persona.RequestedTransportSequence)), TransportModes.ArrayToMask(persona.RequestedTransportSequence));
         }
 
-        public void TracePersonas()
+        public static void TracePersonas()
         {
             logger.Debug("");
             logger.Debug("Personas:");
@@ -585,7 +587,7 @@ namespace SytyRouting.Routing
             }
         }
 
-        public void TraceRoute(Persona persona)
+        public static void TraceRoute(Persona persona)
         {
             if(persona.Route is not null && persona.TransportModeTransitions is not null)
             {
@@ -595,7 +597,7 @@ namespace SytyRouting.Routing
             }
         }
 
-        public void TraceRoute(LineString route)
+        public static void TraceRoute(LineString route)
         {
             var routeCoordinates = route.Coordinates;
 
@@ -624,7 +626,7 @@ namespace SytyRouting.Routing
             logger.Debug(routeTimeStampString);
         }
 
-        public void TraceFullRoute(LineString route)
+        public static void TraceFullRoute(LineString route)
         {
             var routeCoordinates = route.Coordinates;
             
@@ -660,7 +662,7 @@ namespace SytyRouting.Routing
             //Environment.Exit(0);
         }
 
-        public void TraceRouteDetails(LineString route, Dictionary<int, Tuple<byte,int>>? transportModeTransitions)
+        public static void TraceRouteDetails(LineString route, Dictionary<int, Tuple<byte,int>>? transportModeTransitions)
         {
             var routeCoordinates = route.Coordinates;
 

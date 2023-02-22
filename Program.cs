@@ -74,6 +74,13 @@ namespace SytyRouting
 
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
 
+            
+            // // Multimodal Persona spatial data generation and routing benchmarking
+            //var routeTable = Configuration.PersonaRouteTable;
+            //var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            // //
+
 
             /////////////
             var routeTable = Configuration.PersonaRouteTable + "_T70";
