@@ -44,9 +44,9 @@ namespace SytyRouting
             //////////////////////////////////////////////
             // // // Create a new table for route results
             /////////////////////////////////////////////
-            await DataBase.PLGSQLCoaleaseTransportModesTimeStamps.SetCoaleaseTransportModesTimeStampsFunction(Configuration.ConnectionString);
-            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            //await DataBase.PLGSQLCoaleaseTransportModesTimeStamps.SetCoaleaseTransportModesTimeStampsFunction(Configuration.ConnectionString);
+            //var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
+            //await personaRouteTable.CreateDataSet(Configuration.PersonaTable,Configuration.PersonaRouteTable,10);
             /////////////////////////////////////////////
 
             ///////////////////////////////////////////
@@ -88,11 +88,12 @@ namespace SytyRouting
             ////////////////////////////////////////////////
             // // Route results uploading benchmarking // //
             ////////////////////////////////////////////////
+            int numberOfRows = 10;
+            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             
+            //////////////
             var routeTable = Configuration.PersonaRouteTable + "_T70";
-            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             
@@ -100,9 +101,7 @@ namespace SytyRouting
             
             //////////////
             routeTable = Configuration.PersonaRouteTable + "_T71";
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SingleRouteUploader,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
 
@@ -115,9 +114,7 @@ namespace SytyRouting
             /////////////
 
             routeTable = Configuration.PersonaRouteTable + "_T74";
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
 
@@ -130,9 +127,7 @@ namespace SytyRouting
             // /////////////
 
             routeTable = Configuration.PersonaRouteTable + "_T75";
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
 
             await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
 
