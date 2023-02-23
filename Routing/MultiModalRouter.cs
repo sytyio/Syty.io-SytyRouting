@@ -88,7 +88,9 @@ namespace SytyRouting.Routing
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("StartRouting execution time :: {0}", totalTime);
+            logger.Info("=================================================");
+            logger.Info("    Routing execution time :: {0}", totalTime);
+            logger.Info("=================================================");
         }
 
         private static async Task DBPersonaDownloadAsync()

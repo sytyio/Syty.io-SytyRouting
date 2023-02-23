@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class SeveralRoutesUpload : BaseRouteUploader
+    public class SeveralRoutesUploader : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -41,18 +41,6 @@ namespace SytyRouting.DataBase
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
-                    
-                    // await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes, time_stamps) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET transport_modes = $2, time_stamps = $3", connection)
-                    // {
-                    //     Parameters =
-                    //     {
-                    //         new() { Value = persona.Id },
-                    //         new() { Value = transportModes },
-                    //         new() { Value = timeStampsTZ },
-                    //     }
-                    // };
-                
-                    // await cmd_insert_ttext.ExecuteNonQueryAsync();
                 }
                 catch
                 {
@@ -60,26 +48,6 @@ namespace SytyRouting.DataBase
                     uploadFails++;
                 }
             }
-
-            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
-
-            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
-
-            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
-
-            // await using (var cmd = new NpgsqlCommand("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
 
             await using var batch = new NpgsqlBatch(connection)
             {

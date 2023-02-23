@@ -98,7 +98,9 @@ namespace SytyRouting.Routing
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("StartRouting execution time :: {0}", totalTime);
+            logger.Info("=================================================");
+            logger.Info("    Routing execution time :: {0}", totalTime);
+            logger.Info("=================================================");
         }
 
         private async Task DownloadPersonaDataAsync()
@@ -177,9 +179,9 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
-        {
-        }
+        // protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        // {
+        // }
 
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {

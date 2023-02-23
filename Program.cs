@@ -49,7 +49,9 @@ namespace SytyRouting
             await personaRouteTable.CreateDataSet();
             /////////////////////////////////////////////
 
-
+            ///////////////////////////////////////////
+            // // Routing algorithms benchmarking // //
+            ///////////////////////////////////////////
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -74,22 +76,25 @@ namespace SytyRouting
             // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
 
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            // //
 
-            
-            // // Multimodal Persona spatial data generation and routing benchmarking
-            //var routeTable = Configuration.PersonaRouteTable;
-            //var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            ///////////////////////////////////////////////////////////////////////////////
+            // // Multimodal Persona spatial data generation and routing benchmarking // //
+            ///////////////////////////////////////////////////////////////////////////////
+            // await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             // //
 
 
-            /////////////
+            ////////////////////////////////////////////////
+            // // Route results uploading benchmarking // //
+            ////////////////////////////////////////////////
+            
             var routeTable = Configuration.PersonaRouteTable + "_T70";
             var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
             personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
             await personaRouteTable.CreateDataSet();
 
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUpload,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             
             var auxiliaryTable0 = auxiliaryTable;
             
@@ -99,7 +104,7 @@ namespace SytyRouting
             personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
             await personaRouteTable.CreateDataSet();
 
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SingleRouteUpload,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SingleRouteUploader,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
 
             var auxiliaryTable1 = auxiliaryTable;
             //////////////
@@ -114,7 +119,7 @@ namespace SytyRouting
             personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
             await personaRouteTable.CreateDataSet();
 
-            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUpload,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
 
             var auxiliaryTable4 = auxiliaryTable;
             // //////////////
@@ -124,17 +129,19 @@ namespace SytyRouting
             // //////////////
             // /////////////
 
-            // routeTable = Configuration.PersonaRouteTable + "_T75";
-            // auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-            // personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
-            // await personaRouteTable.CreateDataSet();
+            routeTable = Configuration.PersonaRouteTable + "_T75";
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,routeTable,Configuration.ConnectionString);
+            await personaRouteTable.CreateDataSet();
 
-            // await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUpload,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+            await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
 
-            // var auxiliaryTable5 = auxiliaryTable;
-            // //////////////
+            var auxiliaryTable5 = auxiliaryTable;
+            //////////////
 
-            // await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable5);
+            await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable5);
+
+            //////////////
 
             // //////////////
 

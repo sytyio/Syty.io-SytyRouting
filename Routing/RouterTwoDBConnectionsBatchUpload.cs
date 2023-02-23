@@ -75,6 +75,7 @@ namespace SytyRouting.Routing
             }
             
             Task downloadTask = Task.Run(() => DownloadPersonaDataAsync());
+            
             Thread.Sleep(initialDataLoadSleepMilliseconds);
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
             {
@@ -89,11 +90,12 @@ namespace SytyRouting.Routing
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
-            Task uploadTask = Task.Run(() => DownloadPersonaDataAsync());
+            Task uploadTask = Task.Run(() => UploadRoutesAsync3<U>());
 
-            Task.WaitAll(routingTasks);
             Task.WaitAll(downloadTask); //debug <-
+            Task.WaitAll(routingTasks);
             routingTasksHaveEnded = true;
+            Task.WaitAll(uploadTask); //debug <-
             Task.WaitAll(monitorTask);
 
             ComputedRoutesCount = computedRoutes;
@@ -103,7 +105,9 @@ namespace SytyRouting.Routing
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("StartRouting execution time :: {0}", totalTime);
+            logger.Info("=================================================");
+            logger.Info("    Routing execution time :: {0}", totalTime);
+            logger.Info("=================================================");
         }
 
         private async Task DownloadPersonaDataAsync()
@@ -184,9 +188,9 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
-        {
-        }
+        // protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        // {
+        // }
 
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
@@ -358,7 +362,7 @@ namespace SytyRouting.Routing
 
             var uploader = new U();
 
-            List<Persona> personas =  new List<Persona>(uploadBatchSize);
+            List<Persona> personasUploadBatch = new List<Persona>(uploadBatchSize);
             int uploadFails = 0;
 
 
@@ -367,18 +371,18 @@ namespace SytyRouting.Routing
             while(true)
             {
 
-                if(routesQueue.Count>uploadBatchSize)
+                if(routesQueue.Count>=uploadBatchSize)
                 {
                     int count = 0;
                     while(routesQueue.TryDequeue(out Persona? persona) && count<uploadBatchSize)
                     {
                         if(persona!=null)
                         {
-                            personas.Add(persona);
+                            personasUploadBatch.Add(persona);
                             count++;
                         }
                     }
-                    uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,personas);
+                    uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,personasUploadBatch);
                 }
 
                 if(routingTasksHaveEnded)
@@ -386,11 +390,11 @@ namespace SytyRouting.Routing
                 
                     uploadStopWatch.Stop();
                     var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
-                    logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, _auxiliaryTable, totalTime);
-                    logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
-                    logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
-                    logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
+                    logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personasUploadBatch.Count);
+                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personasUploadBatch.Count - uploadFails, _auxiliaryTable, totalTime);
+                    logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personasUploadBatch.Count, 100.0 * (double)uploadFails / (double)personasUploadBatch.Count);
+                    logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personasUploadBatch.Count);
+                    logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personasUploadBatch.Count);
              
                     return;
                 }
