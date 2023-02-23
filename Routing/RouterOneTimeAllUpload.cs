@@ -87,6 +87,8 @@ namespace SytyRouting.Routing
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
+            TotalRoutingTime = stopWatch.Elapsed;
+
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
@@ -307,8 +309,10 @@ namespace SytyRouting.Routing
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
 
+
+            TotalUploadingTime = uploadStopWatch.Elapsed;
             uploadStopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
+            var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
             logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);

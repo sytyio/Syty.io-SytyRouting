@@ -16,6 +16,8 @@ namespace SytyRouting.Routing
         protected string _auxiliaryTable = null!;
         protected List<Persona> Personas = null!;
         protected int ComputedRoutesCount = 0;
+        protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
+        protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
         protected int sequenceValidationErrors = 0;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -39,6 +41,16 @@ namespace SytyRouting.Routing
         public int GetComputedRoutesCount()
         {
             return ComputedRoutesCount;
+        }
+
+        public TimeSpan GetRoutingTime()
+        {
+            return TotalRoutingTime;
+        }
+
+        public TimeSpan GetUploadingTime()
+        {
+            return TotalUploadingTime;
         }
 
         protected byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)

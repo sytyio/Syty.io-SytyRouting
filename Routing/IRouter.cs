@@ -10,5 +10,7 @@ namespace SytyRouting.Routing
         Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new();
         List<Persona> GetPersonas();
         int GetComputedRoutesCount();
+        TimeSpan GetRoutingTime();
+        TimeSpan GetUploadingTime();
     }
 }
