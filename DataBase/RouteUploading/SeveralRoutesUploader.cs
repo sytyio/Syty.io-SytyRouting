@@ -48,6 +48,29 @@ namespace SytyRouting.DataBase
                     uploadFails++;
                 }
             }
+   
+            await connection.CloseAsync();
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("Route uploading execution time :: {0}", totalTime);
+
+            return uploadFails;
+        }
+
+        //public static async Task<int> PropagateResultsStaticAsync(string connectionString, string auxiliaryTable, string routeTable)
+        //public override async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        public static async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        {
+            Stopwatch stopWatch = new Stopwatch();
+
+            stopWatch.Start();
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+
+            int uploadFails = 0;
 
             await using var batch = new NpgsqlBatch(connection)
             {
@@ -130,12 +153,6 @@ namespace SytyRouting.DataBase
                     uploadFails++;
                 }                
             }
-   
-            await connection.CloseAsync();
-
-            stopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("Route uploading execution time :: {0}", totalTime);
 
             return uploadFails;
         }

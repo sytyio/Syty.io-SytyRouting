@@ -364,6 +364,7 @@ namespace SytyRouting.Routing
 
             List<Persona> personasUploadBatch = new List<Persona>(uploadBatchSize);
             int uploadFails = 0;
+            int uploadedRoutes = 0;
 
 
             //debug:
@@ -382,16 +383,28 @@ namespace SytyRouting.Routing
                             count++;
                         }
                     }
+                    logger.Debug("Uploading {0} routes",personasUploadBatch.Count);
                     uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,personasUploadBatch);
+                    uploadedRoutes += count - uploadFails;
+                    logger.Debug("{0} routes uploaded in total",uploadedRoutes);
                 }
 
                 if(routingTasksHaveEnded)
                 {
+                    var remainingRoutes = routesQueue.ToList();
+
+                    logger.Debug("Uploading {0} routes",remainingRoutes.Count);
+                    
+                    uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,remainingRoutes);
+                    uploadFails += await SeveralRoutesUploader.PropagateResultsAsync(connectionString,_auxiliaryTable,_routeTable);
+
+                    uploadedRoutes += remainingRoutes.Count - uploadFails;
+                    logger.Debug("{0} routes uploaded in total",uploadedRoutes);
                 
                     uploadStopWatch.Stop();
                     var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
                     logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personasUploadBatch.Count);
-                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personasUploadBatch.Count - uploadFails, _auxiliaryTable, totalTime);
+                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", uploadedRoutes, _auxiliaryTable, totalTime);
                     logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personasUploadBatch.Count, 100.0 * (double)uploadFails / (double)personasUploadBatch.Count);
                     logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personasUploadBatch.Count);
                     logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personasUploadBatch.Count);

@@ -308,7 +308,7 @@ namespace SytyRouting.Routing
             var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
-
+            uploadFails += await DataBase.SeveralRoutesUploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
             TotalUploadingTime = uploadStopWatch.Elapsed;
             uploadStopWatch.Stop();

@@ -26,18 +26,17 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 200;
+            int numberOfRows = 100;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
-            //TimeSpan[] totalTime = new TimeSpan[4];
-            //string[] testResult = new string[4];
-            //string[] routeTable = new string[4];
             
             //////////////
             var routeTable = Configuration.PersonaRouteTable + "_T70";
             var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
-            var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploader,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
             var auxiliaryTable0 = auxiliaryTable;
@@ -51,7 +50,9 @@ namespace SytyRouting.DataBase
             auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,DataBase.SingleRouteUploader,Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SingleRouteUploader,
+                                    Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable1 = auxiliaryTable;
@@ -65,7 +66,9 @@ namespace SytyRouting.DataBase
             auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploader,
+                                    Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable4 = auxiliaryTable;
@@ -80,7 +83,9 @@ namespace SytyRouting.DataBase
             auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,DataBase.SeveralRoutesUploader,Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploader,
+                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable5 = auxiliaryTable;
@@ -284,13 +289,14 @@ namespace SytyRouting.DataBase
                     try
                     {
                         var route = (LineString)reader.GetValue(1); // route (Point)
-                        routesFirstTable[i++] = route;
+                        routesFirstTable[i] = route;
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
                         numberOfFailures++;
                     }
+                    i++;
                 }
             }
 
@@ -308,13 +314,14 @@ namespace SytyRouting.DataBase
                     try
                     {
                         var route = (LineString)reader.GetValue(1); // route (Point)
-                        routesSecondTable[i++] = route;
+                        routesSecondTable[i] = route;
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
                         numberOfFailures++;
                     }
+                    i++;
                 }
             }
 
@@ -326,13 +333,21 @@ namespace SytyRouting.DataBase
             {
                 for(int i=0; i<routesFirstTable.Length; i++)
                 {
-                    try
+                    if(routesFirstTable[i]!=null && routesSecondTable[i]!=null)
                     {
-                        Assert.IsEquals(routesFirstTable[i], routesSecondTable[i], "Test failed. Uploaded Routes are not equal");
+                        try
+                        {
+                            Assert.IsEquals(routesFirstTable[i], routesSecondTable[i], "Test failed. Uploaded Routes are not equal");
+                        }
+                        catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                        {
+                            logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
+                            numberOfFailures++;
+                        }
                     }
-                    catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                    else
                     {
-                        logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
+                        logger.Debug("Invalid route");
                         numberOfFailures++;
                     }
                 }

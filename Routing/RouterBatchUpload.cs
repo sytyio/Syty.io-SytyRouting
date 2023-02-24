@@ -89,6 +89,9 @@ namespace SytyRouting.Routing
             Task.WaitAll(routingTasks);
             Task.WaitAll(downloadTask); //debug <-
             routingTasksHaveEnded = true;
+            //var uploader = new U();
+            //await uploader.PropagateResultsAsync(Configuration.ConnectionString,_auxiliaryTable,_routeTable);
+            await SeveralRoutesUploader.PropagateResultsAsync(Configuration.ConnectionString,_auxiliaryTable,_routeTable);
             Task.WaitAll(monitorTask);
 
             ComputedRoutesCount = computedRoutes;

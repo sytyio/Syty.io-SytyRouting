@@ -1029,6 +1029,113 @@ namespace SytyRouting
 
 
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ////// Other versions ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        //public static async Task<int> PropagateResultsStaticAsync(string connectionString, string auxiliaryTable, string routeTable)
+        //public override async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        // public static async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        // {
+        //     Stopwatch stopWatch = new Stopwatch();
+
+        //     stopWatch.Start();
+
+        //     await using var connection = new NpgsqlConnection(connectionString);
+        //     await connection.OpenAsync();
+        //     connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+
+        //     int uploadFails = 0;
+
+        //     await using var batch = new NpgsqlBatch(connection)
+        //     {
+        //         BatchCommands =
+        //         {
+        //             new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"),
+        //             new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
+        //             new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
+        //             new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;")
+        //         }
+        //     };
+
+        //     await using (var reader = await batch.ExecuteReaderAsync())
+        //     {
+        //         logger.Debug("{0} table SET statements executed",auxiliaryTable);
+        //     }
+
+        //     //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
+        //     var iterationString = @"
+        //     DO 
+        //     $$
+        //     DECLARE
+        //     _id int;
+        //     _arr_tm text[];
+        //     _arr_ts timestamptz[];
+        //     BEGIN    
+        //         FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+        //         LOOP
+        //             RAISE NOTICE 'id: %', _id;
+        //             RAISE NOTICE 'transport modes: %', _arr_tm;
+        //             RAISE NOTICE 'time stamps: %', _arr_ts;
+        //             UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+        //         END LOOP;
+        //     END;
+        //     $$;
+        //     ";
+
+        //     await using (var cmd = new NpgsqlCommand(iterationString, connection))
+        //     {
+        //         try
+        //         {
+        //             await cmd.ExecuteNonQueryAsync();
+        //         }
+        //         catch(Exception e)
+        //         {
+        //             logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
+        //             uploadFails++;
+        //         }                
+        //     }
+
+        //     //PLGSQL: Iterates over each route result to update the persona_route table
+        //     var updateString = @"
+        //     DO 
+        //     $$
+        //     DECLARE
+        //     _id int;
+        //     _r tgeompoint;
+        //     _ts ttext(Sequence);
+        //     BEGIN    
+        //         FOR _id, _r, _ts in SELECT persona_id, route, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+        //         LOOP
+        //             RAISE NOTICE 'id: %', _id;
+        //             RAISE NOTICE 'route: %', _r;
+        //             RAISE NOTICE 'transport sequence: %', _ts;
+        //             UPDATE " + routeTable + @" SET route = _r, transport_sequence = _ts WHERE id = _id;
+        //         END LOOP;
+        //     END;
+        //     $$;
+        //     ";
+
+        //     await using (var cmd = new NpgsqlCommand(updateString, connection))
+        //     {
+        //         try
+        //         {
+        //             await cmd.ExecuteNonQueryAsync();
+        //         }
+        //         catch(Exception e)
+        //         {
+        //             logger.Debug(" ==>> Unable to update routes/transport sequences on the database: {0}", e.Message);
+        //             uploadFails++;
+        //         }                
+        //     }
+
+        //     return uploadFails;
+        // }
+
+
+
 
         
     }
