@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 10;
+            int numberOfRows = 200;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             //TimeSpan[] totalTime = new TimeSpan[4];
             //string[] testResult = new string[4];
@@ -99,22 +99,33 @@ namespace SytyRouting.DataBase
             var uploadResultsArray = uploadResults.ToArray();
             var comparisonResultsArray = comparisonResults.ToArray();
 
-            logger.Info("============================================================================================================================================");
+            logger.Info("========================================================================================================================================================================================================");
             logger.Info("{0} Routes Benchmarking",numberOfRows);
-            logger.Info("============================================================================================================================================");
-            logger.Info("{0,20}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}","Table","Routing Time","Uploading Time","Total Time","Uploading Test","Comparison Test");
-            logger.Info("============================================================================================================================================");
+            logger.Info("========================================================================================================================================================================================================");
+            logger.Info("{0,20}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
+            logger.Info("{0,20}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}","     ","d.hh:mm:ss.ms"," d.hh:mm:ss.ms","                      %","d.hh:mm:ss.ms","      (items/s)","              ","               ");
+            logger.Info("========================================================================================================================================================================================================");
             for(int i=0; i<comparisonResultsArray.Length; i++)
             {
-                logger.Info("{0,20}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}",
+                double processingRate=-1.0;
+                double uploadingRoutingRatio = -1.0;
+                if(uploadResultsArray[i].Equals("SUCCEEDED"))
+                {
+                    processingRate = Helper.GetProcessingRate(numberOfRows,totalTimesArray[i].TotalMilliseconds);
+                    uploadingRoutingRatio = 100.0 * uploadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
+                }
+                
+                logger.Info("{0,20}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}",
                                                             tableNamesArray[i],
                                                             Helper.FormatElapsedTime(routingTimesArray[i]),
                                                             Helper.FormatElapsedTime(uploadingTimesArray[i]),
+                                                            uploadingRoutingRatio,
                                                             Helper.FormatElapsedTime(totalTimesArray[i]),
+                                                            processingRate,
                                                             uploadResultsArray[i],
                                                             comparisonResultsArray[i]);
             }
-            logger.Info("============================================================================================================================================");
+            logger.Info("======================================================================================================================================================================================================");
 
         }
 
@@ -307,18 +318,26 @@ namespace SytyRouting.DataBase
                 }
             }
 
-            for(int i=0; i<elementsFirstTable; i++)
+            if(routesFirstTable.Length!=routesSecondTable.Length)
             {
-                try
+                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+            }
+            else
+            {
+                for(int i=0; i<routesFirstTable.Length; i++)
                 {
-                    Assert.IsEquals(firstRouteTable[i], secondRouteTable[i], "Test failed. Uploaded Routes are not equal");
-                }
-                catch (NetTopologySuite.Utilities.AssertionFailedException e)
-                {
-                    logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
-                    numberOfFailures++;
+                    try
+                    {
+                        Assert.IsEquals(routesFirstTable[i], routesSecondTable[i], "Test failed. Uploaded Routes are not equal");
+                    }
+                    catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                    {
+                        logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
+                        numberOfFailures++;
+                    }
                 }
             }
+
             string result;
             if (numberOfFailures != 0)
                 result = "FAILED";
@@ -326,7 +345,7 @@ namespace SytyRouting.DataBase
                 result = "SUCCEEDED";
 
             logger.Info("---------------------------------------------");
-            logger.Info("DB uploaded routes integrity check {0}.", result);
+            logger.Info("DB uploaded routes comparison {0}.", result);
             logger.Info("---------------------------------------------");
 
             await connection.CloseAsync();
