@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class SeveralRoutesUploaderCOPY : BaseRouteUploader
+    public class SeveralRoutesUploaderUNNEST : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -49,21 +49,38 @@ namespace SytyRouting.DataBase
             //     }
             // }
 
-            using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
+            // // using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
 
             var _records = personas;
-            foreach (var element in _records)
+            // // foreach (var element in _records)
+            // // {
+            // //     await importer.StartRowAsync();
+            // //     await importer.WriteAsync(element.Id);
+            // //     await importer.WriteAsync(element.Route);
+            // //     await importer.WriteAsync(element.TTextTransitions.Item1);
+            // //     await importer.WriteAsync(element.TTextTransitions.Item2);
+            // // }
+
+            // // await importer.CompleteAsync();
+
+          
+          
+            //using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) SELECT * FROM unnest(@i, @r, @tm, @ts) AS d");
+            using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes) SELECT * FROM unnest(@i, @tm) AS d");
+
+            command.Parameters.Add(new NpgsqlParameter<int[]>("i", _records.Select(e => e.Id).ToArray()));
+            //command.Parameters.Add(new NpgsqlParameter<LineString[]>("r", _records.Select(e => e.Route).ToArray()));
+            var personasArray = personas.ToArray();
+            var transportModes = new List<string[]>(personasArray.Length);
+            for(int i=0; i<personasArray.Length; i++)
             {
-                await importer.StartRowAsync();
-                await importer.WriteAsync(element.Id);
-                await importer.WriteAsync(element.Route);
-                await importer.WriteAsync(element.TTextTransitions.Item1);
-                await importer.WriteAsync(element.TTextTransitions.Item2);
+                transportModes.Add(personas[i].TTextTransitions.Item1);
             }
+            command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", transportModes.ToArray()));
 
-            await importer.CompleteAsync();
+            //command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", _records.Select(e => e.TTextTransitions.Item1).ToArray()));
 
-
+            await command.ExecuteNonQueryAsync();
 
 
    
