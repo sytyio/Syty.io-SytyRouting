@@ -71,7 +71,7 @@ namespace SytyRouting
                 .AddJsonFile("appsettings.data.json")
                 .AddJsonFile("appsettings.routing.json")
                 .AddJsonFile("appsettings.transport.json")
-                .AddJsonFile("appsettings.routingbenchmark.json")
+                .AddJsonFile("appsettings.benchmarking.json")
                 .Build();
 
             // Get values from the config representation given their key and their target type:

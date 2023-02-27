@@ -42,7 +42,7 @@
       </None>
   </ItemGroup>
   <ItemGroup>
-      <None Update="appsettings.routingbenchmark.json">
+      <None Update="appsettings.benchmarking.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
   </ItemGroup>

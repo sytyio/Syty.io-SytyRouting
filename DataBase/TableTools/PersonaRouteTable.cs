@@ -41,6 +41,25 @@ namespace SytyRouting.DataBase
             return auxiliaryTable;
         }
 
+        public async Task<string> CreateDataSetEmptyAuxTab(string personaOriginTable, string routingResultTable, int numberOfRows)
+        {
+            stopWatch.Start();
+
+            //PersonaOriginTable=personaOriginTable;
+            //_numberOfRows=numberOfRows;
+            
+            await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
+
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(_connectionString);
+            var auxiliaryTable = await personaRouteAuxTable.CreateEmptyAuxiliaryTable(routingResultTable,numberOfRows);
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("{0} initial data set creation time :: {1}", routingResultTable,totalTime);
+
+            return auxiliaryTable;
+        }
+
         private async Task SetRoutingResultTableAsync(string personaOriginTable, string routingResultTable, int numberOfRows)
         {
             var routingResultTablePK=routingResultTable+Configuration.PKConstraintSuffix;

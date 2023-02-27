@@ -36,11 +36,11 @@ namespace SytyRouting.DataBase
             return auxiliaryTable;
         }
 
-        public async Task<string> CreateAuxiliaryTableCopy(string resultsTable, int numberOfRows)
+        public async Task<string> CreateEmptyAuxiliaryTable(string resultsTable, int numberOfRows)
         {
             stopWatch.Start();
             
-            var auxiliaryTable = await SetAuxiliaryTableCopyAsync(resultsTable, numberOfRows);
+            var auxiliaryTable = await SetEmptyAuxiliaryTableAsync(resultsTable, numberOfRows);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
@@ -101,7 +101,7 @@ namespace SytyRouting.DataBase
             return auxiliaryTable;
         }
 
-        private async Task<string> SetAuxiliaryTableCopyAsync(string resultsTable, int numberOfRows)
+        private async Task<string> SetEmptyAuxiliaryTableAsync(string resultsTable, int numberOfRows)
         {
             var auxiliaryTable=resultsTable+Configuration.AuxiliaryTableSuffix;;
             var auxiliaryTableTablePK=auxiliaryTable+Configuration.PKConstraintSuffix;
