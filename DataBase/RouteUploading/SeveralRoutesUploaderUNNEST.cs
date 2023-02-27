@@ -66,7 +66,9 @@ namespace SytyRouting.DataBase
           
           
             //using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) SELECT * FROM unnest(@i, @r, @tm, @ts) AS d");
-            using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes) SELECT * FROM unnest(@i, @tm) AS d");
+            //using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id) SELECT * FROM unnest(@i) AS d ON CONFLICT (persona_id) DO UPDATE SET is_valid_route = true;");
+            //using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, transport_modes) SELECT * FROM unnest(@i,@tm) AS d ON CONFLICT (persona_id) DO UPDATE SET transport_modes = @tm;");
+            using var command = new NpgsqlCommand(connection: connection, cmdText: "INSERT INTO " + auxiliaryTable + " (persona_id, time_stamps) SELECT * FROM unnest(@i) as _id SELECT * FROM unnest_2d_1d(@ts) AS _ts ON CONFLICT (persona_id) DO UPDATE SET time_stamps = @ts;");
 
             command.Parameters.Add(new NpgsqlParameter<int[]>("i", _records.Select(e => e.Id).ToArray()));
             //command.Parameters.Add(new NpgsqlParameter<LineString[]>("r", _records.Select(e => e.Route).ToArray()));
@@ -74,9 +76,21 @@ namespace SytyRouting.DataBase
             var transportModes = new List<string[]>(personasArray.Length);
             for(int i=0; i<personasArray.Length; i++)
             {
-                transportModes.Add(personas[i].TTextTransitions.Item1);
+                transportModes.Add(personasArray[i].TTextTransitions.Item1);
             }
-            command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", transportModes.ToArray()));
+            var transportModesArray = transportModes.ToArray();
+
+            var eitme1s=_records.Select(e => e.TTextTransitions.Item1).ToArray();
+            
+            //command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", transportModesArray));
+
+            //command.Parameters.Add(new NpgsqlParameter<List<string[]>>("tm", transportModes));
+            //command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", _records.Select(e => e.TTextTransitions.Item1).ToArray()));
+
+
+
+            command.Parameters.Add(new NpgsqlParameter<DateTime[][]>("ts", _records.Select(e => e.TTextTransitions.Item2).ToArray()));
+
 
             //command.Parameters.Add(new NpgsqlParameter<string[][]>("tm", _records.Select(e => e.TTextTransitions.Item1).ToArray()));
 

@@ -30,7 +30,7 @@ namespace SytyRouting.DataBase
                     var transportModes = persona.TTextTransitions.Item1;
                     var timeStampsTZ = persona.TTextTransitions.Item2;
 
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ($1, $2, $3, $4) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2, transport_modes = $3, time_stamps = $4", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ($1, $2, $3, $4) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2, transport_modes = $3, time_stamps = $4;", connection)
                     {
                         Parameters =
                         {

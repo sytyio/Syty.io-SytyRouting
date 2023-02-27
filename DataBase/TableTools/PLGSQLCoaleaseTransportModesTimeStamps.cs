@@ -4,7 +4,7 @@ using Npgsql;
 
 namespace SytyRouting.DataBase
 {
-    public static class PLGSQLCoaleaseTransportModesTimeStamps
+    public static class PLGSQLFunctions
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
@@ -44,6 +44,39 @@ namespace SytyRouting.DataBase
                         RETURN null;
             END;
             $$ LANGUAGE PLPGSQL;
+            ";
+
+            await using (var cmd = new NpgsqlCommand(functionString, connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            await connection.CloseAsync();
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("PLGSQL function Coalease TransportModes - Time Stamps upload time :: {0}",totalTime);
+        }
+
+        public static async Task SetUnnest2D1D(string connectionString)
+        {   
+            stopWatch.Start();
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            // PLGSQL: Merge each transport_mode with its corresponding transition time_stamp: 
+            var functionString = @"
+            CREATE OR REPLACE FUNCTION unnest_2d_1d(ANYARRAY, OUT a ANYARRAY)
+                RETURNS SETOF ANYARRAY
+                LANGUAGE plpgsql IMMUTABLE STRICT AS
+                $func$
+                    BEGIN
+                        FOREACH a SLICE 1 IN ARRAY $1 LOOP
+                            RETURN NEXT;
+                        END LOOP;
+                    END
+                $func$;
             ";
 
             await using (var cmd = new NpgsqlCommand(functionString, connection))
