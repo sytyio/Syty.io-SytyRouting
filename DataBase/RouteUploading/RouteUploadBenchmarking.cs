@@ -172,6 +172,7 @@ namespace SytyRouting.DataBase
             // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable9);
             // comparisonResults.Add(comparisonResult);
 
+            //////////////
             // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, INSERT PLAIN");
             routeTable = baseRouteTable + "_T78";
