@@ -173,7 +173,7 @@ namespace SytyRouting.DataBase
             // comparisonResults.Add(comparisonResult);
 
             // /////////////  ////////////// //
-            uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
+            uploadStrategies.Add("On-Time All, single DB connection, INSERT PLAIN");
             routeTable = baseRouteTable + "_T78";
             auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
