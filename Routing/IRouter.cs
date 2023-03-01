@@ -1,6 +1,7 @@
 using SytyRouting.Algorithms;
 using SytyRouting.Model;
 using SytyRouting.DataBase;
+using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Routing
 {
