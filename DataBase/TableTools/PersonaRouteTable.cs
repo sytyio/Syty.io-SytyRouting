@@ -8,93 +8,101 @@ namespace SytyRouting.DataBase
 {
     public class PersonaRouteTable
     {
-        public string ConnectionString;
-        public string PersonaOriginTable;
-        public string RoutingResultTable;
-        public string AuxiliaryTable = "";
+        //public string PersonaOriginTable;
+        //public string RoutingResultTable;
+        //public string AuxiliaryTable = "";
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
+        //private int _numberOfRows = 0;
+        private string _connectionString;
 
-        public PersonaRouteTable(string personaOriginTable, string personaRouteTable, string connectionString)
+        public PersonaRouteTable(string connectionString)
         {
-            ConnectionString=connectionString;
-            PersonaOriginTable=personaOriginTable;
-            RoutingResultTable=personaRouteTable;
+            _connectionString=connectionString;
         }
 
-        public async Task CreateDataSet()
+        public async Task<string> CreateDataSet(string personaOriginTable, string routingResultTable, int numberOfRows)
         {
             stopWatch.Start();
-            
-            await SetRoutingResultTableAsync();
 
-            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(RoutingResultTable,ConnectionString);
-            await personaRouteAuxTable.CreateAuxiliaryTable();
-            AuxiliaryTable = personaRouteAuxTable.AuxiliaryTable;
+            //PersonaOriginTable=personaOriginTable;
+            //_numberOfRows=numberOfRows;
+            
+            await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
+
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(_connectionString);
+            var auxiliaryTable = await personaRouteAuxTable.CreateAuxiliaryTable(routingResultTable,numberOfRows);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("{0} initial data set creation time :: {1}", RoutingResultTable,totalTime);
+            logger.Info("{0} initial data set creation time :: {1}", routingResultTable,totalTime);
+
+            return auxiliaryTable;
         }
 
-        private async Task SetRoutingResultTableAsync()
+        public async Task<string> CreateDataSetEmptyAuxTab(string personaOriginTable, string routingResultTable, int numberOfRows)
         {
-            var connectionString = ConnectionString;
-            var personaOriginTable=PersonaOriginTable;
-            var routeResultTable=RoutingResultTable;
+            stopWatch.Start();
 
-            List<int> personaIds = new List<int>(0);
+            //PersonaOriginTable=personaOriginTable;
+            //_numberOfRows=numberOfRows;
+            
+            await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
+
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(_connectionString);
+            var auxiliaryTable = await personaRouteAuxTable.CreateEmptyAuxiliaryTable(routingResultTable,numberOfRows);
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Info("{0} initial data set creation time :: {1}", routingResultTable,totalTime);
+
+            return auxiliaryTable;
+        }
+
+        private async Task SetRoutingResultTableAsync(string personaOriginTable, string routingResultTable, int numberOfRows)
+        {
+            var routingResultTablePK=routingResultTable+Configuration.PKConstraintSuffix;
+
+            List<int> personaIds = new List<int>(numberOfRows);
 
             // Create a factory using default values (e.g. floating precision)
 			GeometryFactory geometryFactory = new GeometryFactory();            
             
-            await using var connection = new NpgsqlConnection(connectionString);
+            await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
-            await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routeResultTable + " CASCADE;", connection))
+            //debug: (To be removed once the table gets its definite form)
+            await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routingResultTable + " CASCADE;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }
+            //
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;", connection))
+            await using var batch = new NpgsqlBatch(connection)
             {
-                await cmd.ExecuteNonQueryAsync();
-            }
+                BatchCommands =
+                {
+                    new("CREATE TABLE IF NOT EXISTS " + routingResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT " + numberOfRows + ";"),
+                    new("ALTER TABLE " + routingResultTable + " DROP CONSTRAINT IF EXISTS " + routingResultTablePK + ";"),
+                    new("ALTER TABLE " + routingResultTable + " ADD CONSTRAINT " + routingResultTablePK + " PRIMARY KEY (id);"),
+                    new("ALTER TABLE " + routingResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];"),
+                    new("ALTER TABLE " + routingResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;"),
+                    new("ALTER TABLE " + routingResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
+                    new("ALTER TABLE " + routingResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
+                }
+            };
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " DROP CONSTRAINT IF EXISTS persona_route_pk;", connection))
+            await using (var reader = await batch.ExecuteReaderAsync())
             {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD CONSTRAINT persona_route_pk PRIMARY KEY (id);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routeResultTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++");
+                logger.Debug("   {0} table creation   ",routingResultTable);
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++");
             }
 
             // Insert default transport sequence.
-            var queryString = "SELECT id FROM " + routeResultTable + " ORDER BY id ASC;";
+            var queryString = "SELECT id FROM " + routingResultTable + " ORDER BY id ASC;";
 
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
@@ -110,7 +118,7 @@ namespace SytyRouting.DataBase
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routeResultTable + " (id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingResultTable + " (id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
                     {
                         Parameters =
                         {

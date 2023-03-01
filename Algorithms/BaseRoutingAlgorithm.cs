@@ -259,7 +259,7 @@ namespace SytyRouting.Algorithms
             throw new Exception("Unable to calculate the requested time interval.");
         }
 
-        public Dictionary<int, Tuple<byte,int>> SingleTransportModeTransition(Node origin, Node destination, byte transportMode)
+        public Tuple<string[],DateTime[]> SingleTransportModeTransition(Persona persona, Node origin, Node destination, byte transportMode)
         {
             Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(2);
             var transition = Tuple.Create<byte,int>(transportMode,-1);
@@ -269,7 +269,55 @@ namespace SytyRouting.Algorithms
             else
                 transportModeTransitions.Add(destination.Idx,transition);
 
-            return transportModeTransitions;
+            //return transportModeTransitions;
+            return SingleTransportTransitionsToTTEXTSequence(persona, transportModeTransitions);
+        }
+
+        private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(Persona persona, Dictionary<int,Tuple<byte,int>> transitions)
+        {
+            var route = persona.Route;
+            var startTime = persona.StartDateTime;
+            if(route == null || transitions == null || transitions.Count <1 || route.IsEmpty)
+                return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+
+            var coordinates = route.Coordinates;
+
+            List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
+            List<string> transportModes = new List<string>(transitions.Count);
+
+            Node origin = _graph.GetNodeByLongitudeLatitude(coordinates[0].X, coordinates[0].Y);
+        
+            string transportModeS = "";
+                        
+            byte currentTransportMode = 0;    
+
+            if(transitions.ContainsKey(origin.Idx))
+            {
+                currentTransportMode = transitions[origin.Idx].Item1;
+                var routeType = transitions[origin.Idx].Item2;
+                if(routeType==-1)
+                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+                else if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
+                timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[0].M))); //DEBUG: CHECK UNITS!
+                transportModes.Add(transportModeS);                    
+            }
+            
+            Node destination = _graph.GetNodeByLongitudeLatitude(coordinates[route.Count -1].X, coordinates[route.Count -1].Y);
+
+            timeStamps.Add(startTime.Add(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M))); //DEBUG: CHECK UNITS!
+
+            if(transitions.ContainsKey(destination.Idx))
+            {
+                var routeType = transitions[destination.Idx].Item2;
+                if(routeType==-1)
+                    transportModeS = TransportModes.SingleMaskToString(currentTransportMode);
+                else if(!TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
+                    transportModeS = TransportModes.SingleMaskToString(TransportModes.TagIdToTransportModes(routeType));
+            }
+            transportModes.Add(transportModeS);
+
+            return new Tuple<string[],DateTime[]>(transportModes.ToArray(), timeStamps.ToArray());
         }
 
         private byte SelectTransportMode(int nodeIdx, Dictionary<int,Tuple<byte,int>> transitions)

@@ -21,6 +21,8 @@ namespace SytyRouting
         public static string PersonaTable {get;}
         public static string PersonaRouteTable {get;}
         public static string PersonaRouteAuxTable {get;}
+        public static string PKConstraintSuffix {get;}
+        public static string FKConstraintSuffix {get;}
         public static string AuxiliaryTableSuffix {get;}
         public static string ComputedRouteTable {get;}
         public static string EdgeTable {get;}
@@ -69,7 +71,7 @@ namespace SytyRouting
                 .AddJsonFile("appsettings.data.json")
                 .AddJsonFile("appsettings.routing.json")
                 .AddJsonFile("appsettings.transport.json")
-                .AddJsonFile("appsettings.routingbenchmark.json")
+                .AddJsonFile("appsettings.benchmarking.json")
                 .Build();
 
             // Get values from the config representation given their key and their target type:
@@ -96,6 +98,8 @@ namespace SytyRouting
                 
                 PersonaTable = dBTableSettings.PersonaTable;
                 PersonaRouteTable = dBTableSettings.PersonaRouteTable;
+                PKConstraintSuffix = dBTableSettings.PKConstraintSuffix;
+                FKConstraintSuffix = dBTableSettings.FKConstraintSuffix;
                 PersonaRouteAuxTable = dBTableSettings.PersonaRouteAuxTable;
                 AuxiliaryTableSuffix = dBTableSettings.AuxiliaryTableSuffix;
                 ComputedRouteTable = dBTableSettings.RouteTable;

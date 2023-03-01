@@ -41,7 +41,7 @@ namespace SytyRouting
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
-            var elementProcessingRate = (double)processedElements / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
+            var elementProcessingRate = GetProcessingRate(processedElements,timeSpanMilliseconds);
             double setCreationTimeSeconds;
             TimeSpan setCreationTime;
             if(elementProcessingRate != 0)
@@ -66,6 +66,11 @@ namespace SytyRouting
             logger.Info("");
 
             return new DataSetBenchmark {PendingElements = totalElements - processedElements, ProcessedElements = processedElements, ProcessingRate = elementProcessingRate, ElapsedTime = elapsedTime, ExpectedCompletionTime = totalTime};
+        }
+
+        public static double GetProcessingRate(int processedElements, double totalMilliseconds)
+        {
+            return 1000.0 * (double)processedElements / totalMilliseconds; // Assuming a fairly constant rate
         }
 
         public static string FormatElapsedTime(TimeSpan timeSpan)

@@ -3,6 +3,8 @@ using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
+using SytyRouting.Algorithms;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -10,15 +12,48 @@ namespace SytyRouting.Routing
     {
         [NotNull]
         protected Graph? _graph = null!;
+        protected string _routeTable = null!;
+        protected string _auxiliaryTable = null!;
+        protected List<Persona> Personas = null!;
+        protected int ComputedRoutesCount = 0;
+        protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
+        protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
         protected int sequenceValidationErrors = 0;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public BaseRouter(Graph graph, string routeTable)
+        // public BaseRouter(Graph graph, string routeTable)
+        // {
+        //     _graph = graph;
+        // }
+
+        public void Initialize(Graph graph, string routeTable, string auxiliaryTable)
         {
             _graph = graph;
+            _routeTable = routeTable;
+            _auxiliaryTable = auxiliaryTable;
         }
 
-        public byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
+        public List<Persona> GetPersonas()
+        {
+            return Personas;
+        }
+
+        public int GetComputedRoutesCount()
+        {
+            return ComputedRoutesCount;
+        }
+
+        public TimeSpan GetRoutingTime()
+        {
+            return TotalRoutingTime;
+        }
+
+        public TimeSpan GetUploadingTime()
+        {
+            return TotalUploadingTime;
+        }
+
+        protected byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence)
         {
             byte[] formattedSequence = TransportModes.CreateSequence(transportSequence);
 
@@ -88,8 +123,22 @@ namespace SytyRouting.Routing
             }
         }
 
-        // Routing algorithm implementation
-        protected virtual List<Node> RouteSearch(Node origin, Node destination, byte[] transportModesSequence)
+        public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void CalculateRoutes<A>(int taskIndex) where A: IRoutingAlgorithm, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual void CalculateRoutes<A,U>(int taskIndex) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task UploadRoutesAsync<U>() where U: IRouteUploader, new()
         {
             throw new NotImplementedException();
         }

@@ -5,6 +5,7 @@ using NLog;
 using Npgsql;
 using SytyRouting.Algorithms;
 using SytyRouting.Model;
+using SytyRouting.Routing;
 
 namespace SytyRouting.DataBase
 {
@@ -13,44 +14,254 @@ namespace SytyRouting.DataBase
         private static Graph _graph = null!;
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public static async Task Start<T, U>(Graph graph) where T: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        private static List<TimeSpan> totalTimes = new List<TimeSpan>();
+        private static List<TimeSpan> routingTimes = new List<TimeSpan>();
+        private static List<TimeSpan> uploadingTimes = new List<TimeSpan>();
+        private static List<string> uploadResults = new List<string>();
+        private static List<string> comparisonResults = new List<string>();
+        private static List<string> tableNames = new List<string>();
+        private static List<string> uploadStrategies = new List<string>();
+
+        public static async Task Start(Graph graph)
+        {
+            _graph = graph;
+
+            int numberOfRows = 1000;
+            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
+            //var personaRouteTableEmptyAuxTab = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
+            
+            string baseRouteTable = Configuration.PersonaRouteTable;
+
+
+            //////////////
+            uploadStrategies.Add("One-Time All, single DB connection, INSERT");
+            var routeTable = baseRouteTable + "_T70";
+            var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploader,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+            
+            var auxiliaryTable0 = auxiliaryTable;
+
+            var comparisonResult = "Reference";
+            comparisonResults.Add(comparisonResult);
+            
+            // //////////////
+            // uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
+            // routeTable = baseRouteTable + "_T71";
+            // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SingleRouteUploader,
+            //                         Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable1 = auxiliaryTable;
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable1);
+            // comparisonResults.Add(comparisonResult);
+
+            // //////////////
+            // uploadStrategies.Add("As computed (batch), parallel DB connections");
+            // routeTable = baseRouteTable + "_T74";
+            // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploader,
+            //                         Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable4 = auxiliaryTable;
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable4);
+            // comparisonResults.Add(comparisonResult);
+
+            // // //////////////
+            // // /////////////
+            // uploadStrategies.Add("As computed (batch), single DB connection");
+            // routeTable = baseRouteTable + "_T75";
+            // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploader,
+            //                         Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable5 = auxiliaryTable;
+            // //////////////
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable5);
+            // comparisonResults.Add(comparisonResult);
+
+            // //////////////
+
+
+            // /////////////
+            uploadStrategies.Add("On-Time All, single DB connection, COPY");
+            routeTable = baseRouteTable + "_T76";
+            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploaderCOPY,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+
+            var auxiliaryTable6 = auxiliaryTable;
+
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
+            comparisonResults.Add(comparisonResult);
+
+            // //////////////
+            // // ///////////// DOES NOT WORK ////////////// //
+            // uploadStrategies.Add("On-Time All, single DB connection, UNNEST");
+            // routeTable = baseRouteTable + "_T77";
+            // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploaderUNNEST,
+            //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable7 = auxiliaryTable;
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable7);
+            // comparisonResults.Add(comparisonResult);
+
+            // //////////////
+
+            //////////////
+            // /////////////  ////////////// //
+            uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
+            routeTable = baseRouteTable + "_T78";
+            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploaderINSERTBATCHED,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+
+            var auxiliaryTable8 = auxiliaryTable;
+
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable8);
+            comparisonResults.Add(comparisonResult);
+
+            //////////////
+            // /////////////  DOES NOT WORK ////////////// //
+            // uploadStrategies.Add("On-Time All, single DB connection, INSERT PREPARED");
+            // routeTable = baseRouteTable + "_T79";
+            // auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploaderINSERTPREPARED,
+            //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable9 = auxiliaryTable;
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable9);
+            // comparisonResults.Add(comparisonResult);
+
+            //////////////
+            // /////////////  ////////////// //
+            uploadStrategies.Add("On-Time All, single DB connection, INSERT PLAIN");
+            routeTable = baseRouteTable + "_T78";
+            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploaderINSERTPLAIN,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+
+            var auxiliaryTable9 = auxiliaryTable;
+
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable9);
+            comparisonResults.Add(comparisonResult);
+
+
+
+            var uploadStrategiesArray =  uploadStrategies.ToArray();
+            var tableNamesArray = tableNames.ToArray();
+            var totalTimesArray = totalTimes.ToArray();
+            var routingTimesArray = routingTimes.ToArray();
+            var uploadingTimesArray = uploadingTimes.ToArray();
+            var uploadResultsArray = uploadResults.ToArray();
+            var comparisonResultsArray = comparisonResults.ToArray();
+
+            logger.Info("===============================================================================================================================================================================================================================================");
+            logger.Info("{0} Routes Benchmarking",numberOfRows);
+            logger.Info("===============================================================================================================================================================================================================================================");
+            logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","Strategy","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
+            logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
+            logger.Info("===============================================================================================================================================================================================================================================");
+            for(int i=0; i<comparisonResultsArray.Length; i++)
+            {
+                double processingRate=-1.0;
+                double uploadingRoutingRatio = -1.0;
+                if(uploadResultsArray[i].Equals("SUCCEEDED"))
+                {
+                    processingRate = Helper.GetProcessingRate(numberOfRows,totalTimesArray[i].TotalMilliseconds);
+                    uploadingRoutingRatio = 100.0 * uploadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
+                }
+                
+                logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}",
+                                                            uploadStrategiesArray[i],
+                                                            tableNamesArray[i],
+                                                            Helper.FormatElapsedTime(routingTimesArray[i]),
+                                                            Helper.FormatElapsedTime(uploadingTimesArray[i]),
+                                                            uploadingRoutingRatio,
+                                                            Helper.FormatElapsedTime(totalTimesArray[i]),
+                                                            processingRate,
+                                                            uploadResultsArray[i],
+                                                            comparisonResultsArray[i]);
+            }
+            logger.Info("===============================================================================================================================================================================================================================================");
+
+        }
+
+        private static async Task<TimeSpan> Run<A, U, R>(Graph graph, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
-            _graph = graph;
-
-            var algorithm = new T();
             var uploader = new U();
+            var router = new R();
 
-            algorithm.Initialize(graph);
+            router.Initialize(_graph, routeTable, auxiliaryTable);
+            await router.StartRouting<A,U>();
+
+            var personas = router.GetPersonas();
+            var computedRoutes = router.GetComputedRoutesCount();
+            var routingTime = router.GetRoutingTime();
+            var uploadingTime = router.GetUploadingTime();
+            routingTimes.Add(routingTime);
+            uploadingTimes.Add(uploadingTime);
+
+            var uploadTest = await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
+            uploadResults.Add(uploadTest);
+
             
-            var routeTable = Configuration.PersonaRouteTable;
-            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-
-            // // Persona spatial data generation
-            //await RoutingBenchmark.CreateDataSet();
-            var router = new Routing.RouterOneTimeAllUpload(graph, routeTable);
-            //var personaRouter = new PersonaRouterBenchmark(graph);
-
-            await router.StartRouting<T>();
-
-            var personas = router.Personas;
-            var computedRoutes = router.ComputedRoutes;
-
-            await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
-    
-            //personaRouter.TracePersonas();
-            // // personaRouter.TracePersonasRouteResult();
-            
-            
-
             benchmarkStopWatch.Stop();
+            var executionTime = benchmarkStopWatch.Elapsed;
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
-            logger.Info("Benchmark performed in {0} (HH:MM:S.mS)", totalTime);
+            logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(A).Name);
+            logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+
+            return executionTime;
         }
 
-        private static async Task CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)
+        public static async Task<string> CheckUploadedRoutesAsync(List<Persona> personas, string routeTable, int computedRoutes)
         {
             logger.Info("DB uploaded routes integrity check:");
             int numberOfFailures = 0;
@@ -72,14 +283,15 @@ namespace SytyRouting.DataBase
                 while (await reader.ReadAsync())
                 {
                     var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
-                    var route = (LineString)reader.GetValue(1); // route (Point)
                     try
                     {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
                         uploadedPersonas.Add(persona_id, route);
                     }
                     catch
                     {
                         logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
                     }
                 }
             }
@@ -117,9 +329,138 @@ namespace SytyRouting.DataBase
             else
                 result = "SUCCEEDED";
 
+            logger.Info("---------------------------------------------");
             logger.Info("DB uploaded route integrity check {0}.", result);
+            logger.Info("---------------------------------------------");
 
             await connection.CloseAsync();
+
+            return result;
+        }
+
+        public static async Task<string> CompareUploadedRoutesAsync(string firstRouteTable, string secondRouteTable)
+        {
+            Stopwatch benchmarkStopWatch = new Stopwatch();
+            benchmarkStopWatch.Start();
+            logger.Info("--------------------------------------------------------------------------------------------------------------");
+            logger.Info("DB uploaded routes comparison (LineString)");
+            logger.Info("Route tables: {0} vs. {1}",firstRouteTable,secondRouteTable);
+            logger.Info("--------------------------------------------------------------------------------------------------------------");
+            
+            int numberOfFailures = 0;
+
+            var elementsFirstTable = await Helper.DbTableRowCount(firstRouteTable, logger);
+            var elementsSecondTable = await Helper.DbTableRowCount(secondRouteTable, logger);
+
+            if(elementsFirstTable!=elementsSecondTable)
+            {
+                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+            }
+            else
+            {
+                logger.Info("{0} routes to compare",elementsFirstTable);
+            }
+
+            //var connectionString = Configuration.X270ConnectionString; // Local DB for testing
+            var connectionString = Configuration.ConnectionString;
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+
+            LineString[] routesFirstTable = new LineString[elementsFirstTable];
+            LineString[] routesSecondTable = new LineString[elementsSecondTable];
+
+            // Read location data from 'persona routes'
+            //                     0              1             
+            var queryString = "SELECT persona_id, computed_route FROM " + firstRouteTable + " ORDER BY persona_id ASC";
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                int i=0;
+                while (await reader.ReadAsync())
+                {
+                    var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
+                    try
+                    {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
+                        routesFirstTable[i] = route;
+                    }
+                    catch
+                    {
+                        logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
+                    }
+                    i++;
+                }
+            }
+
+            // Read location data from 'persona routes'
+            //                     0              1             
+            queryString = "SELECT persona_id, computed_route FROM " + secondRouteTable + " ORDER BY persona_id ASC";
+
+            await using (var command = new NpgsqlCommand(queryString, connection))
+            await using (var reader = await command.ExecuteReaderAsync())
+            {
+                int i=0;
+                while (await reader.ReadAsync())
+                {
+                    var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
+                    try
+                    {
+                        var route = (LineString)reader.GetValue(1); // route (Point)
+                        routesSecondTable[i] = route;
+                    }
+                    catch
+                    {
+                        logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                        numberOfFailures++;
+                    }
+                    i++;
+                }
+            }
+
+            if(routesFirstTable.Length!=routesSecondTable.Length)
+            {
+                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+            }
+            else
+            {
+                for(int i=0; i<routesFirstTable.Length; i++)
+                {
+                    if(routesFirstTable[i]!=null && routesSecondTable[i]!=null)
+                    {
+                        try
+                        {
+                            Assert.IsEquals(routesFirstTable[i], routesSecondTable[i], "Test failed. Uploaded Routes are not equal");
+                        }
+                        catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                        {
+                            logger.Debug("Route equality assertion failed index {0}: {1}", i, e.Message);
+                            numberOfFailures++;
+                        }
+                    }
+                    else
+                    {
+                        logger.Debug("Invalid route");
+                        numberOfFailures++;
+                    }
+                }
+            }
+
+            string result;
+            if (numberOfFailures != 0)
+                result = "FAILED";
+            else
+                result = "SUCCEEDED";
+
+            logger.Info("---------------------------------------------");
+            logger.Info("DB uploaded routes comparison {0}.", result);
+            logger.Info("---------------------------------------------");
+
+            await connection.CloseAsync();
+
+            return result;
         }
 
         private static void TracePersonaDetails(Persona persona)
@@ -352,12 +693,5 @@ namespace SytyRouting.DataBase
                 }
             }
         }
-
-
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////       
-
-        
     }
 }

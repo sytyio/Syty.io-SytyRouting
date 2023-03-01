@@ -45,11 +45,15 @@ namespace SytyRouting
             //////////////////////////////////////////////
             // // // Create a new table for route results
             /////////////////////////////////////////////
-            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
-            await personaRouteTable.CreateDataSet();
+            await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(Configuration.ConnectionString);
+            await DataBase.PLGSQLFunctions.SetUnnest2D1D(Configuration.ConnectionString);
+            //var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
+            //await personaRouteTable.CreateDataSet(Configuration.PersonaTable,Configuration.PersonaRouteTable,10);
             /////////////////////////////////////////////
 
-
+            ///////////////////////////////////////////
+            // // Routing algorithms benchmarking // //
+            ///////////////////////////////////////////
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
@@ -74,21 +78,32 @@ namespace SytyRouting
             // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
 
             // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
+            // //
+
+            ///////////////////////////////////////////////////////////////////////////////
+            // // Multimodal Persona spatial data generation and routing benchmarking // //
+            ///////////////////////////////////////////////////////////////////////////////
+            // await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            // //
+
+
+            ////////////////////////////////////////////////
+            // // Route results uploading benchmarking // //
+            ////////////////////////////////////////////////
+            await DataBase.RouteUploadBenchmarking.Start(graph);
+
 
 
             // // Persona spatial data generation
-            await RoutingBenchmark.CreateDataSet();
-            var personaRouter = new PersonaRouterBenchmark(graph);
-            await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
+            //await RoutingBenchmark.CreateDataSet();
+            //var personaRouter = new PersonaRouterBenchmark(graph);
+            //await personaRouter.StartRouting<SytyRouting.Algorithms.Dijkstra.Dijkstra>();
             // //
 
 
 
-            /////
+            // //////////////
 
-            // await DataBase.RouteUploadBenchmarking.Start<Algorithms.Dijkstra.Dijkstra,DataBase.OneTimeAllUpload>(graph);
-
-            /////
 
 
             // Logger flushing

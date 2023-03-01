@@ -8,9 +8,18 @@ namespace SytyRouting.DataBase
 {
     public abstract class BaseRouteUploader : IRouteUploader
     {
-        
+        // public virtual Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        // {
+        //     throw new NotImplementedException();
+        // }
+
         // Route upload algorithm implementation
         public virtual Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas)
+        {
+           throw new NotImplementedException();
+        }
+
+        public virtual Task<int> UploadRouteAsync(string connectionString, string auxiliaryTable, string routeTable, Persona personas)
         {
            throw new NotImplementedException();
         }
