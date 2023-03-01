@@ -87,7 +87,6 @@ namespace SytyRouting.DataBase
             // command.CommandText = sb.ToString();
             // await command.ExecuteNonQueryAsync();
 
-
         var transaction = connection.BeginTransaction();
         using var command = new NpgsqlCommand(connection: connection, cmdText:
             "INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES (@i, @r, @tm, @ts)");
