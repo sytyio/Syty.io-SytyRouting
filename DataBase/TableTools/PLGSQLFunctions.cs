@@ -88,7 +88,7 @@ namespace SytyRouting.DataBase
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("PLGSQL function Coalease TransportModes - Time Stamps upload time :: {0}",totalTime);
+            logger.Info("PLGSQL function PostgreSQL unnest 2D array to 1D array version upload time :: {0}",totalTime);
         }
     }
 }

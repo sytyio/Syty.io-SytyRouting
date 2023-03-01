@@ -31,7 +31,7 @@ namespace SytyRouting.Routing
         private int elementsToProcess = 0;
         private int processedDbElements = 0;
 //        public int ComputedRoutes {private set; get;} = 0;
-        private static int computedRoutes = 0;
+        private int computedRoutes = 0;
         private bool routingTasksHaveEnded = false;
     
         private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
