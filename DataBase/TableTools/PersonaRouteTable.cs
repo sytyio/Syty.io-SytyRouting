@@ -6,7 +6,7 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.DataBase
 {
-    public class RouteTable
+    public class PersonaRouteTable
     {
         public string ConnectionString;
         public string PersonaOriginTable;
@@ -16,7 +16,7 @@ namespace SytyRouting.DataBase
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
 
-        public RouteTable(string personaOriginTable, string personaRouteTable, string connectionString)
+        public PersonaRouteTable(string personaOriginTable, string personaRouteTable, string connectionString)
         {
             ConnectionString=connectionString;
             PersonaOriginTable=personaOriginTable;
@@ -29,7 +29,7 @@ namespace SytyRouting.DataBase
             
             await SetRoutingResultTableAsync();
 
-            var personaRouteAuxTable = new RouteAuxiliaryTable(RoutingResultTable,ConnectionString);
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(RoutingResultTable,ConnectionString);
             await personaRouteAuxTable.CreateAuxiliaryTable();
             AuxiliaryTable = personaRouteAuxTable.AuxiliaryTable;
 
@@ -58,7 +58,7 @@ namespace SytyRouting.DataBase
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 13;", connection))
+            await using (var cmd = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS " + routeResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT 10;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
             }

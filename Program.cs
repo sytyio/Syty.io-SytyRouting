@@ -45,7 +45,7 @@ namespace SytyRouting
             //////////////////////////////////////////////
             // // // Create a new table for route results
             /////////////////////////////////////////////
-            var personaRouteTable = new DataBase.RouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
+            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.PersonaTable,Configuration.PersonaRouteTable,Configuration.ConnectionString);
             await personaRouteTable.CreateDataSet();
             /////////////////////////////////////////////
 
