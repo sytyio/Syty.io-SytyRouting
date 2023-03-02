@@ -3,6 +3,7 @@ using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
+using NetTopologySuite.Utilities;
 
 namespace SytyRouting.Algorithms
 {
@@ -17,6 +18,10 @@ namespace SytyRouting.Algorithms
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
+        private DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = null!;
+        private GeometryFactory _geometryFactory = null!;
+        private LineString _emptyLineString = null!;
+
         //DEBUG:
         protected int Steps = 0;
         protected int Scores = 0;
@@ -24,6 +29,9 @@ namespace SytyRouting.Algorithms
         public virtual void Initialize(Graph graph)
         {
             _graph = graph;
+            _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            _geometryFactory = new GeometryFactory(_sequenceFactory);
+            _emptyLineString = new LineString(null, _geometryFactory);
         }
 
         public List<Node> GetRoute(double x1, double y1, double x2, double y2, byte[] transportModesSequence)
@@ -88,14 +96,11 @@ namespace SytyRouting.Algorithms
         {
             transitions.Clear();
 
-            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-            var geometryFactory = new GeometryFactory(sequenceFactory);
-
             var numberOfNodes = nodeRoute.Count;
 
             if(numberOfNodes <= 1)
             {
-                return new LineString(null, geometryFactory);
+                return _emptyLineString;
             }
             
             List<Coordinate> xyCoordinates = new List<Coordinate>(numberOfNodes+2); // number of nodes +1 start point (home) +1 end point (work)
@@ -137,7 +142,6 @@ namespace SytyRouting.Algorithms
                 {
                     var speed = Helper.ComputeSpeed(outboundEdge,outboundMode);
                     
-                    //var minTimeIntervalS = edge.LengthM / edge.MaxSpeedMPerS; // [s]
                     var minTimeInterval = outboundEdge.LengthM / speed; // [s]
 
                     minTimeInterval = Helper.ApplyRoutingPenalties(outboundEdge,outboundMode, minTimeInterval);
@@ -165,7 +169,7 @@ namespace SytyRouting.Algorithms
                 }
                 else
                 {
-                    return new LineString(null, geometryFactory);
+                    return _emptyLineString;
                 }
             }
 
@@ -185,14 +189,11 @@ namespace SytyRouting.Algorithms
             }
             coordinateSequence.ReleaseCoordinateArray();
 
-            return new LineString(coordinateSequence, geometryFactory);
+            return new LineString(coordinateSequence, _geometryFactory);
         }
 
         public LineString TwoPointLineString(double x1, double y1, double x2, double y2, byte transportMode, TimeSpan initialTimeStamp)
-        {
-            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-            var geometryFactory = new GeometryFactory(sequenceFactory);
-            
+        {   
             List<Coordinate> xyCoordinates = new List<Coordinate>(2);
             List<double> mOrdinates = new List<double>(2);
 
@@ -217,7 +218,7 @@ namespace SytyRouting.Algorithms
             }
             coordinateSequence.ReleaseCoordinateArray();
 
-            return new LineString(coordinateSequence, geometryFactory);
+            return new LineString(coordinateSequence, _geometryFactory);
         }
 
         private void AddTransition(byte transportMode, double mOrdinate, DateTime startTime)
@@ -269,7 +270,6 @@ namespace SytyRouting.Algorithms
             else
                 transportModeTransitions.Add(destination.Idx,transition);
 
-            //return transportModeTransitions;
             return SingleTransportTransitionsToTTEXTSequence(persona, transportModeTransitions);
         }
 
