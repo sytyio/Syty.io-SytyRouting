@@ -44,7 +44,7 @@ namespace SytyRouting
             var elementProcessingRate = GetProcessingRate(processedElements,timeSpanMilliseconds);
             double setCreationTimeSeconds;
             TimeSpan setCreationTime;
-            if(elementProcessingRate != 0)
+            if(elementProcessingRate != 0 && !double.IsNaN(elementProcessingRate))
             {
                 setCreationTimeSeconds = totalElements / elementProcessingRate;
                 setCreationTime = TimeSpan.FromSeconds(setCreationTimeSeconds);
