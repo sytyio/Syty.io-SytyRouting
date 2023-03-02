@@ -12,7 +12,7 @@ namespace SytyRouting.Routing
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
-        
+
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
         private Task[] routingTasks = new Task[simultaneousRoutingTasks];
@@ -58,7 +58,7 @@ namespace SytyRouting.Routing
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
                 int t = taskIndex;
-                routingTasks[t] = Task.Run(() => CalculateRoutes<A>(t));
+                routingTasks[t] = Task.Run(() => CalculateRoutes<A,U>(t));
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
@@ -157,7 +157,7 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
@@ -185,31 +185,6 @@ namespace SytyRouting.Routing
                 }
             }
         }
-
-        // private void MonitorRouteCalculation()
-        // {
-        //     int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
-        //     while(true)
-        //     {
-        //         var timeSpan = stopWatch.Elapsed;
-        //         var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-        //         Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
-        //         logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
-        //         logger.Info("");
-
-        //         if(routingTasksHaveEnded)
-        //         {
-        //             if(processedDbElements != elementsToProcess)
-        //             {
-        //                 logger.Info(" ==>> Inconsistent number of processed elements.");
-        //             }
-        //             logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, 100 * uploadedRoutes / personas.Count);
-        //             return;
-        //         }
-
-        //         Thread.Sleep(monitorSleepMilliseconds);
-        //     }
-        // }
 
         private int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
         {
