@@ -14,22 +14,8 @@ namespace SytyRouting.Routing
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-        private static int simultaneousRoutingTasks = Environment.ProcessorCount;
-
-        private Task[] routingTasks = new Task[simultaneousRoutingTasks];
-
-        private ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
         private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
-
-        private int taskArraysQueueThreshold = simultaneousRoutingTasks;
-
-    
-        private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
-
         private int uploadBatchSize = 0;
-
-
-        private int originEqualsDestinationErrors = 0;
 
 
         public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()

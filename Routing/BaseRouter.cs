@@ -6,6 +6,7 @@ using SytyRouting.Model;
 using SytyRouting.Algorithms;
 using SytyRouting.DataBase;
 using System.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace SytyRouting.Routing
 {
@@ -30,6 +31,17 @@ namespace SytyRouting.Routing
         protected List<Persona> personas = new List<Persona>();
 
         protected bool routingTasksHaveEnded = false;
+
+
+        protected static int simultaneousRoutingTasks = Environment.ProcessorCount;
+        protected Task[] routingTasks = new Task[simultaneousRoutingTasks];
+        protected int taskArraysQueueThreshold = simultaneousRoutingTasks;
+
+        protected ConcurrentQueue<Persona[]> personaTaskArraysQueue = new ConcurrentQueue<Persona[]>();
+        protected int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
+
+
+        protected int originEqualsDestinationErrors = 0;
 
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
