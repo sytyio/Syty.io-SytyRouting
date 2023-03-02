@@ -19,9 +19,9 @@ namespace SytyRouting.Routing
         protected int ComputedRoutesCount = 0;
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
         protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
+
         protected int sequenceValidationErrors = 0;
 
-        //stopWatch,elementsToProcess,computedRoutes,processedDbElements,uploadedRoutes,personas.Count,routingTasksHaveEnded
         protected Stopwatch stopWatch = new Stopwatch();
         protected int elementsToProcess = 0;
         protected int computedRoutes = 0;
@@ -34,10 +34,6 @@ namespace SytyRouting.Routing
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        // public BaseRouter(Graph graph, string routeTable)
-        // {
-        //     _graph = graph;
-        // }
 
         public void Initialize(Graph graph, string routeTable, string auxiliaryTable)
         {
@@ -224,11 +220,6 @@ namespace SytyRouting.Routing
         }
 
         public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual void CalculateRoutes<A>(int taskIndex) where A: IRoutingAlgorithm, new()
         {
             throw new NotImplementedException();
         }
