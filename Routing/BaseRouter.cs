@@ -5,6 +5,7 @@ using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
 using SytyRouting.Algorithms;
 using SytyRouting.DataBase;
+using System.Diagnostics;
 
 namespace SytyRouting.Routing
 {
@@ -19,6 +20,18 @@ namespace SytyRouting.Routing
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
         protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
         protected int sequenceValidationErrors = 0;
+
+        //stopWatch,elementsToProcess,computedRoutes,processedDbElements,uploadedRoutes,personas.Count,routingTasksHaveEnded
+        protected Stopwatch stopWatch = new Stopwatch();
+        protected int elementsToProcess = 0;
+        protected int computedRoutes = 0;
+        protected int processedDbElements = 0;
+        protected int uploadedRoutes = 0;
+        protected List<Persona> personas = new List<Persona>();
+
+        protected bool routingTasksHaveEnded = false;
+
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         // public BaseRouter(Graph graph, string routeTable)
@@ -183,6 +196,31 @@ namespace SytyRouting.Routing
             }
 
             return false;
+        }
+
+        protected void MonitorRouteCalculation()
+        {
+            int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
+            while(true)
+            {
+                var timeSpan = stopWatch.Elapsed;
+                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
+                logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
+                logger.Info("");
+
+                if(routingTasksHaveEnded)
+                {
+                    if(processedDbElements != elementsToProcess)
+                    {
+                        logger.Info(" ==>> Inconsistent number of processed elements.");
+                    }
+                    logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, 100 * uploadedRoutes / personas.Count);
+                    return;
+                }
+
+                Thread.Sleep(monitorSleepMilliseconds);
+            }
         }
 
         public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()

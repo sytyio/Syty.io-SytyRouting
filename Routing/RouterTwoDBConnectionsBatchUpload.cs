@@ -13,13 +13,6 @@ namespace SytyRouting.Routing
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        //public List<Persona> Personas {private set; get;} = null!;
-
-        private List<Persona> personas = new List<Persona>();
-        
-        //private Graph _graph;
-        // private string _routeTable;
-        // private string _auxiliaryTable;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
@@ -30,29 +23,14 @@ namespace SytyRouting.Routing
 
         private int taskArraysQueueThreshold = simultaneousRoutingTasks;
 
-        private int elementsToProcess = 0;
-        private int processedDbElements = 0;
-//        public int ComputedRoutes {private set; get;} = 0;
-        private static int computedRoutes = 0;
-
-        private static int uploadedRoutes = 0;
-
-        private bool routingTasksHaveEnded = false;
     
         private int regularBatchSize = simultaneousRoutingTasks * Configuration.RegularRoutingTaskBatchSize;
 
         private int uploadBatchSize = 0;
 
-        private Stopwatch stopWatch = new Stopwatch();
 
         private int originEqualsDestinationErrors = 0;
 
-        // public RouterOneTimeAllUpload(Graph graph, string routeTable) : base(graph,routeTable)
-        // {
-        //     _graph = graph;
-        //     _routeTable = routeTable;
-        //     _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-        // }
 
         public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()
         {
@@ -188,10 +166,6 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        // protected override void CalculateRoutes<A>(int taskIndex) //where A: IRoutingAlgorithm, new()
-        // {
-        // }
-
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
         {
             var routingAlgorithm = new A();
@@ -219,42 +193,6 @@ namespace SytyRouting.Routing
                         logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
                     }
                 }
-                //debug:
-                // try
-                // {
-                //     Task uploadTask = Task.Run(() => UploadRoutesAsync2<U>(personaArray));
-                //     Task.WaitAll(uploadTask);
-                // }
-                // catch(Exception e)
-                // {
-                //     logger.Debug("Error uploading routes by batches: {0}",e.Message);
-                // }
-                //
-            }
-        }
-
-        private void MonitorRouteCalculation()
-        {
-            int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
-            while(true)
-            {
-                var timeSpan = stopWatch.Elapsed;
-                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
-                logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
-                logger.Info("");
-
-                if(routingTasksHaveEnded)
-                {
-                    if(processedDbElements != elementsToProcess)
-                    {
-                        logger.Info(" ==>> Inconsistent number of processed elements.");
-                    }
-                    logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, 100 * uploadedRoutes / personas.Count);
-                    return;
-                }
-
-                Thread.Sleep(monitorSleepMilliseconds);
             }
         }
 
