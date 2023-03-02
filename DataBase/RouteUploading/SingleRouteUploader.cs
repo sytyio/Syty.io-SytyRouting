@@ -54,7 +54,8 @@ namespace SytyRouting.DataBase
                     new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route) WHERE persona_id = " + persona.Id + ";"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route) WHERE persona_id = " + persona.Id + ";"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route) AND persona_id = " + persona.Id + ";"), 
-                    new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true AND persona_id = " + persona.Id + ";")
+                    //new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true AND persona_id = " + persona.Id + ";")
+                    new("UPDATE " + routeTable + " rt SET route = t_aux.computed_route::tgeompoint FROM " + auxiliaryTable + " t_aux WHERE  t_aux.persona_id = rt.id AND t_aux.is_valid_route = true;")
                 }
             };
 
@@ -81,17 +82,17 @@ namespace SytyRouting.DataBase
             //PLGSQL: Iterates over each route result to update the persona_route table
             var updateString = "UPDATE " + routeTable + " SET route = (SELECT route FROM " + auxiliaryTable + " WHERE persona_id = " + persona.Id + ") WHERE id = " + persona.Id;
 
-            await using (var cmd = new NpgsqlCommand(updateString, connection))
-            {
-                try
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                catch(Exception e)
-                {
-                    logger.Debug(" ==>> Unable to update routes on the database: {0}", e.Message);
-                }                
-            }
+            // await using (var cmd = new NpgsqlCommand(updateString, connection))
+            // {
+            //     try
+            //     {
+            //         await cmd.ExecuteNonQueryAsync();
+            //     }
+            //     catch(Exception e)
+            //     {
+            //         logger.Debug(" ==>> Unable to update routes on the database: {0}", e.Message);
+            //     }                
+            // }
 
             updateString = "UPDATE " + routeTable + " SET transport_sequence = (SELECT transport_sequence FROM " + auxiliaryTable + " WHERE persona_id = " + persona.Id + ") WHERE id = " + persona.Id;
 
