@@ -199,61 +199,11 @@ namespace SytyRouting.Routing
 
                     try
                     {
-                        var homeX = persona.HomeLocation!.X;
-                        var homeY = persona.HomeLocation.Y;
+                        var routeFound = CalculateRoute(routingAlgorithm, ref persona);
                         
-                        var workX = persona.WorkLocation!.X;
-                        var workY = persona.WorkLocation.Y;
-                        
-                        var requestedTransportModes = persona.RequestedTransportSequence;
-
-                        TimeSpan initialTime = TimeSpan.Zero;
-
-                        List<Node> route = null!;
-
-                        var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
-                        var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
-
-                        if(origin == destination)
+                        if(routeFound)
                         {
-                            logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
-
-                            persona.Route = routingAlgorithm.TwoPointLineString(homeX, homeY, workX, workY, TransportModes.DefaultMode, initialTime);
-
-                            if(persona.Route.IsEmpty)
-                            {
-                                logger.Debug("Route is empty for Persona Id {0} !!!!", persona.Id);
-                                originEqualsDestinationErrors++;
-                                continue;
-                            }
-
-                            persona.TTextTransitions = routingAlgorithm.SingleTransportModeTransition(persona, origin, destination, TransportModes.DefaultMode);
-
-                            persona.SuccessfulRouteComputation = true;
-
                             Interlocked.Increment(ref computedRoutes);
-                        }
-                        else
-                        {
-                            route = routingAlgorithm.GetRoute(origin, destination, requestedTransportModes);
-                        }
-
-                        if(route != null)
-                        {
-                            if(route.Count > 0)
-                            {
-                                persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime, persona.StartDateTime);
-
-                                persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
-
-                                persona.SuccessfulRouteComputation = true;
-
-                                Interlocked.Increment(ref computedRoutes);
-                            }
-                            else
-                            {
-                                logger.Debug("Route is empty for Persona Id {0}", persona.Id);
-                            }
                         }
                     }
                     catch (Exception e)

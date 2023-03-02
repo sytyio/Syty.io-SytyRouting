@@ -123,6 +123,68 @@ namespace SytyRouting.Routing
             }
         }
 
+        protected bool CalculateRoute(IRoutingAlgorithm routingAlgorithm, ref Persona persona)
+        {
+            var homeX = persona.HomeLocation!.X;
+            var homeY = persona.HomeLocation.Y;
+            
+            var workX = persona.WorkLocation!.X;
+            var workY = persona.WorkLocation.Y;
+            
+            var requestedTransportModes = persona.RequestedTransportSequence;
+
+            TimeSpan initialTime = TimeSpan.Zero;
+
+            List<Node> route = null!;
+
+            var origin = _graph.GetNodeByLongitudeLatitude(persona.HomeLocation!.X, persona.HomeLocation.Y, isSource: true);
+            var destination = _graph.GetNodeByLongitudeLatitude(persona.WorkLocation!.X, persona.WorkLocation.Y, isTarget: true);
+
+            if(origin == destination)
+            {
+                logger.Debug("Origin and destination nodes are equal for Persona Id {0}", persona.Id);
+
+                persona.Route = routingAlgorithm.TwoPointLineString(homeX, homeY, workX, workY, TransportModes.DefaultMode, initialTime);
+
+                if(persona.Route.IsEmpty)
+                {
+                    logger.Debug("Route is empty for Persona Id {0} !!!!", persona.Id);
+                    
+                    return false;
+                }
+
+                persona.TTextTransitions = routingAlgorithm.SingleTransportModeTransition(persona, origin, destination, TransportModes.DefaultMode);
+
+                persona.SuccessfulRouteComputation = true;
+
+                return true;
+            }
+            else
+            {
+                route = routingAlgorithm.GetRoute(origin, destination, requestedTransportModes);
+            }
+
+            if(route != null)
+            {
+                if(route.Count > 0)
+                {
+                    persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime, persona.StartDateTime);
+
+                    persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
+
+                    persona.SuccessfulRouteComputation = true;
+
+                    return true;
+                }
+                else
+                {
+                    logger.Debug("Route is empty for Persona Id {0}", persona.Id);
+                }
+            }
+
+            return false;
+        }
+
         public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
         {
             throw new NotImplementedException();
