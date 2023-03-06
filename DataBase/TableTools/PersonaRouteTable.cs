@@ -84,6 +84,7 @@ namespace SytyRouting.DataBase
             {
                 BatchCommands =
                 {
+                    //debug: new("CREATE TABLE IF NOT EXISTS " + routingResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " WHERE id = 1359 ORDER BY id ASC LIMIT " + numberOfRows + ";"),
                     new("CREATE TABLE IF NOT EXISTS " + routingResultTable + " AS SELECT id, home_location, work_location FROM " + personaOriginTable + " ORDER BY id ASC LIMIT " + numberOfRows + ";"),
                     new("ALTER TABLE " + routingResultTable + " DROP CONSTRAINT IF EXISTS " + routingResultTablePK + ";"),
                     new("ALTER TABLE " + routingResultTable + " ADD CONSTRAINT " + routingResultTablePK + " PRIMARY KEY (id);"),

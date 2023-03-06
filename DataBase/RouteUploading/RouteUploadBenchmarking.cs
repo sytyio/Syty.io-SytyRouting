@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 13000; //60; //100_000; //1360
+            int numberOfRows = 1360; //60; //100_000; //1360
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             //var personaRouteTableEmptyAuxTab = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             

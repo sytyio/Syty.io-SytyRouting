@@ -13,7 +13,7 @@ namespace SytyRouting.Algorithms
         protected Graph? _graph = null!;
         protected List<Node> route = new List<Node>();
         protected Dictionary<int, Tuple<byte,int>> transportModeTransitions = new Dictionary<int, Tuple<byte,int>>(1);
-        public List<Tuple<string,DateTime>> transitions = new List<Tuple<string,DateTime>>(2);
+        private List<Tuple<string,DateTime>> _transitions = new List<Tuple<string,DateTime>>(2);
         protected double routeCost;
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -21,6 +21,7 @@ namespace SytyRouting.Algorithms
         private DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = null!;
         private GeometryFactory _geometryFactory = null!;
         private LineString _emptyLineString = null!;
+        private Tuple<string[],DateTime[]> _emptyTTextTransition = null!;
 
         //DEBUG:
         protected int Steps = 0;
@@ -32,6 +33,12 @@ namespace SytyRouting.Algorithms
             _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             _geometryFactory = new GeometryFactory(_sequenceFactory);
             _emptyLineString = new LineString(null, _geometryFactory);
+
+            // string[] _noTransportMode = new string[2] {TransportModes.NoTransportMode,TransportModes.NoTransportMode};
+            // DateTime[] _baseDateTime = new DateTime[2] {DateTime.UtcNow,DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))};
+            string[] _noTransportMode = new string[1] {TransportModes.NoTransportMode};
+            DateTime[] _baseDateTime = new DateTime[1] {DateTime.UtcNow};
+            _emptyTTextTransition = new Tuple<string[],DateTime[]>(_noTransportMode,_baseDateTime);
         }
 
         public List<Node> GetRoute(double x1, double y1, double x2, double y2, byte[] transportModesSequence)
@@ -94,7 +101,7 @@ namespace SytyRouting.Algorithms
 
         public LineString NodeRouteToLineStringMSeconds(double startX, double startY, double endX, double endY, List<Node> nodeRoute, TimeSpan initialTimeStamp, DateTime startTime)
         {
-            transitions.Clear();
+            _transitions.Clear();
 
             var numberOfNodes = nodeRoute.Count;
 
@@ -226,7 +233,7 @@ namespace SytyRouting.Algorithms
             DateTime timeStamp = startTime.Add(TimeSpan.FromSeconds(mOrdinate));
             String transportModeName = TransportModes.SingleMaskToString(transportMode);
             var transition = new Tuple<string,DateTime>(transportModeName,timeStamp);
-            transitions.Add(transition);
+            _transitions.Add(transition);
         }
 
         private double Get2PointTimeInterval(double x1, double y1, double x2, double y2, byte transportMode)
@@ -276,10 +283,11 @@ namespace SytyRouting.Algorithms
         private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(Persona persona, Dictionary<int,Tuple<byte,int>> transitions)
         {
             var route = persona.Route;
-            var startTime = persona.StartDateTime;
             if(route == null || transitions == null || transitions.Count <1 || route.IsEmpty)
-                return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+                //return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
+                return _emptyTTextTransition;
 
+            var startTime = persona.StartDateTime;
             var coordinates = route.Coordinates;
 
             List<DateTime> timeStamps = new List<DateTime>(transitions.Count);
@@ -343,13 +351,19 @@ namespace SytyRouting.Algorithms
 
         public Tuple<string[],DateTime[]> GetTransportModeTransitions()
         {
-            string[] transportModes = new string[transitions.Count];
-            DateTime[] timeStamps = new DateTime[transitions.Count];
-
-            for(int i = 0; i < transitions.Count; i++)
+            if(_transitions.Count<2)
             {
-                transportModes[i]=transitions[i].Item1;
-                timeStamps[i]=transitions[i].Item2;
+                logger.Debug("Invalid transport transition data.");
+                return _emptyTTextTransition;
+            }
+
+            string[] transportModes = new string[_transitions.Count];
+            DateTime[] timeStamps = new DateTime[_transitions.Count];
+
+            for(int i = 0; i < _transitions.Count; i++)
+            {
+                transportModes[i]=_transitions[i].Item1;
+                timeStamps[i]=_transitions[i].Item2;
             }
 
             return Tuple.Create<string[],DateTime[]>(transportModes,timeStamps);

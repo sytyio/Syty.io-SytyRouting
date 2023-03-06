@@ -23,8 +23,6 @@ namespace SytyRouting.DataBase
 
             int uploadFails = 0;
 
-            //var _records = personas;
-
             using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
             foreach (var persona in personas)
             {
