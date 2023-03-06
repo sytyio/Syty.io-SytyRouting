@@ -188,6 +188,13 @@ namespace SytyRouting.Routing
             persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime, persona.StartDateTime);
 
             persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
+
+            //debug:
+            if(persona.Route==null)
+            {
+                Console.WriteLine("Problem");
+            }
+            //
             
             //if(route != null)
             if(!persona.Route.IsEmpty)
