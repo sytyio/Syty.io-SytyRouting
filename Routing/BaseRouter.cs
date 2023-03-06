@@ -237,6 +237,19 @@ namespace SytyRouting.Routing
             }
         }
 
+        protected int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
+        {
+            int lastSlice = whole - regularSlice * (numberOfSlices - 1);
+            int[] batchPartition = new int[numberOfSlices];
+            for (var i = 0; i < batchPartition.Length-1; i++)
+            {
+                batchPartition[i] = regularSlice;
+            }
+            batchPartition[batchPartition.Length-1] = lastSlice;
+
+            return batchPartition;
+        }
+
         public virtual Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
         {
             throw new NotImplementedException();
