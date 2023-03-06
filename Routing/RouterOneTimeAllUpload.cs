@@ -3,8 +3,6 @@ using System.Diagnostics;
 using Npgsql;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using SytyRouting.Algorithms;
-using System.Collections.Concurrent;
 
 namespace SytyRouting.Routing
 {
@@ -170,19 +168,6 @@ namespace SytyRouting.Routing
                     }
                 }
             }
-        }
-
-        private int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
-        {
-            int lastSlice = whole - regularSlice * (numberOfSlices - 1);
-            int[] batchPartition = new int[numberOfSlices];
-            for (var i = 0; i < batchPartition.Length-1; i++)
-            {
-                batchPartition[i] = regularSlice;
-            }
-            batchPartition[batchPartition.Length-1] = lastSlice;
-
-            return batchPartition;
         }
 
         protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader
