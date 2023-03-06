@@ -23,69 +23,8 @@ namespace SytyRouting.DataBase
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
             int uploadFails = 0;
-            
-            // foreach(var persona in personas)
-            // {
-            //     try
-            //     {
-            //         var transportModes = persona.TTextTransitions.Item1;
-            //         var timeStampsTZ = persona.TTextTransitions.Item2;
-
-            //         await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ($1, $2, $3, $4) ON CONFLICT (persona_id) DO UPDATE SET computed_route = $2, transport_modes = $3, time_stamps = $4", connection)
-            //         {
-            //             Parameters =
-            //             {
-            //                 new() { Value = persona.Id },
-            //                 new() { Value = persona.Route },
-            //                 new() { Value = transportModes },
-            //                 new() { Value = timeStampsTZ }
-            //             }
-            //         };
-            //         await cmd_insert.ExecuteNonQueryAsync();
-            //     }
-            //     catch
-            //     {
-            //         logger.Debug(" ==>> Unable to upload route data to database. Persona Id {0}", persona.Id);
-            //         uploadFails++;
-            //     }
-            // }
-
-            // using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
 
             var _records = personas;
-            // foreach (var element in _records)
-            // {
-            //     await importer.StartRowAsync();
-            //     await importer.WriteAsync(element.Id);
-            //     await importer.WriteAsync(element.Route);
-            //     await importer.WriteAsync(element.TTextTransitions.Item1);
-            //     await importer.WriteAsync(element.TTextTransitions.Item2);
-            // }
-
-            // await importer.CompleteAsync();
-
-
-
-            // using var command = new NpgsqlCommand(connection: connection, cmdText: null);
-
-            // var sb = new StringBuilder("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ");
-            // for (var i = 0; i < _records.ToArray().Length; i++)
-            // {
-            //     if (i != 0) sb.Append(',');
-            //     var iName = (i * 4 + 1).ToString();
-            //     var rName = (i * 4 + 2).ToString();
-            //     var tmName = (i * 4 + 3).ToString();
-            //     var tsName = (i * 4 + 4).ToString();
-
-            //     sb.Append("(@").Append(iName).Append(", @").Append(rName).Append(", @").Append(tmName).Append(", @").Append(tsName).Append(')');
-            //     command.Parameters.Add(new NpgsqlParameter<int>(iName, _records[i].Id));
-            //     command.Parameters.Add(new NpgsqlParameter<LineString>(rName, _records[i].Route));
-            //     command.Parameters.Add(new NpgsqlParameter<string[]>(tmName, _records[i].TTextTransitions.Item1));
-            //     command.Parameters.Add(new NpgsqlParameter<DateTime[]>(tsName, _records[i].TTextTransitions.Item2));
-            // }
-
-            // command.CommandText = sb.ToString();
-            // await command.ExecuteNonQueryAsync();
 
         var transaction = connection.BeginTransaction();
         using var command = new NpgsqlCommand(connection: connection, cmdText:

@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 13; //1360
+            int numberOfRows = 100_000; //1360
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             //var personaRouteTableEmptyAuxTab = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             
@@ -89,6 +89,24 @@ namespace SytyRouting.DataBase
 
             // /////////////
             // /////////////  ////////////// //
+            uploadStrategies.Add("On-Time All, single DB connection, COPY on AUX table");
+            routeTable = baseRouteTable + "_T86";
+            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploaderCOPY,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+
+            var auxiliaryTable86 = auxiliaryTable;
+
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable86);
+            comparisonResults.Add(comparisonResult);
+
+
+            // /////////////
+            // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, COPY");
             routeTable = baseRouteTable + "_T76";
             auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
@@ -145,20 +163,20 @@ namespace SytyRouting.DataBase
             
             //////////////
             // /////////////  ////////////// //
-            uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
-            routeTable = baseRouteTable + "_T71";
-            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
+            // // uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
+            // // routeTable = baseRouteTable + "_T71";
+            // // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // // tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SingleRouteUploader,
-                                    Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
+            // // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            // //                         DataBase.SingleRouteUploader,
+            // //                         Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+            // // totalTimes.Add(totalTime);
 
-            var auxiliaryTable1 = auxiliaryTable;
+            // // var auxiliaryTable1 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable1);
-            comparisonResults.Add(comparisonResult);
+            // // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable1);
+            // // comparisonResults.Add(comparisonResult);
 
 
             //////////////
@@ -212,12 +230,12 @@ namespace SytyRouting.DataBase
             var uploadResultsArray = uploadResults.ToArray();
             var comparisonResultsArray = comparisonResults.ToArray();
 
-            logger.Info("===============================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================");
             logger.Info("{0} Routes Benchmarking",numberOfRows);
-            logger.Info("===============================================================================================================================================================================================================================================");
-            logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","Strategy","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
-            logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
-            logger.Info("===============================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================");
+            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","Strategy","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
+            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
+            logger.Info("=======================================================================================================================================================================================================================================================================================");
             for(int i=0; i<comparisonResultsArray.Length; i++)
             {
                 double processingRate=-1.0;
@@ -228,7 +246,7 @@ namespace SytyRouting.DataBase
                     uploadingRoutingRatio = 100.0 * uploadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
                 }
                 
-                logger.Info("{0,50}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}",
+                logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}",
                                                             uploadStrategiesArray[i],
                                                             tableNamesArray[i],
                                                             Helper.FormatElapsedTime(routingTimesArray[i]),
@@ -239,7 +257,7 @@ namespace SytyRouting.DataBase
                                                             uploadResultsArray[i],
                                                             comparisonResultsArray[i]);
             }
-            logger.Info("===============================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================");
 
         }
 

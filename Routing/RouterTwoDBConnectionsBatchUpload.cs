@@ -88,7 +88,8 @@ namespace SytyRouting.Routing
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
             int[] batchSizes = GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
 
-            uploadBatchSize = batchSize;
+            //uploadBatchSize = batchSize;
+            uploadBatchSize = elementsToProcess;
 
             int offset = 0;
             for(var batchNumber = 0; batchNumber < numberOfBatches; batchNumber++)
@@ -237,12 +238,16 @@ namespace SytyRouting.Routing
             int uploadFails = 0;
             int uploadedRoutes = 0;
 
+            //debug:
+            List<Persona> uploadedRoutesList = new List<Persona>(elementsToProcess);
+            //
 
             //debug:
             int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
             while(true)
             {
 
+                logger.Debug("{0} elements in the uploading queue",routesQueue.Count);
                 if(routesQueue.Count>=uploadBatchSize)
                 {
                     int count = 0;
@@ -250,27 +255,40 @@ namespace SytyRouting.Routing
                     {
                         if(persona!=null)
                         {
+                            //debug:
+                            if(persona.Id==282)
+                            {
+                                Console.WriteLine("Problem here");
+                            }
+                            uploadedRoutesList.Add(persona);
+                            //
                             personasUploadBatch.Add(persona);
                             count++;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Null person");
                         }
                     }
                     logger.Debug("Uploading {0} routes",personasUploadBatch.Count);
                     uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,personasUploadBatch);
                     uploadedRoutes += count - uploadFails;
-                    logger.Debug("{0} routes uploaded in total",uploadedRoutes);
+                    logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
+                    personasUploadBatch.Clear();
+                    uploadedRoutes = 0;
                 }
 
                 if(routingTasksHaveEnded)
                 {
                     var remainingRoutes = routesQueue.ToList();
 
-                    logger.Debug("Uploading {0} routes",remainingRoutes.Count);
+                    logger.Debug("Routing tasks have ended. Uploading {0} remaining routes",remainingRoutes.Count);
                     
                     uploadFails = await uploader.UploadRoutesAsync(connectionString,_auxiliaryTable,_routeTable,remainingRoutes);
                     uploadFails += await SeveralRoutesUploader.PropagateResultsAsync(connectionString,_auxiliaryTable,_routeTable);
 
                     uploadedRoutes += remainingRoutes.Count - uploadFails;
-                    logger.Debug("{0} routes uploaded in total",uploadedRoutes);
+                    logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
                 
                     uploadStopWatch.Stop();
                     var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
