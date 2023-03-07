@@ -91,11 +91,34 @@ namespace SytyRouting.DataBase
                     RAISE NOTICE 'id: %', _id;
                     RAISE NOTICE 'transport modes: %', _arr_tm;
                     RAISE NOTICE 'time stamps: %', _arr_ts;
-                    UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+                    UPDATE " + routeTable + @" r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM " + auxiliaryTable + @" t_aux WHERE t_aux.is_valid_route = true AND r_t.id = _id;
                 END LOOP;
             END;
             $$;
             ";
+
+
+            // DO 
+            // $$
+            // DECLARE
+            // _id int;
+            // _arr_tm text[];
+            // _arr_ts timestamptz[];
+            // BEGIN    
+            //     FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM persona_route_t76_aux ORDER BY persona_id ASC
+            //     LOOP
+            //         RAISE NOTICE 'id: %', _id;
+            //         RAISE NOTICE 'transport modes: %', _arr_tm;
+            //         RAISE NOTICE 'time stamps: %', _arr_ts;
+            //         UPDATE persona_route_t76 r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM persona_route_t76_aux t_aux WHERE t_aux.is_valid_route = true AND r_t.id = _id;
+            //     END LOOP;
+            // END;
+            // $$;
+
+
+
+
+
 
             await using (var cmd = new NpgsqlCommand(iterationString, connection))
             {
