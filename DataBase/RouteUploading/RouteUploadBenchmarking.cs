@@ -29,6 +29,7 @@ namespace SytyRouting.DataBase
             int numberOfRows = 10;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
                         
+                        
             string baseRouteTable = Configuration.PersonaRouteTable;
 
 
@@ -44,7 +45,7 @@ namespace SytyRouting.DataBase
                                     Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
-            var auxiliaryTable0 = auxiliaryTable;
+            var auxiliaryTable70 = auxiliaryTable;
 
             var comparisonResult = "Reference";
             comparisonResults.Add(comparisonResult);
@@ -62,9 +63,9 @@ namespace SytyRouting.DataBase
                                     Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable9 = auxiliaryTable;
+            var auxiliaryTable79 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable9);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable79);
             comparisonResults.Add(comparisonResult);
 
 
@@ -80,9 +81,9 @@ namespace SytyRouting.DataBase
                                     Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable8 = auxiliaryTable;
+            var auxiliaryTable78 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable8);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable78);
             comparisonResults.Add(comparisonResult);
 
 
@@ -100,7 +101,7 @@ namespace SytyRouting.DataBase
 
             var auxiliaryTable86 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable86);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable86);
             comparisonResults.Add(comparisonResult);
 
 
@@ -116,9 +117,10 @@ namespace SytyRouting.DataBase
                                     Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable6 = auxiliaryTable;
+            var auxiliaryTable76 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
+            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable76);
             comparisonResults.Add(comparisonResult);
 
 
@@ -172,9 +174,9 @@ namespace SytyRouting.DataBase
                                     Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable1 = auxiliaryTable;
+            var auxiliaryTable71 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable1);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable71);
             comparisonResults.Add(comparisonResult);
 
 
@@ -190,9 +192,9 @@ namespace SytyRouting.DataBase
                                     Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable4 = auxiliaryTable;
+            var auxiliaryTable74 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable4);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable74);
             comparisonResults.Add(comparisonResult);
 
 
@@ -208,9 +210,9 @@ namespace SytyRouting.DataBase
                                     Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable5 = auxiliaryTable;
+            var auxiliaryTable75 = auxiliaryTable;
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable5);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable75);
             comparisonResults.Add(comparisonResult);
 
             // //////////////
