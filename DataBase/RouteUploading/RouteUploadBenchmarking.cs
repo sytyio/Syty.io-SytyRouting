@@ -182,24 +182,6 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            uploadStrategies.Add("As computed (batch), parallel DB connections");
-            routeTable = baseRouteTable + "_T74";
-            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
-
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploader,
-                                    Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
-
-            var auxiliaryTable4 = auxiliaryTable;
-
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable4);
-            comparisonResults.Add(comparisonResult);
-
-
-            //////////////
-            // /////////////  ////////////// //
             // // // uploadStrategies.Add("As computed (batch), parallel DB connections");
             // // // routeTable = baseRouteTable + "_T74";
             // // // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
