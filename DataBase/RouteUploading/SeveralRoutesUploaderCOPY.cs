@@ -34,8 +34,6 @@ namespace SytyRouting.DataBase
             }
 
             await importer.CompleteAsync();
-
-
    
             await connection.CloseAsync();
 
@@ -68,7 +66,7 @@ namespace SytyRouting.DataBase
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
                     //new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true;")
-                    new("UPDATE " + routeTable + " rt SET route = t_aux.computed_route::tgeompoint FROM " + auxiliaryTable + " t_aux WHERE  t_aux.persona_id = rt.id AND t_aux.is_valid_route = true;")
+                    new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;")
                 }
             };
 
@@ -91,11 +89,12 @@ namespace SytyRouting.DataBase
                     RAISE NOTICE 'id: %', _id;
                     RAISE NOTICE 'transport modes: %', _arr_tm;
                     RAISE NOTICE 'time stamps: %', _arr_ts;
-                    UPDATE " + routeTable + @" r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM " + auxiliaryTable + @" t_aux WHERE t_aux.is_valid_route = true AND r_t.id = _id;
+                    UPDATE " + routeTable + @" r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM " + auxiliaryTable + @" aux_t WHERE aux_t.is_valid_route = true AND r_t.id = _id;
                 END LOOP;
             END;
             $$;
             ";
+            //UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
 
 
             // DO 

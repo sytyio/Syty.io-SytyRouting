@@ -45,8 +45,7 @@ namespace SytyRouting
             //////////////////////////////////////////////
             // // // Create a new table for route results
             /////////////////////////////////////////////
-            await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(Configuration.ConnectionString);
-            await DataBase.PLGSQLFunctions.SetUnnest2D1D(Configuration.ConnectionString);
+            //await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(Configuration.ConnectionString);
             //var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             //await personaRouteTable.CreateDataSet(Configuration.PersonaTable,Configuration.PersonaRouteTable,10);
             /////////////////////////////////////////////
