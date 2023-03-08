@@ -915,7 +915,84 @@ namespace SytyRouting
         ////// Orphaned methods and code blocks /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        ///////////////////////////
+        // DB related ///// ///////
+        ///////////////////////////
+
         // //await DataBase.PLGSQLFunctions.SetUnnest2D1D(Configuration.ConnectionString);
+
+
+        //UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+
+        //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
+        // var iterationString = @"
+        // DO 
+        // $$
+        // DECLARE
+        // _id int;
+        // _arr_tm text[];
+        // _arr_ts timestamptz[];
+        // BEGIN    
+        //     FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+        //     LOOP
+        //         RAISE NOTICE 'id: %', _id;
+        //         RAISE NOTICE 'transport modes: %', _arr_tm;
+        //         RAISE NOTICE 'time stamps: %', _arr_ts;
+        //         UPDATE " + routeTable + @" r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM " + auxiliaryTable + @" aux_t WHERE aux_t.is_valid_route = true AND r_t.id = _id;
+        //     END LOOP;
+        // END;
+        // $$;
+        // ";
+
+        // DO 
+        // $$
+        // DECLARE
+        // _id int;
+        // _arr_tm text[];
+        // _arr_ts timestamptz[];
+        // BEGIN    
+        //     FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM persona_route_t76_aux ORDER BY persona_id ASC
+        //     LOOP
+        //         RAISE NOTICE 'id: %', _id;
+        //         RAISE NOTICE 'transport modes: %', _arr_tm;
+        //         RAISE NOTICE 'time stamps: %', _arr_ts;
+        //         UPDATE persona_route_t76 r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM persona_route_t76_aux t_aux WHERE t_aux.is_valid_route = true AND r_t.id = _id;
+        //     END LOOP;
+        // END;
+        // $$;
+
+        //PLGSQL: Iterates over each route result to update the persona_route table
+        // var updateString = @"
+        // DO 
+        // $$
+        // DECLARE
+        // _id int;
+        // _r tgeompoint;
+        // _ts ttext(Sequence);
+        // BEGIN    
+        //     FOR _id, _r, _ts in SELECT persona_id, route, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+        //     LOOP
+        //         RAISE NOTICE 'id: %', _id;
+        //         RAISE NOTICE 'route: %', _r;
+        //         RAISE NOTICE 'transport sequence: %', _ts;
+        //         UPDATE " + routeTable + @" SET route = _r, transport_sequence = _ts WHERE id = _id;
+        //     END LOOP;
+        // END;
+        // $$;
+        // ";
+
+        // await using (var cmd = new NpgsqlCommand(updateString, connection))
+        // {
+        //     try
+        //     {
+        //         await cmd.ExecuteNonQueryAsync();
+        //     }
+        //     catch(Exception e)
+        //     {
+        //         logger.Debug(" ==>> Unable to update routes/transport sequences on the database: {0}", e.Message);
+        //         uploadFails++;
+        //     }                
+        // }
 
         ///////////////////////////
         // PersonaRouter.cs ///////
