@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using NLog;
@@ -13,9 +12,9 @@ namespace SytyRouting.DataBase
         
         protected async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
         {
-            Stopwatch stopWatch = new Stopwatch();
+            //Stopwatch stopWatch = new Stopwatch();
 
-            stopWatch.Start();
+            //stopWatch.Start();
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();

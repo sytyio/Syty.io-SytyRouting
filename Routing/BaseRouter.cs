@@ -23,7 +23,7 @@ namespace SytyRouting.Routing
 
         protected int sequenceValidationErrors = 0;
 
-        protected Stopwatch stopWatch = new Stopwatch();
+        protected Stopwatch baseRouterStopWatch = new Stopwatch();
         protected int elementsToProcess = 0;
         protected int computedRoutes = 0;
         protected int processedDbElements = 0;
@@ -224,8 +224,8 @@ namespace SytyRouting.Routing
             int monitorSleepMilliseconds = Configuration.MonitorSleepMilliseconds; // 5_000;
             while(true)
             {
-                var timeSpan = stopWatch.Elapsed;
-                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                var timeSpan = baseRouterStopWatch.Elapsed;
+                var timeSpanMilliseconds = baseRouterStopWatch.ElapsedMilliseconds;
                 Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
                 logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
                 logger.Info("");

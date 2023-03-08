@@ -13,7 +13,7 @@ namespace SytyRouting.Routing
 
         public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
         {
-            stopWatch.Start();
+            baseRouterStopWatch.Start();
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
@@ -51,15 +51,15 @@ namespace SytyRouting.Routing
             routingTasksHaveEnded = true;
             Task.WaitAll(monitorTask);
 
-            TotalRoutingTime = stopWatch.Elapsed;
+            TotalRoutingTime = baseRouterStopWatch.Elapsed;
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
             await UploadRoutesAsync<U>();
 
-            stopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            baseRouterStopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(baseRouterStopWatch.Elapsed);
             logger.Info("=================================================");
             logger.Info("    Routing execution time :: {0}", totalTime);
             logger.Info("=================================================");
@@ -188,8 +188,8 @@ namespace SytyRouting.Routing
             //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
             //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
-            TotalUploadingTime = uploadStopWatch.Elapsed;
             uploadStopWatch.Stop();
+            TotalUploadingTime = uploadStopWatch.Elapsed;
             var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
             logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
