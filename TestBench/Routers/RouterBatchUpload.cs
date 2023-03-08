@@ -14,7 +14,8 @@ namespace SytyRouting.Routing
 
         public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()
         {
-            stopWatch.Start();
+            //baseRouterStopWatch.Start();
+            baseRouterStopWatch.Reset();
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
@@ -60,8 +61,8 @@ namespace SytyRouting.Routing
 
             //await UploadRoutesAsync();
 
-            stopWatch.Stop();
-            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            baseRouterStopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(baseRouterStopWatch.Elapsed);
             logger.Info("=================================================");
             logger.Info("    Routing execution time :: {0}", totalTime);
             logger.Info("=================================================");

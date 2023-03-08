@@ -13,6 +13,5 @@ namespace SytyRouting.Routing
         int GetComputedRoutesCount();
         TimeSpan GetRoutingTime();
         TimeSpan GetUploadingTime();
-        //byte[] ValidateTransportSequence(int id, Point homeLocation, Point workLocation, string[] transportSequence);
     }
 }

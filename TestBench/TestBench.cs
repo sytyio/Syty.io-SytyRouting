@@ -939,8 +939,26 @@ namespace SytyRouting
         // comparisonResults.Add(comparisonResult);
 
 
+        // //////////////
+        // // /////////////    WORKS PARTIALLY: DEADLOCKS DETECTED ON DB  ////////////// //
+        // uploadStrategies.Add("As computed (batch), parallel DB connections");
+        // routeTable = baseRouteTable + "_T74";
+        // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+        // tableNames.Add(routeTable);
+
+        // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+        //                         DataBase.SeveralRoutesUploader,
+        //                         Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
+        // totalTimes.Add(totalTime);
+
+        // var auxiliaryTable74 = auxiliaryTable;
+
+        // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable74);
+        // comparisonResults.Add(comparisonResult);
+
+
         //////////////
-        // // /////////////  WORKS PARTIALLY: DEADLOCKS DETECTED ON DB ////////////// //
+        // // /////////////  WORKS PARTIALLY: DEADLOCKS DETECTED ON DB  ////////////// //
         // uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
         // routeTable = baseRouteTable + "_T71";
         // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);

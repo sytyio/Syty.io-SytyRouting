@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 100;
+            int numberOfRows = 1000;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
                         
                         
@@ -103,24 +103,6 @@ namespace SytyRouting.DataBase
 
             //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable76);
-            comparisonResults.Add(comparisonResult);
-
-
-            // //////////////
-            // // /////////////  ////////////// //
-            uploadStrategies.Add("As computed (batch), parallel DB connections");
-            routeTable = baseRouteTable + "_T74";
-            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
-
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploader,
-                                    Routing.RouterBatchUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
-
-            var auxiliaryTable74 = auxiliaryTable;
-
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable74);
             comparisonResults.Add(comparisonResult);
 
 
@@ -299,8 +281,6 @@ namespace SytyRouting.DataBase
 
         public static async Task<string> CompareUploadedRoutesAsync(string firstRouteTable, string secondRouteTable)
         {
-            Stopwatch benchmarkStopWatch = new Stopwatch();
-            benchmarkStopWatch.Start();
             logger.Info("--------------------------------------------------------------------------------------------------------------");
             logger.Info("DB uploaded routes comparison (LineString)");
             logger.Info("Route tables: {0} vs. {1}",firstRouteTable,secondRouteTable);
