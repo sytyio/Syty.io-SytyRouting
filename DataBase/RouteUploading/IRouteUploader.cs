@@ -7,6 +7,6 @@ namespace SytyRouting.DataBase
     {        
         public Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas);
         public Task<int> UploadRouteAsync(string connectionString, string auxiliaryTable, string routeTable, Persona personas);
-       //public Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable);
+        //protected Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable);
     }
 }
