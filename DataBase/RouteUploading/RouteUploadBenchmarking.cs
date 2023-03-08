@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 10;
+            int numberOfRows = 100;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
                         
                         
@@ -103,24 +103,6 @@ namespace SytyRouting.DataBase
 
             //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable76);
-            comparisonResults.Add(comparisonResult);
-            
-            
-            //////////////
-            // /////////////  ////////////// //
-            uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
-            routeTable = baseRouteTable + "_T71";
-            auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
-
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SingleRouteUploader,
-                                    Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
-
-            var auxiliaryTable71 = auxiliaryTable;
-
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable71);
             comparisonResults.Add(comparisonResult);
 
 

@@ -940,7 +940,25 @@ namespace SytyRouting
 
 
         //////////////
-        // /////////////  DOES NOT WORK ////////////// //
+        // // /////////////  WORKS PARTIALLY: DEADLOCKS DETECTED ON DB ////////////// //
+        // uploadStrategies.Add("As computed (one-by-one), parallel DB connections");
+        // routeTable = baseRouteTable + "_T71";
+        // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+        // tableNames.Add(routeTable);
+
+        // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+        //                         DataBase.SingleRouteUploader,
+        //                         Routing.RouterSingleRouteUpload>(graph,routeTable,auxiliaryTable);
+        // totalTimes.Add(totalTime);
+
+        // var auxiliaryTable71 = auxiliaryTable;
+
+        // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable71);
+        // comparisonResults.Add(comparisonResult);
+
+
+        //////////////
+        // /////////////  DOES NOT WORK: JAGGED ARRAYS NOT SUPPORTED ////////////// //
         // uploadStrategies.Add("On-Time All, single DB connection, INSERT PREPARED");
         // routeTable = baseRouteTable + "_T79";
         // auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
@@ -958,7 +976,7 @@ namespace SytyRouting
 
 
         // //////////////
-        // // ///////////// DOES NOT WORK ////////////// //
+        // // ///////////// DOES NOT WORK: JAGGED ARRAYS NOT SUPPORTED  ////////////// //
         // uploadStrategies.Add("On-Time All, single DB connection, UNNEST");
         // routeTable = baseRouteTable + "_T77";
         // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
