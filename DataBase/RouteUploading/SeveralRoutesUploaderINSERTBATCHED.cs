@@ -54,9 +54,10 @@ namespace SytyRouting.DataBase
 
             command.CommandText = sb.ToString();
             await command.ExecuteNonQueryAsync();
-
    
             await connection.CloseAsync();
+
+            await PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
