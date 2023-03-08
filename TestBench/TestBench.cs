@@ -919,6 +919,64 @@ namespace SytyRouting
         // DB related ///// ///////
         ///////////////////////////
 
+
+        // /////////////
+        // /////////////  ////////////// //
+        // uploadStrategies.Add("On-Time All, single DB connection, COPY on AUX table");
+        // var routeTable = baseRouteTable + "_T86";
+        // var auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+        // tableNames.Add(routeTable);
+
+        // var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+        //                         DataBase.SeveralRoutesUploaderCOPYaux,
+        //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+        // totalTimes.Add(totalTime);
+
+        // var auxiliaryTable86 = auxiliaryTable;
+
+        // //var comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable86);
+        // var comparisonResult = "Reference";
+        // comparisonResults.Add(comparisonResult);
+
+
+        //////////////
+        // /////////////  DOES NOT WORK ////////////// //
+        // uploadStrategies.Add("On-Time All, single DB connection, INSERT PREPARED");
+        // routeTable = baseRouteTable + "_T79";
+        // auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+        // tableNames.Add(routeTable);
+
+        // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+        //                         DataBase.SeveralRoutesUploaderINSERTPREPARED,
+        //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+        // totalTimes.Add(totalTime);
+
+        // var auxiliaryTable9 = auxiliaryTable;
+
+        // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable9);
+        // comparisonResults.Add(comparisonResult);
+
+
+        // //////////////
+        // // ///////////// DOES NOT WORK ////////////// //
+        // uploadStrategies.Add("On-Time All, single DB connection, UNNEST");
+        // routeTable = baseRouteTable + "_T77";
+        // auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+        // tableNames.Add(routeTable);
+
+        // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+        //                         DataBase.SeveralRoutesUploaderUNNEST,
+        //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+        // totalTimes.Add(totalTime);
+
+        // var auxiliaryTable7 = auxiliaryTable;
+
+        // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable7);
+        // comparisonResults.Add(comparisonResult);
+
+        // //////////////
+
+
         // //await DataBase.PLGSQLFunctions.SetUnnest2D1D(Configuration.ConnectionString);
 
 
