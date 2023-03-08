@@ -54,8 +54,7 @@ namespace SytyRouting.DataBase
                     new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route) WHERE persona_id = " + persona.Id + ";"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route) WHERE persona_id = " + persona.Id + ";"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route) AND persona_id = " + persona.Id + ";"), 
-                    //new("UPDATE " + auxiliaryTable + " SET route = computed_route::tgeompoint WHERE is_valid_route = true AND persona_id = " + persona.Id + ";")
-                    new("UPDATE " + routeTable + " rt SET route = t_aux.computed_route::tgeompoint FROM " + auxiliaryTable + " t_aux WHERE  t_aux.persona_id = rt.id AND t_aux.is_valid_route = true;")
+                    new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;")
                 }
             };
 
@@ -65,7 +64,7 @@ namespace SytyRouting.DataBase
             }
 
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
-            var iterationString = "UPDATE " + auxiliaryTable + " SET transport_sequence= coalesce_transport_modes_time_stamps(transport_modes, time_stamps) WHERE is_valid_route = true AND persona_id = " + persona.Id + ";";
+            var iterationString = "UPDATE " + routeTable + " r_t SET transport_sequence = coalesce_transport_modes_time_stamps(aux_t.transport_modes, aux_t.time_stamps) FROM " + auxiliaryTable + " aux_t WHERE aux_t.is_valid_route = true AND r_t.id = aux_t.persona_id;";
 
             await using (var cmd = new NpgsqlCommand(iterationString, connection))
             {
@@ -76,35 +75,6 @@ namespace SytyRouting.DataBase
                 catch(Exception e)
                 {
                     logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
-                }                
-            }
-
-            //PLGSQL: Iterates over each route result to update the persona_route table
-            var updateString = "UPDATE " + routeTable + " SET route = (SELECT route FROM " + auxiliaryTable + " WHERE persona_id = " + persona.Id + ") WHERE id = " + persona.Id;
-
-            // await using (var cmd = new NpgsqlCommand(updateString, connection))
-            // {
-            //     try
-            //     {
-            //         await cmd.ExecuteNonQueryAsync();
-            //     }
-            //     catch(Exception e)
-            //     {
-            //         logger.Debug(" ==>> Unable to update routes on the database: {0}", e.Message);
-            //     }                
-            // }
-
-            updateString = "UPDATE " + routeTable + " SET transport_sequence = (SELECT transport_sequence FROM " + auxiliaryTable + " WHERE persona_id = " + persona.Id + ") WHERE id = " + persona.Id;
-
-            await using (var cmd = new NpgsqlCommand(updateString, connection))
-            {
-                try
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                catch(Exception e)
-                {
-                    logger.Debug(" ==>> Unable to update transport sequences on the database: {0}", e.Message);
                 }                
             }
    
