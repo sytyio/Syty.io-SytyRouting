@@ -128,7 +128,7 @@ namespace SytyRouting.DataBase
 
             // /////////////
             // /////////////  ////////////// //
-            uploadStrategies.Add("On-Time All, single DB connection, static COPY");
+            uploadStrategies.Add("On-Time All, single DB connection, STATIC COPY");
             routeTable = baseRouteTable + "_T106";
             auxiliaryTable = await personaRouteTableS.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);

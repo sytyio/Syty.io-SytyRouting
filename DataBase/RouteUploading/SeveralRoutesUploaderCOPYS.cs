@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class SeveralRoutesUploaderCOPYS : BaseRouteUploaderS
+    public class SeveralRoutesUploaderCOPYS : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -47,7 +47,7 @@ namespace SytyRouting.DataBase
             return uploadFails;
         }
 
-        public static async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
+        public static async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
