@@ -52,6 +52,8 @@ namespace SytyRouting.DataBase
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
+            var timeIncrement = stopWatch.Elapsed;
+
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
@@ -74,6 +76,11 @@ namespace SytyRouting.DataBase
             {
                 logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
+
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
             var iterationString = @"
@@ -103,30 +110,18 @@ namespace SytyRouting.DataBase
                 }
                 catch(Exception e)
                 {
-                    logger.Debug(" ==>> Unable to compute transport mode transitions on the database: {0}", e.Message);
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Database error ");
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Unable to compute transport mode transitions on the database: {0}", e.Message);
                     uploadFails++;
                 }                
             }
 
-            //PLGSQL: Iterates over each route result to update the persona_route table
-            // var updateString = @"
-            // DO 
-            // $$
-            // DECLARE
-            // _id int;
-            // _r tgeompoint;
-            // _ts ttext(Sequence);
-            // BEGIN    
-            //     FOR _id, _r, _ts in SELECT persona_id, route, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
-            //     LOOP
-            //         RAISE NOTICE 'id: %', _id;
-            //         RAISE NOTICE 'route: %', _r;
-            //         RAISE NOTICE 'transport sequence: %', _ts;
-            //         UPDATE " + routeTable + @" SET route = _r, transport_sequence = _ts WHERE id = _id;
-            //     END LOOP;
-            // END;
-            // $$;
-            // ";
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("------------------------------------------------------------------------------------");
+            logger.Info("    ttext(Sequence) calculation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("------------------------------------------------------------------------------------");
 
             var updateString = @"
             DO 
@@ -155,10 +150,18 @@ namespace SytyRouting.DataBase
                 }
                 catch(Exception e)
                 {
-                    logger.Debug(" ==>> Unable to update routes/transport sequences on the database: {0}", e.Message);
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Database error ");
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Unable to update transport sequences on the database: {0}", e.Message);
                     uploadFails++;
                 }                
             }
+
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+            logger.Info("    ttext(Sequence) result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);

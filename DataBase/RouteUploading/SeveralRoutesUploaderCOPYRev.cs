@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class SeveralRoutesUploaderCOPY : BaseRouteUploader
+    public class SeveralRoutesUploaderCOPYRev : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -36,7 +36,7 @@ namespace SytyRouting.DataBase
    
             await connection.CloseAsync();
 
-            await PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
+            await BaseRouteUploader.PropagateResultsSAsync(connectionString,auxiliaryTable,routeTable);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);

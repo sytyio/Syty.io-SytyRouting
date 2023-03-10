@@ -135,7 +135,7 @@ namespace SytyRouting.DataBase
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;"),
-                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
+                    //new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")

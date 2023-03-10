@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 100;
+            int numberOfRows = 1000;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             var personaRouteTableS = new DataBase.PersonaRouteTableS(Configuration.ConnectionString);
                         
@@ -43,7 +43,7 @@ namespace SytyRouting.DataBase
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploader,
-                                    Routing.RouterOneTimeAllUpload_rev>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
             var auxiliaryTable70 = auxiliaryTable;
@@ -143,6 +143,27 @@ namespace SytyRouting.DataBase
             //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable106);
             comparisonResults.Add(comparisonResult);
+
+
+            // /////////////
+            // /////////////  ////////////// //
+            uploadStrategies.Add("On-Time All, single DB connection, REV COPY");
+            routeTable = baseRouteTable + "_T116";
+            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.SeveralRoutesUploaderCOPYRev,
+                                    Routing.RouterOneTimeAllUploadRev>(graph,routeTable,auxiliaryTable);
+            totalTimes.Add(totalTime);
+
+            var auxiliaryTable116 = auxiliaryTable;
+
+            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable116);
+            comparisonResults.Add(comparisonResult);
+
+
 
 
             // ///////////////
