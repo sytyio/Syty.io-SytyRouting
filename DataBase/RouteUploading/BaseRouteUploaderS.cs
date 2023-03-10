@@ -2,7 +2,7 @@ using SytyRouting.Model;
 
 namespace SytyRouting.DataBase
 {
-    public abstract class BaseRouteUploaderS : IRouteUploader
+    public abstract class BaseRouteUploaderS : IRouteUploaderS
     {
         public virtual Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas)
         {

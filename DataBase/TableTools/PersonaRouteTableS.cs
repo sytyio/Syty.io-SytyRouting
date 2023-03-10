@@ -31,7 +31,7 @@ namespace SytyRouting.DataBase
             
             await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
 
-            var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(_connectionString);
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTableS(_connectionString);
             var auxiliaryTable = await personaRouteAuxTable.CreateAuxiliaryTable(routingResultTable,numberOfRows);
 
             stopWatch.Stop();
