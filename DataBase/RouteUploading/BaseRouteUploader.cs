@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using NLog;
@@ -12,9 +13,10 @@ namespace SytyRouting.DataBase
         
         protected async Task<int> PropagateResultsAsync(string connectionString, string auxiliaryTable, string routeTable)
         {
-            //Stopwatch stopWatch = new Stopwatch();
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
 
-            //stopWatch.Start();
+            var timeIncrement = stopWatch.Elapsed;
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
@@ -37,6 +39,11 @@ namespace SytyRouting.DataBase
             {
                 logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
+
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
             var iterationString = @"
@@ -70,6 +77,17 @@ namespace SytyRouting.DataBase
                     uploadFails++;
                 }                
             }
+
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            logger.Info("    ttext(Sequence) result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+            stopWatch.Stop();
+            var totalTime = stopWatch.Elapsed;
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+            logger.Info("    Result propagation time :: {0}", Helper.FormatElapsedTime(totalTime));
+            logger.Info("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
             return uploadFails;
         }

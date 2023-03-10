@@ -14,7 +14,6 @@ namespace SytyRouting.DataBase
         public override async Task<int> UploadRoutesAsync(string connectionString, string auxiliaryTable, string routeTable, List<Persona> personas)
         {
             Stopwatch stopWatch = new Stopwatch();
-
             stopWatch.Start();
 
             await using var connection = new NpgsqlConnection(connectionString);
@@ -41,7 +40,9 @@ namespace SytyRouting.DataBase
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("Route uploading execution time :: {0}", totalTime);
+            logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+            logger.Info("   Route uploading execution time :: {0}", totalTime);
+            logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
 
             return uploadFails;
         }        
