@@ -8,8 +8,13 @@ namespace SytyRouting.DataBase
 {
     public class PersonaRouteTable
     {
+        //public string PersonaOriginTable;
+        //public string RoutingResultTable;
+        //public string AuxiliaryTable = "";
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
+        //private int _numberOfRows = 0;
         private string _connectionString;
 
         public PersonaRouteTable(string connectionString)
@@ -20,6 +25,9 @@ namespace SytyRouting.DataBase
         public async Task<string> CreateDataSet(string personaOriginTable, string routingResultTable, int numberOfRows)
         {
             stopWatch.Start();
+
+            //PersonaOriginTable=personaOriginTable;
+            //_numberOfRows=numberOfRows;
             
             await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
 
@@ -37,6 +45,9 @@ namespace SytyRouting.DataBase
         {
             stopWatch.Start();
 
+            //PersonaOriginTable=personaOriginTable;
+            //_numberOfRows=numberOfRows;
+            
             await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
 
             var personaRouteAuxTable = new PersonaRouteAuxiliaryTable(_connectionString);

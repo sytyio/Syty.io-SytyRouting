@@ -36,7 +36,7 @@ namespace SytyRouting.DataBase
    
             await connection.CloseAsync();
 
-            await PropagateResultsSAsync(connectionString,auxiliaryTable,routeTable);
+            await PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);

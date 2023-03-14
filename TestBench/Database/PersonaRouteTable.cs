@@ -6,18 +6,13 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.DataBase
 {
-    public class PersonaRouteTableS
+    public class PersonaRouteTablePrev
     {
-        //public string PersonaOriginTable;
-        //public string RoutingResultTable;
-        //public string AuxiliaryTable = "";
-
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
-        //private int _numberOfRows = 0;
         private string _connectionString;
 
-        public PersonaRouteTableS(string connectionString)
+        public PersonaRouteTablePrev(string connectionString)
         {
             _connectionString=connectionString;
         }
@@ -25,13 +20,10 @@ namespace SytyRouting.DataBase
         public async Task<string> CreateDataSet(string personaOriginTable, string routingResultTable, int numberOfRows)
         {
             stopWatch.Start();
-
-            //PersonaOriginTable=personaOriginTable;
-            //_numberOfRows=numberOfRows;
             
             await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
 
-            var personaRouteAuxTable = new PersonaRouteAuxiliaryTableS(_connectionString);
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTablePrev(_connectionString);
             var auxiliaryTable = await personaRouteAuxTable.CreateAuxiliaryTable(routingResultTable,numberOfRows);
 
             stopWatch.Stop();
@@ -45,12 +37,9 @@ namespace SytyRouting.DataBase
         {
             stopWatch.Start();
 
-            //PersonaOriginTable=personaOriginTable;
-            //_numberOfRows=numberOfRows;
-            
             await SetRoutingResultTableAsync(personaOriginTable,routingResultTable,numberOfRows);
 
-            var personaRouteAuxTable = new PersonaRouteAuxiliaryTableS(_connectionString);
+            var personaRouteAuxTable = new PersonaRouteAuxiliaryTablePrev(_connectionString);
             var auxiliaryTable = await personaRouteAuxTable.CreateEmptyAuxiliaryTable(routingResultTable,numberOfRows);
 
             stopWatch.Stop();

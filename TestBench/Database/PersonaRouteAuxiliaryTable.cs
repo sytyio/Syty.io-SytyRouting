@@ -6,21 +6,15 @@ using NetTopologySuite.Geometries.Implementation;
 
 namespace SytyRouting.DataBase
 {
-    public class PersonaRouteAuxiliaryTableS
+    public class PersonaRouteAuxiliaryTablePrev
     {
-        //public string ConnectionString;
-        //public string ResultTable;
-        //public string AuxiliaryTable;
-
         private static Logger logger = LogManager.GetCurrentClassLogger();
         private static Stopwatch stopWatch = new Stopwatch();
         private string _connectionString;
 
-        public PersonaRouteAuxiliaryTableS(string connectionString)
+        public PersonaRouteAuxiliaryTablePrev(string connectionString)
         {
             _connectionString=connectionString;
-            // ResultTable=resultTable;
-            // AuxiliaryTable=resultTable+Configuration.AuxiliaryTableSuffix;
         }
 
         public async Task<string> CreateAuxiliaryTable(string resultsTable, int numberOfRows)
@@ -51,8 +45,6 @@ namespace SytyRouting.DataBase
 
         private async Task<string> SetAuxiliaryTableAsync(string resultsTable, int numberOfRows)
         {
-            //var connectionString = ConnectionString;
-            //var routeTable=ResultTable;
             var auxiliaryTable=resultsTable+Configuration.AuxiliaryTableSuffix;;
             var auxiliaryTableTablePK=auxiliaryTable+Configuration.PKConstraintSuffix;
             var auxiliaryTableTableFK=auxiliaryTable+Configuration.FKConstraintSuffix;
@@ -84,10 +76,8 @@ namespace SytyRouting.DataBase
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;"),
-                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];"),
-                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
                 }
             };
 
@@ -125,9 +115,7 @@ namespace SytyRouting.DataBase
             {
                 BatchCommands =
                 {
-                    //new("CREATE TABLE IF NOT EXISTS " + auxiliaryTable + " AS SELECT id FROM " + resultsTable + " ORDER BY id ASC LIMIT " + numberOfRows + ";"),
                     new("CREATE TABLE IF NOT EXISTS " + auxiliaryTable + " (persona_id INT);"),
-                    //new("ALTER TABLE " + auxiliaryTable + " RENAME COLUMN id TO persona_id;"),
                     new("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTableTableFK + ";"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT " + auxiliaryTableTableFK + " FOREIGN KEY (persona_id) REFERENCES " + resultsTable + " (id);"),
                     new("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTableTablePK + ";"),
@@ -135,10 +123,8 @@ namespace SytyRouting.DataBase
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;"),
-                    //new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];"),
-                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
                 }
             };
 

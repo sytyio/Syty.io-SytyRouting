@@ -920,6 +920,24 @@ namespace SytyRouting
         ///////////////////////////
 
 
+            // /////////////
+            // // /////////////  ////////////// //
+            // uploadStrategies.Add("On-Time All, single DB connection, STATIC COPY");
+            // routeTable = baseRouteTable + "_T106";
+            // auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
+
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploaderCOPYS,
+            //                         Routing.RouterOneTimeAllUploadS>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
+
+            // var auxiliaryTable106 = auxiliaryTable;
+
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable106);
+            // //var comparisonResult = "Reference";
+            // comparisonResults.Add(comparisonResult);
+
         // /////////////
         // /////////////  ////////////// //
         // uploadStrategies.Add("On-Time All, single DB connection, COPY on AUX table");
