@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 10;
+            int numberOfRows = 1000;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             var personaRouteTableS = new DataBase.PersonaRouteTableS(Configuration.ConnectionString);
                         
@@ -149,7 +149,8 @@ namespace SytyRouting.DataBase
             // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, REV COPY");
             routeTable = baseRouteTable + "_T116";
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            //debug:auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            auxiliaryTable = await personaRouteTableS.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,

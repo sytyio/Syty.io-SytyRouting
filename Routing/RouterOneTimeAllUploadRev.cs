@@ -182,13 +182,9 @@ namespace SytyRouting.Routing
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
-            //var uploader = new DataBase.OneTimeAllUpload();
             var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
-            await BaseRouteUploader.PropagateResultsSAsync(connectionString,auxiliaryTable,routeTable);
-            //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
-            //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
             uploadStopWatch.Stop();
             TotalUploadingTime = uploadStopWatch.Elapsed;

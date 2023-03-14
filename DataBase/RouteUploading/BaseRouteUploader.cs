@@ -94,7 +94,8 @@ namespace SytyRouting.DataBase
         }
 
         //debug: protected static async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
-        public static async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
+        //debug: public static async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
+        protected async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -137,9 +138,9 @@ namespace SytyRouting.DataBase
             _arr_tm text[];
             _arr_ts timestamptz[];
             BEGIN    
-                FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+                FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @"
                 LOOP
-                    UPDATE " + routeTable + @" r_t SET transport_sequence = coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) FROM " + auxiliaryTable + @" aux_t WHERE aux_t.is_valid_route = true AND r_t.id = _id;
+                    UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
                 END LOOP;
             END;
             $$;
@@ -157,6 +158,41 @@ namespace SytyRouting.DataBase
                     logger.Debug(" Database error ");
                     logger.Debug("!!!!!!!!!!!!!!!!");
                     logger.Debug(" Unable to compute transport mode transitions: {0}", e.Message);
+                    uploadFails++;
+                }                
+            }
+
+            // var updateString = @"
+            // DO 
+            // $$
+            // DECLARE
+            // _id int;
+            // _r tgeompoint;
+            // _ts ttext(Sequence);
+            // BEGIN    
+            //     FOR _id, _ts in SELECT persona_id, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
+            //     LOOP
+            //         UPDATE " + routeTable + @" SET transport_sequence = _ts WHERE id = _id;
+            //     END LOOP;
+            // END;
+            // $$;
+            // ";
+
+
+            var updateString = "UPDATE " + routeTable + " r_t SET transport_sequence = aux_t.transport_sequence FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id;";
+
+            await using (var cmd = new NpgsqlCommand(updateString, connection))
+            {
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                catch(Exception e)
+                {
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Database error ");
+                    logger.Debug("!!!!!!!!!!!!!!!!");
+                    logger.Debug(" Unable to update transport sequences on the database: {0}", e.Message);
                     uploadFails++;
                 }                
             }
