@@ -108,27 +108,6 @@ namespace SytyRouting.DataBase
 
             int uploadFails = 0;
 
-            await using var batch = new NpgsqlBatch(connection)
-            {
-                BatchCommands =
-                {
-                    new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"),
-                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
-                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
-                    new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;")
-                }
-            };
-
-            await using (var reader = await batch.ExecuteReaderAsync())
-            {
-                logger.Debug("{0} table SET statements executed",auxiliaryTable);
-            }
-
-            timeIncrement = stopWatch.Elapsed-timeIncrement;
-            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
-            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
             var iterationString = @"
             DO 
@@ -146,37 +125,27 @@ namespace SytyRouting.DataBase
             $$;
             ";
 
-            await using (var cmd = new NpgsqlCommand(iterationString, connection))
+            await using var batch = new NpgsqlBatch(connection)
             {
-                try
+                BatchCommands =
                 {
-                    await cmd.ExecuteNonQueryAsync();
+                    new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"),
+                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
+                    new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
+                    new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;"),
+                    new(iterationString)
                 }
-                catch(Exception e)
-                {
-                    logger.Debug("!!!!!!!!!!!!!!!!");
-                    logger.Debug(" Database error ");
-                    logger.Debug("!!!!!!!!!!!!!!!!");
-                    logger.Debug(" Unable to compute transport mode transitions: {0}", e.Message);
-                    uploadFails++;
-                }                
+            };
+
+            await using (var reader = await batch.ExecuteReaderAsync())
+            {
+                logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
 
-            // var updateString = @"
-            // DO 
-            // $$
-            // DECLARE
-            // _id int;
-            // _r tgeompoint;
-            // _ts ttext(Sequence);
-            // BEGIN    
-            //     FOR _id, _ts in SELECT persona_id, transport_sequence FROM " + auxiliaryTable + @" ORDER BY persona_id ASC
-            //     LOOP
-            //         UPDATE " + routeTable + @" SET transport_sequence = _ts WHERE id = _id;
-            //     END LOOP;
-            // END;
-            // $$;
-            // ";
+            timeIncrement = stopWatch.Elapsed-timeIncrement;
+            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
 
             var updateString = "UPDATE " + routeTable + " r_t SET transport_sequence = aux_t.transport_sequence FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id;";
