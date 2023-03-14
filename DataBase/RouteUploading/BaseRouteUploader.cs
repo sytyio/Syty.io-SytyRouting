@@ -125,6 +125,8 @@ namespace SytyRouting.DataBase
             $$;
             ";
 
+            var updateString = "UPDATE " + routeTable + " r_t SET transport_sequence = aux_t.transport_sequence FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id;";
+
             await using var batch = new NpgsqlBatch(connection)
             {
                 BatchCommands =
@@ -133,7 +135,8 @@ namespace SytyRouting.DataBase
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
                     new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;"),
-                    new(iterationString)
+                    new(iterationString),
+                    new(updateString)
                 }
             };
 
@@ -142,34 +145,34 @@ namespace SytyRouting.DataBase
                 logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
 
-            timeIncrement = stopWatch.Elapsed-timeIncrement;
-            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-            logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
-            logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            // timeIncrement = stopWatch.Elapsed-timeIncrement;
+            // logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            // logger.Info("    tgeompoint result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            // logger.Info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
 
-            var updateString = "UPDATE " + routeTable + " r_t SET transport_sequence = aux_t.transport_sequence FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id;";
+            
 
-            await using (var cmd = new NpgsqlCommand(updateString, connection))
-            {
-                try
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                catch(Exception e)
-                {
-                    logger.Debug("!!!!!!!!!!!!!!!!");
-                    logger.Debug(" Database error ");
-                    logger.Debug("!!!!!!!!!!!!!!!!");
-                    logger.Debug(" Unable to update transport sequences on the database: {0}", e.Message);
-                    uploadFails++;
-                }                
-            }
+            // await using (var cmd = new NpgsqlCommand(updateString, connection))
+            // {
+            //     try
+            //     {
+            //         await cmd.ExecuteNonQueryAsync();
+            //     }
+            //     catch(Exception e)
+            //     {
+            //         logger.Debug("!!!!!!!!!!!!!!!!");
+            //         logger.Debug(" Database error ");
+            //         logger.Debug("!!!!!!!!!!!!!!!!");
+            //         logger.Debug(" Unable to update transport sequences on the database: {0}", e.Message);
+            //         uploadFails++;
+            //     }                
+            // }
 
-            timeIncrement = stopWatch.Elapsed-timeIncrement;
-            logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
-            logger.Info("    ttext(Sequence) result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
-            logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+            // timeIncrement = stopWatch.Elapsed-timeIncrement;
+            // logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
+            // logger.Info("    ttext(Sequence) result propagation time :: {0}", Helper.FormatElapsedTime(timeIncrement));
+            // logger.Info("'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''");
 
             stopWatch.Stop();
             var totalTime = stopWatch.Elapsed;
