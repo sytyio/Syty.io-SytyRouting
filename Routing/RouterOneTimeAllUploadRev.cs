@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Npgsql;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
+using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -185,6 +186,7 @@ namespace SytyRouting.Routing
             var uploader = new U();
 
             int uploadFails = await uploader.UploadRoutesAsync(connectionString,auxiliaryTable,routeTable,personas);
+            await BaseRouteUploader.PropagateResultsSAsync(connectionString,auxiliaryTable,routeTable);
             //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
             //uploadFails += await uploader.PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 

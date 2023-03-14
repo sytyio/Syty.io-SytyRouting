@@ -47,7 +47,7 @@ namespace SytyRouting.DataBase
             return uploadFails;
         }
 
-        public static async Task<int> PropagateResultsSAsync(string connectionString, string auxiliaryTable, string routeTable)
+        public static async Task<int> PropagateResultsSSAsync(string connectionString, string auxiliaryTable, string routeTable)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();

@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 1000;
+            int numberOfRows = 10;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
             var personaRouteTableS = new DataBase.PersonaRouteTableS(Configuration.ConnectionString);
                         
@@ -36,20 +36,20 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            uploadStrategies.Add("One-Time All, single DB connection, INSERT");
-            var routeTable = baseRouteTable + "_T70";
-            var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
+            // uploadStrategies.Add("One-Time All, single DB connection, INSERT");
+            // var routeTable = baseRouteTable + "_T70";
+            // var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
 
-            var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploader,
-                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
+            // var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploader,
+            //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
             
-            var auxiliaryTable70 = auxiliaryTable;
+            // var auxiliaryTable70 = auxiliaryTable;
 
-            var comparisonResult = "Reference";
-            comparisonResults.Add(comparisonResult);
+            // var comparisonResult = "Reference";
+            // comparisonResults.Add(comparisonResult);
 
 
             // //////////////
@@ -109,39 +109,39 @@ namespace SytyRouting.DataBase
 
             // /////////////
             // /////////////  ////////////// //
-            uploadStrategies.Add("On-Time All, single DB connection, COPY");
-            routeTable = baseRouteTable + "_T96";
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
+            // uploadStrategies.Add("On-Time All, single DB connection, COPY");
+            // routeTable = baseRouteTable + "_T96";
+            // auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            // tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploaderCOPY,
-                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.SeveralRoutesUploaderCOPY,
+            //                         Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+            // totalTimes.Add(totalTime);
 
-            var auxiliaryTable96 = auxiliaryTable;
+            // var auxiliaryTable96 = auxiliaryTable;
 
-            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable96);
-            comparisonResults.Add(comparisonResult);
+            // //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable96);
+            // comparisonResults.Add(comparisonResult);
 
 
             // /////////////
             // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, STATIC COPY");
-            routeTable = baseRouteTable + "_T106";
-            auxiliaryTable = await personaRouteTableS.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            var routeTable = baseRouteTable + "_T106";
+            var auxiliaryTable = await personaRouteTableS.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
             tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploaderCOPYS,
                                     Routing.RouterOneTimeAllUploadS>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable106 = auxiliaryTable;
 
-            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable106);
+            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable106);
+            var comparisonResult = "Reference";
             comparisonResults.Add(comparisonResult);
 
 
@@ -160,7 +160,7 @@ namespace SytyRouting.DataBase
             var auxiliaryTable116 = auxiliaryTable;
 
             //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable116);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable106,auxiliaryTable116);
             comparisonResults.Add(comparisonResult);
 
 
