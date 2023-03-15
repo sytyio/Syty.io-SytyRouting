@@ -70,6 +70,7 @@ namespace SytyRouting.DataBase
             await importer.CloseAsync();
 
             /////////////////
+            
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
             var iterationString = @"
             DO 
@@ -110,7 +111,6 @@ namespace SytyRouting.DataBase
             /////////////////
 
             //debug: Aux table copied to a permanent table for benchmarking
-
             await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + auxiliaryTable + "_comp;", connection))
             {
                 await cmd.ExecuteNonQueryAsync();
