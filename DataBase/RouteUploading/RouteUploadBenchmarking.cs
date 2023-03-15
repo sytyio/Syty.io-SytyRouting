@@ -28,7 +28,6 @@ namespace SytyRouting.DataBase
 
             int numberOfRows = 10;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
-            //var personaRouteTableS = new DataBase.PersonaRouteTableS(Configuration.ConnectionString);
                         
                         
             string baseRouteTable = Configuration.PersonaRouteTable;
@@ -38,74 +37,64 @@ namespace SytyRouting.DataBase
             // /////////////  ////////////// //
             uploadStrategies.Add("One-Time All, single DB connection, INSERT");
             var routeTable = baseRouteTable + "_T70";
-            var auxiliaryTable = await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            await personaRouteTable.CreateDataSetRev(Configuration.PersonaTable,routeTable,numberOfRows);
+            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploader,
-                                    Routing.RouterOneTimeAllUploadRev>(graph,routeTable,auxiliaryTable);
+                                    DataBase.RouteUploader,
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
             var auxiliaryTable70 = auxiliaryTable;
 
             var comparisonResult = "Reference";
             comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
 
 
             // //////////////
             // // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, INSERT PLAIN");
             routeTable = baseRouteTable + "_T79";
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploaderINSERTPLAIN,
-                                    Routing.RouterOneTimeAllUploadRev>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable79 = auxiliaryTable;
 
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable79);
             comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
+
 
 
             // //////////////
             // // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
             routeTable = baseRouteTable + "_T78";
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploaderINSERTBATCHED,
-                                    Routing.RouterOneTimeAllUploadRev>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable78 = auxiliaryTable;
 
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable78);
             comparisonResults.Add(comparisonResult);
-
-
-            // /////////////
-            // /////////////  ////////////// //
-            uploadStrategies.Add("On-Time All, single DB connection, REV COPY");
-            routeTable = baseRouteTable + "_T116";
-            //debug:auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
-            tableNames.Add(routeTable);
-
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploaderCOPYRev,
-                                    Routing.RouterOneTimeAllUploadRev>(graph,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
-
-            var auxiliaryTable116 = auxiliaryTable;
-
-            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable116);
-            comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
 
 
 
@@ -113,11 +102,12 @@ namespace SytyRouting.DataBase
             // // /////////////  ////////////// //
             uploadStrategies.Add("As computed (batch), single DB connection");
             routeTable = baseRouteTable + "_T75";
-            auxiliaryTable = await personaRouteTable.CreateDataSetEmptyAuxTab(Configuration.PersonaTable,routeTable,numberOfRows);
+            await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
+            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploaderCOPYRev,
+                                    DataBase.RouteUploader,
                                     Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
@@ -125,7 +115,6 @@ namespace SytyRouting.DataBase
 
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable75);
             comparisonResults.Add(comparisonResult);
-
             // //////////////
             // //////////////
 
@@ -146,10 +135,11 @@ namespace SytyRouting.DataBase
 
             var auxiliaryTable126 = auxiliaryTable;
 
-            //comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable0,auxiliaryTable6);
             comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable126);
             comparisonResults.Add(comparisonResult);
-
+            // /////////////   ///////////// //
+            // /////////////  ////////////// //
+ 
 
             
 
