@@ -6,7 +6,7 @@ using NetTopologySuite.Geometries;
 
 namespace SytyRouting.Routing
 {
-    public class RouterOneTimeAllUpload : BaseRouter
+    public class RouterOneTimeAllUploadFirstVersion : BaseRouter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
         

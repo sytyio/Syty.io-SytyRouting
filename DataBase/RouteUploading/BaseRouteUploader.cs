@@ -76,6 +76,11 @@ namespace SytyRouting.DataBase
            throw new NotImplementedException();
         }
 
+        public virtual Task<int> UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
+        {
+           throw new NotImplementedException();
+        }
+
         public virtual Task<int> UploadRouteAsync(string connectionString, string auxiliaryTable, string routeTable, Persona personas)
         {
            throw new NotImplementedException();
