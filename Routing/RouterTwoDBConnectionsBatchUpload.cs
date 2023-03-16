@@ -87,8 +87,8 @@ namespace SytyRouting.Routing
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
             int[] batchSizes = GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
 
-            //uploadBatchSize = batchSize;
-            uploadBatchSize = elementsToProcess;
+            uploadBatchSize = batchSize;
+            //uploadBatchSize = elementsToProcess;
 
             int offset = 0;
             for(var batchNumber = 0; batchNumber < numberOfBatches; batchNumber++)

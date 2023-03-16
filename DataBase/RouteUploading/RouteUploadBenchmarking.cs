@@ -26,7 +26,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 11;
+            int numberOfRows = 515;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
                         
                         
