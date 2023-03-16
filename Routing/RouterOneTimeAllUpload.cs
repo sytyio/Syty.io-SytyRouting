@@ -47,12 +47,14 @@ namespace SytyRouting.Routing
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
-            Task.WaitAll(routingTasks);
             Task.WaitAll(downloadTask); //debug <-
-            routingTasksHaveEnded = true;
-            Task.WaitAll(monitorTask);
+            Task.WaitAll(routingTasks);
 
             TotalRoutingTime = baseRouterStopWatch.Elapsed;
+
+            routingTasksHaveEnded = true;
+            
+            Task.WaitAll(monitorTask);
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
