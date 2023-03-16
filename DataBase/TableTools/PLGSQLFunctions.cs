@@ -65,7 +65,7 @@ namespace SytyRouting.DataBase
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
 
-            // PLGSQL: Merge each transport_mode with its corresponding transition time_stamp: 
+            // PLGSQL: UNNEST 2D arrays into 1D arrays
             var functionString = @"
             CREATE OR REPLACE FUNCTION unnest_2d_1d(ANYARRAY, OUT a ANYARRAY)
                 RETURNS SETOF ANYARRAY
