@@ -261,11 +261,11 @@ namespace SytyRouting.Routing
                     uploadStopWatch.Stop();
                     TotalUploadingTime = uploadStopWatch.Elapsed;
                     var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
-                    logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personasUploadBatch.Count);
+                    logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)uploadBatch.Count);
                     logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", uploadedRoutes, _auxiliaryTable, totalTime);
-                    logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personasUploadBatch.Count, 100.0 * (double)uploadFails / (double)personasUploadBatch.Count);
-                    logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personasUploadBatch.Count);
-                    logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personasUploadBatch.Count);
+                    logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, uploadBatch.Count, 100.0 * (double)uploadFails / (double)uploadBatch.Count);
+                    logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)uploadBatch.Count);
+                    logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)uploadBatch.Count);
              
                     return;
                 }
