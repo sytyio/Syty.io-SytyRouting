@@ -127,6 +127,10 @@ namespace SytyRouting.Algorithms
             var firstNodeY = nodeRoute.First().Y;
 
             previousTimeInterval = Get2PointTimeInterval(startX,startY,firstNodeX,firstNodeY,outboundMode);
+            if(previousTimeInterval==0)
+            {
+                return _emptyLineString;
+            }
 
             xyCoordinates.Add(new Coordinate(firstNodeX,firstNodeY));
             mOrdinates.Add(previousTimeInterval);
@@ -183,6 +187,10 @@ namespace SytyRouting.Algorithms
             var lastNodeX = nodeRoute.Last().X;
             var lastNodeY = nodeRoute.Last().Y;
             var endM = Get2PointTimeInterval(lastNodeX,lastNodeY,endX,endY,TransportModes.DefaultMode) + previousTimeInterval;
+            if(endM==0)
+            {
+                return _emptyLineString;
+            }
             
             xyCoordinates.Add(new Coordinate(endX,endY));
             mOrdinates.Add(endM);
@@ -212,6 +220,10 @@ namespace SytyRouting.Algorithms
             mOrdinates.Add(previousTimeIntervalS);
 
             double minTimeIntervalS = Get2PointTimeInterval(x1,y1,x2,y2,transportMode);
+            if(minTimeIntervalS==0)
+            {
+                return _emptyLineString;
+            }
 
             previousTimeIntervalS = minTimeIntervalS + previousTimeIntervalS;
 
@@ -238,25 +250,22 @@ namespace SytyRouting.Algorithms
 
         private double Get2PointTimeInterval(double x1, double y1, double x2, double y2, byte transportMode)
         {
-            double timeInterval = 0;
+            double timeInterval = 0.0;
             var distance = Helper.GetDistance(x1,y1,x2,y2);
             
             if(distance == 0)
             {
                 logger.Debug("Distance between Origin and Destination points is zero.");
+                return timeInterval;
             }
 
             if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
             {
                 timeInterval = distance / TransportModes.MasksToSpeeds[transportMode];
 
-                if(timeInterval>0)
+                if(timeInterval<=0)
                 {
-                    return timeInterval;
-                }
-                else
-                {
-                    logger.Debug("Time interval between Origin and Destination points is zero.");
+                    logger.Debug("Invalid time interval between Origin and Destination points: {0}",timeInterval);
                 }
             }
             else
@@ -264,7 +273,7 @@ namespace SytyRouting.Algorithms
                 logger.Debug("Requested transport mode '{0}' not found.", TransportModes.SingleMaskToString(transportMode));
             }
 
-            throw new Exception("Unable to calculate the requested time interval.");
+            return timeInterval;
         }
 
         public Tuple<string[],DateTime[]> SingleTransportModeTransition(Persona persona, Node origin, Node destination, byte transportMode)
