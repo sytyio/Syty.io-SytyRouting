@@ -12,16 +12,8 @@ namespace SytyRouting.Routing
     public class MultiModalRoutingBenchmarking
     {
         private static Graph _graph = null!;
-        //private string _routeTable;
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
-
-        // public RouteUploadBenchmarking(Graph graph, string routeTable)
-        // {
-        //     _graph = graph;
-        //     _routeTable = routeTable;
-        //     //_auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
-        // }
-
 
 
         public static async Task Start<T>(Graph graph) where T: IRoutingAlgorithm, new()
@@ -31,10 +23,6 @@ namespace SytyRouting.Routing
 
             _graph = graph;
 
-            //var algorithm = new T();
-            //var uploader = new U();
-
-            //algorithm.Initialize(graph);
 
             await Routing.MultiModalBenchmarkDataSet.CreateDataSet();
             await MultiModalRouter.StartRouting<T>(_graph);
