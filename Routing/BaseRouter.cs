@@ -189,25 +189,16 @@ namespace SytyRouting.Routing
 
             persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
             
-            //if(route != null)
             if(!persona.Route.IsEmpty)
             {
-                //if(route.Count > 0)
-                //{
-                    // persona.Route = routingAlgorithm.NodeRouteToLineStringMSeconds(homeX, homeY, workX, workY, route, initialTime, persona.StartDateTime);
-
-                    // persona.TTextTransitions = routingAlgorithm.GetTransportModeTransitions();
-
                     persona.SuccessfulRouteComputation = true;
 
                     return true;
-                //}
             }
             else
             {
                 logger.Debug("Route is empty for Persona Id {0}", persona.Id);
             }
-            //}
 
             return false;
         }

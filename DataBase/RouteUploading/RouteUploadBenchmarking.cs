@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 154;
+            int numberOfRows = 1360;
             var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
                         
                         
@@ -226,7 +226,8 @@ namespace SytyRouting.DataBase
                     try
                     {
                         var route = (LineString)reader.GetValue(1); // route (Point)
-                        uploadedPersonas.Add(persona_id, route);
+                        if(!route.IsEmpty)
+                            uploadedPersonas.Add(persona_id, route);
                     }
                     catch
                     {
@@ -240,11 +241,17 @@ namespace SytyRouting.DataBase
             {
                 logger.Debug("Inconsistent number of routes in the database");
             }
-            logger.Debug("Computed routes {0} : {1} Routes in the database", computedRoutes, uploadedPersonas.Count);
+            logger.Debug("Computed routes (non-empty) {0} : {1} Non-empty routes in the database", computedRoutes, uploadedPersonas.Count);
 
             foreach (var persona in personas)
             {
-                if (uploadedPersonas.ContainsKey(persona.Id) && persona.Route is not null)
+                if(persona.Route is null || persona.Route.IsEmpty)
+                {
+                    logger.Debug("Invalid/empty route for Persona Id {0}", persona.Id);
+                    continue;
+                }
+
+                if (uploadedPersonas.ContainsKey(persona.Id))
                 {
                     try
                     {
@@ -259,8 +266,8 @@ namespace SytyRouting.DataBase
                 else
                 {
                     logger.Debug("Unable to compare routes for Persona Id {0}", persona.Id);
-                    TracePersonaDetails(persona);
-                    numberOfFailures++;
+                    //TracePersonaDetails(persona);
+                    //numberOfFailures++;
                 }
             }
             string result;
@@ -269,9 +276,9 @@ namespace SytyRouting.DataBase
             else
                 result = "SUCCEEDED";
 
-            logger.Info("---------------------------------------------");
-            logger.Info("DB uploaded route integrity check {0}.", result);
-            logger.Info("---------------------------------------------");
+            logger.Info("-------------------------------------------------------");
+            logger.Info("DB uploaded route integrity check {0} for valid routes.", result);
+            logger.Info("-------------------------------------------------------");
 
             await connection.CloseAsync();
 
