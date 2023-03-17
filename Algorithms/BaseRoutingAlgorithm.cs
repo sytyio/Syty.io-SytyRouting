@@ -293,7 +293,6 @@ namespace SytyRouting.Algorithms
         {
             var route = persona.Route;
             if(route == null || transitions == null || transitions.Count <1 || route.IsEmpty)
-                //return new Tuple<string[],DateTime[]>(new string[0], new DateTime[0]);
                 return _emptyTTextTransition;
 
             var startTime = persona.StartDateTime;
