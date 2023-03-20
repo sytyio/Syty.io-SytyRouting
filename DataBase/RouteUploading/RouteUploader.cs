@@ -61,21 +61,23 @@ namespace SytyRouting.DataBase
             await importer.CloseAsync();
             
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
-            var iterationString = @"
-            DO 
-            $$
-            DECLARE
-            _id int;
-            _arr_tm text[];
-            _arr_ts timestamptz[];
-            BEGIN    
-                FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @"
-                LOOP
-                    UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
-                END LOOP;
-            END;
-            $$;
-            ";
+            // var iterationString = @"
+            // DO 
+            // $$
+            // DECLARE
+            // _id int;
+            // _arr_tm text[];
+            // _arr_ts timestamptz[];
+            // BEGIN    
+            //     FOR _id, _arr_tm, _arr_ts in SELECT persona_id, transport_modes, time_stamps FROM " + auxiliaryTable + @"
+            //     LOOP
+            //         UPDATE " + auxiliaryTable + @" SET transport_sequence= coalesce_transport_modes_time_stamps(_arr_tm, _arr_ts) WHERE is_valid_route = true AND persona_id = _id;
+            //     END LOOP;
+            // END;
+            // $$;
+            // ";
+
+            var iterationString = "UPDATE " + auxiliaryTable + " SET transport_sequence= coalesce_transport_modes_time_stamps(transport_modes, time_stamps) WHERE is_valid_route = true;";
 
             var updateString = "UPDATE " + routeTable + " r_t SET transport_sequence = aux_t.transport_sequence FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id;";
 
