@@ -57,28 +57,6 @@ namespace SytyRouting.DataBase
             // //////////////
 
 
-            //////////////
-            // /////////////  ////////////// //
-            uploadStrategies.Add("On-Time All, single DB connection, INSERT PLAIN");
-            routeTable = baseRouteTable + "_t79";
-            await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
-            tableNames.Add(routeTable);
-
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.SeveralRoutesUploaderINSERTPLAIN,
-                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
-            totalTimes.Add(totalTime);
-
-            var auxiliaryTable79 = auxiliaryTable;
-            compTableNames.Add(auxiliaryTable);
-
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable79);
-            comparisonResults.Add(comparisonResult);
-            // //////////////
-            // //////////////
-
-
 
             // //////////////
             // // /////////////  ////////////// //
