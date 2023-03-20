@@ -230,6 +230,14 @@ namespace SytyRouting.Routing
             }
         }
 
+        protected int[] GetBatchSizes()
+        {
+            var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
+            var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
+            
+            return GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
+        }
+
         protected int[] GetBatchPartition(int regularSlice, int whole, int numberOfSlices)
         {
             int lastSlice = whole - regularSlice * (numberOfSlices - 1);

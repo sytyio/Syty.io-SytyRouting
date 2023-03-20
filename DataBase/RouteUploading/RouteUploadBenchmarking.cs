@@ -257,9 +257,9 @@ namespace SytyRouting.DataBase
             else
                 result = "SUCCEEDED";
 
-            logger.Info("-------------------------------------------------------");
+            logger.Info("-------------------------------------------------------------");
             logger.Info("DB uploaded route integrity check {0} for valid routes.", result);
-            logger.Info("-------------------------------------------------------");
+            logger.Info("-------------------------------------------------------------");
 
             await connection.CloseAsync();
 

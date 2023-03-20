@@ -71,18 +71,13 @@ namespace SytyRouting.Routing
         {
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
-            //var connectionString = Configuration.ConnectionString;
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            var personaTable = _routeTable;
-
-            var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
-            var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
-            int[] batchSizes = GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
+            int[] batchSizes = GetBatchSizes();
 
             int offset = 0;
-            for(var batchNumber = 0; batchNumber < numberOfBatches; batchNumber++)
+            for(var batchNumber = 0; batchNumber < batchSizes.Length; batchNumber++)
             {
                 var currentBatchSize = batchSizes[batchNumber];
 
@@ -95,7 +90,7 @@ namespace SytyRouting.Routing
 
                 // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
                 //                        0   1              2              3           4
-                var queryString = "SELECT id, home_location, work_location, start_time, requested_transport_modes FROM " + personaTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
+                var queryString = "SELECT id, home_location, work_location, start_time, requested_transport_modes FROM " + _routeTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
