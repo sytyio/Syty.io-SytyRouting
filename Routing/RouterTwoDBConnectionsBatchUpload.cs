@@ -203,13 +203,7 @@ namespace SytyRouting.Routing
                         if(persona!=null)
                         {
                             uploadBatch.Add(persona);
-                            //if(uploadBatch.Count>=uploadBatchSize)
-                            //    break;
                         }
-                        // else
-                        // {
-                        //     Console.WriteLine("Null person! Who let you enter ?!");
-                        // }
                     }
                     logger.Debug("Uploading {0} routes",uploadBatch.Count);
                     
