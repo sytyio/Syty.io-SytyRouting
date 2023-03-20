@@ -4,7 +4,6 @@ using Npgsql;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
 using System.Collections.Concurrent;
-using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -182,7 +181,6 @@ namespace SytyRouting.Routing
             }
         }
 
-        //private async Task UploadRoutesAsync3<U>() where U: IRouteUploader, new()
         protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader, new()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
@@ -200,18 +198,18 @@ namespace SytyRouting.Routing
                 if(routesQueue.Count>=uploadBatchSize)
                 {
                     uploadStopWatch.Start();
-                    while(routesQueue.TryDequeue(out Persona? persona))
+                    while(uploadBatch.Count<=uploadBatchSize && routesQueue.TryDequeue(out Persona? persona))
                     {
                         if(persona!=null)
                         {
                             uploadBatch.Add(persona);
-                            if(uploadBatch.Count>=uploadBatchSize)
-                                break;
+                            //if(uploadBatch.Count>=uploadBatchSize)
+                            //    break;
                         }
-                        else
-                        {
-                            Console.WriteLine("Null person! Who let you enter ?!");
-                        }
+                        // else
+                        // {
+                        //     Console.WriteLine("Null person! Who let you enter ?!");
+                        // }
                     }
                     logger.Debug("Uploading {0} routes",uploadBatch.Count);
                     
@@ -247,8 +245,6 @@ namespace SytyRouting.Routing
              
                     return;
                 }
-
-                
 
                 Thread.Sleep(monitorSleepMilliseconds);
             }
