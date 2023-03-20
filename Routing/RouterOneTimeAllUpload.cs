@@ -3,7 +3,6 @@ using System.Diagnostics;
 using Npgsql;
 using SytyRouting.Model;
 using NetTopologySuite.Geometries;
-using SytyRouting.DataBase;
 
 namespace SytyRouting.Routing
 {
@@ -12,7 +11,7 @@ namespace SytyRouting.Routing
         private static Logger logger = LogManager.GetCurrentClassLogger();
         
 
-        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new() where U: IRouteUploader, new()
+        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, U: IRouteUploader
         {
             baseRouterStopWatch.Start();
 
@@ -47,7 +46,7 @@ namespace SytyRouting.Routing
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
-            Task.WaitAll(downloadTask); //debug <-
+            Task.WaitAll(downloadTask);
             Task.WaitAll(routingTasks);
 
             TotalRoutingTime = baseRouterStopWatch.Elapsed;
@@ -72,8 +71,8 @@ namespace SytyRouting.Routing
         {
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
-            var connectionString = Configuration.ConnectionString;
-            await using var connection = new NpgsqlConnection(connectionString);
+            //var connectionString = Configuration.ConnectionString;
+            await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
             var personaTable = _routeTable;
@@ -144,7 +143,7 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, U: IRouteUploader
         {
             var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
@@ -178,21 +177,15 @@ namespace SytyRouting.Routing
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
-            // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
-            var connectionString = Configuration.ConnectionString;       
-
-            var auxiliaryTable = _auxiliaryTable;
-            var routeTable = _routeTable;
-
             var uploader = new U();
 
-            int uploadFails = await uploader.UploadRoutesAsync(connectionString,routeTable,personas);
+            int uploadFails = await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas);
 
             uploadStopWatch.Stop();
             TotalUploadingTime = uploadStopWatch.Elapsed;
             var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
+            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, _auxiliaryTable, totalTime);
             logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
             logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);

@@ -12,12 +12,10 @@ namespace SytyRouting.Routing
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-
         private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
         private int uploadBatchSize = 0;
 
-
-        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, new()
+        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, U: IRouteUploader
         {
             baseRouterStopWatch.Start();
 
@@ -80,8 +78,8 @@ namespace SytyRouting.Routing
         {
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
-            var connectionString = Configuration.ConnectionString;
-            await using var connection = new NpgsqlConnection(connectionString);
+            //var connectionString = Configuration.ConnectionString;
+            await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
 
             var personaTable = _routeTable;
@@ -154,7 +152,7 @@ namespace SytyRouting.Routing
             await connection.CloseAsync();
         }
 
-        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, new()
+        protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, U: IRouteUploader
         {
             var routingAlgorithm = new A();
             routingAlgorithm.Initialize(_graph);
@@ -188,9 +186,6 @@ namespace SytyRouting.Routing
         {
             Stopwatch uploadStopWatch = new Stopwatch();
 
-            // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
-            var connectionString = Configuration.ConnectionString;       
-
             var uploader = new U();
 
             List<Persona> uploadBatch = new List<Persona>(uploadBatchSize);
@@ -219,7 +214,7 @@ namespace SytyRouting.Routing
                     }
                     logger.Debug("Uploading {0} routes",uploadBatch.Count);
                     
-                    uploadFails = await uploader.UploadRoutesAsync(connectionString,_routeTable,uploadBatch);
+                    uploadFails = await uploader.UploadRoutesAsync(_connectionString,_routeTable,uploadBatch);
 
                     uploadedRoutes += uploadBatch.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
@@ -235,7 +230,7 @@ namespace SytyRouting.Routing
 
                     logger.Debug("Routing tasks have ended. Uploading {0} remaining routes",remainingRoutes.Count);
                     
-                    uploadFails = await uploader.UploadRoutesAsync(connectionString,_routeTable,remainingRoutes);
+                    uploadFails = await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes);
 
                     uploadedRoutes += remainingRoutes.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);

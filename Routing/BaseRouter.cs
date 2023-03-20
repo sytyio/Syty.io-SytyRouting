@@ -14,6 +14,7 @@ namespace SytyRouting.Routing
     {
         [NotNull]
         protected Graph? _graph = null!;
+        protected string _connectionString = null!;
         protected string _routeTable = null!;
         protected string _auxiliaryTable = null!;
         protected List<Persona> Personas = null!;
@@ -47,9 +48,10 @@ namespace SytyRouting.Routing
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-        public void Initialize(Graph graph, string routeTable, string auxiliaryTable)
+        public void Initialize(Graph graph, string connectionString, string routeTable, string auxiliaryTable)
         {
             _graph = graph;
+            _connectionString = connectionString;
             _routeTable = routeTable;
             _auxiliaryTable = auxiliaryTable;
         }

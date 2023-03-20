@@ -28,7 +28,8 @@ namespace SytyRouting.DataBase
             _graph = graph;
 
             int numberOfRows = 1360;
-            var personaRouteTable = new DataBase.PersonaRouteTable(Configuration.ConnectionString);
+            var connectionString = Configuration.ConnectionString;
+            var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
                         
             string baseRouteTable = Configuration.PersonaRouteTable;
@@ -44,7 +45,7 @@ namespace SytyRouting.DataBase
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.RouteUploader,
-                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
             var auxiliaryTable70 = auxiliaryTable;
@@ -66,7 +67,7 @@ namespace SytyRouting.DataBase
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploaderINSERTPLAIN,
-                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable79 = auxiliaryTable;
@@ -89,7 +90,7 @@ namespace SytyRouting.DataBase
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.SeveralRoutesUploaderINSERTBATCHED,
-                                    Routing.RouterOneTimeAllUpload>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable78 = auxiliaryTable;
@@ -112,7 +113,7 @@ namespace SytyRouting.DataBase
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.RouteUploader,
-                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,routeTable,auxiliaryTable);
+                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
             var auxiliaryTable75 = auxiliaryTable;
@@ -169,7 +170,7 @@ namespace SytyRouting.DataBase
 
         }
 
-        private static async Task<TimeSpan> Run<A, U, R>(Graph graph, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new() where R: IRouter, new()
+        private static async Task<TimeSpan> Run<A, U, R>(Graph graph, string connectionString, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
@@ -177,7 +178,7 @@ namespace SytyRouting.DataBase
             var uploader = new U();
             var router = new R();
 
-            router.Initialize(_graph, routeTable, auxiliaryTable);
+            router.Initialize(_graph, connectionString, routeTable, auxiliaryTable);
             await router.StartRouting<A,U>();
 
             var personas = router.GetPersonas();
