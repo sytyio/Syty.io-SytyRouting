@@ -62,7 +62,7 @@ namespace SytyRouting.DataBase
             {
                 BatchCommands =
                 {
-                    new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"), // Only for a quick visual review on TablePlus. 
+                    new("UPDATE " + auxiliaryTable + " SET computed_route_2d = st_force2d(computed_route);"), // Only for a quick visual review on TablePlus.
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = st_IsValidTrajectory(computed_route);"),
                     new("UPDATE " + auxiliaryTable + " SET is_valid_route = false WHERE st_IsEmpty(computed_route);"),
                     new("UPDATE " + routeTable + " r_t SET route = aux_t.computed_route::tgeompoint FROM " + auxiliaryTable + " aux_t WHERE  aux_t.persona_id = r_t.id AND aux_t.is_valid_route = true;"),
@@ -81,8 +81,8 @@ namespace SytyRouting.DataBase
             var comparisonTablePK=auxiliaryTablePK + "_comp";;
 
             bool comparisonTableExists = false;
-            await using (var command = new NpgsqlCommand("SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = '" + comparisonTable + "');", connection))
-            await using (var reader = await command.ExecuteReaderAsync())
+            await using (var prmCommand = new NpgsqlCommand("SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = '" + comparisonTable + "');", connection))
+            await using (var reader = await prmCommand.ExecuteReaderAsync())
             {
                 while(await reader.ReadAsync())
                 {
