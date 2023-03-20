@@ -71,7 +71,7 @@ namespace SytyRouting.DataBase
             return uploadFails;
         }
 
-        public virtual Task<int> UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
+        public virtual Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
         {
            throw new NotImplementedException();
         }

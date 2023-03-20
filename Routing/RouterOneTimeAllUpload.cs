@@ -179,16 +179,13 @@ namespace SytyRouting.Routing
 
             var uploader = new U();
 
-            int uploadFails = await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas);
+            await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas);
 
             uploadStopWatch.Stop();
             TotalUploadingTime = uploadStopWatch.Elapsed;
             var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, _auxiliaryTable, totalTime);
-            logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
-            logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
     }
 }

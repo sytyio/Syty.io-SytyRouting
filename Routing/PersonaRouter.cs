@@ -375,15 +375,12 @@ namespace SytyRouting.Routing
 
             var uploader = new DataBase.RouteUploader();
 
-            int uploadFails = await uploader.UploadRoutesAsync(connectionString,routeTable,personas);
+            await uploader.UploadRoutesAsync(connectionString,routeTable,personas);
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
-            logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", personas.Count - uploadFails, auxiliaryTable, totalTime);
-            logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, personas.Count, 100.0 * (double)uploadFails / (double)personas.Count);
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
-            logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)personas.Count);
         }
 
         private Tuple<string[],DateTime[]> SingleTransportTransitionsToTTEXTSequence(LineString route, Dictionary<int,Tuple<byte,int>> transitions, DateTime startTime)

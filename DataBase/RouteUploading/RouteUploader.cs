@@ -11,7 +11,7 @@ namespace SytyRouting.DataBase
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public override async Task<int> UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
+        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -19,11 +19,6 @@ namespace SytyRouting.DataBase
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
-
-            int uploadFails = 0;
-
-
-            /////////////////
 
             var auxiliaryTable=routeTable+Configuration.AuxiliaryTableSuffix;
             var auxiliaryTablePK=auxiliaryTable+Configuration.PKConstraintSuffix;
@@ -37,12 +32,10 @@ namespace SytyRouting.DataBase
                 BatchCommands =
                 {
                     new("CREATE TEMPORARY TABLE IF NOT EXISTS " + auxiliaryTable + " (persona_id INT);"),
-                    //new("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTableTableFK + ";"),
-                    //new("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT " + auxiliaryTableTableFK + " FOREIGN KEY (persona_id) REFERENCES " + routeTable + " (id);"),
                     new("ALTER TABLE " + auxiliaryTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTablePK + ";"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD CONSTRAINT " + auxiliaryTablePK + " PRIMARY KEY (persona_id);"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
-                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"),
+                    new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"), // uncomment this line to get a quick view of the routing trajectory on TablePlus. (Modify also resultsBatch and the perm. copy of the aux. table.)
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];"),
                     new("ALTER TABLE " + auxiliaryTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];"),
@@ -55,8 +48,6 @@ namespace SytyRouting.DataBase
                 logger.Debug("{0} table creation",auxiliaryTable);
             }
 
-            /////////////////
-
             using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
             foreach (var persona in personas)
             {
@@ -68,8 +59,6 @@ namespace SytyRouting.DataBase
             }
             await importer.CompleteAsync();
             await importer.CloseAsync();
-
-            /////////////////
             
             //PLGSQL: Iterates over each transport mode transition to create the corresponding temporal text type sequence (ttext(Sequence)) for each valid route
             var iterationString = @"
@@ -108,16 +97,10 @@ namespace SytyRouting.DataBase
                 logger.Debug("{0} table SET statements executed",auxiliaryTable);
             }
 
-            /////////////////
-
+            ///////////////////////////////////////////////////////////////
             //debug: Aux table copied to a permanent table for benchmarking
             var comparisonTable=auxiliaryTable+"_comp";
             var comparisonTablePK=auxiliaryTablePK + "_comp";;
-
-            // await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + auxiliaryTable + "_comp;", connection))
-            // {
-            //     await cmd.ExecuteNonQueryAsync();
-            // }
 
             bool comparisonTableExists = false;
             await using (var command = new NpgsqlCommand("SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = '" + comparisonTable + "');", connection))
@@ -135,9 +118,7 @@ namespace SytyRouting.DataBase
                 {
                     BatchCommands =
                     {
-                        //new("CREATE TABLE IF NOT EXISTS " + auxiliaryTable + " (persona_id INT);"),
                         new("CREATE TABLE " + comparisonTable + " as (SELECT * FROM " + auxiliaryTable + ");"),
-                        //new("ALTER TABLE " + comparisonTable + " DROP CONSTRAINT IF EXISTS " + auxiliaryTablePK + ";"),
                         new("ALTER TABLE " + comparisonTable + " ADD CONSTRAINT " + auxiliaryTablePK + " PRIMARY KEY (persona_id);")
                     }
                 };
@@ -151,7 +132,8 @@ namespace SytyRouting.DataBase
             else
             {
                 await using var cmd_insert = new NpgsqlCommand(@"
-                INSERT INTO " + comparisonTable + @" (persona_id, computed_route, transport_modes, time_stamps, transport_sequence, computed_route_2d, is_valid_route)
+                INSERT INTO " + comparisonTable + @" (
+                       persona_id, computed_route, transport_modes, time_stamps, transport_sequence, computed_route_2d, is_valid_route)
                 SELECT persona_id, computed_route, transport_modes, time_stamps, transport_sequence, computed_route_2d, is_valid_route FROM " + auxiliaryTable + @" ON CONFLICT (persona_id) DO
                 UPDATE SET 
                  computed_route = EXCLUDED.computed_route,
@@ -160,29 +142,19 @@ namespace SytyRouting.DataBase
                  transport_sequence = EXCLUDED.transport_sequence,
                  computed_route_2d = EXCLUDED.computed_route_2d,
                  is_valid_route = EXCLUDED.is_valid_route;", connection);  
-
-                //SELECT persona_id, computed_route, transport_modes, time_stamps, transport_sequence, computed_route_2d, is_valid_route FROM " + auxiliaryTable + ";", connection);
                 
                 await cmd_insert.ExecuteNonQueryAsync();
-            }
-        
+            }            
+            //:gudeb
 
-            
-            //
-
-
-   
+  
             await connection.CloseAsync();
-
-            //await PropagateResultsAsync(connectionString,auxiliaryTable,routeTable);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
             logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
             logger.Info("   Route uploading execution time :: {0}", totalTime);
             logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
-
-            return uploadFails;
         }
     }
 }
