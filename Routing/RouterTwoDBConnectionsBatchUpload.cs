@@ -51,7 +51,7 @@ namespace SytyRouting.Routing
             }
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
-            Task uploadTask = Task.Run(() => UploadRoutesAsync3<U>());
+            Task uploadTask = Task.Run(() => UploadRoutesAsync<U>());
 
             Task.WaitAll(downloadTask); //debug <-
             Task.WaitAll(routingTasks);
@@ -182,7 +182,8 @@ namespace SytyRouting.Routing
             }
         }
 
-        private async Task UploadRoutesAsync3<U>() where U: IRouteUploader, new()
+        //private async Task UploadRoutesAsync3<U>() where U: IRouteUploader, new()
+        protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader, new()
         {
             Stopwatch uploadStopWatch = new Stopwatch();
 
@@ -251,7 +252,6 @@ namespace SytyRouting.Routing
 
                 Thread.Sleep(monitorSleepMilliseconds);
             }
-            //
         }
     }
 }
