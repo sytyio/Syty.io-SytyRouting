@@ -29,12 +29,9 @@ namespace SytyRouting.DataBase
                 FOREACH _transport_mode IN ARRAY transport_modes
                 LOOP
                     _index := _index + 1;
-                    RAISE NOTICE 'current tranport mode: %', _transport_mode;
                     _arr_ttext[_index] := ttext_inst(transport_modes[_index], time_stamps[_index]);            
-                    RAISE NOTICE 'current ttext: %', _arr_ttext[_index];
                 END LOOP;
                 _seq_ttext := ttext_seq(_arr_ttext);
-                RAISE NOTICE 'sequence: %', _seq_ttext;
                 RETURN _seq_ttext;
                 EXCEPTION
                     WHEN others THEN
