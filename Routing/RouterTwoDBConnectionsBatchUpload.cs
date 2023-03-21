@@ -88,26 +88,16 @@ namespace SytyRouting.Routing
 
                 var routingTaskBatchSize = (currentBatchSize / simultaneousRoutingTasks > 0) ? currentBatchSize / simultaneousRoutingTasks : 1;
                 int[] routingTaskBatchSizes = downloader.GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);
-
-                ///var taskIndex = 0;
                 
                 foreach(var routingBatchSize in routingTaskBatchSizes)
                 {
-                    /////////
-                    // ::: ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    //var routingBatchSize = routingTaskBatchSizes[taskIndex];
-
                     Persona[] personaTaskArray = await downloader.DownloadPersonasAsync(_connectionString,_routeTable,routingBatchSize,offset);///
 
                     personaTaskArraysQueue.Enqueue(personaTaskArray);
                     personas.AddRange(personaTaskArray);
 
-                    //taskIndex++;
-
                     processedDbElements+=personaTaskArray.Length;
-                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                    //offset += currentBatchSize;
                     offset += routingBatchSize;
                 }
 
@@ -190,7 +180,7 @@ namespace SytyRouting.Routing
 
                     var remainingRoutes = routesQueue.ToList();
 
-                    logger.Debug("Routing tasks have ended. Uploading {0} remaining routes",remainingRoutes.Count);
+                    logger.Debug("Routing tasks have ended. Computed routes queue dump. Uploading {0} remaining routes",remainingRoutes.Count);
                     
                     await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes);
 

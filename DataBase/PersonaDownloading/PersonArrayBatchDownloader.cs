@@ -48,21 +48,8 @@ namespace SytyRouting.DataBase
 
                     var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, StartDateTime = startTime, RequestedTransportSequence = requestedTransportSequence};
                     
-                    //personasBatch.Add(persona);
-                    
                     personaTaskArray[personaIndex] = persona;
                     personaIndex++;
-
-                    //if(personaIndex >= batchSize)
-                    //{
-                        //return personaTaskArray;
-
-                        
-                        //personaIndex = 0;
-                        
-                        //if(taskIndex < simultaneousRoutingTasks)
-                        //    personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
-                    //}
                 }
             }
             

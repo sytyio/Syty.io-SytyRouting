@@ -68,7 +68,6 @@ namespace SytyRouting.Routing
             logger.Info("=================================================");
         }
 
-        //private async Task DownloadPersonaDataAsync()
         protected override async Task DownloadPersonasAsync<D>()
         {
             var downloader = new D();
@@ -86,26 +85,15 @@ namespace SytyRouting.Routing
                 var routingTaskBatchSize = (currentBatchSize / simultaneousRoutingTasks > 0) ? currentBatchSize / simultaneousRoutingTasks : 1;
                 int[] routingTaskBatchSizes = downloader.GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);                
 
-                //var taskIndex = 0;
-
                 foreach(var routingBatchSize in routingTaskBatchSizes)
                 {
-
-                    /////////
-                    // ::: ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                    //var routingBatchSize = routingTaskBatchSizes[taskIndex];
-
                     Persona[] personaTaskArray = await downloader.DownloadPersonasAsync(_connectionString,_routeTable,routingBatchSize,offset);///
 
                     personaTaskArraysQueue.Enqueue(personaTaskArray);
                     personas.AddRange(personaTaskArray);
 
-                    //taskIndex++;
-
                     processedDbElements+=personaTaskArray.Length;
-                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-                    //offset += currentBatchSize;
                     offset += routingBatchSize;
                 }
 

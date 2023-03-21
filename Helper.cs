@@ -13,7 +13,7 @@ namespace SytyRouting
     {
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        
+
         public static async Task<int> DbTableRowCount(string tableName, Logger logger)
         {
             int totalDbRows = 0;
@@ -42,7 +42,6 @@ namespace SytyRouting
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
-            //var elementProcessingRate = GetProcessingRate(processedElements,timeSpanMilliseconds);
             var elementProcessingRate = GetProcessingRate(processedElements,timeSpan.TotalMilliseconds);
             double setCreationTimeSeconds;
             TimeSpan setCreationTime;
