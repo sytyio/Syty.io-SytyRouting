@@ -62,7 +62,6 @@ namespace SytyRouting.DataBase
             // // /////////////  ////////////// //
             uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
             routeTable = baseRouteTable + "_t78";
-            //await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
@@ -86,7 +85,6 @@ namespace SytyRouting.DataBase
             // // /////////////  ////////////// //
             uploadStrategies.Add("As computed (batch), single DB connection");
             routeTable = baseRouteTable + "_t75";
-            //await personaRouteTable.CreateDataSetEmptyAuxTabRev(Configuration.PersonaTable,routeTable,numberOfRows);
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
