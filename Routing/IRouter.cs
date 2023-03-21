@@ -8,7 +8,7 @@ namespace SytyRouting.Routing
     public interface IRouter
     {
         void Initialize(Graph graph, string connectionString, string routeTable, string auxiliaryTable);
-        Task StartRouting<A,U>() where A: IRoutingAlgorithm, new() where U: IRouteUploader, new();
+        Task StartRouting<A,D,U>() where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new();
         List<Persona> GetPersonas();
         int GetComputedRoutesCount();
         TimeSpan GetRoutingTime();
