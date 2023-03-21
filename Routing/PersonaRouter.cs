@@ -331,8 +331,7 @@ namespace SytyRouting.Routing
             while(true)
             {
                 var timeSpan = stopWatch.Elapsed;
-                var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
+                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, logger);
                 logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
                 logger.Info("");
 
