@@ -104,8 +104,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         nodesProcessed++;
                         if(nodesProcessed%1000==0){
                             var timeSpan = stopWatch.Elapsed;
-                            var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                            Helper.DataLoadBenchmark(totalNodes, nodesProcessed, timeSpan, timeSpanMilliseconds, logger);
+                            Helper.DataLoadBenchmark(totalNodes, nodesProcessed, timeSpan, logger);
                         }
                     }
                 }

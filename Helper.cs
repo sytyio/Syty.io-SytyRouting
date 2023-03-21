@@ -37,11 +37,12 @@ namespace SytyRouting
             return totalDbRows;
         }
         
-        public static DataSetBenchmark DataLoadBenchmark(int totalElements, int processedElements, TimeSpan timeSpan, long timeSpanMilliseconds, Logger logger, [CallerMemberName] string callerName = "")
+        public static DataSetBenchmark DataLoadBenchmark(int totalElements, int processedElements, TimeSpan timeSpan, Logger logger, [CallerMemberName] string callerName = "")
         {
             var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
-            var elementProcessingRate = GetProcessingRate(processedElements,timeSpanMilliseconds);
+            //var elementProcessingRate = GetProcessingRate(processedElements,timeSpanMilliseconds);
+            var elementProcessingRate = GetProcessingRate(processedElements,timeSpan.TotalMilliseconds);
             double setCreationTimeSeconds;
             TimeSpan setCreationTime;
             if(elementProcessingRate != 0 && !double.IsNaN(elementProcessingRate))

@@ -91,8 +91,7 @@ namespace SytyRouting.DataBase
                     if (dbRowsProcessed % 50000 == 0)
                     {
                         var timeSpan = stopWatch.Elapsed;
-                        var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                        Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, timeSpanMilliseconds, logger);
+                        Helper.DataLoadBenchmark(totalDbRows, dbRowsProcessed, timeSpan, logger);
                     }
                 }
 

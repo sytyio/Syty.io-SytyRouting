@@ -211,8 +211,7 @@ namespace SytyRouting.Routing
             while(true)
             {
                 var timeSpan = baseRouterStopWatch.Elapsed;
-                var timeSpanMilliseconds = baseRouterStopWatch.ElapsedMilliseconds;
-                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, timeSpanMilliseconds, logger);
+                Helper.DataLoadBenchmark(elementsToProcess, computedRoutes, timeSpan, logger);
                 logger.Info("DB elements already processed: {0} ({1:0.000} %). Computed routes: {2} ({3:0.000} %)", processedDbElements, (double)processedDbElements / elementsToProcess * 100, computedRoutes, (double)computedRoutes / elementsToProcess * 100);
                 logger.Info("");
 
@@ -234,7 +233,7 @@ namespace SytyRouting.Routing
         {
             var batchSize = (regularBatchSize > elementsToProcess) ? elementsToProcess : regularBatchSize;
             var numberOfBatches = (elementsToProcess / batchSize > 0) ? elementsToProcess / batchSize : 1;
-            
+
             return GetBatchPartition(batchSize, elementsToProcess, numberOfBatches);
         }
 
