@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 1360;
+            int numberOfRows = 1360; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -44,6 +44,7 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaArrayBatchDownloader,
                                     DataBase.RouteUploader,
                                     Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
@@ -67,6 +68,7 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaArrayBatchDownloader,
                                     DataBase.SeveralRoutesUploaderINSERTBATCHED,
                                     Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
@@ -90,6 +92,7 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaArrayBatchDownloader,
                                     DataBase.RouteUploader,
                                     Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
@@ -144,20 +147,20 @@ namespace SytyRouting.DataBase
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
 
-            await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
+            //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
 
         }
 
-        private static async Task<TimeSpan> Run<A, U, R>(Graph graph, string connectionString, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where U: IRouteUploader, new() where R: IRouter, new()
+        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
-            var uploader = new U();
+            //var uploader = new U();
             var router = new R();
 
             router.Initialize(_graph, connectionString, routeTable, auxiliaryTable);
-            await router.StartRouting<A,U>();
+            await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();
             var computedRoutes = router.GetComputedRoutesCount();
@@ -174,7 +177,7 @@ namespace SytyRouting.DataBase
             var executionTime = benchmarkStopWatch.Elapsed;
             var totalTime = Helper.FormatElapsedTime(benchmarkStopWatch.Elapsed);
             logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, uploader.GetType().Name, router.GetType().Name, typeof(A).Name);
+            logger.Info("Benchmark performed in {0} (HH:MM:S.mS) for the uploader '{1}' and the router '{2}' using the '{3}' algorithm", totalTime, typeof(U).Name, router.GetType().Name, typeof(A).Name);
             logger.Info("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
             return executionTime;
@@ -184,71 +187,80 @@ namespace SytyRouting.DataBase
         {
             logger.Info("DB uploaded routes integrity check:");
             int numberOfFailures = 0;
-            var uploadedPersonas = new Dictionary<int, LineString>(personas.Count);
-
-            //var connectionString = Configuration.X270ConnectionString; // Local DB for testing
-            var connectionString = Configuration.ConnectionString;
-
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            // Read location data from 'persona routes'
-            //                     0              1             
-            var queryString = "SELECT persona_id, computed_route FROM " + routeTable + " ORDER BY persona_id ASC";
-
-            await using (var command = new NpgsqlCommand(queryString, connection))
-            await using (var reader = await command.ExecuteReaderAsync())
+            if(personas!=null)
             {
-                while (await reader.ReadAsync())
+                var uploadedPersonas = new Dictionary<int, LineString>(personas.Count);
+
+                //var connectionString = Configuration.X270ConnectionString; // Local DB for testing
+                var connectionString = Configuration.ConnectionString;
+
+                await using var connection = new NpgsqlConnection(connectionString);
+                await connection.OpenAsync();
+
+                // Read location data from 'persona routes'
+                //                     0              1             
+                var queryString = "SELECT persona_id, computed_route FROM " + routeTable + " ORDER BY persona_id ASC";
+
+                await using (var command = new NpgsqlCommand(queryString, connection))
+                await using (var reader = await command.ExecuteReaderAsync())
                 {
-                    var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
-                    try
+                    while (await reader.ReadAsync())
                     {
-                        var route = (LineString)reader.GetValue(1); // route (Point)
-                        if(!route.IsEmpty)
-                            uploadedPersonas.Add(persona_id, route);
-                    }
-                    catch
-                    {
-                        logger.Debug("Unable to download route for Persona Id {0}", persona_id);
-                        numberOfFailures++;
+                        var persona_id = Convert.ToInt32(reader.GetValue(0)); // persona_id (int)
+                        try
+                        {
+                            var route = (LineString)reader.GetValue(1); // route (Point)
+                            if(!route.IsEmpty)
+                                uploadedPersonas.Add(persona_id, route);
+                        }
+                        catch
+                        {
+                            logger.Debug("Unable to download route for Persona Id {0}", persona_id);
+                            numberOfFailures++;
+                        }
                     }
                 }
+
+                if (computedRoutes != uploadedPersonas.Count)
+                {
+                    logger.Debug("Inconsistent number of routes in the database");
+                }
+                logger.Debug("Computed routes (non-empty) {0} : {1} Non-empty routes in the database", computedRoutes, uploadedPersonas.Count);
+
+                foreach (var persona in personas)
+                {
+                    if(persona.Route is null || persona.Route.IsEmpty)
+                    {
+                        logger.Debug("Invalid/empty route for Persona Id {0}", persona.Id);
+                        continue;
+                    }
+
+                    if (uploadedPersonas.ContainsKey(persona.Id))
+                    {
+                        try
+                        {
+                            Assert.IsEquals(uploadedPersonas[persona.Id], persona.Route, "Test failed. Original and Uploaded Routes are not equal");
+                        }
+                        catch (NetTopologySuite.Utilities.AssertionFailedException e)
+                        {
+                            logger.Debug("Route equality assertion failed for Persona Id {0}: {1}", persona.Id, e.Message);
+                            numberOfFailures++;
+                        }
+                    }
+                    else
+                    {
+                        logger.Debug("Unable to compare routes for Persona Id {0}", persona.Id);
+                        //TracePersonaDetails(persona);
+                        //numberOfFailures++;
+                    }
+                }
+                await connection.CloseAsync();
+            }
+            else
+            {
+                numberOfFailures++;
             }
 
-            if (computedRoutes != uploadedPersonas.Count)
-            {
-                logger.Debug("Inconsistent number of routes in the database");
-            }
-            logger.Debug("Computed routes (non-empty) {0} : {1} Non-empty routes in the database", computedRoutes, uploadedPersonas.Count);
-
-            foreach (var persona in personas)
-            {
-                if(persona.Route is null || persona.Route.IsEmpty)
-                {
-                    logger.Debug("Invalid/empty route for Persona Id {0}", persona.Id);
-                    continue;
-                }
-
-                if (uploadedPersonas.ContainsKey(persona.Id))
-                {
-                    try
-                    {
-                        Assert.IsEquals(uploadedPersonas[persona.Id], persona.Route, "Test failed. Original and Uploaded Routes are not equal");
-                    }
-                    catch (NetTopologySuite.Utilities.AssertionFailedException e)
-                    {
-                        logger.Debug("Route equality assertion failed for Persona Id {0}: {1}", persona.Id, e.Message);
-                        numberOfFailures++;
-                    }
-                }
-                else
-                {
-                    logger.Debug("Unable to compare routes for Persona Id {0}", persona.Id);
-                    //TracePersonaDetails(persona);
-                    //numberOfFailures++;
-                }
-            }
             string result;
             if (numberOfFailures != 0)
                 result = "FAILED";
@@ -258,8 +270,6 @@ namespace SytyRouting.DataBase
             logger.Info("-------------------------------------------------------------");
             logger.Info("DB uploaded route integrity check {0} for valid routes.", result);
             logger.Info("-------------------------------------------------------------");
-
-            await connection.CloseAsync();
 
             return result;
         }

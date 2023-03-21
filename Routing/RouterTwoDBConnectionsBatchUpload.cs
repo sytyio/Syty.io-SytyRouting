@@ -13,7 +13,7 @@ namespace SytyRouting.Routing
 
         private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
 
-        public override async Task StartRouting<A,U>() //where A: IRoutingAlgorithm, U: IRouteUploader
+        public override async Task StartRouting<A,D,U>() //where A: IRoutingAlgorithm, D: IPersonaDownloader, U: IRouteUploader
         {
             baseRouterStopWatch.Start();
 
@@ -33,7 +33,7 @@ namespace SytyRouting.Routing
                 simultaneousRoutingTasks = elementsToProcess;
             }
             
-            Task downloadTask = Task.Run(() => DownloadPersonaDataAsync());
+            Task downloadTask = Task.Run(() => DownloadPersonasAsync<D>());
             
             Thread.Sleep(initialDataLoadSleepMilliseconds);
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
@@ -72,14 +72,14 @@ namespace SytyRouting.Routing
             logger.Info("=================================================");
         }
 
-        private async Task DownloadPersonaDataAsync()
+        protected override async Task DownloadPersonasAsync<D>()
         {
+            var downloader = new D();
+            downloader.Initialize(_graph,_connectionString,_routeTable);
+
             int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();            
-
-            int[] batchSizes = GetBatchSizes();
+            int[] batchSizes = downloader.GetBatchSizes(regularBatchSize,elementsToProcess);
 
             int offset = 0;
             for(var batchNumber = 0; batchNumber < batchSizes.Length; batchNumber++)
@@ -87,60 +87,35 @@ namespace SytyRouting.Routing
                 var currentBatchSize = batchSizes[batchNumber];
 
                 var routingTaskBatchSize = (currentBatchSize / simultaneousRoutingTasks > 0) ? currentBatchSize / simultaneousRoutingTasks : 1;
-                int[] routingTaskBatchSizes = GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);
+                int[] routingTaskBatchSizes = downloader.GetBatchPartition(routingTaskBatchSize, currentBatchSize, simultaneousRoutingTasks);
 
-                var taskIndex = 0;
-                var personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
-                var personaIndex = 0;
-
-                // Read location data from 'persona' and create the corresponding latitude-longitude coordinates
-                //                        0   1              2              3           4
-                var queryString = "SELECT id, home_location, work_location, start_time, requested_transport_modes FROM " + _routeTable + " ORDER BY id ASC LIMIT " + currentBatchSize + " OFFSET " + offset;
-
-                await using (var command = new NpgsqlCommand(queryString, connection))
-                await using (var reader = await command.ExecuteReaderAsync())
+                ///var taskIndex = 0;
+                
+                foreach(var routingBatchSize in routingTaskBatchSizes)
                 {
-                    while(await reader.ReadAsync())
-                    {
-                        var id = Convert.ToInt32(reader.GetValue(0)); // id (int)
-                        var homeLocation = (Point)reader.GetValue(1); // home_location (Point)
-                        var workLocation = (Point)reader.GetValue(2); // work_location (Point)
-                        var startTime = (DateTime)reader.GetValue(3); // start_time (TIMESTAMPTZ)
-                        var requestedSequence = reader.GetValue(4); // transport_sequence (text[])
-                        byte[] requestedTransportSequence;
-                        if(requestedSequence is not null && requestedSequence != DBNull.Value)
-                        {
-                             requestedTransportSequence = ValidateTransportSequence(id, homeLocation, workLocation, (string[])requestedSequence);
-                        }
-                        else
-                        {
-                            requestedTransportSequence = new byte[0];
-                        }
+                    /////////
+                    // ::: ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //var routingBatchSize = routingTaskBatchSizes[taskIndex];
 
-                        var persona = new Persona {Id = id, HomeLocation = homeLocation, WorkLocation = workLocation, StartDateTime = startTime, RequestedTransportSequence = requestedTransportSequence};
-                        
-                        personas.Add(persona);
-                        
-                        personaTaskArray[personaIndex] = persona;
-                        personaIndex++;
+                    Persona[] personaTaskArray = await downloader.DownloadPersonasAsync(_connectionString,_routeTable,routingBatchSize,offset);///
 
-                        if(personaIndex >= routingTaskBatchSizes[taskIndex])
-                        {
-                            personaTaskArraysQueue.Enqueue(personaTaskArray);
-                            personaIndex = 0;
-                            taskIndex++;
-                            if(taskIndex < simultaneousRoutingTasks)
-                                personaTaskArray = new Persona[routingTaskBatchSizes[taskIndex]];
-                        }
-                        processedDbElements++;
-                    }
+                    personaTaskArraysQueue.Enqueue(personaTaskArray);
+                    personas.AddRange(personaTaskArray);
+
+                    //taskIndex++;
+
+                    processedDbElements+=personaTaskArray.Length;
+                    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                    //offset += currentBatchSize;
+                    offset += routingBatchSize;
                 }
-                offset += currentBatchSize;
 
                 while(personaTaskArraysQueue.Count > taskArraysQueueThreshold)
                     Thread.Sleep(dBPersonaLoadAsyncSleepMilliseconds);
             }
-            await connection.CloseAsync();
+            var sequenceValidationErrors = downloader.GetValidationErrors();
+            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
         }
 
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, U: IRouteUploader
@@ -225,7 +200,6 @@ namespace SytyRouting.Routing
                     uploadStopWatch.Stop();
                     TotalUploadingTime = uploadStopWatch.Elapsed;
                     var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
-                    logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)uploadBatch.Count);
                     logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", uploadedRoutes, _auxiliaryTable, totalTime);
                     logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, uploadBatch.Count, 100.0 * (double)uploadFails / (double)uploadBatch.Count);
                     logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)uploadBatch.Count);

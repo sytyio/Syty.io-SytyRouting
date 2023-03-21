@@ -13,6 +13,7 @@ namespace SytyRouting
     {
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
+        
         public static async Task<int> DbTableRowCount(string tableName, Logger logger)
         {
             int totalDbRows = 0;
