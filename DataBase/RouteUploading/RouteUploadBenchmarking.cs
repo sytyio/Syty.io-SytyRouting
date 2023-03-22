@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 1360;//60; //1360;
+            int numberOfRows = 13;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -94,7 +94,7 @@ namespace SytyRouting.DataBase
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,comparisonTable);
+                                    Routing.RouterBatchUpload>(graph,connectionString,routeTable,comparisonTable);
             totalTimes.Add(totalTime);
 
             var comparisonTable75 = comparisonTable;

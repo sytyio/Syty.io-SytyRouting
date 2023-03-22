@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 
 namespace SytyRouting.Routing
 {
-    public class RouterTwoDBConnectionsBatchUpload : BaseRouter
+    public class RouterBatchUpload : BaseRouter
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
