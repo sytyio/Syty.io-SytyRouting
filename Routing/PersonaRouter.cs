@@ -374,7 +374,7 @@ namespace SytyRouting.Routing
 
             var uploader = new DataBase.RouteUploaderCOPY();
 
-            await uploader.UploadRoutesAsync(connectionString,routeTable,personas);
+            await uploader.UploadRoutesAsync(connectionString,routeTable,personas,auxiliaryTable);
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);

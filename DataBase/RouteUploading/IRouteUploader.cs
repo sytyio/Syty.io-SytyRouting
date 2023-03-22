@@ -4,6 +4,6 @@ namespace SytyRouting.DataBase
 {
     public interface IRouteUploader
     {        
-        public Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas);
+        public Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable);
     }
 }

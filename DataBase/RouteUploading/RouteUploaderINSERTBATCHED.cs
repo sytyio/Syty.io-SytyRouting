@@ -12,7 +12,7 @@ namespace SytyRouting.DataBase
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas)
+        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -96,7 +96,7 @@ namespace SytyRouting.DataBase
 
             ///////////////////////////////////////////////////////////////
             //debug: Aux table copied to a permanent table for benchmarking
-            var comparisonTable=auxiliaryTable+"_comp";
+            //var comparisonTable=auxiliaryTable+"_comp";
             var comparisonTablePK=auxiliaryTablePK + "_comp";;
 
             bool comparisonTableExists = false;
