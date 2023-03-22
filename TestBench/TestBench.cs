@@ -628,8 +628,8 @@ namespace SytyRouting
                                                     step.PreviousStep.CumulatedCost,
                                                     step.PreviousStep.Direction,
                                                     step.PreviousStep.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.PreviousStep.InboundTransportMode),
-                                                    step.PreviousStep.InboundRouteType);
+                                                    TransportModes.SingleMaskToString(step.PreviousStep.OutboundTransportMode),
+                                                    step.PreviousStep.OutboundRouteType);
 
                 TraceOneNode(step.PreviousStep.ActiveNode);
                 
@@ -649,8 +649,8 @@ namespace SytyRouting
                                                     step.CumulatedCost,
                                                     step.Direction,
                                                     step.TransportSequenceIndex,
-                                                    TransportModes.SingleMaskToString(step.InboundTransportMode),
-                                                    step.InboundRouteType);
+                                                    TransportModes.SingleMaskToString(step.OutboundTransportMode),
+                                                    step.OutboundRouteType);
 
             TraceOneNode(step.ActiveNode);
 
@@ -886,8 +886,8 @@ namespace SytyRouting
                     s.PreviousStep!=null?s.PreviousStep.ActiveNode.Idx:"--------",
                     s.CumulatedCost,
                     s.TransportSequenceIndex,
-                    s.InboundTransportMode,
-                    s.InboundRouteType);
+                    s.OutboundTransportMode,
+                    s.OutboundRouteType);
             }
             Console.WriteLine("----------------------------------------------------------------------------------------------------------------------------------------------");
             Console.WriteLine("{0,3}\t{1,8}\t{2,50}\t{3,50}",
