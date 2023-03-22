@@ -53,9 +53,9 @@ namespace SytyRouting.DataBase
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
-            logger.Info("   Route uploading execution time :: {0}", totalTime);
-            logger.Info("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+            logger.Debug("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+            logger.Debug("   Route uploading execution time :: {0}", totalTime);
+            logger.Debug("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
         }
     }
 }

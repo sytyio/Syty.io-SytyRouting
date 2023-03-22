@@ -25,7 +25,7 @@ namespace SytyRouting.DataBase
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("{0} initial data set creation time :: {1}", routingResultTable,totalTime);
+            logger.Debug("{0} initial data set creation time :: {1}", routingResultTable,totalTime);
         }
 
         private async Task SetRoutingResultTableAsync(string personaOriginTable, string routingResultTable, int numberOfRows)

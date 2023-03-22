@@ -55,9 +55,9 @@ namespace SytyRouting.DataBase
             
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
-            logger.Info("   Personas downloading execution time :: {0}", totalTime);
-            logger.Info("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+            logger.Debug("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+            logger.Debug("   Personas downloading execution time :: {0}", totalTime);
+            logger.Debug("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
 
             return personaTaskArray;
         }

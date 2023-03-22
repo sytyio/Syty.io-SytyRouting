@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 13;//60; //1360;
+            int numberOfRows = 1360;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -288,11 +288,11 @@ namespace SytyRouting.DataBase
 
             if(elementsFirstTable!=elementsSecondTable)
             {
-                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+                logger.Debug("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
             }
             else
             {
-                logger.Info("{0} routes to compare",elementsFirstTable);
+                logger.Debug("{0} routes to compare",elementsFirstTable);
             }
 
             //var connectionString = Configuration.X270ConnectionString; // Local DB for testing
@@ -356,7 +356,7 @@ namespace SytyRouting.DataBase
 
             if(routesFirstTable.Length!=routesSecondTable.Length)
             {
-                logger.Info("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
+                logger.Debug("Incompatible number of elements: {0} != {1}",elementsFirstTable,elementsSecondTable);
             }
             else
             {
@@ -415,9 +415,9 @@ namespace SytyRouting.DataBase
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
-            logger.Info("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
-            logger.Info("   Cleaning database execution time :: {0}", totalTime);
-            logger.Info("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+            logger.Debug("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
+            logger.Debug("   Cleaning database execution time :: {0}", totalTime);
+            logger.Debug("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccc");
         }
 
         private static void TracePersonaDetails(Persona persona)
@@ -447,7 +447,7 @@ namespace SytyRouting.DataBase
                     routeComputationFails++;
                 }
             }
-            logger.Info("{0} routes missing", routeComputationFails);
+            logger.Debug("{0} routes missing", routeComputationFails);
         }
 
         public void TracePersonas(List<Persona> personas)
