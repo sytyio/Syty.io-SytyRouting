@@ -166,7 +166,7 @@ namespace SytyRouting.Routing
                     }
                     logger.Debug("Uploading {0} routes",uploadBatch.Count);
                     
-                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,uploadBatch);
+                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,uploadBatch,_comparisonTable);
 
                     uploadedRoutes += uploadBatch.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
@@ -182,7 +182,7 @@ namespace SytyRouting.Routing
 
                     logger.Debug("Routing tasks have ended. Computed routes queue dump. Uploading {0} remaining routes",remainingRoutes.Count);
                     
-                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes);
+                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes,_comparisonTable);
 
                     uploadedRoutes += remainingRoutes.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
@@ -190,7 +190,7 @@ namespace SytyRouting.Routing
                     uploadStopWatch.Stop();
                     TotalUploadingTime = uploadStopWatch.Elapsed;
                     var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
-                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", uploadedRoutes, _auxiliaryTable, totalTime);
+                    logger.Info("{0} Routes successfully uploaded to the database ({1}) in {2} (d.hh:mm:s.ms)", uploadedRoutes, _comparisonTable, totalTime);
                     logger.Debug("{0} routes (out of {1}) failed to upload ({2} %)", uploadFails, uploadBatch.Count, 100.0 * (double)uploadFails / (double)uploadBatch.Count);
                     logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)uploadBatch.Count);
                     logger.Debug("                 Other errors: {0} ({1} %)", uploadFails - originEqualsDestinationErrors, 100.0 * (double)(uploadFails - originEqualsDestinationErrors) / (double)uploadBatch.Count);

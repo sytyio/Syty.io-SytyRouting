@@ -14,7 +14,7 @@ namespace SytyRouting.Routing
         protected Graph? _graph = null!;
         protected string _connectionString = null!;
         protected string _routeTable = null!;
-        protected string _auxiliaryTable = null!;
+        protected string _comparisonTable = null!;
         protected List<Persona> Personas = null!;
         protected int ComputedRoutesCount = 0;
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
@@ -44,12 +44,12 @@ namespace SytyRouting.Routing
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-        public void Initialize(Graph graph, string connectionString, string routeTable, string auxiliaryTable)
+        public void Initialize(Graph graph, string connectionString, string routeTable, string comparisonTable)
         {
             _graph = graph;
             _connectionString = connectionString;
             _routeTable = routeTable;
-            _auxiliaryTable = auxiliaryTable;
+            _comparisonTable = comparisonTable;
         }
 
         public List<Persona> GetPersonas()

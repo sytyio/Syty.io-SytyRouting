@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 13;//60; //1360;
+            int numberOfRows = 1360;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -40,17 +40,17 @@ namespace SytyRouting.DataBase
             uploadStrategies.Add("On-Time All, single DB connection, COPY, TEMP AUX (ref.)");
             var routeTable = baseRouteTable + "_t70";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            var auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            var comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
             totalTimes.Add(totalTime);
             
-            var auxiliaryTable70 = auxiliaryTable;
-            compTableNames.Add(auxiliaryTable);
+            var comparisonTable70 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
             var comparisonResult = "Reference";
             comparisonResults.Add(comparisonResult);
@@ -64,19 +64,19 @@ namespace SytyRouting.DataBase
             uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
             routeTable = baseRouteTable + "_t78";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderINSERTBATCHED,
-                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable78 = auxiliaryTable;
-            compTableNames.Add(auxiliaryTable);
+            var comparisonTable78 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable78);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable78);
             comparisonResults.Add(comparisonResult);
             // //////////////
             // //////////////
@@ -88,19 +88,19 @@ namespace SytyRouting.DataBase
             uploadStrategies.Add("As computed (batch), single DB connection");
             routeTable = baseRouteTable + "_t75";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,auxiliaryTable);
+                                    Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,comparisonTable);
             totalTimes.Add(totalTime);
 
-            var auxiliaryTable75 = auxiliaryTable;
-            compTableNames.Add(auxiliaryTable);
+            var comparisonTable75 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(auxiliaryTable70,auxiliaryTable75);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable75);
             comparisonResults.Add(comparisonResult);
             // //////////////
             // //////////////
@@ -151,7 +151,7 @@ namespace SytyRouting.DataBase
 
         }
 
-        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string auxiliaryTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
+        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
@@ -159,7 +159,7 @@ namespace SytyRouting.DataBase
             //var uploader = new U();
             var router = new R();
 
-            router.Initialize(_graph, connectionString, routeTable, auxiliaryTable);
+            router.Initialize(_graph, connectionString, routeTable, comparisonTable);
             await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();
@@ -169,7 +169,7 @@ namespace SytyRouting.DataBase
             routingTimes.Add(routingTime);
             uploadingTimes.Add(uploadingTime);
 
-            var uploadTest = await CheckUploadedRoutesAsync(personas, auxiliaryTable, computedRoutes);
+            var uploadTest = await CheckUploadedRoutesAsync(personas, comparisonTable, computedRoutes);
             uploadResults.Add(uploadTest);
 
             
