@@ -12,7 +12,7 @@ namespace SytyRouting.Model
         public LineString? Route;
         public byte[] RequestedTransportSequence = null!;
         public Dictionary<int, Tuple<byte,int>>? TransportModeTransitions; // <Node Idx, <Transport Mask, Route Type> 
-        public Tuple<string[],DateTime[]> TTextTransitions = null!;
+        public Tuple<string[],DateTime[]> TTextTransitions = null!; // <transportModes[],timeStamps[]>
         public bool SuccessfulRouteComputation;
     }
 }

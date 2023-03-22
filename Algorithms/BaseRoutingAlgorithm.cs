@@ -115,7 +115,7 @@ namespace SytyRouting.Algorithms
 
             var previousTimeInterval = initialTimeStamp.TotalSeconds;
 
-            byte inboundMode = TransportModes.None;
+            byte inboundMode = TransportModes.DefaultMode;
             byte outboundMode = TransportModes.DefaultMode; // Assuming the user starts the journey as a 'Pedestrian'
             
             xyCoordinates.Add(new Coordinate(startX,startY));
@@ -137,11 +137,9 @@ namespace SytyRouting.Algorithms
 
             for(var i = 0; i < nodeRoute.Count-1; i++)
             {
-                inboundMode = outboundMode;
-
                 var newOutboundMode = SelectTransportMode(nodeRoute[i].Idx, transportModeTransitions);
 
-                if(newOutboundMode!=TransportModes.None && newOutboundMode!=outboundMode)
+                if(newOutboundMode!=TransportModes.None && newOutboundMode!=inboundMode)
                 {
                     outboundMode = newOutboundMode;
                     AddTransition(outboundMode,previousTimeInterval,startTime);
@@ -177,6 +175,8 @@ namespace SytyRouting.Algorithms
 
                     xyCoordinates.Add(new Coordinate(targetX, targetY));
                     mOrdinates.Add(previousTimeInterval);
+
+                    inboundMode = outboundMode;
                 }
                 else
                 {
@@ -186,6 +186,13 @@ namespace SytyRouting.Algorithms
 
             var lastNodeX = nodeRoute.Last().X;
             var lastNodeY = nodeRoute.Last().Y;
+            
+            outboundMode = TransportModes.DefaultMode;
+            if(outboundMode!=inboundMode)
+            {
+                AddTransition(outboundMode,previousTimeInterval,startTime);
+            }
+            
             var endM = Get2PointTimeInterval(lastNodeX,lastNodeY,endX,endY,TransportModes.DefaultMode) + previousTimeInterval;
             if(endM==0)
             {
