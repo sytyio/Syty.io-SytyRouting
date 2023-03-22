@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 1360;//60; //1360;
+            int numberOfRows = 13;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -59,51 +59,51 @@ namespace SytyRouting.DataBase
 
 
 
-            // // //////////////
-            // // // /////////////  ////////////// //
-            // uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
-            // routeTable = baseRouteTable + "_t78";
-            // await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            // comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
-            // tableNames.Add(routeTable);
+            // //////////////
+            // // /////////////  ////////////// //
+            uploadStrategies.Add("On-Time All, single DB connection, INSERT BATCHED");
+            routeTable = baseRouteTable + "_t78";
+            await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            tableNames.Add(routeTable);
 
-            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-            //                         DataBase.PersonaDownloaderArrayBatch,
-            //                         DataBase.RouteUploaderINSERTBATCHED,
-            //                         Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
-            // totalTimes.Add(totalTime);
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderINSERTBATCHED,
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
+            totalTimes.Add(totalTime);
 
-            // var comparisonTable78 = comparisonTable;
-            // compTableNames.Add(comparisonTable);
+            var comparisonTable78 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
-            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable78);
-            // comparisonResults.Add(comparisonResult);
-            // // //////////////
-            // // //////////////
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable78);
+            comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
 
 
 
-            // // ///////////////
-            // // // /////////////  ////////////// //
-            // uploadStrategies.Add("As computed (batch), single DB connection");
-            // routeTable = baseRouteTable + "_t75";
-            // await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            // comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
-            // tableNames.Add(routeTable);
+            // ///////////////
+            // // /////////////  ////////////// //
+            uploadStrategies.Add("As computed (batch), single DB connection");
+            routeTable = baseRouteTable + "_t75";
+            await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            tableNames.Add(routeTable);
 
-            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-            //                         DataBase.PersonaDownloaderArrayBatch,
-            //                         DataBase.RouteUploaderCOPY,
-            //                         Routing.RouterBatchUpload>(graph,connectionString,routeTable,comparisonTable);
-            // totalTimes.Add(totalTime);
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderCOPY,
+                                    Routing.RouterBatchUpload>(graph,connectionString,routeTable,comparisonTable);
+            totalTimes.Add(totalTime);
 
-            // var comparisonTable75 = comparisonTable;
-            // compTableNames.Add(comparisonTable);
+            var comparisonTable75 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
-            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable75);
-            // comparisonResults.Add(comparisonResult);
-            // // //////////////
-            // // //////////////
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable75);
+            comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
 
             
 
@@ -147,7 +147,7 @@ namespace SytyRouting.DataBase
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
 
-            // await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
+            await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
 
         }
 
@@ -693,30 +693,22 @@ namespace SytyRouting.DataBase
                     logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexS, coordinateXS, coordinateYS, timeStampS, transportModeS, routeTypeS, routeTagS, routeTransportModesS, nodeIdxS, nodeS);
                     logger.Debug("=======================================================================================================================================================================================================================");
                     
-                    //int transportModeRepetitions=0;
                     byte currentTransportMode = 0;
                     byte previousTransportMode = 0;
                     for(var n = 0; n < routeCoordinates.Length-1; n++)
                     {
                         node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[n].X, routeCoordinates[n].Y);
 
-                        // if(transportModeTransitions.ContainsKey(node.Idx))
-                        // {
-                        //     currentTransportMode = transportModeTransitions[node.Idx].Item1;
-                        // }
-
-                        // if(previousTransportMode!=currentTransportMode)
-                        // {
                             previousTransportMode = currentTransportMode;    
                             transportModeS = String.Format("{0,18}",TransportModes.MaskToString(currentTransportMode));
-                            // var routeType = transportModeTransitions[node.Idx].Item2;
+
                             var routeType = 0;
                             routeTypeS     = String.Format("{0,10}",routeType);
                             if(TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
                                 routeTagS      = String.Format("{0,30}",TransportModes.OSMTagIdToKeyValue[routeType]);
                             else
                                 routeTagS      = String.Format("{0,30}","Not available");
-                            //routeTransportModesS = String.Format("{0,30}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
+
                             routeTransportModesS = String.Format("{0,30}",TransportModes.MaskToString(node.GetAvailableOutboundTransportModes()));
                             timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[n].M)); // <- debug: check units
                             vertexS      = String.Format("{0,8}", n+1);
@@ -726,14 +718,6 @@ namespace SytyRouting.DataBase
                             coordinateYS = String.Format("{0,20}", routeCoordinates[n].Y);
                             nodeIdxS     = String.Format("{0,14}", node.Idx);
                             logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexS, coordinateXS, coordinateYS, timeStampS, transportModeS, routeTypeS, routeTagS, routeTransportModesS, nodeIdxS, nodeS);
-                            //transportModeRepetitions=0;
-                        // }
-                        // else
-                        // {
-                        //     if(transportModeRepetitions<1)
-                        //         logger.Debug("{0,10}\t{1,20}\t{2,20}\t{3,14}\t{4,18}\t{5,10}\t{6,30}\t{7,30}\t{8,14}\t{9,20}","|  ","|","|","|","| ","|","|","| ","|","|");
-                        //     transportModeRepetitions++;
-                        // }
                     }
                     node = _graph.GetNodeByLongitudeLatitude(routeCoordinates[route.Count -1].X, routeCoordinates[route.Count -1].Y);
                     timeStamp = Helper.FormatElapsedTime(TimeSpan.FromSeconds(route.Coordinates[route.Count -1].M)); // <- debug: check units
@@ -742,24 +726,6 @@ namespace SytyRouting.DataBase
                     timeStampS     = String.Format("{0,14}", timeStamp);
                     coordinateXS   = String.Format("{0,20}", routeCoordinates[route.Count -1].X);
                     coordinateYS   = String.Format("{0,20}", routeCoordinates[route.Count -1].Y);
-                    // if(transportModeTransitions.ContainsKey(node.Idx))
-                    // {
-                    //     transportModeS = String.Format("{0,18}",TransportModes.MaskToString(transportModeTransitions[node.Idx].Item1));
-                    //     var routeType = transportModeTransitions[node.Idx].Item2;
-                    //     routeTypeS     = String.Format("{0,10}",routeType);
-                    //     if(TransportModes.OSMTagIdToKeyValue.ContainsKey(routeType))
-                    //         routeTagS      = String.Format("{0,30}",TransportModes.OSMTagIdToKeyValue[routeType]);
-                    //     else
-                    //         routeTagS      = String.Format("{0,30}","Not available");
-                    //     routeTransportModesS = String.Format("{0,30}",TransportModes.MaskToString(TransportModes.TagIdToTransportModes(routeType)));
-                    // }
-                    // else
-                    // {
-                    //     transportModeS = String.Format("{0,18}","| ");
-                    //     routeTypeS     = String.Format("{0,10}","|");
-                    //     routeTagS      = String.Format("{0,30}","|");
-                    //     routeTransportModesS     = String.Format("{0,30}","| ");
-                    // }
                     nodeIdxS       = String.Format("{0,14}", node.Idx);
                     logger.Debug("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}", vertexS, coordinateXS, coordinateYS, timeStampS, transportModeS, routeTypeS, routeTagS, routeTransportModesS, nodeIdxS, nodeS);
                 }

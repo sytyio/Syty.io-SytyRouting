@@ -27,10 +27,7 @@ namespace SytyRouting.Algorithms.Dijkstra
                 Edge outboundEdge = originNode.GetFirstOutboundEdge(outboundMode);
                 if(outboundEdge != null)
                 {
-                    //byte inboundMode = TransportModes.None; // inbound transport mode (wrt the step active node)
-                    //var inboundRouteType = TransportModes.NoRouteType;
                     var outboundRouteType = outboundEdge.TagIdRouteType;
-                    //AddStep(null, originNode, 0, 0, inboundMode, inboundRouteType);
                     AddStep(null, originNode, 0, 0, outboundMode, outboundRouteType);
                 }
             }
@@ -42,8 +39,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                 activeNode = currentStep!.ActiveNode;
 
                 int transportIndex = currentStep.TransportSequenceIndex;
-                //byte inboundMode = currentStep.PreviousStep.OutboundTransportMode;
-                //byte outboundMode = transportModesSequence[transportIndex];
                 byte outboundMode = currentStep.OutboundTransportMode;
                              
                 if(activeNode == destinationNode)
@@ -61,7 +56,6 @@ namespace SytyRouting.Algorithms.Dijkstra
                     foreach(var outwardEdge in activeNode.OutwardEdges)
                     {
                         var availableOutboundModes = outwardEdge.TransportModes;
-                        //var currentMode = inboundMode;
                         
                         if((availableOutboundModes & outboundMode) == outboundMode)
                         {
