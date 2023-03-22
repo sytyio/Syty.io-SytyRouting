@@ -1,5 +1,4 @@
 using NLog;
-using SytyRouting.Model;
 
 namespace SytyRouting
 {
