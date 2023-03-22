@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 namespace SytyRouting.DataBase
 {
-    public class RouteUploader : BaseRouteUploader
+    public class RouteUploaderCOPY : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 

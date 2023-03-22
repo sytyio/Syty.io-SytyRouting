@@ -8,7 +8,7 @@ using System.Text;
 
 namespace SytyRouting.DataBase
 {
-    public class SeveralRoutesUploaderINSERTBATCHED : BaseRouteUploader
+    public class RouteUploaderINSERTBATCHED : BaseRouteUploader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 

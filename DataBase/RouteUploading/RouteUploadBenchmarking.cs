@@ -27,7 +27,7 @@ namespace SytyRouting.DataBase
         {
             _graph = graph;
 
-            int numberOfRows = 1360; //1360;
+            int numberOfRows = 13;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -44,8 +44,8 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.PersonaArrayBatchDownloader,
-                                    DataBase.RouteUploader,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderCOPY,
                                     Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
             
@@ -68,8 +68,8 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.PersonaArrayBatchDownloader,
-                                    DataBase.SeveralRoutesUploaderINSERTBATCHED,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderINSERTBATCHED,
                                     Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 
@@ -92,8 +92,8 @@ namespace SytyRouting.DataBase
             tableNames.Add(routeTable);
 
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.PersonaArrayBatchDownloader,
-                                    DataBase.RouteUploader,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderCOPY,
                                     Routing.RouterTwoDBConnectionsBatchUpload>(graph,connectionString,routeTable,auxiliaryTable);
             totalTimes.Add(totalTime);
 

@@ -6,7 +6,7 @@ using NetTopologySuite.Geometries;
 
 namespace SytyRouting.DataBase
 {
-    public class PersonaArrayBatchDownloader : BasePersonaDownloader
+    public class PersonaDownloaderArrayBatch : BasePersonaDownloader
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();       
 

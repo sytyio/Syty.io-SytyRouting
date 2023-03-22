@@ -372,7 +372,7 @@ namespace SytyRouting.Routing
             var auxiliaryTable = _auxiliaryTable;
             var routeTable = _routeTable;
 
-            var uploader = new DataBase.RouteUploader();
+            var uploader = new DataBase.RouteUploaderCOPY();
 
             await uploader.UploadRoutesAsync(connectionString,routeTable,personas);
 
