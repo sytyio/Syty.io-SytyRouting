@@ -14,10 +14,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public KDTree? KDTree;
 
-        public ControllerAllGtfs(KDTree? kDTree, Node [] nodesArray){
+        public ControllerAllGtfs(KDTree? kDTree, Node [] nodesArray)
+        {
             KDTree=kDTree;
             NodesArray=nodesArray;
-
         }
 
         public void Clean()
