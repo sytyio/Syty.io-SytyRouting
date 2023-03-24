@@ -625,6 +625,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     fullPathDwln);
                 logger.Info("downloaded directory for {0}", choice);
             }
+
             try
             {
                 await dwnldAsync;
@@ -634,6 +635,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 logger.Info("Error with the provider {0}", choice);
                 throw;
             }
+            
             await Task.Run(() => ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract));
             logger.Info("{0} done", choice);
 

@@ -14,10 +14,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public KDTree? KDTree;
 
-        public ControllerAllGtfs(KDTree? kDTree, Node [] nodesArray){
+        public ControllerAllGtfs(KDTree? kDTree, Node [] nodesArray)
+        {
             KDTree=kDTree;
             NodesArray=nodesArray;
-
         }
 
         public void Clean()
@@ -25,7 +25,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             if (Directory.Exists("GtfsData"))
             {
                 Directory.Delete("GtfsData", true);
-                logger.Info("Cleaning GtfsData");
+                logger.Info("Removing GtfsData directory");
             }
             else
             {
