@@ -156,7 +156,6 @@ namespace SytyRouting
             }
         }
 
-
         public static DateTime ValidateTimeStamp(string timeStamp)
         {
             DateTime timeStampResult;
@@ -165,8 +164,6 @@ namespace SytyRouting
             else
                 return Constants.BaseDateTime;
         }
-
-
 
         public static Dictionary<int,byte> CreateMappingTypeRouteToTransportMode(Dictionary<int,byte> transportModeMasks)
         {
