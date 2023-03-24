@@ -25,7 +25,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             if (Directory.Exists("GtfsData"))
             {
                 Directory.Delete("GtfsData", true);
-                logger.Info("Cleaning GtfsData");
+                logger.Info("Removing GtfsData directory");
             }
             else
             {

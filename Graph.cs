@@ -123,8 +123,7 @@ namespace SytyRouting
             }
             catch
             {
-                logger.Info("Could not load from file, loading from DB instead.");
-                
+                logger.Info("Could not load GRAPH from local file. Loading data from OSM DB and GTFS sources.");
                 // Initialise masks 
                 await InitialiseMaskModes();
 
