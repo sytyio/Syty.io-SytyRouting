@@ -134,7 +134,7 @@ namespace SytyRouting
 
                 await GetGtfsData();
                 KDTree = new KDTree(NodesArray);
-                logger.Info("Node count with STIB-MIVB GTFS {0}",NodesArray.Count());
+                logger.Info("Node count with GTFS: {0}",NodesArray.Count());
                 
                 await FileSaveAsync(path);
             }
