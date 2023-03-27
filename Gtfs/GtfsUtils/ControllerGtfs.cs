@@ -20,7 +20,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv = null!;
-        private string choice;
+        private string _provider;
 
         private const double checkValue = 0.000000000000001;
 
@@ -54,47 +54,47 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public ControllerGtfs(string provider)
         {
-            choice = provider;
+            _provider = provider;
         }
 
         public async Task InitController()
         {
             await DownloadGtfs();
-            CtrlCsv = new ControllerCsv(choice);
+            CtrlCsv = new ControllerCsv(_provider);
 
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
             stopDico = CreateStopGtfsDictionary();
-            logger.Info("Stop dico nb stops = {0} for {1} in {2}", stopDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Stop dico nb stops = {0} for {1} in {2}", stopDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             agencyDico = CreateAgencyGtfsDictionary();
-            logger.Info("Agency nb {0} for {1} in {2}", agencyDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Agency nb {0} for {1} in {2}", agencyDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             routeDico = CreateRouteGtfsDictionary();
-            logger.Info("Route nb {0} for {1} in {2}", routeDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Route nb {0} for {1} in {2}", routeDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             shapeDico = CreateShapeGtfsDictionary();
-            logger.Info("Shape nb {0} for {1} in {2}", shapeDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Shape nb {0} for {1} in {2}", shapeDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             calendarDico = CreateCalendarGtfsDictionary();
 
             calendarDateDico = CreateCalendarDateGtfsDictionary();
-            logger.Info("Calendar nb {0} for {1} in {2}", calendarDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Calendar nb {0} for {1} in {2}", calendarDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             SetDaysCirculation();
             stopWatch.Restart();
             scheduleDico = CreateScheduleGtfsDictionary();
-            logger.Info("Schedule nb {0} for {1} in {2}", scheduleDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Schedule nb {0} for {1} in {2}", scheduleDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             tripDico = CreateTripGtfsDictionary();
-            logger.Info("Trip  nb {0} for {1} in {2}", tripDico.Count, choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Trip  nb {0} for {1} in {2}", tripDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
 
             stopWatch.Restart();
             AddTripsToRoute();
-            logger.Info("Trip to route for {0} in {1}", choice, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            logger.Info("Trip to route for {0} in {1}", _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Restart();
             AddSplitLineString();
-            logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed), choice);
+            logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed), _provider);
             stopWatch.Restart();
 
 
@@ -110,7 +110,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 logger.Info("Nb trips for one day ( {0} ) = {1}", Configuration.SelectedDate, nbTripsDays);
             }
 
-            logger.Info("Nb trips for all days = {0} for {1}", nbTrips, choice);
+            logger.Info("Nb trips for all days = {0} for {1}", nbTrips, _provider);
 
 
             AllTripsToEdgeDictionary();
@@ -549,7 +549,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             // if (Math.Abs(distance - Helper.GetDistance(source, target)) > 2000)
             // {
-            //     logger.Debug("Delta distance with linestring and without = {0} for {1}", Math.Abs(distance - Helper.GetDistance(source, target)),choice);
+            //     logger.Debug("Delta distance with linestring and without = {0} for {1}", Math.Abs(distance - Helper.GetDistance(source, target)),_provider);
             // }
             return distance;
         }
@@ -609,12 +609,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             string path = System.IO.Path.GetFullPath("GtfsData");
 
-            logger.Info("Start download {0}", choice);
-            string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs.zip";
-            string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{choice}{Path.DirectorySeparatorChar}gtfs";
-            Uri linkOfGtfs = Configuration.ProvidersInfo[choice];
+            logger.Info("Start download {0}", _provider);
+            string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
+            string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
+            Uri linkOfGtfs = Configuration.ProvidersInfo[_provider];
             Directory.CreateDirectory(path);
-            Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{choice}");
+            Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{_provider}");
             
             try
             {
@@ -630,20 +630,20 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             catch
             {
-                logger.Info("Unable to download GTFS data for {0}", choice);
+                logger.Info("Unable to download GTFS data for {0}", _provider);
                 throw;
             }
             
             ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract);
 
-            logger.Info("Downloading GTFS files for {0} completed", choice);
+            logger.Info("Downloading GTFS files for {0} completed", _provider);
 
             if (Directory.Exists(fullPathExtract))
             {
                 File.Delete(fullPathDwln); //delete .zip
             }
 
-            logger.Info("GTFS source file for {0} deleted", choice);
+            logger.Info("GTFS source file for {0} deleted", _provider);
         }
     }
 }
