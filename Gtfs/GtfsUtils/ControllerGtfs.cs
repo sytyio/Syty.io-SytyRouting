@@ -20,6 +20,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         [NotNull]
         public ControllerCsv? CtrlCsv = null!;
+
+        public bool IsActive=false;
+
         private string _provider;
 
         private const double checkValue = 0.000000000000001;
@@ -57,10 +60,19 @@ namespace SytyRouting.Gtfs.GtfsUtils
             _provider = provider;
         }
 
-        public async Task InitController()
+        public async Task Initialize()
         {
-            await DownloadGtfs();
-            CtrlCsv = new ControllerCsv(_provider);
+            var status = await DownloadGtfs();
+
+            if(status==GTFSDownloadState.Completed)
+            {
+                CtrlCsv = new ControllerCsv(_provider);
+            }
+            else
+            {
+                logger.Info("Error downloading GTFS data for {0}",_provider);
+                return;
+            }
 
             var stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -114,7 +126,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
 
             AllTripsToEdgeDictionary();
-            logger.Info("Edge  dico loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
+
+            IsActive=true;
+            
+            logger.Info("Edge dictionary loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
             stopWatch.Stop();
         }
 
@@ -605,11 +620,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return new TimeSpan(hour % 24, min, seconds);
         }
 
-        private async Task DownloadGtfs()
+        private async Task<GTFSDownloadState> DownloadGtfs()
         {
+            GTFSDownloadState state = GTFSDownloadState.Error;
+
             string path = System.IO.Path.GetFullPath("GtfsData");
 
-            logger.Info("Start download {0}", _provider);
+            logger.Info("Fetching GTFS data from {0}", _provider);
             string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
             string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
             Uri linkOfGtfs = Configuration.ProvidersInfo[_provider];
@@ -627,23 +644,27 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 {
                     await contentStream.CopyToAsync(fileStream);
                 }
+
+                logger.Info("Extrancting GTFS files to {0}",fullPathExtract);
+                ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract);
+                
+                logger.Info("Downloading GTFS files for {0} completed", _provider);
+
+                if (Directory.Exists(fullPathExtract))
+                {
+                    File.Delete(fullPathDwln); //delete .zip
+                }
+
+                logger.Info("GTFS source file for {0} deleted", _provider);
+
+                return GTFSDownloadState.Completed;
             }
-            catch
+            catch(Exception e)
             {
-                logger.Info("Unable to download GTFS data for {0}", _provider);
-                throw;
+                logger.Info("Unable to download GTFS data for {0}: {1}",_provider,e.Message);
+                
+                return state;
             }
-            
-            ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract);
-
-            logger.Info("Downloading GTFS files for {0} completed", _provider);
-
-            if (Directory.Exists(fullPathExtract))
-            {
-                File.Delete(fullPathDwln); //delete .zip
-            }
-
-            logger.Info("GTFS source file for {0} deleted", _provider);
         }
     }
 }

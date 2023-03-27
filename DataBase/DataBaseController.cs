@@ -177,7 +177,7 @@ namespace SytyRouting.DataBase
             return nodesArray;
         }
 
-        public async Task InitController()
+        public async Task Initialize()
         {
             await DBLoadAsync();
             Clean();

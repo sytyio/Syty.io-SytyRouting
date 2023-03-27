@@ -9,7 +9,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
     public class ControllerAllGtfs : ControllerExternalSource
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
-        public Dictionary<string, ControllerGtfs> GtfsDico = new Dictionary<string, ControllerGtfs>();
+        public Dictionary<string, ControllerGtfs> GtfsControllers = new Dictionary<string, ControllerGtfs>();
         private Node[] NodesArray;
 
         public KDTree? KDTree;
@@ -29,7 +29,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             else
             {
-                logger.Info("No data found");
+                logger.Info("No GTFS data found");
             }
         }
 
@@ -48,29 +48,47 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return NodesArray;
         }
 
-        public async Task InitController()
+        public async Task Initialize()
         {
             Clean();
+
             foreach (var provider in Configuration.ProvidersInfo.Keys)
             {
-                GtfsDico.Add(provider, new ControllerGtfs(provider));
+                GtfsControllers.Add(provider, new ControllerGtfs(provider));
             }
-            List<Task> listDwnld = new List<Task>();
-            foreach (var gtfs in GtfsDico)
+
+            List<Task> GTFSDownloadTasks = new List<Task>(GtfsControllers.Count);
+            
+            foreach (var gtfsCtrl in GtfsControllers)
             {
-                var gtfsValueInitCtrl = gtfs.Value.InitController(); 
-                listDwnld.Add(gtfsValueInitCtrl);
+                var task = gtfsCtrl.Value.Initialize(); 
+                GTFSDownloadTasks.Add(task);
             }
-            await Task.WhenAll(listDwnld);
+            
+            await Task.WhenAll(GTFSDownloadTasks);
+
+            CleanGtfsControllers();
             AddGtfsData();
             Clean();
+        }
+
+        private void CleanGtfsControllers()
+        {
+            foreach(var gtfsCtrl in GtfsControllers)
+            {
+                if(!gtfsCtrl.Value.IsActive)
+                {
+                    logger.Debug("Removing inactive GTFS controller: {0}",gtfsCtrl.Key);
+                    GtfsControllers.Remove(gtfsCtrl.Key);
+                }
+            }
         }
 
         private void AddGtfsData()
         {
             if(KDTree is not null)
             {
-                foreach (var gtfs in GtfsDico)
+                foreach (var gtfs in GtfsControllers)
                 {
                     Stopwatch stopWatch = new Stopwatch();
                     stopWatch.Start();
@@ -108,7 +126,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         }
                     }
                 }
-                foreach (var gtfs in GtfsDico)
+                foreach (var gtfs in GtfsControllers)
                 {
                     var nodes = gtfs.Value.GetNodes().Union(gtfs.Value.GetInternalNodes()).ToArray();
                     var testNode = gtfs.Value.GetNodes();
