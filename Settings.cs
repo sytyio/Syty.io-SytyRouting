@@ -29,6 +29,12 @@ namespace SytyRouting
         public string? SelectedDate {get;set;}=null!;
     }
 
+    public sealed class GtfsData
+    {
+        public Uri Uri {get;set;}=null!;
+        public string ZipFile {get;set;}=null!;
+    }
+
     public sealed class RoutingBenchmarkSettings
     {
         public RoutingProbe[] RoutingProbes {get; set;} = null!;
