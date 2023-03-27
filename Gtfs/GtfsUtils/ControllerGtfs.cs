@@ -14,6 +14,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
     public class ControllerGtfs
     {
+        static readonly HttpClient client = new HttpClient();
+
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
         [NotNull]
@@ -613,34 +615,35 @@ namespace SytyRouting.Gtfs.GtfsUtils
             Uri linkOfGtfs = Configuration.ProvidersInfo[choice];
             Directory.CreateDirectory(path);
             Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{choice}");
-
-            Task dwnldAsync;
-
-            using (WebClient wc = new WebClient())
-            {
-                dwnldAsync = wc.DownloadFileTaskAsync(
-                    // Param1 = Link of file
-                    linkOfGtfs,
-                    // Param2 = Path to save
-                    fullPathDwln);
-                logger.Info("downloaded directory for {0}", choice);
-            }
+            
             try
             {
-                await dwnldAsync;
+                using HttpResponseMessage response = await client.GetAsync(linkOfGtfs, HttpCompletionOption.ResponseHeadersRead);
+
+                response.EnsureSuccessStatusCode();
+
+                using (Stream contentStream = await response.Content.ReadAsStreamAsync())
+                using (FileStream fileStream = new FileStream(fullPathDwln, FileMode.Create, FileAccess.Write))
+                {
+                    await contentStream.CopyToAsync(fileStream);
+                }
             }
             catch
             {
-                logger.Info("Error with the provider {0}", choice);
+                logger.Info("Unable to download GTFS data for {0}", choice);
                 throw;
             }
-            await Task.Run(() => ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract));
-            logger.Info("{0} done", choice);
+            
+            ZipFile.ExtractToDirectory(fullPathDwln, fullPathExtract);
+
+            logger.Info("Downloading GTFS files for {0} completed", choice);
 
             if (Directory.Exists(fullPathExtract))
             {
                 File.Delete(fullPathDwln); //delete .zip
             }
+
+            logger.Info("GTFS source file for {0} deleted", choice);
         }
     }
 }

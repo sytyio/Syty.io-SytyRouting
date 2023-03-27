@@ -123,18 +123,19 @@ namespace SytyRouting
             }
             catch
             {
-                logger.Info("Could not load from file, loading from DB instead.");
+                logger.Info("Could not load GRAPH from local file. Loading data from OSM DB and GTFS sources.");
                 // Initialise masks 
                 await InitialiseMaskModes();
 
-                logger.Info("Nb nodes init {0}",NodesArray.Count())      ;   
+                logger.Info("Initial Node count: {0}",NodesArray.Count());
                 await GetDbData();   
-                logger.Info("Nb nodes database {0}",NodesArray.Count())      ;   
+                KDTree = new KDTree(NodesArray);
+                logger.Info("Node count with OSM data: {0}",NodesArray.Count());
 
-                KDTree = new KDTree(NodesArray);
                 await GetGtfsData();
-                logger.Info("Nb nodes with gtfs {0}",NodesArray.Count())      ;   
                 KDTree = new KDTree(NodesArray);
+                logger.Info("Node count with GTFS: {0}",NodesArray.Count());
+                
                 await FileSaveAsync(path);
             }
             ComputeCost();
