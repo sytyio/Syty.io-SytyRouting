@@ -47,7 +47,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////
             // //  Create a new table for route results  //
             ///////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
+            //await DataBase.PersonaRouteFullTable.Create();
             ///////////////////////////////////////////////
 
 
@@ -102,7 +102,7 @@ namespace SytyRouting
             /////////////////////////////////////////////////////
             // //   Route results uploading benchmarking    // //
             /////////////////////////////////////////////////////
-            await DataBase.RouteUploadBenchmarking.Start(graph);
+            //await DataBase.RouteUploadBenchmarking.Start(graph);
             /////////////////////////////////////////////////////
 
 
