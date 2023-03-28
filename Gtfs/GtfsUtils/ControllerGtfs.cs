@@ -622,14 +622,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private async Task<GTFSDownloadState> DownloadGtfs()
         {
-            GTFSDownloadState state = GTFSDownloadState.Error;
-
-            string path = System.IO.Path.GetFullPath("GtfsData");
-
             logger.Info("Fetching GTFS data from {0}", _provider);
-            string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
-            string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
+
+            GTFSDownloadState state = GTFSDownloadState.Error;
+            
+            string path = System.IO.Path.GetFullPath("GtfsData");         
             Uri linkOfGtfs = Configuration.ProvidersInfo[_provider].Uri;
+            string zipFile = Configuration.ProvidersInfo[_provider].ZipFile;
+
+            //string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
+            string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}{zipFile}";
+            string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
+            
             Directory.CreateDirectory(path);
             Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{_provider}");
             
