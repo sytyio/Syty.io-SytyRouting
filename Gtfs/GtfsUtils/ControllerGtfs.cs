@@ -629,7 +629,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             logger.Info("Fetching GTFS data from {0}", _provider);
             string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
             string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
-            Uri linkOfGtfs = Configuration.ProvidersInfo[_provider];
+            Uri linkOfGtfs = Configuration.ProvidersInfo[_provider].Uri;
             Directory.CreateDirectory(path);
             Directory.CreateDirectory($"{path}{Path.DirectorySeparatorChar}{_provider}");
             

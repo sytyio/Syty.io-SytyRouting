@@ -24,8 +24,8 @@ namespace SytyRouting
 
     public sealed class DataGtfsSettings
     {
-        public string [] GtfsProviders {get;set;}=null!;
-        public Uri [] GtfsUris {get;set;}=null!;
+        public string[] GtfsProviders {get;set;}=null!;
+        public GtfsData[] GtfsData {get;set;}=null!;
         public string? SelectedDate {get;set;}=null!;
     }
 

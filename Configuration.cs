@@ -31,7 +31,7 @@ namespace SytyRouting
 
         // Gtfs settings : 
         public static DataGtfsSettings DataGtfsSettings {get;set;} = null!;
-        public static Dictionary<String, Uri> ProvidersInfo {get;set;} = null!;
+        public static Dictionary<String, GtfsData> ProvidersInfo {get;set;} = null!;
 
         public static string SelectedDate {get;set;}=null!;
 
@@ -95,7 +95,6 @@ namespace SytyRouting
                     ConfigurationTable = dBTableSettings.ConfigurationTable;
                 else
                     throw new Exception("Config dBTableSettings are not valid.");
-                
                 PersonaTable = dBTableSettings.PersonaTable;
                 PersonaRouteTable = dBTableSettings.PersonaRouteTable;
                 PKConstraintSuffix = dBTableSettings.PKConstraintSuffix;
@@ -109,7 +108,7 @@ namespace SytyRouting
 
                 DataGtfsSettings? dataGtfsSettings = config.GetRequiredSection("DataGtfsSettings").Get<DataGtfsSettings>();
                 if(dataGtfsSettings != null)
-                    CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsUris);
+                    CreateDictionaryProviderUri(dataGtfsSettings.GtfsProviders,dataGtfsSettings.GtfsData);
                 else
                     throw new Exception("Config dataGtfsSettings are not valid.");
                 InitialiseDateGtfs(dataGtfsSettings.SelectedDate);
@@ -425,16 +424,22 @@ namespace SytyRouting
             return osmTagIds;
         }
 
-        private static void CreateDictionaryProviderUri(string [] providers, Uri [] uris){
-            ProvidersInfo = new Dictionary<string, Uri>();
-            if(providers.Count()!=uris.Count()){
-                logger.Info("Problem with the providers data, not the same number of uris and providers");
-            }else{
+        private static void CreateDictionaryProviderUri(string[] providers, GtfsData[] gtfsData){
+            ProvidersInfo = new Dictionary<string, GtfsData>();
+            if(providers.Count()!=gtfsData.Count())
+            {
+                logger.Info("Problem with the providers data. Not the same number of uris/file names and providers");
+            }
+            else
+            {
                 for(int i=0;i<providers.Count();i++){
-                    try{
-                    ProvidersInfo.Add(providers[i],uris[i]);
-                    }catch(ArgumentException){
-                        logger.Info("Provider already there");
+                    try
+                    {
+                        ProvidersInfo.Add(providers[i],gtfsData[i]);
+                    }
+                    catch(ArgumentException)
+                    {
+                        logger.Info("Provider {0} already there",providers[i]);
                     }
                 }
             }
