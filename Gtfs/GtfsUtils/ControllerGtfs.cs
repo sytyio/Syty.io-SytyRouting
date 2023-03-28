@@ -75,28 +75,33 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
 
             var stopWatch = new Stopwatch();
-            stopWatch.Start();
 
+            stopWatch.Start();
             stopDico = CreateStopGtfsDictionary();
             logger.Info("Stop dico nb stops = {0} for {1} in {2}", stopDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+
             stopWatch.Restart();
             agencyDico = CreateAgencyGtfsDictionary();
             logger.Info("Agency nb {0} for {1} in {2}", agencyDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            
             stopWatch.Restart();
             routeDico = CreateRouteGtfsDictionary();
             logger.Info("Route nb {0} for {1} in {2}", routeDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            
             stopWatch.Restart();
             shapeDico = CreateShapeGtfsDictionary();
             logger.Info("Shape nb {0} for {1} in {2}", shapeDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            
             stopWatch.Restart();
             calendarDico = CreateCalendarGtfsDictionary();
-
             calendarDateDico = CreateCalendarDateGtfsDictionary();
             logger.Info("Calendar nb {0} for {1} in {2}", calendarDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             SetDaysCirculation();
+            
             stopWatch.Restart();
             scheduleDico = CreateScheduleGtfsDictionary();
             logger.Info("Schedule nb {0} for {1} in {2}", scheduleDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            
             stopWatch.Restart();
             tripDico = CreateTripGtfsDictionary();
             logger.Info("Trip  nb {0} for {1} in {2}", tripDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
@@ -104,12 +109,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             stopWatch.Restart();
             AddTripsToRoute();
             logger.Info("Trip to route for {0} in {1}", _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+            
             stopWatch.Restart();
             AddSplitLineString();
             logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed), _provider);
+            
             stopWatch.Restart();
-
-
             var nbTrips = tripDico.Count();
             if (Configuration.SelectedDate != "")
             {
@@ -121,9 +126,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 var nbTripsDays = tripDicoForOneDay.Count();
                 logger.Info("Nb trips for one day ( {0} ) = {1}", Configuration.SelectedDate, nbTripsDays);
             }
-
             logger.Info("Nb trips for all days = {0} for {1}", nbTrips, _provider);
-
 
             AllTripsToEdgeDictionary();
 
@@ -622,7 +625,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private async Task<GTFSDownloadState> DownloadGtfs()
         {
-            logger.Info("Fetching GTFS data from {0}", _provider);
+            logger.Info("Fetching GTFS data for {0}", _provider);
 
             GTFSDownloadState state = GTFSDownloadState.Error;
             
@@ -630,7 +633,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             Uri linkOfGtfs = Configuration.ProvidersInfo[_provider].Uri;
             string zipFile = Configuration.ProvidersInfo[_provider].ZipFile;
 
-            //string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs.zip";
             string fullPathDwln = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}{zipFile}";
             string fullPathExtract = $"{path}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}gtfs";
             
@@ -642,11 +644,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 using HttpResponseMessage response = await client.GetAsync(linkOfGtfs, HttpCompletionOption.ResponseHeadersRead);
 
                 response.EnsureSuccessStatusCode();
-
-                using (Stream contentStream = await response.Content.ReadAsStreamAsync())
-                using (FileStream fileStream = new FileStream(fullPathDwln, FileMode.Create, FileAccess.Write))
+                using (var fs = new FileStream(fullPathDwln, FileMode.CreateNew))
                 {
-                    await contentStream.CopyToAsync(fileStream);
+                    await response.Content.CopyToAsync(fs);
                 }
 
                 logger.Info("Extrancting GTFS files to {0}",fullPathExtract);
@@ -658,7 +658,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 {
                     File.Delete(fullPathDwln); //delete .zip
                 }
-
                 logger.Info("GTFS source file for {0} deleted", _provider);
 
                 return GTFSDownloadState.Completed;
