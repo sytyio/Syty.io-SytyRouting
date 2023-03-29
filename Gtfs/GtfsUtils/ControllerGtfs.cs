@@ -361,6 +361,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void OneTripToEdgeDictionary(string tripId)
         {
+            int oneTripToEdgeDictionaryErrors = 0;
+
             TripGtfs buffTrip;
             if (Configuration.SelectedDate == "")
             {
@@ -379,7 +381,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 buffShape.ArrayDistances = new double[buffTrip.Schedule.Details.Count()];
             }
-            int i = 1;
+            int index = 1;
             int cpt = 0;
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
@@ -423,17 +425,29 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             {
                                 AddNearestNodeCreateEdges(currentStop, currentNearestNodeOnLineString, idForNearestNode, buffTrip, length, cpt);
                             }
+
                             LineString lineString = buffShape.LineString;
 
-                            LineString splitLineString = buffShape.SplitLineString![i];
-                            var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
-                            if(internalGeom != null)
-                                newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
+                            try
+                            {
+                                LineString splitLineString = buffShape.SplitLineString[index];
+                                var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
+                            
+                                if(internalGeom != null)
+                                   newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
+                            }
+                            catch (Exception e)
+                            {
+                                logger.Debug("SplitLineString error: {0}",e.Message);
+                                oneTripToEdgeDictionaryErrors++;
+                            }
+
                             if(newEdge !=null && (newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0))
                             {
                                 logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
                             }
-                            i++;
+
+                            index++;
                         }
                         else // if there is no linestring
                         {
@@ -454,7 +468,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     }
                     else
                     {
-                        i++;
+                        index++;
                     }
                 }
                 else
@@ -491,6 +505,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 previousStopTime = currentStopTime.Value;
                 previousNearestOnLineString = currentNearestNodeOnLineString;
             }
+
+            logger.Debug("{0} OneTripToEdgeDictionary errors for provider {1}",oneTripToEdgeDictionaryErrors,_provider);
         }
 
         private EdgeGtfs AddEdge(LineString splitLineString, Node currentNearestNodeOnLineString, Node previousNearestOnLineString, string newId, double duration, TripGtfs buffTrip, XYMPoint[] internalGeom, StopGtfs prev, StopGtfs current) // StopGtfs prev, StopGtfs current
