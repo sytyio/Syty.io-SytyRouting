@@ -23,7 +23,7 @@ namespace SytyRouting.Model
     */
     interface ControllerExternalSource
     {
-        Task InitController();
+        Task Initialize();
         IEnumerable<Node> GetNodes();
         IEnumerable<Edge> GetEdges();
 

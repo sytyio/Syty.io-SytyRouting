@@ -99,21 +99,22 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private List<StopCsv> GetAllStops(string provider){
             string fullPathStop = System.IO.Path.GetFullPath($"GtfsData{Path.DirectorySeparatorChar}{provider}{Path.DirectorySeparatorChar}gtfs{Path.DirectorySeparatorChar}stops.txt");
-            try
-            {
-                using (var reader = new StreamReader(fullPathStop))
+                try
                 {
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    using (var reader = new StreamReader(fullPathStop))
                     {
-                        return csv.GetRecords<StopCsv>().ToList();
+                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                        {
+                            return csv.GetRecords<StopCsv>().ToList();
+                        }
                     }
                 }
-            }
-            catch (DirectoryNotFoundException)
-            {
-                logger.Info("Something went wrong with the {0} directory (missing gtfs)", provider);
-                throw;
-            }
+                //catch (DirectoryNotFoundException)
+                catch (Exception e)
+                {
+                    logger.Info("Something went wrong with the {0} directory (missing gtfs): {1}",provider,e.Message);
+                    throw;
+                }
         }
 
         private List<CalendarCsv> GetAllCalendars(string provider)

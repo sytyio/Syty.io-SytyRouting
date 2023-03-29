@@ -24,9 +24,15 @@ namespace SytyRouting
 
     public sealed class DataGtfsSettings
     {
-        public string [] GtfsProviders {get;set;}=null!;
-        public Uri [] GtfsUris {get;set;}=null!;
+        public string[] GtfsProviders {get;set;}=null!;
+        public GtfsData[] GtfsData {get;set;}=null!;
         public string? SelectedDate {get;set;}=null!;
+    }
+
+    public sealed class GtfsData
+    {
+        public Uri Uri {get;set;}=null!;
+        public string ZipFile {get;set;}=null!;
     }
 
     public sealed class RoutingBenchmarkSettings

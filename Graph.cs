@@ -173,14 +173,14 @@ namespace SytyRouting
         public async Task GetDbData()
         {
             DataBaseController db = new DataBaseController(Configuration.ConnectionString,Configuration.EdgeTable);
-            await db.InitController();
+            await db.Initialize();
             NodesArray=db.GetNodes().ToArray();
         }
 
         public async Task GetGtfsData()
         {
             ControllerAllGtfs gtfs = new ControllerAllGtfs(KDTree,NodesArray);
-            await gtfs.InitController();
+            await gtfs.Initialize();
             NodesArray = gtfs.GetNodes().ToArray();
          }
 

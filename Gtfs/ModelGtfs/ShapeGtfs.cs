@@ -11,16 +11,17 @@ namespace SytyRouting.Gtfs.ModelGtfs
 
         public LineString LineString {get;set;}
 
-        public double[]? ArrayDistances; 
+        public double[] ArrayDistances = null!; 
 
-        public List<LineString>? SplitLineString;
+        public List<LineString> SplitLineString = null!;
 
         public override string ToString()
         {
             return "Id = " + Id + " Nb points = " + ItineraryPoints.Count;
         }
 
-        public ShapeGtfs(string id, Dictionary<int,Point> itineraryPoints, LineString lineString){
+        public ShapeGtfs(string id, Dictionary<int,Point> itineraryPoints, LineString lineString)
+        {
             Id=id;
             ItineraryPoints=itineraryPoints;
             LineString=lineString;

@@ -1,5 +1,11 @@
 namespace SytyRouting
 {
+    public enum GTFSDownloadState
+    {
+        Completed =     1,
+        Error =         0,                
+    }
+
     [Flags]
     public enum CostCriteria
     {
