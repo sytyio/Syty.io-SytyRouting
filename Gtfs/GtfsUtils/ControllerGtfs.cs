@@ -323,21 +323,25 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private void AllTripsToEdgeDictionary()
         {
+            int oneTripToEdgeDictionaryErrors = 0;
+
             if (Configuration.SelectedDate == "")
             {
 
                 foreach (var trip in tripDico)
                 {
-                    OneTripToEdgeDictionary(trip.Key);
+                    oneTripToEdgeDictionaryErrors+=OneTripToEdgeDictionary(trip.Key);
                 }
             }
             else
             {
                 foreach (var trip in tripDicoForOneDay) // trips for one day
                 {
-                    OneTripToEdgeDictionary(trip.Key);
+                    oneTripToEdgeDictionaryErrors+=OneTripToEdgeDictionary(trip.Key);
                 }
             }
+
+            logger.Debug("{0} OneTripToEdgeDictionary errors for provider {1}",oneTripToEdgeDictionaryErrors,_provider);
         }
 
         private void AddSplitLineString()
@@ -359,7 +363,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
         }
 
-        private void OneTripToEdgeDictionary(string tripId)
+        private int OneTripToEdgeDictionary(string tripId)
         {
             int oneTripToEdgeDictionaryErrors = 0;
 
@@ -438,13 +442,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             }
                             catch (Exception e)
                             {
-                                logger.Debug("SplitLineString error: {0}",e.Message);
+                                //logger.Debug("SplitLineString error: {0}",e.Message);
                                 oneTripToEdgeDictionaryErrors++;
                             }
 
                             if(newEdge !=null && (newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0))
                             {
-                                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                                //TraceGTFSTrip(buffTrip,previousStop,currentStop,newEdge);
                             }
 
                             index++;
@@ -462,7 +466,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             newEdge = new EdgeGtfs(newId, previousStop, currentStop, distance, duration, buffTrip.Route, false, distance / duration, null, TransportModes.PublicModes, buffTrip.Route.Type);
                             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, previousStop, currentStop);
                             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
-                                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                                //logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                                //TraceGTFSTrip(buffTrip,previousStop,currentStop,newEdge);
                             }
                         }
                     }
@@ -506,7 +511,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 previousNearestOnLineString = currentNearestNodeOnLineString;
             }
 
-            logger.Debug("{0} OneTripToEdgeDictionary errors for provider {1}",oneTripToEdgeDictionaryErrors,_provider);
+            return oneTripToEdgeDictionaryErrors;
         }
 
         private EdgeGtfs AddEdge(LineString splitLineString, Node currentNearestNodeOnLineString, Node previousNearestOnLineString, string newId, double duration, TripGtfs buffTrip, XYMPoint[] internalGeom, StopGtfs prev, StopGtfs current) // StopGtfs prev, StopGtfs current
@@ -516,7 +521,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                                       distance / duration, internalGeom, TransportModes.PublicModes, buffTrip.Route.Type);
             AddEdgeToNodes(previousNearestOnLineString, currentNearestNodeOnLineString, newEdge, buffTrip, prev, current);
             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
-                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                //logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                //TraceGTFSTrip(buffTrip,previousStop,currentStop,newEdge);
             }
             return newEdge;
         }
@@ -527,7 +533,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             currentStop.InwardEdges.Add(newEdge);
             edgeDico.Add(newEdge.Id, newEdge);
             if(newEdge.LengthM<=0||newEdge.MaxSpeedMPerS<=0||Double.IsNaN(newEdge.LengthM)||newEdge.MaxSpeedMPerS>50||newEdge.DurationS<=0){
-                logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                //logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",buffTrip.Route.Id,buffTrip.Id,prev.Id,prev.Y,prev.X,current.Id,current.Y,current.X,newEdge.LengthM,newEdge.MaxSpeedMPerS,newEdge.DurationS);
+                //TraceGTFSTrip(buffTrip,previousStop,currentStop,newEdge);
             }
         }
 
@@ -684,6 +691,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 
                 return state;
             }
+        }
+
+        private void TraceGTFSTrip(TripGtfs trip, StopGtfs previousStop, StopGtfs currentStop, EdgeGtfs edge)
+        {
+            logger.Info("Route {0} Trip {1} from {2} {3} {4} to {5} {6} {7} length {8} speed {9} duration {10}",trip.Route.Id,trip.Id,previousStop.Id,previousStop.Y,previousStop.X,currentStop.Id,currentStop.Y,currentStop.X,edge.LengthM,edge.MaxSpeedMPerS,edge.DurationS);
         }
     }
 }
