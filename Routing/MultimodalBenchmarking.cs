@@ -32,8 +32,7 @@ namespace SytyRouting.Routing
             var routingBenchmarkTable = Configuration.RoutingBenchmarkTable;
             var routingBenchmarkCompTable = Configuration.RoutingBenchmarkTable+"_comp";
                         
-            int numberOfRows = await Routing.MultiModalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routingBenchmarkTable);
-
+            int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routingBenchmarkTable);
             
 
             // ////////////// // ////////////// ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,8 +52,6 @@ namespace SytyRouting.Routing
                                     Routing.RouterOneTimeAllUpload>(graph,connectionString,routingBenchmarkTable,routingBenchmarkCompTable);
 
             totalTimes.Add(totalTime);
-            
-            
 
             var comparisonResult = "Reference";
             comparisonResults.Add(comparisonResult);
@@ -99,9 +96,7 @@ namespace SytyRouting.Routing
             }
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
-
             //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
-
         }
 
         private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
@@ -109,12 +104,9 @@ namespace SytyRouting.Routing
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
-            //var uploader = new U();
             var router = new R();
 
-            router.Initialize(_graph, connectionString, routeTable, comparisonTable);
-            //Task routingTask = router.StartRouting<A,D,U>();
-            //await Task.WhenAll(routingTask);
+            router.Initialize(_graph, connectionString, routeTable, comparisonTable);            
             await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();
@@ -126,7 +118,6 @@ namespace SytyRouting.Routing
 
             var uploadTest = await CheckUploadedRoutesAsync(personas, comparisonTable, computedRoutes);
             uploadResults.Add(uploadTest);
-
             
             benchmarkStopWatch.Stop();
             var executionTime = benchmarkStopWatch.Elapsed;
