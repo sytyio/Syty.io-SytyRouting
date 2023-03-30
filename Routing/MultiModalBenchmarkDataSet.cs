@@ -14,24 +14,26 @@ namespace SytyRouting.Routing
         private static Stopwatch stopWatch = new Stopwatch();
         
 
-        public static async Task CreateDataSet()
+        public static async Task<int> CreateDataSet(string connectionString, string personaTable, string routingBenchmarkTable)
         {
             stopWatch.Start();
             
-            await PersonaLocalDBUploadAsync();
+            var items = await PersonaLocalDBUploadAsync(connectionString,personaTable,routingBenchmarkTable);
 
             stopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
             logger.Info("Routing benchmark data set creation time :: {0}", totalTime);
+
+            return items;
         }
 
-        private static async Task PersonaLocalDBUploadAsync()
+        private static async Task<int> PersonaLocalDBUploadAsync(string connectionString, string personaTable, string routingBenchmarkTable)
         {
             Stopwatch uploadStopWatch = new Stopwatch();
             uploadStopWatch.Start();
 
             //var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
-            var connectionString = Configuration.ConnectionString;  // Local DB for testing
+            //var connectionString = Configuration.ConnectionString;  // Local DB for testing
 
             // Selected points around Brussels:
 
@@ -113,8 +115,6 @@ namespace SytyRouting.Routing
             await connection.OpenAsync();
             connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
 
-            var personaTable = Configuration.PersonaTable;
-            var routingBenchmarkTable = Configuration.RoutingBenchmarkTable;
             var additionalProbes = Configuration.AdditionalRoutingProbes;
 
             await using (var cmd = new NpgsqlCommand("DROP TABLE IF EXISTS " + routingBenchmarkTable + ";", connection))
@@ -122,105 +122,43 @@ namespace SytyRouting.Routing
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            await using (var cmd = new NpgsqlCommand("CREATE TABLE " + routingBenchmarkTable + " AS SELECT id, home_location, work_location FROM " + personaTable + " WHERE id > " + routingProbes.Length + " AND ST_X(home_location) > 4.2491 AND ST_X(home_location) < 4.4887 AND ST_Y(home_location) > 50.7843 AND ST_Y(home_location) < 50.9229 AND ST_X(work_location) > 4.2491 AND ST_X(work_location) < 4.4887 AND ST_Y(work_location) > 50.7843 AND ST_Y(work_location) < 50.9229 ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";", connection))
+            await using var batch = new NpgsqlBatch(connection)
             {
-                await cmd.ExecuteNonQueryAsync();
+                BatchCommands =
+                {
+                    new(@"CREATE TABLE " + routingBenchmarkTable + " AS SELECT id, home_location, work_location FROM "
+                     + personaTable + " WHERE id > " + routingProbes.Length + @" AND ST_X(home_location) > 4.2491
+                                                                                 AND ST_X(home_location) < 4.4887
+                                                                                 AND ST_Y(home_location) > 50.7843
+                                                                                 AND ST_Y(home_location) < 50.9229
+                                                                                    AND ST_X(work_location) > 4.2491
+                                                                                    AND ST_X(work_location) < 4.4887
+                                                                                    AND ST_Y(work_location) > 50.7843
+                                                                                    AND ST_Y(work_location) < 50.9229
+                                                                                      ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " DROP CONSTRAINT IF EXISTS routingbenchmarktest_pk;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD CONSTRAINT routingbenchmarktest_pk PRIMARY KEY (id);"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS total_time TIMESTAMPTZ;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS total_time_interval INTERVAL;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS route TGEOMPOINT;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
+                }
+            };
+
+            await using (var reader = await batch.ExecuteReaderAsync())
+            {
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++++++");
+                logger.Debug("   {0} table creation   ",routingBenchmarkTable);
+                logger.Debug("++++++++++++++++++++++++++++++++++++++++++++++");
             }
 
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " DROP CONSTRAINT IF EXISTS routingbenchmarktest_pk;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD CONSTRAINT routingbenchmarktest_pk PRIMARY KEY (id);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_sequence TEXT[];", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route_2d GEOMETRY;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS total_time TIMESTAMPTZ;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS total_time_interval INTERVAL;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS is_valid_route BOOL;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route_temporal_point TGEOMPOINT;", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_modes TEXT[];", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS time_stamps TIMESTAMPTZ[];", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            await using (var cmd = new NpgsqlCommand("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_transitions TTEXT(Sequence);", connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
-
-            // PLGSQL: Merge each transport_mode with its corresponding transition time_stamp: 
-            var functionString =  @"
-            CREATE OR REPLACE FUNCTION coalesce_transport_modes_time_stamps(transport_modes text[], time_stamps timestamptz[]) RETURNS ttext(Sequence) AS $$
-            DECLARE
-            _arr_ttext ttext[];
-            _seq_ttext ttext(Sequence);
-            _transport_mode text;
-            _index int;
-            BEGIN
-                _index := 0;
-                FOREACH _transport_mode IN ARRAY transport_modes
-                LOOP
-                    _index := _index + 1;
-                    RAISE NOTICE 'current tranport mode: %', _transport_mode;
-                    _arr_ttext[_index] := ttext_inst(transport_modes[_index], time_stamps[_index]);            
-                    RAISE NOTICE 'current ttext: %', _arr_ttext[_index];
-                END LOOP;
-                _seq_ttext := ttext_seq(_arr_ttext);
-                RAISE NOTICE 'sequence: %', _seq_ttext;
-                RETURN _seq_ttext;
-                EXCEPTION
-                    WHEN others THEN
-                        RAISE NOTICE 'An error has occurred:';
-                        RAISE NOTICE '% %', SQLERRM, SQLSTATE;
-                        --RETURN ttext_seq(ARRAY[ttext_inst('None', '1970-01-01 00:00:00'), ttext_inst('None', '1970-01-01 00:00:01')]);
-                        RETURN null;
-            END;
-            $$ LANGUAGE PLPGSQL;
-            ";
-
-            await using (var cmd = new NpgsqlCommand(functionString, connection))
-            {
-                await cmd.ExecuteNonQueryAsync();
-            }
 
             int uploadFails = 0;
 
@@ -228,14 +166,15 @@ namespace SytyRouting.Routing
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, home_location, work_location, transport_sequence) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET home_location = $2, work_location = $3, transport_sequence = $4", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, home_location, work_location, requested_transport_modes, start_time) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET home_location = $2, work_location = $3, requested_transport_modes = $4, start_time = $5", connection)
                     {
                         Parameters =
                         {
                             new() { Value = brusseleir.Id },
                             new() { Value = brusseleir.HomeLocation },
                             new() { Value = brusseleir.WorkLocation },
-                            new() { Value = TransportModes.ArrayToNames(brusseleir.RequestedTransportSequence) }
+                            new() { Value = TransportModes.ArrayToNames(brusseleir.RequestedTransportSequence) },
+                            new() { Value = Configuration.DefaultRouteStartDateTime }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
@@ -263,7 +202,7 @@ namespace SytyRouting.Routing
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, transport_sequence) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET transport_sequence = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, requested_transport_modes) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2", connection)
                     {
                         Parameters =
                         {
@@ -287,6 +226,8 @@ namespace SytyRouting.Routing
             logger.Info("{0} Persona examples successfully uploaded to the database (routing benchmark table) in {1} (d.hh:mm:s.ms)", realBrusselVloms.Count - uploadFails,  totalTime);
             var totalDBItems = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTable, logger);
             logger.Debug("{0} personas (out of {1}) failed to upload ({2} %) to the routing benchmark table", uploadFails, totalDBItems, 100 * uploadFails / totalDBItems);
+
+            return totalDBItems;
         }
     }
 }

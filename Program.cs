@@ -47,7 +47,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////
             // //  Create a new table for route results  //
             ///////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
+            //await DataBase.PersonaRouteFullTable.Create();
             ///////////////////////////////////////////////
 
 
@@ -94,7 +94,8 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
             // //             Multimodal Persona spatial data generation and routing benchmarking             // //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            // await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            //await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            await Routing.MultimodalBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -102,7 +103,7 @@ namespace SytyRouting
             /////////////////////////////////////////////////////
             // //   Route results uploading benchmarking    // //
             /////////////////////////////////////////////////////
-            await DataBase.RouteUploadBenchmarking.Start(graph);
+            //await DataBase.RouteUploadBenchmarking.Start(graph);
             /////////////////////////////////////////////////////
 
 
