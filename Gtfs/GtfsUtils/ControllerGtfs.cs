@@ -442,7 +442,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             }
                             catch (Exception e)
                             {
-                                //logger.Debug("SplitLineString error: {0}",e.Message);
+                                logger.Debug("SplitLineString error: {0}",e.Message);
                                 oneTripToEdgeDictionaryErrors++;
                             }
 

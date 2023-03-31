@@ -46,6 +46,7 @@ namespace SytyRouting.DataBase
             ///////////////////////////////////////////////////////////////
             //debug: Aux table copied to a permanent table for benchmarking
             await SetComparisonTable(connection,auxiliaryTable,comparisonTable);
+            await SetBenchmarkingTable(connection,auxiliaryTable,routeTable,personas);
             //:gudeb
 
   

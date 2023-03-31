@@ -24,7 +24,7 @@ namespace SytyRouting.Routing
             _graph = graph;
 
 
-            await Routing.MultiModalBenchmarkDataSet.CreateDataSet();
+            //await Routing.MultiModalBenchmarkDataSet.CreateDataSet();
             await MultiModalRouter.StartRouting<T>(_graph);
             
 

@@ -108,6 +108,97 @@ namespace SytyRouting.DataBase
         }
         //:gudeb
 
+
+        /////////////////////////////////////////////////////////////////////
+        //debug: Routing results copied to a permanent table for benchmarking
+        public async Task SetBenchmarkingTable(NpgsqlConnection connection, string auxiliaryTable, string benchmarkingTable, List<Persona> personas)
+        {
+            //var comparisonTable=auxiliaryTable+"_comp";
+            var benchmarkingTablePK=benchmarkingTable+"_PK";
+
+            bool benchmarkingTableExists = false;
+            await using (var prmCommand = new NpgsqlCommand("SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = '" + benchmarkingTable + "');", connection))
+            await using (var reader = await prmCommand.ExecuteReaderAsync())
+            {
+                while(await reader.ReadAsync())
+                {
+                    benchmarkingTableExists = Convert.ToBoolean(reader.GetValue(0));
+                }
+            }
+
+            if(!benchmarkingTableExists)
+            {
+                await using var compTableBatch = new NpgsqlBatch(connection)
+                {
+                    BatchCommands =
+                    {
+                        new("CREATE TABLE " + benchmarkingTable + " as (SELECT * FROM " + auxiliaryTable + ");"),
+                        new("ALTER TABLE " + benchmarkingTable + " ADD CONSTRAINT " + benchmarkingTablePK + " PRIMARY KEY (persona_id);")
+                    }
+                };
+
+                await using (await compTableBatch.ExecuteReaderAsync())
+                {
+                    logger.Debug("{0} table creation",benchmarkingTable);
+                }
+
+            }
+            else
+            {
+                await using var cmd_insert = new NpgsqlCommand(@"
+                INSERT INTO " + benchmarkingTable + @" (
+                       id, computed_route, computed_route_2d, transport_modes, time_stamps, is_valid_route)
+                SELECT persona_id as id, computed_route, computed_route_2d, transport_modes, time_stamps, is_valid_route FROM " + auxiliaryTable + @" ON CONFLICT (id) DO
+                UPDATE SET 
+                 computed_route = EXCLUDED.computed_route,
+                 computed_route_2d = EXCLUDED.computed_route_2d,
+                 transport_modes = EXCLUDED.transport_modes,
+                 time_stamps = EXCLUDED.time_stamps,
+                 is_valid_route = EXCLUDED.is_valid_route;", connection);  
+                
+                await cmd_insert.ExecuteNonQueryAsync();
+            }
+
+            int uploadFails = 0;
+            foreach(var persona in personas)
+            {
+                try
+                {
+                    var route = persona.Route;
+                    double lastTime = -1.0;
+                    if(route is not null)
+                    {
+                        var routeCoordinates=route.Coordinates;
+                        lastTime = routeCoordinates.Last().M;
+                    }
+                        
+                    var timeStampsTZ = persona.TTextTransitions.Item2;
+                    var interval = TimeSpan.FromSeconds(lastTime);
+                    
+                    await using var cmd_insert_ttext = new NpgsqlCommand("INSERT INTO " + benchmarkingTable + " (id, total_time, total_time_interval) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET total_time = $2, total_time_interval = $3", connection)
+                    {
+                        Parameters =
+                        {
+                            new() { Value = persona.Id },
+                            new() { Value = timeStampsTZ.Last() },
+                            new() { Value = interval },
+                        }
+                    };
+                
+                    await cmd_insert_ttext.ExecuteNonQueryAsync();
+                }
+                catch
+                {
+                    logger.Debug(" ==>> Unable to upload route to database. Persona Id {0}", persona.Id);
+                    uploadFails++;
+                }
+            }
+        }
+        //:gudeb
+
+
+        
+
         public virtual Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable)
         {
            throw new NotImplementedException();
