@@ -25,7 +25,7 @@ namespace SytyRouting.Routing
 
 
             //await Routing.MultiModalBenchmarkDataSet.CreateDataSet();
-            //await MultiModalRouter.StartRouting<T>(_graph);
+            await MultiModalRouter.StartRouting<T>(_graph);
             
 
             benchmarkStopWatch.Stop();

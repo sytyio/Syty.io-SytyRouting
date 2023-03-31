@@ -202,12 +202,13 @@ namespace SytyRouting.Routing
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, requested_transport_modes) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
                     {
                         Parameters =
                         {
                             new() { Value = additionalProbesIds[i] },
-                            new() { Value = Configuration.DefaultBenchmarkSequence }
+                            new() { Value = Configuration.DefaultBenchmarkSequence },
+                            new() { Value = Configuration.DefaultRouteStartDateTime }
                         }
                     };
                     await cmd_insert.ExecuteNonQueryAsync();
