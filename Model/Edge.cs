@@ -13,6 +13,13 @@ namespace SytyRouting.Model
     public class Edge
     {
         public long OsmID;
+        
+        //debug:
+        public string ShapeId=null!;
+        public string RouteId=null!;
+        public string TripId=null!;
+        //:gudeb
+
         public double Cost;
         public OneWayState OneWayState;
         public double LengthM;

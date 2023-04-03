@@ -21,12 +21,33 @@ namespace SytyRouting.Gtfs.ModelGtfs
             return "Id = " + Id + " Target = " + TargetNode.Y+" "+TargetNode.X + " Source = " + SourceNode.Y+ " "+SourceNode.X + " Length ="+LengthM+ " Route = " + Route.LongName +Route.Id + " LineString? = " + IsShapeAvailable + "MaskMode = "+TransportModes;
         }
 
-        public EdgeGtfs(string id, Node source, Node target, double distance, double duration, RouteGtfs route, bool iShapeAvailable,  double maxSpeedMPerS, XYMPoint[]? internalGeometry,byte transportModes, int tagIdRouteType)
+        public EdgeGtfs(
+            string id,
+            //debug:
+            string shapeId,
+            string routeId,
+            string tripId,
+            //:gudeb
+            Node source,
+            Node target,
+            double distance,
+            double duration,
+            RouteGtfs route,
+            bool iShapeAvailable,
+            double maxSpeedMPerS,
+            XYMPoint[]? internalGeometry,
+            byte transportModes,
+            int tagIdRouteType)
         {
             OsmID = long.MaxValue; 
             LengthM = distance;
             DurationS = duration;
             Id = id;
+            //debug:
+            ShapeId=shapeId;
+            RouteId=routeId;
+            TripId=tripId;
+            //:gudeb
             TargetNode = target;
             SourceNode = source;
             Route = route;
