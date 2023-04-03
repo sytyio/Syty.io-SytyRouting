@@ -184,11 +184,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private int GtfsExtendedTypeToBasicType(int type){
             switch(type){
                 case int n when (n<=12):
-                return type;
+                    return type;
                 case int n when (n==700):
-                return 3;
-                case int n when (n>=100&&n<=103):
-                return 2;
+                    return 3;
+                case int n when (n>=100 && n<=103):
+                    return 2;
                 default:
                     throw new ArgumentException(String.Format("Type not implemented for type = {0} see here https://developers.google.com/transit/gtfs/reference/exten ",type));
             }
@@ -368,6 +368,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int oneTripToEdgeDictionaryErrors = 0;
 
             TripGtfs buffTrip;
+
             if (Configuration.SelectedDate == "")
             {
                 buffTrip = tripDico[tripId]; // All trips
@@ -376,6 +377,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 buffTrip = tripDicoForOneDay[tripId]; // Trips for one day 
             }
+
             ShapeGtfs? buffShape = buffTrip.Shape;
             StopGtfs? previousStop = null;
             StopTimesGtfs? previousStopTime = null;
@@ -385,8 +387,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
             {
                 buffShape.ArrayDistances = new double[buffTrip.Schedule.Details.Count()];
             }
+
             int index = 1;
             int cpt = 0;
+
             foreach (var currentStopTime in buffTrip.Schedule.Details)
             {
                 var currentStop = currentStopTime.Value.Stop;
@@ -436,13 +440,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             {
                                 LineString splitLineString = buffShape.SplitLineString[index];
                                 var internalGeom = Helper.GetInternalGeometry(splitLineString, OneWayState.Yes);
+
+                                //debug:
+                                //Console.WriteLine("index: {0} buffShape.SplitLineString.Count: {1}",index,buffShape.SplitLineString.Count);
+                                //:gudeb
                             
                                 if(internalGeom != null)
                                    newEdge = AddEdge(splitLineString, currentNearestNodeOnLineString, previousNearestOnLineString, newId, duration, buffTrip, internalGeom, previousStop, currentStop);
                             }
                             catch (Exception e)
                             {
-                                logger.Debug("SplitLineString error: {0}",e.Message);
+                                //logger.Debug("SplitLineString error: {0}",e.Message);
+                                logger.Debug("index: {0} buffShape.SplitLineString.Count: {1}",index,buffShape.SplitLineString.Count);
                                 oneTripToEdgeDictionaryErrors++;
                             }
 
@@ -455,6 +464,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         }
                         else // if there is no linestring
                         {
+                                //debug:
+                                Console.WriteLine("No LineString");
+                                //:gudeb
+
                             currentNearestNodeOnLineString.X = currentStop.X;
                             currentNearestNodeOnLineString.Y = currentStop.Y;
 
@@ -472,8 +485,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         }
                     }
                     else
-                    {
+                    {                       
                         index++;
+
+                        //debug:
+                        Console.WriteLine("edgeDico Contains Key newId. index: {0}",index);
+                        //:gudeb
                     }
                 }
                 else
