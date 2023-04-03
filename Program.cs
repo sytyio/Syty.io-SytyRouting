@@ -63,7 +63,8 @@ namespace SytyRouting
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // //                                           Routing algorithms benchmarking                                                      // //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
+            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -95,7 +96,7 @@ namespace SytyRouting
             // //             Multimodal Persona spatial data generation and routing benchmarking             // //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
             //await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            await Routing.MultimodalBenchmarking.Start(graph);
+            //await Routing.MultimodalBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
