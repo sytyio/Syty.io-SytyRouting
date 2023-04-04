@@ -236,6 +236,7 @@ namespace SytyRouting
             LinearLocation? ll1 = null;
             SortedList<Double, LinearLocation> sll = new SortedList<double, LinearLocation>();
             sll.Add(-1, new LinearLocation(0, 0d));
+
             foreach (Point pt in pts)
             {
                 Double distanceOnLinearString = lil.Project(pt.Coordinate);
@@ -244,6 +245,7 @@ namespace SytyRouting
                     sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
                 }
             }
+
             foreach (LinearLocation ll in sll.Values)
             {
                 if (ll1 != null)
@@ -252,6 +254,7 @@ namespace SytyRouting
                 }
                 ll1 = ll;
             }
+
             return parts;
         }
 
@@ -320,6 +323,7 @@ namespace SytyRouting
         {
             double speed = 0;
             double transportModeSpeed = 0;
+
             if(TransportModes.MasksToSpeeds.ContainsKey(transportMode))
             {
                 transportModeSpeed = TransportModes.MasksToSpeeds[transportMode];
