@@ -63,8 +63,10 @@ namespace SytyRouting
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // //                                           Routing algorithms benchmarking                                                      // //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
+            //var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
+
+
 
             // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
 
@@ -95,17 +97,16 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
             // //             Multimodal Persona spatial data generation and routing benchmarking             // //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            //await Routing.MultiModalRoutingBenchmarking.Start<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
             //await Routing.MultimodalBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
-            /////////////////////////////////////////////////////
-            // //   Route results uploading benchmarking    // //
-            /////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////
+            // //    Route results uploading benchmarking     // //
+            ///////////////////////////////////////////////////////
             await DataBase.RouteUploadBenchmarking.Start(graph);
-            /////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////
 
 
 
