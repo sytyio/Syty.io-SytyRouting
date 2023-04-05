@@ -147,7 +147,7 @@ namespace SytyRouting.DataBase
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
 
-            await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
+            //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
 
         }
 
@@ -159,7 +159,7 @@ namespace SytyRouting.DataBase
             //var uploader = new U();
             var router = new R();
 
-            router.Initialize(_graph, connectionString, routeTable, comparisonTable);
+            router.Initialize(_graph, connectionString, routeTable, comparisonTable: comparisonTable);
             await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();

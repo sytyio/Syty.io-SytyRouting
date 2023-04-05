@@ -1,10 +1,8 @@
 ﻿using NLog;
 using Npgsql;
-using SytyRouting.Routing;
 
 namespace SytyRouting
 {
-
     class Program
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -44,17 +42,17 @@ namespace SytyRouting
 
 
 
-            ///////////////////////////////////////////////
-            // //  Create a new table for route results  //
-            ///////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
-            ///////////////////////////////////////////////
-
+            ////////////////////////////////////////////////
+            // //  Create a new table for route results   //
+            ////////////////////////////////////////////////
+            //await DataBase.PersonaRouteFullTable.Create();
+            ////////////////////////////////////////////////
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////////
             // //                        Set PLGSQL functions on DB                                   // //
             ///////////////////////////////////////////////////////////////////////////////////////////////
+            //var connectionString = Configuration.ConnectionString;
             //await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(connectionString);
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -67,29 +65,21 @@ namespace SytyRouting
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
 
 
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph,transportSequence);
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph,transportSequence);
 
-            // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph,transportSequence);
 
-            // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
-            // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph);
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph,transportSequence);
 
-            // // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph);
-            // // // // Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            //                                                    SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph,transportSequence);
 
-            // // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // // // //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph);
+            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+            //                                                    SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph,transportSequence);
 
-            // // // // Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // // // //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
-
-            // // // //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
-
-            // // //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            // //                                                    //SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph);
-
-            // // //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph);
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -97,7 +87,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
             // //             Multimodal Persona spatial data generation and routing benchmarking             // //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            //await Routing.MultimodalBenchmarking.Start(graph);
+            await Routing.MultimodalBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -105,7 +95,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////
             // //    Route results uploading benchmarking     // //
             ///////////////////////////////////////////////////////
-            await DataBase.RouteUploadBenchmarking.Start(graph);
+            //await DataBase.RouteUploadBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////
 
 

@@ -137,7 +137,8 @@ namespace SytyRouting.Routing
                                                                                     AND ST_Y(work_location) < 50.9229
                                                                                       ORDER BY id ASC OFFSET " + routingProbes.Length + " LIMIT " + additionalProbes + ";"),
                     new("ALTER TABLE " + routingBenchmarkTable + " DROP CONSTRAINT IF EXISTS routingbenchmarktest_pk;"),
-                    new("ALTER TABLE " + routingBenchmarkTable + " ADD CONSTRAINT routingbenchmarktest_pk PRIMARY KEY (id);"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " RENAME COLUMN id TO persona_id;"),
+                    new("ALTER TABLE " + routingBenchmarkTable + " ADD CONSTRAINT routingbenchmarktest_pk PRIMARY KEY (persona_id);"),
                     new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS requested_transport_modes TEXT[];"),
                     new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS start_time TIMESTAMPTZ;"),
                     new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS computed_route GEOMETRY;"),
@@ -151,6 +152,8 @@ namespace SytyRouting.Routing
                     new("ALTER TABLE " + routingBenchmarkTable + " ADD COLUMN IF NOT EXISTS transport_sequence TTEXT(Sequence);")
                 }
             };
+
+            //ALTER TABLE table_name RENAME COLUMN column_name TO new_column_name;
 
             await using (var reader = await batch.ExecuteReaderAsync())
             {
@@ -166,7 +169,7 @@ namespace SytyRouting.Routing
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, home_location, work_location, requested_transport_modes, start_time) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET home_location = $2, work_location = $3, requested_transport_modes = $4, start_time = $5", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (persona_id, home_location, work_location, requested_transport_modes, start_time) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (persona_id) DO UPDATE SET home_location = $2, work_location = $3, requested_transport_modes = $4, start_time = $5", connection)
                     {
                         Parameters =
                         {
@@ -187,7 +190,7 @@ namespace SytyRouting.Routing
             }
 
             int[] additionalProbesIds = new int[additionalProbes];
-            var queryString = "SELECT id FROM " + routingBenchmarkTable + " WHERE id > " + routingProbes.Length + ";";
+            var queryString = "SELECT persona_id FROM " + routingBenchmarkTable + " WHERE persona_id > " + routingProbes.Length + ";";
             await using (var command = new NpgsqlCommand(queryString, connection))
             await using (var reader = await command.ExecuteReaderAsync())
             {
@@ -202,7 +205,7 @@ namespace SytyRouting.Routing
             {
                 try
                 {
-                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
+                    await using var cmd_insert = new NpgsqlCommand("INSERT INTO " + routingBenchmarkTable + " (persona_id, requested_transport_modes, start_time) VALUES ($1, $2, $3) ON CONFLICT (persona_id) DO UPDATE SET requested_transport_modes = $2, start_time = $3", connection)
                     {
                         Parameters =
                         {

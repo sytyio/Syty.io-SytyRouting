@@ -166,7 +166,7 @@ namespace SytyRouting.Routing
                     }
                     logger.Debug("Uploading {0} routes",uploadBatch.Count);
                     
-                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,uploadBatch,_comparisonTable);
+                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,uploadBatch,comparisonTable:_comparisonTable,benchmarkingTable:_benchmarkTable);
 
                     uploadedRoutes += uploadBatch.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);
@@ -182,7 +182,7 @@ namespace SytyRouting.Routing
 
                     logger.Debug("Routing tasks have ended. Computed routes queue dump. Uploading {0} remaining routes",remainingRoutes.Count);
                     
-                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes,_comparisonTable);
+                    await uploader.UploadRoutesAsync(_connectionString,_routeTable,remainingRoutes,comparisonTable:_comparisonTable,benchmarkingTable:_benchmarkTable);
 
                     uploadedRoutes += remainingRoutes.Count - uploadFails;
                     logger.Debug("{0} routes uploaded in total ({1} upload fails)",uploadedRoutes,uploadFails);

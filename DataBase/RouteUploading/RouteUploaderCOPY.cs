@@ -11,7 +11,7 @@ namespace SytyRouting.DataBase
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable)
+        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable = "", string benchmarkingTable = "")
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -45,8 +45,10 @@ namespace SytyRouting.DataBase
 
             ///////////////////////////////////////////////////////////////
             //debug: Aux table copied to a permanent table for benchmarking
-            await SetComparisonTable(connection,auxiliaryTable,comparisonTable);
-            await SetBenchmarkingTable(connection,auxiliaryTable,routeTable,personas);
+            if(!comparisonTable.Equals(""))
+                await SetComparisonTable(connection,auxiliaryTable,comparisonTable);
+            if(!benchmarkingTable.Equals(""))
+                await SetBenchmarkingTable(connection,auxiliaryTable,benchmarkingTable,personas);
             //:gudeb
 
   

@@ -199,7 +199,7 @@ namespace SytyRouting.DataBase
 
         
 
-        public virtual Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable)
+        public virtual Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas,  string comparisonTable = "", string benchmarkingTable = "")
         {
            throw new NotImplementedException();
         }
