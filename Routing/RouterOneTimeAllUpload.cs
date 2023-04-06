@@ -141,7 +141,7 @@ namespace SytyRouting.Routing
 
             var uploader = new U();
 
-            await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas,_comparisonTable);
+            await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas,comparisonTable:_comparisonTable,benchmarkingTable:_benchmarkTable);
 
             uploadStopWatch.Stop();
             TotalUploadingTime = uploadStopWatch.Elapsed;
