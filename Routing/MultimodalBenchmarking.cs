@@ -30,7 +30,7 @@ namespace SytyRouting.Routing
             var connectionString = Configuration.ConnectionString;
             var personaTable = Configuration.PersonaTable;
             var routeTable = Configuration.RoutingBenchmarkTable;
-            var benchmarkTable = Configuration.RoutingBenchmarkTable+"_bench";
+            var comparisonTable = Configuration.RoutingBenchmarkTable+"_comp";
                         
             int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routeTable);
             
@@ -44,12 +44,12 @@ namespace SytyRouting.Routing
             }
 
             tableNames.Add(routeTable);
-            compTableNames.Add(benchmarkTable);
+            compTableNames.Add(comparisonTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,benchmarkTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
 
             totalTimes.Add(totalTime);
 
@@ -99,14 +99,14 @@ namespace SytyRouting.Routing
             //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
         }
 
-        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string benchmarkTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
+        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
             var router = new R();
 
-            router.Initialize(_graph, connectionString, routeTable, benchmarkTable: benchmarkTable);            
+            router.Initialize(_graph, connectionString, routeTable, benchmarkTable: comparisonTable);            
             await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();
