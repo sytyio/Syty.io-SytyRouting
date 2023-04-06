@@ -30,8 +30,9 @@ namespace SytyRouting.Routing
             var connectionString = Configuration.ConnectionString;
             var personaTable = Configuration.PersonaTable;
             var routeTable = Configuration.RoutingBenchmarkTable;
-            var comparisonTable = Configuration.RoutingBenchmarkTable+"_comp";
-                        
+            //var comparisonTable = Configuration.RoutingBenchmarkTable+"_comp";
+            var comparisonTable = routeTable;
+
             int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routeTable);
             
 
@@ -145,7 +146,7 @@ namespace SytyRouting.Routing
 
                 // Read location data from 'persona routes'
                 //                     0              1             
-                var queryString = "SELECT persona_id, computed_route FROM " + routeTable + " ORDER BY persona_id ASC";
+                var queryString = "SELECT id, computed_route FROM " + routeTable + " ORDER BY id ASC";
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())
