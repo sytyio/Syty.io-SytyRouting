@@ -30,7 +30,6 @@ namespace SytyRouting.Routing
             var connectionString = Configuration.ConnectionString;
             var personaTable = Configuration.PersonaTable;
             var routeTable = Configuration.RoutingBenchmarkTable;
-            //var comparisonTable = Configuration.RoutingBenchmarkTable+"_comp";
             var comparisonTable = routeTable;
 
             int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routeTable);

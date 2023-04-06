@@ -113,9 +113,6 @@ namespace SytyRouting.DataBase
         //debug: Routing results copied to a permanent table for benchmarking
         public async Task SetBenchmarkingTable(NpgsqlConnection connection, string auxiliaryTable, string benchmarkingTable, List<Persona> personas)
         {
-            //var comparisonTable=auxiliaryTable+"_comp";
-            //var benchmarkingTablePK=benchmarkingTable+"_PK";
-
             bool benchmarkingTableExists = false;
             await using (var prmCommand = new NpgsqlCommand("SELECT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename  = '" + benchmarkingTable + "');", connection))
             await using (var reader = await prmCommand.ExecuteReaderAsync())
@@ -128,21 +125,7 @@ namespace SytyRouting.DataBase
 
             if(!benchmarkingTableExists)
             {
-                // await using var compTableBatch = new NpgsqlBatch(connection)
-                // {
-                //     BatchCommands =
-                //     {
-                //         new("CREATE TABLE " + benchmarkingTable + " as (SELECT * FROM " + auxiliaryTable + ");"),
-                //         new("ALTER TABLE " + benchmarkingTable + " ADD CONSTRAINT " + benchmarkingTablePK + " PRIMARY KEY (persona_id);")
-                //     }
-                // };
-
-                // await using (await compTableBatch.ExecuteReaderAsync())
-                // {
-                //     logger.Debug("{0} table creation",benchmarkingTable);
-                // }
                 logger.Debug("Benchmarking table not found: {0}",benchmarkingTable);
-
             }
             else
             {
@@ -197,7 +180,6 @@ namespace SytyRouting.DataBase
             }
         }
         //:gudeb
-
 
         
 
