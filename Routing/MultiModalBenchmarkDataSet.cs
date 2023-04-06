@@ -152,6 +152,8 @@ namespace SytyRouting.Routing
                 }
             };
 
+            //ALTER TABLE table_name RENAME COLUMN column_name TO new_column_name;
+
             await using (var reader = await batch.ExecuteReaderAsync())
             {
                 logger.Debug("++++++++++++++++++++++++++++++++++++++++++++++");

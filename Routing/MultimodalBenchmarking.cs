@@ -29,10 +29,10 @@ namespace SytyRouting.Routing
 
             var connectionString = Configuration.ConnectionString;
             var personaTable = Configuration.PersonaTable;
-            var routingBenchmarkTable = Configuration.RoutingBenchmarkTable;
-            var routingBenchmarkCompTable = Configuration.RoutingBenchmarkTable+"_comp";
-                        
-            int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routingBenchmarkTable);
+            var routeTable = Configuration.RoutingBenchmarkTable;
+            var comparisonTable = routeTable;
+
+            int numberOfRows = await Routing.MultimodalBenchmarkDataSet.CreateDataSet(connectionString,personaTable,routeTable);
             
 
             // ////////////// // ////////////// ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -43,13 +43,13 @@ namespace SytyRouting.Routing
                 multimodalConfiguration += " " + provider;
             }
 
-            tableNames.Add(routingBenchmarkTable);
-            compTableNames.Add(routingBenchmarkCompTable);
+            tableNames.Add(routeTable);
+            compTableNames.Add(comparisonTable);
 
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routingBenchmarkTable,routingBenchmarkCompTable);
+                                    Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
 
             totalTimes.Add(totalTime);
 
@@ -106,7 +106,7 @@ namespace SytyRouting.Routing
 
             var router = new R();
 
-            router.Initialize(_graph, connectionString, routeTable, comparisonTable);            
+            router.Initialize(_graph, connectionString, routeTable, benchmarkTable: comparisonTable);            
             await router.StartRouting<A,D,U>();
 
             var personas = router.GetPersonas();
@@ -116,7 +116,7 @@ namespace SytyRouting.Routing
             routingTimes.Add(routingTime);
             uploadingTimes.Add(uploadingTime);
 
-            var uploadTest = await CheckUploadedRoutesAsync(personas, comparisonTable, computedRoutes);
+            var uploadTest = await CheckUploadedRoutesAsync(personas, routeTable, computedRoutes);
             uploadResults.Add(uploadTest);
             
             benchmarkStopWatch.Stop();
@@ -145,7 +145,7 @@ namespace SytyRouting.Routing
 
                 // Read location data from 'persona routes'
                 //                     0              1             
-                var queryString = "SELECT persona_id, computed_route FROM " + routeTable + " ORDER BY persona_id ASC";
+                var queryString = "SELECT id, computed_route FROM " + routeTable + " ORDER BY id ASC";
 
                 await using (var command = new NpgsqlCommand(queryString, connection))
                 await using (var reader = await command.ExecuteReaderAsync())

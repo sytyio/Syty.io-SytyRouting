@@ -19,7 +19,7 @@ namespace SytyRouting.Routing
         
         private Graph _graph;
         private string _routeTable;
-        private string _auxiliaryTable;
+        private string _comparisonTable;
 
         private static int simultaneousRoutingTasks = Environment.ProcessorCount;
 
@@ -46,7 +46,7 @@ namespace SytyRouting.Routing
         {
             _graph = graph;
             _routeTable = routeTable;
-            _auxiliaryTable = routeTable+Configuration.AuxiliaryTableSuffix;
+            _comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix;
         }
 
         public async Task StartRouting<T>() where T: IRoutingAlgorithm, new()
@@ -369,12 +369,12 @@ namespace SytyRouting.Routing
             // var connectionString = Configuration.LocalConnectionString;  // Local DB for testing
             var connectionString = Configuration.ConnectionString;       
 
-            var auxiliaryTable = _auxiliaryTable;
+            var comparisonTable = _comparisonTable;
             var routeTable = _routeTable;
 
             var uploader = new DataBase.RouteUploaderCOPY();
 
-            await uploader.UploadRoutesAsync(connectionString,routeTable,personas,auxiliaryTable);
+            await uploader.UploadRoutesAsync(connectionString,routeTable,personas,comparisonTable);
 
             uploadStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(uploadStopWatch.Elapsed);

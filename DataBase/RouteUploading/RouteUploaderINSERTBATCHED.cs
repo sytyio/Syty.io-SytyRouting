@@ -12,7 +12,7 @@ namespace SytyRouting.DataBase
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable)
+        public override async Task UploadRoutesAsync(string connectionString, string routeTable, List<Persona> personas, string comparisonTable = "", string benchmarkingTable = "")
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
