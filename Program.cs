@@ -45,15 +45,15 @@ namespace SytyRouting
             ////////////////////////////////////////////////
             // //  Create a new table for route results   //
             ////////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
+            //await DataBase.PersonaRouteFullTable.Create();
             ////////////////////////////////////////////////
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////////
             // //                        Set PLGSQL functions on DB                                   // //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            var connectionString = Configuration.ConnectionString;
-            await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(connectionString);
+            //var connectionString = Configuration.ConnectionString;
+            //await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(connectionString);
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -61,8 +61,8 @@ namespace SytyRouting
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // //                                           Routing algorithms benchmarking                                                      // //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
+            //var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
 
 
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph,transportSequence);
@@ -95,7 +95,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////
             // //    Route results uploading benchmarking     // //
             ///////////////////////////////////////////////////////
-            await DataBase.RouteUploadBenchmarking.Start(graph);
+            //await DataBase.RouteUploadBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////
 
 
