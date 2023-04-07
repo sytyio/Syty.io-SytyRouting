@@ -74,6 +74,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 return;
             }
 
+            //debug:
+            var shapeDebuger = new DataBase.DebugGeometryUploader();
+            //:gudeb
+
             var stopWatch = new Stopwatch();
 
             stopWatch.Start();
@@ -91,6 +95,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             stopWatch.Restart();
             shapeDico = CreateShapeGtfsDictionary();
             logger.Info("Shape nb {0} for {1} in {2}", shapeDico.Count, _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
+
+            //debug:
+            var connectionString = Configuration.ConnectionString;
+            await shapeDebuger.SetDebugGeomTable(connectionString,"gtfs_shape");
+            await shapeDebuger.UploadTrajectoriesAsync(connectionString,"gtfs_shape",shapeDico.Values.ToList());
+            //:gudeb
             
             stopWatch.Restart();
             calendarDico = CreateCalendarGtfsDictionary();

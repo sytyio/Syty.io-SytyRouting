@@ -159,7 +159,8 @@ namespace SytyRouting
             }
         }
 
-        private async Task InitialiseMaskModes(){
+        private async Task InitialiseMaskModes()
+        {
             transportModeMasks = TransportModes.CreateMasks(Configuration.TransportModeNames.Values.ToArray());
             await TransportModes.CreateMappingTagIdRouteTypeToTransportModes();
             TransportModes.CreateMappingTagIdToKeyValue();
