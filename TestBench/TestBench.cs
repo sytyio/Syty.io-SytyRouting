@@ -3,6 +3,7 @@ using NetTopologySuite.Geometries;
 using NLog;
 using SytyRouting.Algorithms;
 using SytyRouting.Algorithms.Dijkstra;
+using SytyRouting.Gtfs.ModelGtfs;
 using SytyRouting.Model;
 
 namespace SytyRouting
@@ -22,9 +23,21 @@ namespace SytyRouting
         public static void TraceLineStringRoute(LineString lineStringRoute)
         {
             logger.Debug("Route: {0} points", lineStringRoute.Count);
+            string fault = "";
             for(var i=0; i<lineStringRoute.Count; i++)
             {
-                logger.Debug("{0}: ({1}, {2}, {3})", i, lineStringRoute.Coordinates[i].X, lineStringRoute.Coordinates[i].Y, lineStringRoute.Coordinates[i].M);
+                if (i>0 && (lineStringRoute.Coordinates[i].M<=lineStringRoute.Coordinates[i-1].M))
+                    fault = "<<<<< fault";
+                else
+                    fault = "";
+
+
+                logger.Debug("{0}: ({1}, {2}, {3})\t{4}",
+                 i,
+                  lineStringRoute.Coordinates[i].X,
+                   lineStringRoute.Coordinates[i].Y,
+                    lineStringRoute.Coordinates[i].M,
+                     fault);
             }
         }  
 
@@ -370,9 +383,26 @@ namespace SytyRouting
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // GTFS Shpe Dictionary test:
+        // public static int TestSahpeDictionary(Dictionary<string,ShapeGtfs> shapeDictionary)
+        // {
+        //     int result = 0;
+
+        //     foreach(var shape in shapeDictionary.Values.ToList())
+        //     {
+        //         if(!isValidSequence(shape.LineString))
+        //     }
+
+        //     return result;
+        // }
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // M ordinate verification (time stamps)
 
-        private static bool isValidSequence(double[] m)
+        public static bool isValidSequence(double[] m)
         {
             if(m.Length>0)
             {

@@ -9,6 +9,8 @@ using System.Net; //download file
 using System.IO.Compression; //zip
 using NetTopologySuite.Operation.Distance;
 using System.Diagnostics.CodeAnalysis;
+using NetTopologySuite.Geometries.Implementation;
+
 namespace SytyRouting.Gtfs.GtfsUtils
 {
 
@@ -644,9 +646,19 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private LineString? CreateLineString(string shapeId)
         {
+            //debug:
+            var sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            var geometryFactory = new GeometryFactory(sequenceFactory);
+            //:gudeb
+            
             var shapeInfos = CtrlCsv.RecordsShape.FindAll(x => x.Id == shapeId);
             // CREATION of LINESTRING
             List<Coordinate> coordinatesList = new List<Coordinate>();
+            
+            //debug:
+            List<double> mOrdinates = new List<double>();
+            //:gudeb
+
             for (int i = 0; i < shapeInfos.Count; i++)
             {
                 ShapeCsv shape = shapeInfos[i];
@@ -654,13 +666,33 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 if (!coordinatesList.Contains(coordinate))
                 {
                     coordinatesList.Add(coordinate);
+                    mOrdinates.Add((double)shape.PtSequence);
                 }
             }
             if (coordinatesList.Count() < 2)
             {
                 return null;
             }
-            LineString lineString = new LineString(coordinatesList.ToArray());
+
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(coordinatesList.ToArray(), Ordinates.XYM);
+            for(var i = 0; i < coordinateSequence.Count; i++)
+            {
+                coordinateSequence.SetM(i, mOrdinates[i]);
+            }
+            coordinateSequence.ReleaseCoordinateArray();
+            
+            //debug: LineString lineString = new LineString(coordinatesList.ToArray());
+            
+            //return new LineString(coordinateSequence, geometryFactory);
+            var lineString = new LineString(coordinateSequence, geometryFactory);
+
+
+            if(!TestBench.isValidSequence(mOrdinates.ToArray()))
+            {
+                logger.Debug("Invalid mOrdinate sequence: Shape {0}", shapeId);
+                TestBench.TraceLineStringRoute(lineString);
+            } 
+
             return lineString;
         }
 
