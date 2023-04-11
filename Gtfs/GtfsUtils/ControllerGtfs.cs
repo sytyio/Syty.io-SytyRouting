@@ -25,6 +25,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public bool IsActive=false;
 
+        public int invalidLineStrings = 0;
+
         private string _provider;
 
         private const double checkValue = 0.000000000000001;
@@ -100,7 +102,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             //debug:
             var connectionString = Configuration.ConnectionString;
-            await shapeDebuger.SetDebugGeomTable(connectionString,"gtfs_shape");
+            await shapeDebuger.SetDebugGeomTable(connectionString,"gtfs_shape"+_provider);
             await shapeDebuger.UploadTrajectoriesAsync(connectionString,"gtfs_shape",shapeDico.Values.ToList());
             //:gudeb
             
@@ -145,6 +147,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
             IsActive=true;
             
             logger.Info("Edge dictionary loaded in {0}", Helper.FormatElapsedTime(stopWatch.Elapsed));
+
+            logger.Debug("Invalid LineStrings loaded for {0}: {1}",_provider,invalidLineStrings);
+
             stopWatch.Stop();
         }
 
@@ -219,6 +224,18 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary()
         {
             return CtrlCsv.RecordsShape.GroupBy(x => x.Id).ToDictionary(x => x.Key, x => new ShapeGtfs(x.Key, x.OrderBy(y => y.PtSequence).ToDictionary(y => y.PtSequence, y => (new Point(y.PtLon, y.PtLat))), CreateLineString(x.Key)!));
+        }
+
+        private Dictionary<string, ShapeGtfs> CreateShapeGtfsDictionary2()
+        {
+            return CtrlCsv
+                        .RecordsShape
+                        .GroupBy(x => x.Id)
+                        .ToDictionary(
+                            x => x.Key,
+                            x => new ShapeGtfs(
+                                x.Key,
+                                x.OrderBy(y => y.PtSequence).ToDictionary(y => y.PtSequence, y => (new Point(y.PtLon, y.PtLat))), CreateLineString(x.Key)!));
         }
 
         private Dictionary<string, CalendarGtfs> CreateCalendarGtfsDictionary()
@@ -501,7 +518,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         index++;
 
                         //debug:
-                        Console.WriteLine("edgeDico Contains Key newId. index: {0}",index);
+                        //Console.WriteLine("edgeDico Contains Key newId. index: {0}",index);
                         //:gudeb
                     }
                 }
@@ -651,7 +668,11 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var geometryFactory = new GeometryFactory(sequenceFactory);
             //:gudeb
             
-            var shapeInfos = CtrlCsv.RecordsShape.FindAll(x => x.Id == shapeId);
+            //debug: 
+            //var shapeInfos = CtrlCsv.RecordsShape.FindAll(x => x.Id == shapeId);
+            var shapeInfos = CtrlCsv.RecordsShape.FindAll(x => x.Id == shapeId).OrderBy(x => x.PtSequence).ToList();
+            //:gudeb
+
             // CREATION of LINESTRING
             List<Coordinate> coordinatesList = new List<Coordinate>();
             
@@ -689,8 +710,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             if(!TestBench.isValidSequence(mOrdinates.ToArray()))
             {
-                logger.Debug("Invalid mOrdinate sequence: Shape {0}", shapeId);
-                TestBench.TraceLineStringRoute(lineString);
+                //logger.Debug("Invalid mOrdinate sequence: Shape {0}", shapeId);
+                //TestBench.TraceLineStringRoute(lineString);
+                ++invalidLineStrings;
             } 
 
             return lineString;
