@@ -357,7 +357,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             if (Configuration.SelectedDate == "")
             {
-
                 foreach (var trip in tripDico)
                 {
                     oneTripToEdgeDictionaryErrors+=OneTripToEdgeDictionary(trip.Key);
@@ -396,6 +395,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
         private int OneTripToEdgeDictionary(string tripId)
         {
             int oneTripToEdgeDictionaryErrors = 0;
+
+            //debug:
+            if (tripId.Equals("35535597-B_2023-BW_A_EX-Sem-N-3-10"))
+            {
+                ;
+            }
+            //:gudeb
 
             TripGtfs buffTrip;
 
@@ -554,6 +560,14 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     previousStop.ValidTarget = true;
                 }
                 cpt++;
+
+                //debug:
+                if(_provider.Equals("Le_TEC") && index == buffShape?.SplitLineString.Count-1)
+                {
+                    ;
+                }
+                //:gudeb
+
                 previousStopTime = currentStopTime.Value;
                 previousNearestOnLineString = currentNearestNodeOnLineString;
             }
