@@ -102,7 +102,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             //debug:
             var connectionString = Configuration.ConnectionString;
-            await shapeDebuger.SetDebugGeomTable(connectionString,"gtfs_shape"+_provider);
+            await shapeDebuger.SetDebugGeomTable(connectionString,"gtfs_shape_"+_provider);
             await shapeDebuger.UploadTrajectoriesAsync(connectionString,"gtfs_shape",shapeDico.Values.ToList());
             //:gudeb
             
