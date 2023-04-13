@@ -4,7 +4,6 @@ using Npgsql;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using SytyRouting.Model;
-using NetTopologySuite.LinearReferencing;
 
 
 namespace SytyRouting
@@ -225,37 +224,6 @@ namespace SytyRouting
         public static Boolean AreNodesAtSamePosition(Node a, Node b)
         {
             return a.X == b.X && a.Y == b.Y;
-        }
-
-        public static List<LineString> SplitLineStringByPoints(LineString ls, Point[] pts, string shapeId)
-        {
-            LengthLocationMap llm = new LengthLocationMap(ls);
-            LengthIndexedLine lil = new LengthIndexedLine(ls);
-            ExtractLineByLocation ell = new ExtractLineByLocation(ls);
-            List<LineString> parts = new List<LineString>();
-            LinearLocation? ll1 = null;
-            SortedList<Double, LinearLocation> sll = new SortedList<double, LinearLocation>();
-            sll.Add(-1, new LinearLocation(0, 0d));
-
-            foreach (Point pt in pts)
-            {
-                Double distanceOnLinearString = lil.Project(pt.Coordinate);
-                if (sll.ContainsKey(distanceOnLinearString) == false)
-                {
-                    sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
-                }
-            }
-
-            foreach (LinearLocation ll in sll.Values)
-            {
-                if (ll1 != null)
-                {
-                    parts.Add((LineString)ell.Extract(ll1, ll));
-                }
-                ll1 = ll;
-            }
-
-            return parts;
         }
 
         public static List<DateTime> GetWeekdayInRange(DateTime dateBegin, DateTime dateEnd, DayOfWeek day)

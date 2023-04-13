@@ -79,6 +79,41 @@ namespace SytyRouting.DataBase
             logger.Debug("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
         }
 
+        public async Task UploadTrajectoriesAsync(string connectionString, string debugGeomTable, List<KeyValuePair<string,LineString>> trajectories)
+        {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite(new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM));
+
+            using var importer = connection.BeginBinaryImport("COPY " + debugGeomTable + " (id, trajectory) FROM STDIN (FORMAT binary)");
+            int trajectoryId = 0;
+            foreach (var trajectory in trajectories)
+            {
+                await importer.StartRowAsync();
+                await importer.WriteAsync(trajectory.Key+"_"+trajectoryId);
+                await importer.WriteAsync(trajectory.Value);
+                ++trajectoryId;
+            }
+            await importer.CompleteAsync();
+            await importer.CloseAsync();
+            
+            ///
+            await PropagateResults(connection,debugGeomTable);
+            ///
+
+            
+            await connection.CloseAsync();
+
+            stopWatch.Stop();
+            var totalTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            logger.Debug("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+            logger.Debug("   Route uploading execution time :: {0}", totalTime);
+            logger.Debug("uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu");
+        }
+
         public async Task PropagateResults(NpgsqlConnection connection, string debugGeomTable)
         {
             await using var resultsBatch = new NpgsqlBatch(connection)

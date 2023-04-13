@@ -5,7 +5,7 @@ using System.Globalization;
 using SytyRouting.Model;
 using SytyRouting.Gtfs.ModelGtfs;
 using NetTopologySuite.Geometries;
-using System.Net; //download file 
+using NetTopologySuite.LinearReferencing;
 using System.IO.Compression; //zip
 using NetTopologySuite.Operation.Distance;
 using System.Diagnostics.CodeAnalysis;
@@ -26,6 +26,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public bool IsActive=false;
 
         public int invalidLineStrings = 0;
+
+        public List<string> debugTables = new List<string>();
 
         private string _provider;
 
@@ -125,10 +127,20 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AddTripsToRoute();
             logger.Info("Trip to route for {0} in {1}", _provider, Helper.FormatElapsedTime(stopWatch.Elapsed));
             
+            
+            
             stopWatch.Restart();
             AddSplitLineString();
+            
+            //debug:
+            Task clean = DataBase.RouteUploadBenchmarking.CleanComparisonTablesAsync(connectionString,debugTables);
+            Task.WaitAll(clean);
+            //:gudeb
+
             logger.Info("Add split linestring loaded in {0} for {1}", Helper.FormatElapsedTime(stopWatch.Elapsed), _provider);
             
+
+
             stopWatch.Restart();
             var nbTrips = tripDico.Count();
             if (Configuration.SelectedDate != "")
@@ -377,6 +389,16 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             foreach (var trip in tripDico)
             {
+
+                //debug:
+                if (trip.Key.Equals("35535597-B_2023-BW_A_EX-Sem-N-3-10"))
+                {
+                    //;
+                    Console.WriteLine("trip: 35535597-B_2023-BW_A_EX-Sem-N-3-10");
+                }
+                //:gudeb
+
+
                 if (trip.Value.Shape != null)
                 {
                     var stopsCoordinatesArray = new Point[trip.Value.Schedule.Details.Count()];
@@ -387,9 +409,75 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         i++;
                     }
                     var currentShape = trip.Value.Shape;
-                    currentShape.SplitLineString = Helper.SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id);
+                    currentShape.SplitLineString = SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
                 }
             }
+        }
+
+        public List<LineString> SplitLineStringByPoints(LineString ls, Point[] pts, string shapeId, string tripKey)
+        {
+            LengthLocationMap llm = new LengthLocationMap(ls);
+            LengthIndexedLine lil = new LengthIndexedLine(ls);
+            ExtractLineByLocation ell = new ExtractLineByLocation(ls);
+            List<LineString> parts = new List<LineString>();
+            LinearLocation? ll1 = null;
+            SortedList<Double, LinearLocation> sll = new SortedList<double, LinearLocation>();
+            sll.Add(-1, new LinearLocation(0, 0d));
+
+            foreach (Point pt in pts)
+            {
+                Double distanceOnLinearString = lil.Project(pt.Coordinate);
+                if (sll.ContainsKey(distanceOnLinearString) == false)
+                {
+                    sll.Add(distanceOnLinearString, llm.GetLocation(distanceOnLinearString));
+                }
+            }
+
+            foreach (LinearLocation ll in sll.Values)
+            {
+                if (ll1 != null)
+                {
+                    parts.Add((LineString)ell.Extract(ll1, ll));
+                }
+                ll1 = ll;
+            }
+
+            //debug:
+            // string shapeIdRef = "012b0234";
+            // string shapeIdRef = "B00100017"
+            // if (shapeId.Equals(shapeIdRef))
+            // {
+            //     //;
+
+            //     Console.WriteLine("shapeId = {0}, tripKey = {1}",shapeIdRef,tripKey);
+
+            //     //debug:
+                
+            //     var shapeDebuger = new DataBase.DebugGeometryUploader();
+
+            //     List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
+                
+            //     var connectionString = Configuration.ConnectionString;
+            //     var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey;
+            //     debugTables.Add(debugTable);
+            //     Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
+
+            //     trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(tripKey,ls));
+            //     foreach (var part in parts)
+            //     {
+            //         trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(shapeId,part));
+            //     }
+                
+            //     Task.WaitAll(setTable);
+
+            //     Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
+            //     Task.WaitAll(uploadTrajectories);
+
+            //     //:gudeb
+            // }
+            //:gudeb
+
+            return parts;
         }
 
         private int OneTripToEdgeDictionary(string tripId)
