@@ -443,38 +443,38 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
 
             //debug:
-            // string shapeIdRef = "012b0234";
-            // string shapeIdRef = "B00100017"
-            // if (shapeId.Equals(shapeIdRef))
-            // {
-            //     //;
+            //string shapeIdRef = "012b0234"; // STIB
+            string shapeIdRef = "B00100017"; // TEC
+            if (shapeId.Equals(shapeIdRef))
+            {
+                //;
 
-            //     Console.WriteLine("shapeId = {0}, tripKey = {1}",shapeIdRef,tripKey);
+                Console.WriteLine("shapeId = {0}, tripKey = {1}",shapeIdRef,tripKey);
 
-            //     //debug:
+                //debug:
                 
-            //     var shapeDebuger = new DataBase.DebugGeometryUploader();
+                var shapeDebuger = new DataBase.DebugGeometryUploader();
 
-            //     List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
+                List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
                 
-            //     var connectionString = Configuration.ConnectionString;
-            //     var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey;
-            //     debugTables.Add(debugTable);
-            //     Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
+                var connectionString = Configuration.ConnectionString;
+                var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey.Replace("-", "_");;
+                debugTables.Add(debugTable);
+                Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
 
-            //     trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(tripKey,ls));
-            //     foreach (var part in parts)
-            //     {
-            //         trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(shapeId,part));
-            //     }
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(tripKey,ls));
+                foreach (var part in parts)
+                {
+                    trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(shapeId,part));
+                }
                 
-            //     Task.WaitAll(setTable);
+                Task.WaitAll(setTable);
 
-            //     Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
-            //     Task.WaitAll(uploadTrajectories);
+                Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
+                Task.WaitAll(uploadTrajectories);
 
-            //     //:gudeb
-            // }
+                //:gudeb
+            }
             //:gudeb
 
             return parts;
