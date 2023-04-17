@@ -410,6 +410,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     }
                     var currentShape = trip.Value.Shape;
                     currentShape.SplitLineString = SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
+                    var dumm = SplitShapeByStops(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
                 }
             }
         }
@@ -478,6 +479,122 @@ namespace SytyRouting.Gtfs.GtfsUtils
             //:gudeb
 
             return parts;
+        }
+
+        public List<LineString> SplitShapeByStops(LineString lineString, Point[] stops, string shapeId, string tripKey)
+        {
+            // This method assumes that (1) the Stop coordinates (X,Y) are properly ordered by the M-ordinate (stop_sequence on the GTFS stop_times.txt file),
+            // (2) the Stop coordinates are "sufficiently" close to the LineString that represents the GTFS shape (or perhaps equivalent, the LineString is sufficiently smooth).
+
+            List<LineString> segments = new List<LineString>();
+            
+            var coordinates = lineString.Coordinates.OrderBy(c=>c.M).ToList();
+            PriorityQueue<Coordinate,Double> sequentiallyExplodedLineString = sequenciallyExplodeLineString(lineString);
+
+            int startIndex = 0;
+            int endIndex = 0;
+
+            for (int i = 0; i < stops.Length-1; ++i)
+            {
+                startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i],coordinates);
+                endIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i+1],coordinates);
+
+                segments.Add(BuildShapeSegment(startIndex,endIndex,coordinates));
+
+                startIndex = endIndex;
+            }
+
+            //debug:
+            //string shapeIdRef = "012b0234"; // STIB
+            string shapeIdRef = "B00100017"; // TEC
+            if (shapeId.Equals(shapeIdRef))
+            {
+                //;
+
+                Console.WriteLine("shapeId = {0}, tripKey = {1}",shapeIdRef,tripKey);
+
+                //debug:
+                
+                var shapeDebuger = new DataBase.DebugGeometryUploader();
+
+                List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
+                
+                var connectionString = Configuration.ConnectionString;
+                var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey.Replace("-", "_")+"_alt";
+                debugTables.Add(debugTable);
+                Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
+
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(tripKey,lineString));
+                foreach (var segment in segments)
+                {
+                    trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>(shapeId,segment));
+                }
+                
+                Task.WaitAll(setTable);
+
+                Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
+                Task.WaitAll(uploadTrajectories);
+
+                //:gudeb
+            }
+            //:gudeb
+
+            return segments;
+        }
+
+        private LineString BuildShapeSegment(int startIndex, int endIndex, List<Coordinate> coordinates)
+        {
+            DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            GeometryFactory _geometryFactory = new GeometryFactory(_sequenceFactory);
+
+            List<Coordinate> xyCoordinates = new List<Coordinate>(coordinates.Count); // number of nodes +1 start point (home) +1 end point (work)
+
+            for (int i = startIndex; i <= endIndex; ++i)
+            {
+                xyCoordinates.Add(new Coordinate(coordinates[i].X,coordinates[i].Y));
+            }
+
+            var coordinateSequence = new DotSpatialAffineCoordinateSequence(xyCoordinates, Ordinates.XYM);
+
+            return new LineString(coordinateSequence, _geometryFactory);
+        }
+
+        private int GetFirstInLineNearestPointIndex(int previousIndex, Point stop, List<Coordinate> sequence)
+        {
+            int index = previousIndex;
+            double minDistance = double.PositiveInfinity;
+            double distance = 0.0;
+            double previousDistance = minDistance;
+
+            for (; index < sequence.Count && distance < previousDistance; ++index)
+            {
+                distance = Helper.GetDistance(stop.X,stop.Y,sequence[index].X,sequence[index].Y);
+                previousDistance = distance;
+            }
+
+            return index;
+        }
+
+
+        private PriorityQueue<Coordinate,double> sequenciallyExplodeLineString(LineString lineString)
+        {
+            PriorityQueue<Coordinate,double> explodedLineString = new PriorityQueue<Coordinate,double>(lineString.Coordinates.Count());
+
+            try
+            {
+                var coordinates = lineString.Coordinates.ToDictionary(c=>c.M,c=>c);
+
+                foreach (var coordinate in coordinates)
+                {
+                    explodedLineString.Enqueue(coordinate.Value,coordinate.Key);
+                }
+            }
+            catch (Exception e)
+            {
+                logger.Debug("Unable to convert Coordinates Array to an M-index Dictionary: {0}",e.Message);
+            }
+            
+            return  explodedLineString;
         }
 
         private int OneTripToEdgeDictionary(string tripId)
