@@ -561,15 +561,33 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private int GetFirstInLineNearestPointIndex(int previousIndex, Point stop, List<Coordinate> sequence)
         {
-            int index = previousIndex;
-            double minDistance = double.PositiveInfinity;
-            double distance = 0.0;
-            double previousDistance = minDistance;
+            int index = -1;
+            double tolerance = 10.0; // [m]
+            Dictionary<int,double> candidates = new Dictionary<int, double>();
 
-            for (; index < sequence.Count && distance < previousDistance; ++index)
+            //double minDistance = double.PositiveInfinity;
+            double distance = 0.0;
+            double previousDistance = double.PositiveInfinity;
+
+            for (int i = previousIndex; i < sequence.Count; ++i)
             {
-                distance = Helper.GetDistance(stop.X,stop.Y,sequence[index].X,sequence[index].Y);
-                previousDistance = distance;
+                distance = Helper.GetDistance(stop.X,stop.Y,sequence[i].X,sequence[i].Y);
+                if (distance < tolerance && !candidates.ContainsKey(i))
+                {
+                    candidates.Add(i,distance);
+                }
+            }
+
+
+            var indices = candidates.Keys.OrderBy(i=>i);
+            for (int i = 0; i < indices.Count(); ++i)
+            {
+                while (candidates[i] < previousDistance)
+                {
+                    previousDistance = candidates[i];
+                }
+
+                index = i;
             }
 
             return index;
