@@ -25,10 +25,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         public bool IsActive=false;
 
+
         public int invalidLineStrings = 0;
-
         public List<string> debugTables = new List<string>();
+        public int splitShapeByStopsCount=0;
+        public int buildShapeSegmentErrors=0;
 
+        
         private string _provider;
 
         private const double checkValue = 0.000000000000001;
@@ -107,6 +110,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var debugTable = "gtfs_shape_"+_provider;
             await shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
             await shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,shapeDico.Values.ToList());
+
+            logger.Debug("Build Shape segment errors: {0}",buildShapeSegmentErrors);
             //:gudeb
             
             stopWatch.Restart();
@@ -494,14 +499,23 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int startIndex = 0;
             int endIndex = 0;
 
-            for (int i = 0; i < stops.Length-1; ++i)
+            startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[0],coordinates);
+            if(startIndex < 0)
             {
-                startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i],coordinates);
-                endIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i+1],coordinates);
+                Console.WriteLine("Wait a minute!");
+                startIndex = 0; // The slam-it! solution.
+            }
+
+            for (int i = 1; i < stops.Length; ++i)
+            {
+                endIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i],coordinates);
 
                 segments.Add(BuildShapeSegment(startIndex,endIndex,coordinates));
 
-                startIndex = endIndex;
+                if (endIndex > startIndex) // Otherwise skip faulty endIndices (that probably led to empty Shape segments in the previous calculation)
+                {
+                    startIndex = endIndex;
+                }
             }
 
             //debug:
@@ -520,7 +534,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
                 
                 var connectionString = Configuration.ConnectionString;
-                var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey.Replace("-", "_")+"_alt";
+                var debugTable = "gtfs_shape_"+shapeId+"_trip_"+tripKey.Replace("-", "_").Remove(10)+"_s"+splitShapeByStopsCount;
                 debugTables.Add(debugTable);
                 Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
 
@@ -535,6 +549,8 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
                 Task.WaitAll(uploadTrajectories);
 
+                ++splitShapeByStopsCount;
+
                 //:gudeb
             }
             //:gudeb
@@ -546,6 +562,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
         {
             DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
             GeometryFactory _geometryFactory = new GeometryFactory(_sequenceFactory);
+
+            if (startIndex <  0 || endIndex < 0  || endIndex <= startIndex)
+            {
+                logger.Debug("Unable to process Shape segment. Indices: {0} -> {1}", startIndex, endIndex);
+                var _emptyLineString = new LineString(null, _geometryFactory);
+                ++buildShapeSegmentErrors;
+
+                return _emptyLineString;
+            }
 
             List<Coordinate> xyCoordinates = new List<Coordinate>(coordinates.Count); // number of nodes +1 start point (home) +1 end point (work)
 
@@ -580,14 +605,17 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
 
             var indices = candidates.Keys.OrderBy(i=>i);
-            for (int i = 0; i < indices.Count(); ++i)
+            foreach (int i in indices)
             {
-                while (candidates[i] < previousDistance)
+                if (candidates[i] > previousDistance)
+                {
+                    break;
+                }
+                else
                 {
                     previousDistance = candidates[i];
+                    index = i;
                 }
-
-                index = i;
             }
 
             return index;
@@ -709,7 +737,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
                             }
                             catch (Exception e)
                             {
-                                //logger.Debug("SplitLineString error: {0}",e.Message);
+                                logger.Debug("SplitLineString error: {0}",e.Message);
                                 //logger.Debug("index: {0} buffShape.SplitLineString.Count: {1}",index,buffShape.SplitLineString.Count);
                                 oneTripToEdgeDictionaryErrors++;
                             }
