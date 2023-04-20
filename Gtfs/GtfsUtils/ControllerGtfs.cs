@@ -29,10 +29,15 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public int invalidLineStrings = 0;
         public List<string> debugTables = new List<string>();
         public int splitShapeByStopsCount=0;
+        public int splitShapeByStopsErrors=0;
         public int buildShapeSegmentErrors=0;
 
         
         private string _provider;
+        private DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = null!;
+        private GeometryFactory _geometryFactory = null!;
+        private LineString _emptyLineString = null!;
+
 
         private const double checkValue = 0.000000000000001;
 
@@ -67,6 +72,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public ControllerGtfs(string provider)
         {
             _provider = provider;
+            _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
+            _geometryFactory = new GeometryFactory(_sequenceFactory);
+            _emptyLineString = new LineString(null, _geometryFactory);
         }
 
         public async Task Initialize()
@@ -112,6 +120,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             await shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,shapeDico.Values.ToList());
 
             logger.Debug("Build Shape segment errors: {0}",buildShapeSegmentErrors);
+            logger.Debug("Split Shape errors: {0} (count: {1})",splitShapeByStopsErrors,splitShapeByStopsCount);
             //:gudeb
             
             stopWatch.Restart();
@@ -499,21 +508,23 @@ namespace SytyRouting.Gtfs.GtfsUtils
             int startIndex = 0;
             int endIndex = 0;
 
-            startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[0],coordinates);
+            startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[0],stops[0],coordinates);
             if(startIndex < 0)
             {
                 Console.WriteLine("Wait a minute!");
+                logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
                 startIndex = 0; // The slam-it! solution.
             }
 
             for (int i = 1; i < stops.Length; ++i)
             {
-                endIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i],coordinates);
+                endIndex = GetFirstInLineNearestPointIndex(startIndex,stops[i],stops[i-1],coordinates);
 
                 segments.Add(BuildShapeSegment(startIndex,endIndex,coordinates));
 
                 if (endIndex > startIndex) // Otherwise skip faulty endIndices (that probably led to empty Shape segments in the previous calculation)
                 {
+                    //logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
                     startIndex = endIndex;
                 }
             }
@@ -560,13 +571,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private LineString BuildShapeSegment(int startIndex, int endIndex, List<Coordinate> coordinates)
         {
-            DotSpatialAffineCoordinateSequenceFactory _sequenceFactory = new DotSpatialAffineCoordinateSequenceFactory(Ordinates.XYM);
-            GeometryFactory _geometryFactory = new GeometryFactory(_sequenceFactory);
-
             if (startIndex <  0 || endIndex < 0  || endIndex <= startIndex)
             {
-                logger.Debug("Unable to process Shape segment. Indices: {0} -> {1}", startIndex, endIndex);
-                var _emptyLineString = new LineString(null, _geometryFactory);
+                //logger.Debug("Unable to process Shape segment. Indices: {0} -> {1}", startIndex, endIndex);
                 ++buildShapeSegmentErrors;
 
                 return _emptyLineString;
@@ -584,11 +591,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             return new LineString(coordinateSequence, _geometryFactory);
         }
 
-        private int GetFirstInLineNearestPointIndex(int previousIndex, Point stop, List<Coordinate> sequence)
+        private int GetFirstInLineNearestPointIndex(int previousIndex, Point stop, Point previousStop, List<Coordinate> sequence)
         {
             int index = -1;
             double tolerance = 10.0; // [m]
             Dictionary<int,double> candidates = new Dictionary<int, double>();
+            Dictionary<int,double> distances = new Dictionary<int,double>(sequence.Count);
 
             //double minDistance = double.PositiveInfinity;
             double distance = 0.0;
@@ -597,12 +605,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
             for (int i = previousIndex; i < sequence.Count; ++i)
             {
                 distance = Helper.GetDistance(stop.X,stop.Y,sequence[i].X,sequence[i].Y);
+                distances.Add(i,distance);
                 if (distance < tolerance && !candidates.ContainsKey(i))
                 {
                     candidates.Add(i,distance);
                 }
             }
-
 
             var indices = candidates.Keys.OrderBy(i=>i);
             foreach (int i in indices)
@@ -617,6 +625,68 @@ namespace SytyRouting.Gtfs.GtfsUtils
                     index = i;
                 }
             }
+
+            //debug:
+            if (index==-2) // Couldn't find a point on the lineString coodinates inside the tolerance radius
+            {
+                Console.WriteLine("previous index: {0}, stop: ({1},{2})",previousIndex,stop.X,stop.Y);
+
+                var distancesKeys = distances.Keys.OrderBy(k=>k).ToList();
+                foreach (var key in distancesKeys)
+                {
+                    logger.Debug("{0}::{1}",key,distances[key]);
+                }
+
+                //debug:
+                
+                var shapeDebuger = new DataBase.DebugGeometryUploader();
+
+                List<KeyValuePair<string,LineString>> trajectoriesIdLineStringPairs = new List<KeyValuePair<string,LineString>>();
+                
+                var connectionString = Configuration.ConnectionString;
+                var debugTable = "gtfs_shape_stop_i"+previousIndex+splitShapeByStopsCount;
+
+                debugTables.Add(debugTable);
+                
+                Task setTable = shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
+
+                // pack the suspicious sequence
+                var coordinateSequence = new DotSpatialAffineCoordinateSequence(sequence, Ordinates.XY);
+                var lineString = new LineString(coordinateSequence, _geometryFactory);
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>("sequence_"+previousIndex,lineString));
+
+                // pack the problematic stop (in the form of a null-distance LineString)
+                var stopList = new List<Coordinate>(2);
+                stopList.Add(new Coordinate(stop.X,stop.Y));
+                stopList.Add(new Coordinate(stop.X,stop.Y));
+                var stopSequence = new DotSpatialAffineCoordinateSequence(stopList, Ordinates.XY);
+                var stopLineString = new LineString(stopSequence, _geometryFactory);
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>("current_stop",stopLineString));
+
+                // pack the previous valid point associated to previousIndex  (in the form of a null-distance LineString)
+                var previousPointList = new List<Coordinate>(2);
+                previousPointList.Add(new Coordinate(sequence[previousIndex].X,sequence[previousIndex].Y));
+                previousPointList.Add(new Coordinate(sequence[previousIndex].X,sequence[previousIndex].Y));
+                var previousPointSequence = new DotSpatialAffineCoordinateSequence(previousPointList, Ordinates.XY);
+                var previousPointLineString = new LineString(previousPointSequence, _geometryFactory);
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>("previous_point",previousPointLineString));
+
+                // pack the previous stop (in the form of a null-distance LineString)
+                var previousStopList = new List<Coordinate>(2);
+                previousStopList.Add(new Coordinate(previousStop.X,previousStop.Y));
+                previousStopList.Add(new Coordinate(previousStop.X,previousStop.Y));
+                var previousStopSequence = new DotSpatialAffineCoordinateSequence(previousStopList, Ordinates.XY);
+                var previousStopLineString = new LineString(previousStopSequence, _geometryFactory);
+                trajectoriesIdLineStringPairs.Add(new KeyValuePair<string,LineString>("previous_stop",previousStopLineString));
+
+
+                
+                Task.WaitAll(setTable);
+
+                Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
+                Task.WaitAll(uploadTrajectories);
+            }
+            //:gudeb
 
             return index;
         }
