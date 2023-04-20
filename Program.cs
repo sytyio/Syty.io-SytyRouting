@@ -24,36 +24,20 @@ namespace SytyRouting
             var graph = new Graph();
             await graph.FileLoadAsync(Configuration.GraphFileName);
 
-            // logger.Info("Count = {0}", graph.GetNodes().Count()); // 1558439 
-            // for (int i = 0  ; i < graph.GetNodes().Count(); i++)
-            // {
-            //     var node = graph.GetNodes()[i];
-            //     foreach(var data in node.InwardEdges){
-            //         if(data.LengthM<=0||data.MaxSpeedMPerS<=0||Double.IsNaN(data.LengthM)||data.MaxSpeedMPerS>50){
-            //             logger.Info("Type {0}, speed {1}, length {1}",TransportModes.MaskToString(data.TransportModes),data.MaxSpeedMPerS,data.LengthM);
-            //         }
-            //     }
-            //     foreach(var data in node.OutwardEdges){
-            //         if(data.LengthM<=0||data.MaxSpeedMPerS<=0||Double.IsNaN(data.LengthM)||data.MaxSpeedMPerS>50){
-            //             logger.Info("Type {0}, speed {1}, length {1}",TransportModes.MaskToString(data.TransportModes),data.MaxSpeedMPerS,data.LengthM);
-            //         }
-            //     }
-            // }
-
-
+            
 
             ////////////////////////////////////////////////
             // //  Create a new table for route results   //
             ////////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
+            //await DataBase.PersonaRouteFullTable.Create();
             ////////////////////////////////////////////////
 
 
             ///////////////////////////////////////////////////////////////////////////////////////////////
             // //                        Set PLGSQL functions on DB                                   // //
             ///////////////////////////////////////////////////////////////////////////////////////////////
-            var connectionString = Configuration.ConnectionString;
-            await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(connectionString);
+            //var connectionString = Configuration.ConnectionString;
+            //await DataBase.PLGSQLFunctions.SetCoaleaseTransportModesTimeStampsFunction(connectionString);
             ///////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -61,8 +45,8 @@ namespace SytyRouting
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             // //                                           Routing algorithms benchmarking                                                      // //
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
-            Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
+            //var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
+            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
 
 
             //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph,transportSequence);
@@ -81,6 +65,14 @@ namespace SytyRouting
             //                                                    SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph,transportSequence);
 
             //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+            ///////////////////////////////////////////////////////
+            // //    Persona data downloading benchmarking     // //
+            ///////////////////////////////////////////////////////
+            await DataBase.PersonaDownloadBenchmarking.Start(graph);
+            ///////////////////////////////////////////////////////
 
 
 

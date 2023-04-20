@@ -20,6 +20,7 @@ namespace SytyRouting.Routing
         protected int ComputedRoutesCount = 0;
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
         protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
+        protected TimeSpan TotalDownloadingTime = TimeSpan.Zero;
 
         protected Stopwatch baseRouterStopWatch = new Stopwatch();
         protected int elementsToProcess = 0;
@@ -67,6 +68,11 @@ namespace SytyRouting.Routing
         public TimeSpan GetRoutingTime()
         {
             return TotalRoutingTime;
+        }
+
+        public TimeSpan GetDownloadingTime()
+        {
+            return TotalDownloadingTime;
         }
 
         public TimeSpan GetUploadingTime()

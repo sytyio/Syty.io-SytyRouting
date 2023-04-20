@@ -13,5 +13,6 @@ namespace SytyRouting.Routing
         int GetComputedRoutesCount();
         TimeSpan GetRoutingTime();
         TimeSpan GetUploadingTime();
+        TimeSpan GetDownloadingTime();
     }
 }
