@@ -16,7 +16,7 @@ namespace SytyRouting.Routing
         protected string _routeTable = null!;
         protected string _comparisonTable = null!;
         protected string _benchmarkTable = null!;
-        protected List<Persona> Personas = null!;
+        protected List<Persona> Personas = new List<Persona>();
         protected int ComputedRoutesCount = 0;
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
         protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
@@ -53,6 +53,26 @@ namespace SytyRouting.Routing
             _routeTable = routeTable;
             _comparisonTable = comparisonTable;
             _benchmarkTable = benchmarkTable;
+        }
+
+        public void Reset()
+        {
+            personas.Clear();
+            Personas.Clear();
+
+            ComputedRoutesCount = 0;
+            TotalRoutingTime = TimeSpan.Zero;
+            TotalUploadingTime = TimeSpan.Zero;
+            TotalDownloadingTime = TimeSpan.Zero;
+
+            baseRouterStopWatch.Reset();
+            elementsToProcess = 0;
+            computedRoutes = 0;
+            processedDbElements = 0;
+            uploadedRoutes = 0;
+            routingTasksHaveEnded = false;
+            personaTaskArraysQueue.Clear();
+            originEqualsDestinationErrors = 0;
         }
 
         public List<Persona> GetPersonas()

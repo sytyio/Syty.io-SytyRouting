@@ -24,7 +24,7 @@ namespace SytyRouting.DataBase
         private static List<string> compTableNames = new List<string>();
         private static List<string> downloadStrategies = new List<string>();
 
-        public static async Task Start(Graph graph)
+        public static async Task Start(Graph graph, int numberOfRuns)
         {
             _graph = graph;
 
@@ -46,7 +46,7 @@ namespace SytyRouting.DataBase
             var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterOneTimeAllDownload>(graph,connectionString,routeTable,comparisonTable);
+                                    Routing.RouterOneTimeAllDownload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
             totalTimes.Add(totalTime);
             
             var comparisonTable70 = comparisonTable;
@@ -141,7 +141,7 @@ namespace SytyRouting.DataBase
             var comparisonResultsArray = comparisonResults.ToArray();
 
             logger.Info("=======================================================================================================================================================================================================================================================================================");
-            logger.Info("{0} Persona Download Benchmarking",numberOfRows);
+            logger.Info("{0} Personas Download Benchmarking. {1} runs",numberOfRows,numberOfRuns);
             logger.Info("=======================================================================================================================================================================================================================================================================================");
             logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","Strategy","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
             logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
@@ -174,25 +174,40 @@ namespace SytyRouting.DataBase
 
         }
 
-        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
+        private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable, int numberOfRuns) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
         {
             Stopwatch benchmarkStopWatch = new Stopwatch();
             benchmarkStopWatch.Start();
 
             //var uploader = new U();
             var router = new R();
-
             router.Initialize(_graph, connectionString, routeTable, comparisonTable: comparisonTable);
-            await router.StartRouting<A,D,U>();
 
-            var personas = router.GetPersonas();
-            var computedRoutes = router.GetComputedRoutesCount();
-            var routingTime = router.GetRoutingTime();
-            var uploadingTime = router.GetUploadingTime();
-            var downloadingTime = router.GetDownloadingTime();
+            TimeSpan routingTime = TimeSpan.Zero;
+            TimeSpan uploadingTime = TimeSpan.Zero;
+            TimeSpan downloadingTime = TimeSpan.Zero;
+
+            numberOfRuns = numberOfRuns > 0 ? numberOfRuns : 1;
+            for (int runs = numberOfRuns; runs > 0; runs--)
+            {
+                router.Reset();
+                
+                await router.StartRouting<A,D,U>();
+
+                routingTime += router.GetRoutingTime();
+                uploadingTime += router.GetUploadingTime();
+                downloadingTime += router.GetDownloadingTime();               
+            }
+
+            routingTime = TimeSpan.FromMilliseconds(routingTime.TotalMilliseconds / numberOfRuns);
+            uploadingTime = TimeSpan.FromMilliseconds(uploadingTime.TotalMilliseconds / numberOfRuns);
+            downloadingTime = TimeSpan.FromMilliseconds(downloadingTime.TotalMilliseconds / numberOfRuns);
+
             routingTimes.Add(routingTime);
             uploadingTimes.Add(uploadingTime);
 
+            var personas = router.GetPersonas();
+            var computedRoutes = router.GetComputedRoutesCount();
             var uploadTest = await CheckUploadedRoutesAsync(personas, comparisonTable, computedRoutes);
             uploadResults.Add(uploadTest);
 
