@@ -26,6 +26,12 @@ namespace SytyRouting.DataBase
 
         public static async Task Start(Graph graph, int numberOfRuns)
         {
+            if (numberOfRuns < 1)
+            {
+                logger.Debug("Only serious requests, please. Number of runs should be greater or equal to 1");
+                return;
+            }
+
             _graph = graph;
 
             int numberOfRows = 1360;//60; //1360;
@@ -47,6 +53,9 @@ namespace SytyRouting.DataBase
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
                                     Routing.RouterOneTimeAllDownload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+
+            totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
+
             totalTimes.Add(totalTime);
             
             var comparisonTable70 = comparisonTable;
@@ -137,15 +146,16 @@ namespace SytyRouting.DataBase
             var totalTimesArray = totalTimes.ToArray();
             var routingTimesArray = routingTimes.ToArray();
             var uploadingTimesArray = uploadingTimes.ToArray();
+            var downloadingTimesArray = downloadingTimes.ToArray();
             var uploadResultsArray = uploadResults.ToArray();
             var comparisonResultsArray = comparisonResults.ToArray();
 
-            logger.Info("=======================================================================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================================");
             logger.Info("{0} Personas Download Benchmarking. {1} runs",numberOfRows,numberOfRuns);
-            logger.Info("=======================================================================================================================================================================================================================================================================================");
-            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","Strategy","Table"," Routing Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
-            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
-            logger.Info("=======================================================================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================================");
+            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}","Strategy","Table"," Routing Time","Downloading Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
+            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
+            logger.Info("=======================================================================================================================================================================================================================================================================================================");
             for(int i=0; i<comparisonResultsArray.Length; i++)
             {
                 double processingRate=-1.0;
@@ -156,10 +166,11 @@ namespace SytyRouting.DataBase
                     uploadingRoutingRatio = 100.0 * uploadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
                 }
                 
-                logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}",
+                logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}",
                                                             uploadStrategiesArray[i],
                                                             tableNamesArray[i],
                                                             Helper.FormatElapsedTime(routingTimesArray[i]),
+                                                            Helper.FormatElapsedTime(downloadingTimesArray[i]),
                                                             Helper.FormatElapsedTime(uploadingTimesArray[i]),
                                                             uploadingRoutingRatio,
                                                             Helper.FormatElapsedTime(totalTimesArray[i]),
@@ -167,7 +178,7 @@ namespace SytyRouting.DataBase
                                                             uploadResultsArray[i],
                                                             comparisonResultsArray[i]);
             }
-            logger.Info("=======================================================================================================================================================================================================================================================================================");
+            logger.Info("=======================================================================================================================================================================================================================================================================================================");
 
 
             //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
@@ -196,7 +207,10 @@ namespace SytyRouting.DataBase
 
                 routingTime += router.GetRoutingTime();
                 uploadingTime += router.GetUploadingTime();
-                downloadingTime += router.GetDownloadingTime();               
+                downloadingTime += router.GetDownloadingTime();
+                logger.Info("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                logger.Info("      Download Time: {0} (HH:MM:S.mS)", Helper.FormatElapsedTime(router.GetDownloadingTime()));
+                logger.Info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
             }
 
             routingTime = TimeSpan.FromMilliseconds(routingTime.TotalMilliseconds / numberOfRuns);
@@ -205,6 +219,8 @@ namespace SytyRouting.DataBase
 
             routingTimes.Add(routingTime);
             uploadingTimes.Add(uploadingTime);
+            downloadingTimes.Add(downloadingTime);
+            
 
             var personas = router.GetPersonas();
             var computedRoutes = router.GetComputedRoutesCount();
