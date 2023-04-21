@@ -31,6 +31,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
         public int splitShapeByStopsCount=0;
         public int splitShapeByStopsErrors=0;
         public int buildShapeSegmentErrors=0;
+        public int nearestPointIndexErrors=0;
 
         
         private string _provider;
@@ -118,9 +119,6 @@ namespace SytyRouting.Gtfs.GtfsUtils
             var debugTable = "gtfs_shape_"+_provider;
             await shapeDebuger.SetDebugGeomTable(connectionString,debugTable);
             await shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,shapeDico.Values.ToList());
-
-            logger.Debug("Build Shape segment errors: {0}",buildShapeSegmentErrors);
-            logger.Debug("Split Shape errors: {0} (count: {1})",splitShapeByStopsErrors,splitShapeByStopsCount);
             //:gudeb
             
             stopWatch.Restart();
@@ -147,6 +145,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
             AddSplitLineString();
             
             //debug:
+            logger.Debug("Build Shape segment errors: {0}",buildShapeSegmentErrors);
+            logger.Debug("Split Shape errors: {0} (count: {1}) [{2:0.00}%]",splitShapeByStopsErrors,splitShapeByStopsCount,splitShapeByStopsErrors/splitShapeByStopsCount*100);
+            logger.Debug("Nearest Point in LineString index errors: {0}",nearestPointIndexErrors);
+
             Task clean = DataBase.RouteUploadBenchmarking.CleanComparisonTablesAsync(connectionString,debugTables);
             Task.WaitAll(clean);
             //:gudeb
@@ -503,7 +505,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             List<LineString> segments = new List<LineString>();
             
             var coordinates = lineString.Coordinates.OrderBy(c=>c.M).ToList();
-            PriorityQueue<Coordinate,Double> sequentiallyExplodedLineString = sequenciallyExplodeLineString(lineString);
+            //PriorityQueue<Coordinate,Double> sequentiallyExplodedLineString = sequenciallyExplodeLineString(lineString);
 
             int startIndex = 0;
             int endIndex = 0;
@@ -511,9 +513,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
             startIndex = GetFirstInLineNearestPointIndex(startIndex,stops[0],stops[0],coordinates);
             if(startIndex < 0)
             {
-                Console.WriteLine("Wait a minute!");
-                logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
-                startIndex = 0; // The slam-it! solution.
+                //Console.WriteLine("Wait a minute!");
+                //logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
+                startIndex = 0; // The slam-it! solution. Shame on me!
+                ++splitShapeByStopsErrors;
             }
 
             for (int i = 1; i < stops.Length; ++i)
@@ -524,8 +527,12 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
                 if (endIndex > startIndex) // Otherwise skip faulty endIndices (that probably led to empty Shape segments in the previous calculation)
                 {
-                    //logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
                     startIndex = endIndex;
+                }
+                else
+                {
+                    //logger.Debug("Shape split error. Shape Id: {0}.\t Trip Key: {1}",shapeId,tripKey);
+                    ++splitShapeByStopsErrors;
                 }
             }
 
@@ -560,10 +567,10 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 Task uploadTrajectories = shapeDebuger.UploadTrajectoriesAsync(connectionString,debugTable,trajectoriesIdLineStringPairs);
                 Task.WaitAll(uploadTrajectories);
 
-                ++splitShapeByStopsCount;
-
                 //:gudeb
             }
+
+            splitShapeByStopsCount+=stops.Length-1;
             //:gudeb
 
             return segments;
