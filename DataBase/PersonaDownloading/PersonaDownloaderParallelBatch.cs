@@ -12,6 +12,7 @@ namespace SytyRouting.DataBase
 
         public override async Task<Persona[]> DownloadPersonasAsync(string connectionString, string personaTable, int batchSize, int offset)
         {
+
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
 
