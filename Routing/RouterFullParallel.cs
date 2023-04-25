@@ -69,8 +69,8 @@ namespace SytyRouting.Routing
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
-            //elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
-            elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
+            elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
+            //elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
             
             if(elementsToProcess < 1)
             {
@@ -110,7 +110,6 @@ namespace SytyRouting.Routing
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
-            await UploadRoutesAsync<U>();
 
             baseRouterStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(baseRouterStopWatch.Elapsed);
@@ -121,16 +120,16 @@ namespace SytyRouting.Routing
 
         protected override async Task DownloadPersonasAsync<D>()
         {
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
+            
             var downloader = new D();
             downloader.Initialize(_graph,_connectionString,_routeTable);
 
             //int dBPersonaLoadAsyncSleepMilliseconds = Configuration.DBPersonaLoadAsyncSleepMilliseconds; // 100;
 
-            logger.Debug("> Thread #{0}\t=>\tDBPersonaLoadAsync", Thread.CurrentThread.ManagedThreadId);
+            logger.Debug("> Thread #{0}\t=>\tDownloadPersonasAsync", Thread.CurrentThread.ManagedThreadId);
             logger.Debug("> DownloadPersonasAsync started");
-
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
             
             int[] batchSizes = GetBatchSizes();
 
@@ -140,9 +139,9 @@ namespace SytyRouting.Routing
 
             var connectionString = Configuration.ConnectionString;
 
-            await using var connection = new NpgsqlConnection(connectionString);
-            await connection.OpenAsync();
-            connection.TypeMapper.UseNetTopologySuite();
+            //await using var connection = new NpgsqlConnection(connectionString);
+            //await connection.OpenAsync();
+            //connection.TypeMapper.UseNetTopologySuite();
 
             for(var b = 0; b < numberOfBatches; b++)
             {
@@ -153,6 +152,7 @@ namespace SytyRouting.Routing
                 foreach(var persona in personasArray)
                 {
                     PersonaQueues[currentQueue].Enqueue(persona);
+                    personas.AddRange(personasArray);
                 }
 
                 dbRowsProcessed += personasArray.Length;
@@ -167,11 +167,12 @@ namespace SytyRouting.Routing
                 }
 
 
-                offset = offset + batchSizes[b];
+                offset = offset + batchSize;
                 currentQueue = ChangeQueue(currentQueue);
             }
 
-            await connection.CloseAsync();
+            //await connection.CloseAsync();
+            
             PersonaDownloadEnded = true;
 
             
@@ -270,7 +271,7 @@ namespace SytyRouting.Routing
                     //personasWithRoute.Add(persona);
                     calculatedRoutes++;
 
-                    if(elementsToProcess == Interlocked.Increment(ref computedRoutes))
+                    if(elementsToProcess == computedRoutes)
                     {
                         Interlocked.Exchange(ref stopRoutingProcess, 1);
                         routingTasksHaveEnded = true;

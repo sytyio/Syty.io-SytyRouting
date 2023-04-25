@@ -44,7 +44,7 @@ namespace SytyRouting.DataBase
             //////////////
             // /////////////  ////////////// //
             downloadStrategies.Add("On-Time All, single DB connection, COPY, TEMP AUX (ref.)");
-            var routeTable = baseRouteTable + "_t70d";
+            var routeTable = baseRouteTable + "_t57d";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             var comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
@@ -58,7 +58,7 @@ namespace SytyRouting.DataBase
 
             totalTimes.Add(totalTime);
             
-            var comparisonTable70 = comparisonTable;
+            var comparisonTable57 = comparisonTable;
             compTableNames.Add(comparisonTable);
 
             var comparisonResult = "Reference";
@@ -88,7 +88,7 @@ namespace SytyRouting.DataBase
             var comparisonTable48 = comparisonTable;
             compTableNames.Add(comparisonTable);
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable48);
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable57,comparisonTable48);
             comparisonResults.Add(comparisonResult);
             // //////////////
             // //////////////
