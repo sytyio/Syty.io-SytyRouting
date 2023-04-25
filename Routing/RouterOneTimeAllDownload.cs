@@ -29,9 +29,9 @@ namespace SytyRouting.Routing
                 simultaneousRoutingTasks = elementsToProcess;
             }
 
-            logger.Info("....................................................");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             logger.Info(":  Starting One-Time-All persona dowload process.  :");
-            logger.Info("....................................................");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
             Stopwatch downloadWatch = new Stopwatch();
             downloadWatch.Start();

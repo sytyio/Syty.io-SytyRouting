@@ -34,7 +34,7 @@ namespace SytyRouting.DataBase
 
             _graph = graph;
 
-            int numberOfRows = 1360;//60; //1360;
+            int numberOfRows = 13;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -67,28 +67,31 @@ namespace SytyRouting.DataBase
             // //////////////
 
 
-            // //////////////
-            // // /////////////  ////////////// //
-            // downloadStrategies.Add("On-Time All, single DB connection, COPY, TEMP AUX (ref.)");
-            // var routeTable = baseRouteTable + "_t70";
-            // await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            // var comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
-            // tableNames.Add(routeTable);
 
-            // var totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-            //                         DataBase.PersonaDownloaderArrayBatch,
-            //                         DataBase.RouteUploaderCOPY,
-            //                         Routing.RouterOneTimeAllUpload>(graph,connectionString,routeTable,comparisonTable);
-            // totalTimes.Add(totalTime);
+            //////////////
+            // /////////////  ////////////// //
+            downloadStrategies.Add("Full-Parallel, dual DB connection, COPY, TEMP AUX (ref.)");
+            routeTable = baseRouteTable + "_t48d";
+            await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            tableNames.Add(routeTable);
+
+            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+                                    DataBase.PersonaDownloaderArrayBatch,
+                                    DataBase.RouteUploaderCOPY,
+                                    Routing.RouterFullParallel>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+
+            totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
+
+            totalTimes.Add(totalTime);
             
-            // var comparisonTable70 = comparisonTable;
-            // compTableNames.Add(comparisonTable);
+            var comparisonTable48 = comparisonTable;
+            compTableNames.Add(comparisonTable);
 
-            // var comparisonResult = "Reference";
-            // comparisonResults.Add(comparisonResult);
-            // // //////////////
-            // // //////////////
-
+            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable70,comparisonTable48);
+            comparisonResults.Add(comparisonResult);
+            // //////////////
+            // //////////////
 
 
             // //////////////

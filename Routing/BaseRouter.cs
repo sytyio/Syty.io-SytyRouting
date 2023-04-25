@@ -46,7 +46,7 @@ namespace SytyRouting.Routing
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
 
-        public void Initialize(Graph graph, string connectionString, string routeTable, string comparisonTable = "", string benchmarkTable = "")
+        public virtual void Initialize(Graph graph, string connectionString, string routeTable, string comparisonTable = "", string benchmarkTable = "")
         {
             _graph = graph;
             _connectionString = connectionString;
@@ -175,7 +175,17 @@ namespace SytyRouting.Routing
                     {
                         logger.Info(" ==>> Inconsistent number of processed elements.");
                     }
-                    logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, 100 * uploadedRoutes / personas.Count);
+                    string percentageS = "";
+                    if(personas.Count > 0)
+                    {
+                        var percentage = 100 * uploadedRoutes / personas.Count;
+                        percentageS = String.Format("{0}", percentage);
+                    }
+                    else
+                    {
+                        percentageS = "NA";
+                    }
+                    logger.Debug("{0} routes (out of {1}) uploaded ({2} %)", uploadedRoutes, personas.Count, percentageS);
                     return;
                 }
 
