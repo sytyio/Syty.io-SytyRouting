@@ -55,7 +55,7 @@ namespace SytyRouting.Routing
             _benchmarkTable = benchmarkTable;
         }
 
-        public void Reset()
+        public virtual void Reset()
         {
             personas.Clear();
             Personas.Clear();

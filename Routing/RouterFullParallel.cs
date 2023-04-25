@@ -55,6 +55,29 @@ namespace SytyRouting.Routing
             Initialized = true;
         }
 
+        public override void Reset()
+        {
+            personas.Clear();
+            Personas.Clear();
+
+            ComputedRoutesCount = 0;
+            TotalRoutingTime = TimeSpan.Zero;
+            TotalUploadingTime = TimeSpan.Zero;
+            TotalDownloadingTime = TimeSpan.Zero;
+
+            baseRouterStopWatch.Reset();
+            elementsToProcess = 0;
+            computedRoutes = 0;
+            processedDbElements = 0;
+            uploadedRoutes = 0;
+            routingTasksHaveEnded = false;
+            personaTaskArraysQueue.Clear();
+            originEqualsDestinationErrors = 0;
+
+            PersonaDownloadEnded = false;
+            stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
+        }
+
         public override async Task StartRouting<A,D,U>() //where A: IRoutingAlgorithm, D: IPersonaDownloader, U: IRouteUploader
         {
             if (Initialized == false)
