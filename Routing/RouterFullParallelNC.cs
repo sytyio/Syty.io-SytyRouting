@@ -8,7 +8,7 @@ using System.Globalization;
 
 namespace SytyRouting.Routing
 {
-    public class RouterFullParallel : BaseRouter
+    public class RouterFullParallelNonConcurrent : BaseRouter
     {
         private const int BatchesPerQueueDivisor = 1000;
         const int MinQueueWaitingTimeMilliseconds = 0_500;
@@ -30,6 +30,12 @@ namespace SytyRouting.Routing
         private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
 
 
+
+
+        private IRoutingAlgorithm[] routingAlgorithms = new IRoutingAlgorithm[simultaneousRoutingTasks];
+
+
+
         
 
         public override void Initialize(Graph graph, string connectionString, string routeTable, string comparisonTable = "", string benchmarkTable = "")
@@ -40,16 +46,13 @@ namespace SytyRouting.Routing
             _comparisonTable = comparisonTable;
             _benchmarkTable = benchmarkTable;
 
-            for (var i = 0; i < PersonaQueues.Length; i++)
+            for(var t = 0; t < routingTasks.Length; t++)
             {
-                PersonaQueues[i] = (PersonaQueues[i]) ?? new ConcurrentQueue<Persona>();
+                routingTasks[t] = Task.CompletedTask;
             }
-
-            for (var i = 0; i < PersonaQueues.Count(); i++)
-            {
-                if(!queueBenchmarks.TryAdd(i, new DataSetBenchmark {Id = i}))
-                    logger.Debug("Failed to initialize queues benchmarks at queue #{0}", i);
-            }
+            
+            
+            
             dBSetBenchmark = new DataSetBenchmark {Id = PersonaQueues.Count()};
 
             Initialized = true;
@@ -82,15 +85,24 @@ namespace SytyRouting.Routing
         {
             if (Initialized == false)
             {
-                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                logger.Info("!!   Full-parallel router not initialized   !!.");
-                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                logger.Info("!!   Non-concurrent full-parallel router not initialized   !!.");
+                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 return;
             }
 
             baseRouterStopWatch.Start();
 
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
+
+
+            for(var a = 0; a < routingAlgorithms.Length; a++)
+            {
+                routingAlgorithms[a] = new A();
+                routingAlgorithms[a].Initialize(_graph);
+            }
+            logger.Info("Route searching using {0}'s algorithm running {1} (simultaneous) routing task(s)", routingAlgorithms[0].GetType().Name, simultaneousRoutingTasks);
+
 
             elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
             //elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
@@ -105,23 +117,20 @@ namespace SytyRouting.Routing
                 simultaneousRoutingTasks = elementsToProcess;
             }
 
-            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-            logger.Info(":  Starting Full-Parallel persona dowload process.  :");
-            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+            logger.Info("%  Starting Non-concurrrent full-parallel persona dowload process.  %");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
 
-            tasks[0] = Task.Run(() => DownloadPersonasAsync<D>());
-            Thread.Sleep(initialDataLoadSleepMilliseconds);
-            for(int q = 1; q < tasks.Length-2; ++q)
-            {
-                var queueIdx = q;
-                tasks[queueIdx] = Task.Run(() => CalculateRoutes<A,U>(queueIdx-1));
-            }
-            tasks[tasks.Length-2] = Task.Run(() => UploadRoutesAsync<U>());
-            tasks[tasks.Length-1] = Task.Run(() => MonitorRouteCalculation());
+            
+            
+            await DownloadPersonasAsync<D>();
+            
+            
 
-            Task.WaitAll(tasks);
-            foreach (Task t in tasks)
+            Task.WaitAll(routingTasks);
+
+            foreach (Task t in routingTasks)
             {
                 Console.WriteLine("Task #{0} status: {1}", t.Id, t.Status);
             }
@@ -154,7 +163,7 @@ namespace SytyRouting.Routing
             logger.Debug("> Thread #{0}\t=>\tDownloadPersonasAsync", Thread.CurrentThread.ManagedThreadId);
             logger.Debug("> DownloadPersonasAsync started");
             
-            int[] batchSizes = GetBatchSizes();
+            int[] batchSizes = downloader.GetBatchSizes(regularBatchSize,elementsToProcess);
 
             int dbRowsProcessed = 0;
             var currentQueue = 0;
@@ -166,18 +175,21 @@ namespace SytyRouting.Routing
             //await connection.OpenAsync();
             //connection.TypeMapper.UseNetTopologySuite();
 
+            int personasIdx = 0;
+
             for(var b = 0; b < numberOfBatches; b++)
             {
                 var batchSize = batchSizes[b];
 
                 var personasArray = await downloader.DownloadPersonasAsync(connectionString,_routeTable,batchSize,offset);
 
-                personas.AddRange(personasArray);
-                foreach(var persona in personasArray)
-                {
-                    PersonaQueues[currentQueue].Enqueue(persona);
-                    //personas.AddRange(personasArray); // <- Watch out here!
-                }
+                // foreach(var persona in personasArray)
+                // {
+                    //personas[personasIdx] = persona;
+                    personas.AddRange(personasArray);
+                //}
+
+                personasIdx+=personasArray.Length;//-1;
 
                 dbRowsProcessed += personasArray.Length;
 
@@ -190,11 +202,14 @@ namespace SytyRouting.Routing
                     DBLoadBenchmark(result);
                 }
 
+                DispatchData(batchSize, personasIdx);
 
                 offset = offset + batchSize;
-                currentQueue = ChangeQueue(currentQueue);
+                //currentQueue = ChangeQueue(currentQueue);
             }
 
+
+            
             //await connection.CloseAsync();
             
             PersonaDownloadEnded = true;
@@ -227,24 +242,76 @@ namespace SytyRouting.Routing
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
         }
 
-        private int[] GetBatchSizes()
+        private void DispatchData(int batchSize, int endReference)
         {
-            int numberOfBatchesPerQueue = (elementsToProcess / PersonaQueues.Count() / BatchesPerQueueDivisor)>0 ? elementsToProcess / PersonaQueues.Count() / BatchesPerQueueDivisor : 1;
-            numberOfBatches = PersonaQueues.Count() * numberOfBatchesPerQueue;
-            
-            var regularBatchSize = elementsToProcess / numberOfBatches;
-            var lastBatchSize = elementsToProcess - regularBatchSize * (numberOfBatches-1);
+            var personasIndex = endReference - batchSize;
 
-            int[] batchSizes = new int[numberOfBatches];
-
-            for (var i = 0; i < batchSizes.Length-1; i++)
+            int firstRoutingTaskBatchSize = 0;
+            int regularRoutingTaskBatchSize = 0;
+            int lastRoutingTaskBatchSize = 0;
+            if(simultaneousRoutingTasks > 1)
             {
-                batchSizes[i] = regularBatchSize;
+                var initialRoutingTaskBatchSize = batchSize / simultaneousRoutingTasks;
+                firstRoutingTaskBatchSize = (initialRoutingTaskBatchSize * 80 / 100 > 0) ? initialRoutingTaskBatchSize * 80 / 100 : 1;
             }
-            batchSizes[batchSizes.Length-1] = lastBatchSize;
+            
+            regularRoutingTaskBatchSize = (simultaneousRoutingTasks - 1 > 0) ? (batchSize - firstRoutingTaskBatchSize) / (simultaneousRoutingTasks - 1) : 0;
+            lastRoutingTaskBatchSize = batchSize - firstRoutingTaskBatchSize - regularRoutingTaskBatchSize * (simultaneousRoutingTasks - 2);
 
-            return batchSizes;
+            int[] routingTaskBatchSizes = new int[simultaneousRoutingTasks];
+
+            routingTaskBatchSizes[0] = firstRoutingTaskBatchSize;
+            for (var s = 1; s < routingTaskBatchSizes.Length-1; s++)
+            {
+                routingTaskBatchSizes[s] = regularRoutingTaskBatchSize;
+            }
+            routingTaskBatchSizes[routingTaskBatchSizes.Length-1] = lastRoutingTaskBatchSize;
+
+            for (var t = 0; t < simultaneousRoutingTasks; t++)
+            {
+                Persona[] personaTaskArray = new Persona[routingTaskBatchSizes[t]];
+                for(var p = 0; p < routingTaskBatchSizes[t]; p++)
+                {
+                    personaTaskArray[p] = personas[personasIndex];
+                    personasIndex++;
+                }
+                ScheduleRoutingTask(personaTaskArray);
+                logger.Debug("Task array {0} (of {1}) has been scheduled", t+1, simultaneousRoutingTasks);
+            }
         }
+
+        private void ScheduleRoutingTask(Persona[] personaTaskArray)
+        {
+            for(var t = 0; t < routingTasks.Length; t++)
+            {
+                var taskIndex = t;
+                if(routingTasks[taskIndex].IsCompleted)
+                {
+                    routingTasks[taskIndex] = Task.Run(() => CalculateRoutes(routingAlgorithms[taskIndex], personaTaskArray));
+                    break;
+                }
+            }
+            Task.WaitAny(routingTasks);
+        }
+
+        // private int[] GetBatchSizes()
+        // {
+        //     int numberOfBatchesPerQueue = (elementsToProcess / PersonaQueues.Count() / BatchesPerQueueDivisor)>0 ? elementsToProcess / PersonaQueues.Count() / BatchesPerQueueDivisor : 1;
+        //     numberOfBatches = PersonaQueues.Count() * numberOfBatchesPerQueue;
+            
+        //     var regularBatchSize = elementsToProcess / numberOfBatches;
+        //     var lastBatchSize = elementsToProcess - regularBatchSize * (numberOfBatches-1);
+
+        //     int[] batchSizes = new int[numberOfBatches];
+
+        //     for (var i = 0; i < batchSizes.Length-1; i++)
+        //     {
+        //         batchSizes[i] = regularBatchSize;
+        //     }
+        //     batchSizes[batchSizes.Length-1] = lastBatchSize;
+
+        //     return batchSizes;
+        // }
 
         private void DBLoadBenchmark(DataSetBenchmark benchmark)
         {
@@ -255,81 +322,110 @@ namespace SytyRouting.Routing
             dBSetBenchmark.ExpectedCompletionTime = benchmark.ExpectedCompletionTime;
         }
 
-        private int ChangeQueue(int currentQueue)
+        // private int ChangeQueue(int currentQueue)
+        // {
+        //     return (++currentQueue >= PersonaQueues.Count()) ? 0 : currentQueue;
+        // }
+
+        private void CalculateRoutes(IRoutingAlgorithm routingAlgorithm, Persona[] personaTaskArray)
         {
-            return (++currentQueue >= PersonaQueues.Count()) ? 0 : currentQueue;
-        }
-
-        protected override void CalculateRoutes<A,U>(int queueNumber) //where A: IRoutingAlgorithm, U: IRouteUploader
-        {   
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
-
-            var routingAlgorithm = new A();
-            routingAlgorithm.Initialize(_graph);
-
-            int calculatedRoutes = 0;
-
-            logger.Debug("> Thread #{0}\t=>\tQueue #{1}", Thread.CurrentThread.ManagedThreadId, queueNumber);
-            logger.Debug("> CalculateRoutes started for Queue #{0}", queueNumber);
-            while(stopRoutingProcess != 1)
+            logger.Debug("> CalculateRoutes started on Thread #{0} with {1} elements", Thread.CurrentThread.ManagedThreadId, personaTaskArray.Length);
+            for(var i = 0; i < personaTaskArray.Length; i++)
             {
-                if(PersonaQueues[queueNumber].TryDequeue(out Persona? persona))
+                var persona = personaTaskArray[i];
+                try
                 {
-                    try
-                    {
-                        var routeFound = CalculateRoute(routingAlgorithm, ref persona);
+                    var routeFound = CalculateRoute(routingAlgorithm, ref persona);
                         
-                        if(routeFound)
-                        {
-                            routesQueue.Enqueue(persona);
-                            Interlocked.Increment(ref computedRoutes);
-                        }
-                    }
-                    catch (Exception e)
+                    if(routeFound)
                     {
-                        persona.SuccessfulRouteComputation = false;
-                        logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
-                    }
-            
-                    //personasWithRoute.Add(persona);
-                    calculatedRoutes++;
-
-                    if(elementsToProcess == computedRoutes)
-                    {
-                        Interlocked.Exchange(ref stopRoutingProcess, 1);
-                        routingTasksHaveEnded = true;
+                        Interlocked.Increment(ref computedRoutes);
                     }
 
-                    if (calculatedRoutes % 100 == 0)
-                    {
-                        var timeSpan = stopWatch.Elapsed;
-                        var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
-                        QueueRoutingBenchmark(elementsToProcess / PersonaQueues.Count(), calculatedRoutes, PersonaQueues[queueNumber].Count, timeSpan, timeSpanMilliseconds, queueNumber, ref queueBenchmarks, ref dBSetBenchmark);
-                    }
+
+                    persona.SuccessfulRouteComputation = true;
+
+                    //personasWithRoute[persona.Idx]=persona;
                 }
-                else if(PersonaDownloadEnded)
+                catch (Exception e)
                 {
-                    logger.Debug("> DB download has ended. No more expected elements to process");
-                    break;
-                }
-                else
-                {
-                    int expectedDbSetCompletionTime = 0; // [ms]
-                    if(dBSetBenchmark.ExpectedCompletionTime is not null)
-                    {
-                        expectedDbSetCompletionTime = Convert.ToInt32(TimeSpan.Parse(dBSetBenchmark.ExpectedCompletionTime).TotalMilliseconds);
-                    }
-                    var pause = (expectedDbSetCompletionTime / numberOfBatches) > 0 ? expectedDbSetCompletionTime / numberOfBatches : MinQueueWaitingTimeMilliseconds;
-                    if(pause > MaxQueueWaitingTimeMilliseconds)
-                    {
-                        logger.Debug("Queue #{0} will wait for {1} [ms]", queueNumber, pause);
-                    }
-                    Thread.Sleep(pause);
+                    persona.SuccessfulRouteComputation = false;
+                    logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
                 }
             }
-            logger.Debug("> CalculateRoutes ended for Queue #{0}", queueNumber);
+            logger.Debug("> CalculateRoutes ended on Thread #{0}", Thread.CurrentThread.ManagedThreadId);
         }
+
+        // protected override void CalculateRoutes<A,U>(int queueNumber) //where A: IRoutingAlgorithm, U: IRouteUploader
+        // {   
+        //     Stopwatch stopWatch = new Stopwatch();
+        //     stopWatch.Start();
+
+        //     var routingAlgorithm = new A();
+        //     routingAlgorithm.Initialize(_graph);
+
+        //     int calculatedRoutes = 0;
+
+        //     logger.Debug("> Thread #{0}\t=>\tQueue #{1}", Thread.CurrentThread.ManagedThreadId, queueNumber);
+        //     logger.Debug("> CalculateRoutes started for Queue #{0}", queueNumber);
+        //     while(stopRoutingProcess != 1)
+        //     {
+        //         if(PersonaQueues[queueNumber].TryDequeue(out Persona? persona))
+        //         {
+        //             try
+        //             {
+        //                 var routeFound = CalculateRoute(routingAlgorithm, ref persona);
+                        
+        //                 if(routeFound)
+        //                 {
+        //                     routesQueue.Enqueue(persona);
+        //                     Interlocked.Increment(ref computedRoutes);
+        //                 }
+        //             }
+        //             catch (Exception e)
+        //             {
+        //                 persona.SuccessfulRouteComputation = false;
+        //                 logger.Debug(" ==>> Unable to compute route: Persona Id {0}: {1}", persona.Id, e);
+        //             }
+            
+        //             //personasWithRoute.Add(persona);
+        //             calculatedRoutes++;
+
+        //             if(elementsToProcess == computedRoutes)
+        //             {
+        //                 Interlocked.Exchange(ref stopRoutingProcess, 1);
+        //                 routingTasksHaveEnded = true;
+        //             }
+
+        //             if (calculatedRoutes % 100 == 0)
+        //             {
+        //                 var timeSpan = stopWatch.Elapsed;
+        //                 var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+        //                 QueueRoutingBenchmark(elementsToProcess / PersonaQueues.Count(), calculatedRoutes, PersonaQueues[queueNumber].Count, timeSpan, timeSpanMilliseconds, queueNumber, ref queueBenchmarks, ref dBSetBenchmark);
+        //             }
+        //         }
+        //         else if(PersonaDownloadEnded)
+        //         {
+        //             logger.Debug("> DB download has ended. No more expected elements to process");
+        //             break;
+        //         }
+        //         else
+        //         {
+        //             int expectedDbSetCompletionTime = 0; // [ms]
+        //             if(dBSetBenchmark.ExpectedCompletionTime is not null)
+        //             {
+        //                 expectedDbSetCompletionTime = Convert.ToInt32(TimeSpan.Parse(dBSetBenchmark.ExpectedCompletionTime).TotalMilliseconds);
+        //             }
+        //             var pause = (expectedDbSetCompletionTime / numberOfBatches) > 0 ? expectedDbSetCompletionTime / numberOfBatches : MinQueueWaitingTimeMilliseconds;
+        //             if(pause > MaxQueueWaitingTimeMilliseconds)
+        //             {
+        //                 logger.Debug("Queue #{0} will wait for {1} [ms]", queueNumber, pause);
+        //             }
+        //             Thread.Sleep(pause);
+        //         }
+        //     }
+        //     logger.Debug("> CalculateRoutes ended for Queue #{0}", queueNumber);
+        // }
 
         private static void QueueRoutingBenchmark(int totalElements, int processedElements, int pendingElements, TimeSpan timeSpan, long timeSpanMilliseconds,
                                                     int queueNumber, ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks, ref DataSetBenchmark dBSetBenchmark)
