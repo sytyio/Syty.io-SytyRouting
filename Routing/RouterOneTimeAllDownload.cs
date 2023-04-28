@@ -16,9 +16,6 @@ namespace SytyRouting.Routing
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
-            //elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            //elementsToProcess = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTable, logger);
-
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -38,7 +35,7 @@ namespace SytyRouting.Routing
             Task.WaitAll(downloadTask);
 
 
-            //Thread.Sleep(initialDataLoadSleepMilliseconds);
+            Thread.Sleep(initialDataLoadSleepMilliseconds); // <- This line is only to match added sleep time in other download strategies
             if(personaTaskArraysQueue.Count < simultaneousRoutingTasks)
             {
                 logger.Info(" ==>> Initial DB load timeout ({0} ms) elapsed. Unable to start the routing process.", initialDataLoadSleepMilliseconds);
@@ -62,6 +59,7 @@ namespace SytyRouting.Routing
             logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
             logger.Info("  Routing time :: {0}", routingTime);
             logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
+            TotalRoutingTime = routingWatch.Elapsed;
 
             routingTasksHaveEnded = true;
             
@@ -78,7 +76,7 @@ namespace SytyRouting.Routing
             logger.Info("    Total routing execution time :: {0}", totalTime);
             logger.Info("======================================================");
 
-            TotalRoutingTime = baseRouterStopWatch.Elapsed;
+            TotalExecutionTime = baseRouterStopWatch.Elapsed;
         }
 
         protected override async Task DownloadPersonasAsync<D>()
@@ -118,7 +116,7 @@ namespace SytyRouting.Routing
             }
 
             var sequenceValidationErrors = downloader.GetValidationErrors();
-
+            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
 
             downloadWatch.Stop();
             var downloadTime = Helper.FormatElapsedTime(downloadWatch.Elapsed);
@@ -126,9 +124,6 @@ namespace SytyRouting.Routing
             logger.Info("  Persona download time :: {0}", downloadTime);
             logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             TotalDownloadingTime = downloadWatch.Elapsed;
-
-
-            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
         }
 
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, U: IRouteUploader

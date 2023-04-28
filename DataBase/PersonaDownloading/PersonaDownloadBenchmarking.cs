@@ -79,7 +79,7 @@ namespace SytyRouting.DataBase
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterFullParallel>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+                                    Routing.RouterFullParallelDownload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
 
             totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
 
@@ -106,7 +106,7 @@ namespace SytyRouting.DataBase
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterFullParallelNonConcurrent>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+                                    Routing.RouterFullParallelDownloadNonConcurrent>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
 
             totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
 
@@ -163,17 +163,17 @@ namespace SytyRouting.DataBase
             logger.Info("=======================================================================================================================================================================================================================================================================================================");
             logger.Info("{0} Personas Download Benchmarking. {1} runs",numberOfRows,numberOfRuns);
             logger.Info("=======================================================================================================================================================================================================================================================================================================");
-            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}","Strategy","Table"," Routing Time","Downloading Time","Uploading Time","Uploading-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
+            logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}","Strategy","Table"," Routing Time","Downloading Time","Uploading Time","Download-Routing Ratio","   Total Time","Processing Rate","Uploading Test","Comparison Test");
             logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}","        ","     ","d.hh:mm:ss.ms "," d.hh:mm:ss.ms "," d.hh:mm:ss.ms ","                      %","d.hh:mm:ss.ms ","      (items/s)","              ","               ");
             logger.Info("=======================================================================================================================================================================================================================================================================================================");
             for(int i=0; i<comparisonResultsArray.Length; i++)
             {
                 double processingRate=-1.0;
-                double uploadingRoutingRatio = -1.0;
+                double downloadingRoutingRatio = -1.0;
                 if(uploadResultsArray[i].Equals("SUCCEEDED"))
                 {
                     processingRate = Helper.GetProcessingRate(numberOfRows,totalTimesArray[i].TotalMilliseconds);
-                    uploadingRoutingRatio = 100.0 * uploadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
+                    downloadingRoutingRatio = 100.0 * downloadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
                 }
                 
                 logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}",
@@ -182,7 +182,7 @@ namespace SytyRouting.DataBase
                                                             Helper.FormatElapsedTime(routingTimesArray[i]),
                                                             Helper.FormatElapsedTime(downloadingTimesArray[i]),
                                                             Helper.FormatElapsedTime(uploadingTimesArray[i]),
-                                                            uploadingRoutingRatio,
+                                                            downloadingRoutingRatio,
                                                             Helper.FormatElapsedTime(totalTimesArray[i]),
                                                             processingRate,
                                                             uploadResultsArray[i],

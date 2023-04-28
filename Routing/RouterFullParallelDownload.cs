@@ -8,7 +8,7 @@ using System.Globalization;
 
 namespace SytyRouting.Routing
 {
-    public class RouterFullParallel : BaseRouter
+    public class RouterFullParallelDownload : BaseRouter
     {
         private const int BatchesPerQueueDivisor = 1000;
         const int MinQueueWaitingTimeMilliseconds = 0_500;
@@ -50,6 +50,7 @@ namespace SytyRouting.Routing
                 if(!queueBenchmarks.TryAdd(i, new DataSetBenchmark {Id = i}))
                     logger.Debug("Failed to initialize queues benchmarks at queue #{0}", i);
             }
+
             dBSetBenchmark = new DataSetBenchmark {Id = PersonaQueues.Count()};
 
             Initialized = true;
@@ -82,9 +83,9 @@ namespace SytyRouting.Routing
         {
             if (Initialized == false)
             {
-                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                logger.Info("!!   Full-parallel router not initialized   !!.");
-                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                logger.Info("!!   Full-parallel download router not initialized   !!");
+                logger.Info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                 return;
             }
 
@@ -93,8 +94,6 @@ namespace SytyRouting.Routing
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
-            //elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -111,24 +110,41 @@ namespace SytyRouting.Routing
 
 
             tasks[0] = Task.Run(() => DownloadPersonasAsync<D>());
+
             Thread.Sleep(initialDataLoadSleepMilliseconds);
+
+
+            Stopwatch routingWatch = new Stopwatch();
+            routingWatch.Start();
+
             for(int q = 1; q < tasks.Length-2; ++q)
             {
                 var queueIdx = q;
                 tasks[queueIdx] = Task.Run(() => CalculateRoutes<A,U>(queueIdx-1));
             }
-            tasks[tasks.Length-2] = Task.Run(() => UploadRoutesAsync<U>());
+
             tasks[tasks.Length-1] = Task.Run(() => MonitorRouteCalculation());
 
+            
+            var routingTasksWaitArray = tasks[1..(tasks.Length-2)];
+            Task.WaitAll(routingTasksWaitArray);
+            routingWatch.Stop();
+            var routingTime = Helper.FormatElapsedTime(routingWatch.Elapsed);
+            logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
+            logger.Info("  Routing time :: {0}", routingTime);
+            logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
+            TotalRoutingTime = routingWatch.Elapsed;
+
+
+            tasks[tasks.Length-2] = Task.Run(() => UploadRoutesAsync<U>());
+            
+            
             Task.WaitAll(tasks);
             foreach (Task t in tasks)
             {
                 Console.WriteLine("Task #{0} status: {1}", t.Id, t.Status);
             }
             
-
-
-            TotalRoutingTime = baseRouterStopWatch.Elapsed;
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
@@ -139,12 +155,14 @@ namespace SytyRouting.Routing
             logger.Info("=================================================");
             logger.Info("    Routing execution time :: {0}", totalTime);
             logger.Info("=================================================");
+
+            TotalExecutionTime = baseRouterStopWatch.Elapsed;
         }
 
         protected override async Task DownloadPersonasAsync<D>()
         {
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            Stopwatch downloadWatch = new Stopwatch();
+            downloadWatch.Start();
             
             var downloader = new D();
             downloader.Initialize(_graph,_connectionString,_routeTable);
@@ -184,8 +202,8 @@ namespace SytyRouting.Routing
                 if (dbRowsProcessed % 5000 == 0)
                 {
                     logger.Debug("Queue #{0}: {1} elements (batch #{2}: {3} elements)", currentQueue, PersonaQueues[currentQueue].Count, b, batchSize);
-                    var timeSpan = stopWatch.Elapsed;
-                    var timeSpanMilliseconds = stopWatch.ElapsedMilliseconds;
+                    var timeSpan = downloadWatch.Elapsed;
+                    var timeSpanMilliseconds = downloadWatch.ElapsedMilliseconds;
                     var result = Helper.DataLoadBenchmark(elementsToProcess, dbRowsProcessed, timeSpan, logger);
                     DBLoadBenchmark(result);
                 }
@@ -199,15 +217,15 @@ namespace SytyRouting.Routing
             
             PersonaDownloadEnded = true;
 
-            
-            stopWatch.Stop();
+            var sequenceValidationErrors = downloader.GetValidationErrors();
+            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
 
-            var downloadTime = Helper.FormatElapsedTime(stopWatch.Elapsed);
+            downloadWatch.Stop();
+            var downloadTime = Helper.FormatElapsedTime(downloadWatch.Elapsed);
             logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
             logger.Info("  Persona download time :: {0}", downloadTime);
             logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-
-            TotalDownloadingTime = stopWatch.Elapsed;
+            TotalDownloadingTime = downloadWatch.Elapsed;
 
 
             dBSetBenchmark.PendingElements = elementsToProcess - dbRowsProcessed;
@@ -221,10 +239,6 @@ namespace SytyRouting.Routing
             logger.Debug("Total number of elements in queues: {0}", elementsToProcess);
 
             logger.Debug("> DownloadPersonasAsync ended");
-
-
-            var sequenceValidationErrors = downloader.GetValidationErrors();
-            logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
         }
 
         private int[] GetBatchSizes()

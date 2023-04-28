@@ -16,9 +16,6 @@ namespace SytyRouting.Routing
             int initialDataLoadSleepMilliseconds = Configuration.InitialDataLoadSleepMilliseconds; // 2_000;
 
             elementsToProcess = await Helper.DbTableRowCount(_routeTable, logger);
-            //elementsToProcess = 6; // 500_000; // 1357; // 13579;                         // For testing with a reduced number of 'personas'
-            //elementsToProcess = await Helper.DbTableRowCount(Configuration.RoutingBenchmarkTable, logger);
-
             if(elementsToProcess < 1)
             {
                 logger.Info("No DB elements to process");
@@ -32,9 +29,7 @@ namespace SytyRouting.Routing
             logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
             logger.Info(":  Starting Batched persona dowload process.  :");
             logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-
-            Stopwatch downloadWatch = new Stopwatch();
-            downloadWatch.Start();
+            
 
             Task downloadTask = Task.Run(() => DownloadPersonasAsync<D>());
 
@@ -46,6 +41,8 @@ namespace SytyRouting.Routing
             }
             
 
+            Stopwatch routingWatch = new Stopwatch();
+            routingWatch.Start();
 
             for(int taskIndex = 0; taskIndex < routingTasks.Length; taskIndex++)
             {
@@ -55,22 +52,16 @@ namespace SytyRouting.Routing
             Task monitorTask = Task.Run(() => MonitorRouteCalculation());
 
 
-
-            
-
-
-            Task.WaitAll(downloadTask);
-            downloadWatch.Stop();
-            var downloadTime = Helper.FormatElapsedTime(downloadWatch.Elapsed);
-            logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-            logger.Info("  Persona download time :: {0}", downloadTime);
-            logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-
             Task.WaitAll(routingTasks);
 
+            routingWatch.Stop();
+            var routingTime = Helper.FormatElapsedTime(routingWatch.Elapsed);
+            logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
+            logger.Info("  Routing time :: {0}", routingTime);
+            logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
+            TotalRoutingTime = routingWatch.Elapsed;
 
-            TotalDownloadingTime = downloadWatch.Elapsed;
-            TotalRoutingTime = baseRouterStopWatch.Elapsed;
+            Task.WaitAll(downloadTask);
 
             routingTasksHaveEnded = true;
 
@@ -78,6 +69,7 @@ namespace SytyRouting.Routing
             Task.WaitAll(uploadTask);
 
             Task.WaitAll(monitorTask);
+
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
@@ -88,10 +80,15 @@ namespace SytyRouting.Routing
             logger.Info("=================================================");
             logger.Info("    Routing execution time :: {0}", totalTime);
             logger.Info("=================================================");
+
+            TotalExecutionTime = baseRouterStopWatch.Elapsed;
         }
 
         protected override async Task DownloadPersonasAsync<D>()
         {
+            Stopwatch downloadWatch = new Stopwatch();
+            downloadWatch.Start();
+
             var downloader = new D();
             downloader.Initialize(_graph,_connectionString,_routeTable);
 
@@ -125,6 +122,13 @@ namespace SytyRouting.Routing
 
             var sequenceValidationErrors = downloader.GetValidationErrors();
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
+
+            downloadWatch.Stop();
+            var downloadTime = Helper.FormatElapsedTime(downloadWatch.Elapsed);
+            logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            logger.Info("  Persona download time :: {0}", downloadTime);
+            logger.Info("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+            TotalDownloadingTime = downloadWatch.Elapsed;
         }
 
         protected override void CalculateRoutes<A,U>(int taskIndex) //where A: IRoutingAlgorithm, U: IRouteUploader
@@ -158,16 +162,19 @@ namespace SytyRouting.Routing
 
         protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader
         {
-            Stopwatch uploadStopWatch = new Stopwatch();
-            uploadStopWatch.Start();
+            Stopwatch uploadWatch = new Stopwatch();
+            uploadWatch.Start();
 
             var uploader = new U();
-
             await uploader.UploadRoutesAsync(_connectionString,_routeTable,personas,comparisonTable:_comparisonTable,benchmarkingTable:_benchmarkTable);
 
-            uploadStopWatch.Stop();
-            TotalUploadingTime = uploadStopWatch.Elapsed;
-            var totalTime = Helper.FormatElapsedTime(TotalUploadingTime);
+            uploadWatch.Stop();
+            var downloadTime = Helper.FormatElapsedTime(uploadWatch.Elapsed);
+            logger.Info("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
+            logger.Info("  Persona upload time :: {0}", downloadTime);
+            logger.Info("UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU");
+            TotalUploadingTime = uploadWatch.Elapsed;
+
             logger.Debug("'Origin = Destination' errors: {0} ({1} %)", originEqualsDestinationErrors, 100.0 * (double)originEqualsDestinationErrors / (double)personas.Count);
         }
     }
