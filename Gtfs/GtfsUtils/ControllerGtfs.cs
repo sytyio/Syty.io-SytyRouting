@@ -146,7 +146,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             
             //debug:
             logger.Debug("Build Shape segment errors: {0}",buildShapeSegmentErrors);
-            logger.Debug("Split Shape errors: {0} (count: {1}) [{2:0.00}%]",splitShapeByStopsErrors,splitShapeByStopsCount,splitShapeByStopsErrors/splitShapeByStopsCount*100);
+            logger.Debug("Split Shape errors: {0} (count: {1}) [{2:0.00}%]",splitShapeByStopsErrors,splitShapeByStopsCount,(double)splitShapeByStopsErrors/splitShapeByStopsCount*100);
             logger.Debug("Nearest Point in LineString index errors: {0}",nearestPointIndexErrors);
 
             Task clean = DataBase.RouteUploadBenchmarking.CleanComparisonTablesAsync(connectionString,debugTables);
@@ -425,8 +425,13 @@ namespace SytyRouting.Gtfs.GtfsUtils
                         i++;
                     }
                     var currentShape = trip.Value.Shape;
-                    currentShape.SplitLineString = SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
-                    var dumm = SplitShapeByStops(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
+                    
+                    //debug:
+                    //currentShape.SplitLineString = SplitLineStringByPoints(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
+                    //var dumm = SplitShapeByStops(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
+                    currentShape.SplitLineString = SplitShapeByStops(currentShape.LineString, stopsCoordinatesArray, currentShape.Id, trip.Key);
+                    //:gudeb
+
                 }
             }
         }
