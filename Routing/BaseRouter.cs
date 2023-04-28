@@ -16,18 +16,21 @@ namespace SytyRouting.Routing
         protected string _routeTable = null!;
         protected string _comparisonTable = null!;
         protected string _benchmarkTable = null!;
-        protected List<Persona> Personas = new List<Persona>();
-        protected int ComputedRoutesCount = 0;
+        
         protected TimeSpan TotalRoutingTime = TimeSpan.Zero;
         protected TimeSpan TotalUploadingTime = TimeSpan.Zero;
         protected TimeSpan TotalDownloadingTime = TimeSpan.Zero;
+        protected TimeSpan TotalExecutionTime = TimeSpan.Zero;
 
         protected Stopwatch baseRouterStopWatch = new Stopwatch();
+
         protected int elementsToProcess = 0;
         protected int computedRoutes = 0;
         protected int processedDbElements = 0;
         protected int uploadedRoutes = 0;
         protected List<Persona> personas = new List<Persona>();
+        protected List<Persona> Personas = new List<Persona>();
+        protected int ComputedRoutesCount = 0;
 
         protected bool routingTasksHaveEnded = false;
 
@@ -98,6 +101,11 @@ namespace SytyRouting.Routing
         public TimeSpan GetUploadingTime()
         {
             return TotalUploadingTime;
+        }
+
+        public TimeSpan GetExecutionTime()
+        {
+            return TotalExecutionTime;
         }
 
         protected bool CalculateRoute(IRoutingAlgorithm routingAlgorithm, ref Persona persona)
