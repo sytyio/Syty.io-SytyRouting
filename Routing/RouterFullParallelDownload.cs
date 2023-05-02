@@ -123,8 +123,8 @@ namespace SytyRouting.Routing
                 tasks[queueIdx] = Task.Run(() => CalculateRoutes<A,U>(queueIdx-1));
             }
 
-            tasks[tasks.Length-1] = Task.Run(() => MonitorRouteCalculation());
-            tasks[tasks.Length-2] = Task.Run(() => UploadRoutesAsync<U>());
+            tasks[tasks.Length-2] = Task.Run(() => MonitorRouteCalculation());
+            
 
             
             var routingTasksWaitArray = tasks[1..(tasks.Length-2)];
@@ -138,10 +138,9 @@ namespace SytyRouting.Routing
 
             routingTasksHaveEnded = true;
 
-
-
             
-            
+            tasks[tasks.Length-1] = Task.Run(() => UploadRoutesAsync<U>());
+
             
             Task.WaitAll(tasks);
             foreach (Task t in tasks)
