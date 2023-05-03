@@ -1,13 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using NLog;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
 using Npgsql;
 using NetTopologySuite.Utilities;
 using System.Diagnostics;
-using SytyRouting.DataBase;
-using SytyRouting.Routing;
 
 namespace SytyRouting.Algorithms
 {
@@ -25,6 +22,7 @@ namespace SytyRouting.Algorithms
         public static List<string> tableNames = new List<string>();
         public static List<string> compTableNames = new List<string>();
         public static List<string> downloadStrategies = new List<string>();
+        public static List<string> uploadStrategies = new List<string>();
 
 
         private static Logger logger = LogManager.GetCurrentClassLogger();
