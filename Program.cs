@@ -71,7 +71,7 @@ namespace SytyRouting
             /////////////////////////////////////////////////////////////
             // //       Persona data downloading benchmarking       // //
             /////////////////////////////////////////////////////////////
-            await DataBase.PersonaDownloadBenchmarking.Start(graph,1);
+            await DataBase.PersonaDownloadBenchmarking.Start(graph,5);
             /////////////////////////////////////////////////////////////
 
 
