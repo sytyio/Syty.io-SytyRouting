@@ -18,6 +18,7 @@ namespace SytyRouting.DataBase
 
             await using var connection = new NpgsqlConnection(connectionString);
             await connection.OpenAsync();
+            connection.TypeMapper.UseNetTopologySuite();
 
             var personaTaskArray = new Persona[batchSize];
             var personaIndex = 0;

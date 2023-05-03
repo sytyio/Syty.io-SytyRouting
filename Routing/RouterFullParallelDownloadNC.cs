@@ -21,11 +21,11 @@ namespace SytyRouting.Routing
         private Task[] tasks = new Task[parallelTasks];
         private DataSetBenchmark dBSetBenchmark = null!;
         private bool Initialized = false;
-        private bool PersonaDownloadEnded = false;
-        private static ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[parallelTasks-3];
-        private ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks = new ConcurrentDictionary<int, DataSetBenchmark>(PersonaQueues.Count(), PersonaQueues.Count());
+       //private bool PersonaDownloadEnded = false;
+        //private static ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[parallelTasks-3];
+       //private ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks = new ConcurrentDictionary<int, DataSetBenchmark>(PersonaQueues.Count(), PersonaQueues.Count());
         private int numberOfBatches = 1; // At least one batch is expected (needs to be int for the thread lock mechanism to work)
-        private static int stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
+        //private static int stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
 
         private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
 
@@ -51,7 +51,8 @@ namespace SytyRouting.Routing
                 routingTasks[t] = Task.CompletedTask;
             }
 
-            dBSetBenchmark = new DataSetBenchmark {Id = PersonaQueues.Count()};
+            //dBSetBenchmark = new DataSetBenchmark {Id = PersonaQueues.Count()};
+            dBSetBenchmark = new DataSetBenchmark {Id = 0};
 
             Initialized = true;
         }
@@ -75,8 +76,8 @@ namespace SytyRouting.Routing
             personaTaskArraysQueue.Clear();
             originEqualsDestinationErrors = 0;
 
-            PersonaDownloadEnded = false;
-            stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
+            //PersonaDownloadEnded = false;
+            //stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
         }
 
         public override async Task StartRouting<A,D,U>() //where A: IRoutingAlgorithm, D: IPersonaDownloader, U: IRouteUploader
@@ -173,7 +174,7 @@ namespace SytyRouting.Routing
             int[] batchSizes = downloader.GetBatchSizes(regularBatchSize,elementsToProcess);
 
             int dbRowsProcessed = 0;
-            var currentQueue = 0;
+            //var currentQueue = 0;
             var offset = 0;
 
             var connectionString = Configuration.ConnectionString;
@@ -202,7 +203,7 @@ namespace SytyRouting.Routing
 
                 if (dbRowsProcessed % 5000 == 0)
                 {
-                    logger.Debug("Queue #{0}: {1} elements (batch #{2}: {3} elements)", currentQueue, PersonaQueues[currentQueue].Count, b, batchSize);
+                    //logger.Debug("Queue #{0}: {1} elements (batch #{2}: {3} elements)", currentQueue, PersonaQueues[currentQueue].Count, b, batchSize);
                     var timeSpan = downloadWatch.Elapsed;
                     var timeSpanMilliseconds = downloadWatch.ElapsedMilliseconds;
                     var result = Helper.DataLoadBenchmark(elementsToProcess, dbRowsProcessed, timeSpan, logger);
@@ -219,7 +220,7 @@ namespace SytyRouting.Routing
             
             //await connection.CloseAsync();
             
-            PersonaDownloadEnded = true;
+            //PersonaDownloadEnded = true;
 
             var sequenceValidationErrors = downloader.GetValidationErrors();
             logger.Debug("Transport sequence validation errors: {0} ({1} % of the requested transport sequences were overridden)", sequenceValidationErrors, 100.0 * (double)sequenceValidationErrors / (double)personas.Count);
@@ -239,7 +240,7 @@ namespace SytyRouting.Routing
 
             logger.Info("                           Persona set creation time :: " + downloadTime);
             logger.Debug("Number of DB rows processed: {0} (of {1})", dbRowsProcessed, elementsToProcess);
-            logger.Debug("Number of Queues: {0}", PersonaQueues.Count());
+            //logger.Debug("Number of Queues: {0}", PersonaQueues.Count());
             logger.Debug("Total number of elements in queues: {0}", elementsToProcess);
 
             logger.Debug("> DownloadPersonasAsync ended");
@@ -430,126 +431,126 @@ namespace SytyRouting.Routing
         //     logger.Debug("> CalculateRoutes ended for Queue #{0}", queueNumber);
         // }
 
-        private static void QueueRoutingBenchmark(int totalElements, int processedElements, int pendingElements, TimeSpan timeSpan, long timeSpanMilliseconds,
-                                                    int queueNumber, ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks, ref DataSetBenchmark dBSetBenchmark)
-        {
-            var elapsedTime = Helper.FormatElapsedTime(timeSpan);
+        // private static void QueueRoutingBenchmark(int totalElements, int processedElements, int pendingElements, TimeSpan timeSpan, long timeSpanMilliseconds,
+        //                                             int queueNumber, ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks, ref DataSetBenchmark dBSetBenchmark)
+        // {
+        //     var elapsedTime = Helper.FormatElapsedTime(timeSpan);
 
-            var elementProcessingRate = (double)processedElements / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
-            var completionTimeEstimateSeconds = totalElements / elementProcessingRate;
-            var completionTimeEstimate = TimeSpan.FromSeconds(completionTimeEstimateSeconds);
+        //     var elementProcessingRate = (double)processedElements / timeSpanMilliseconds * 1000; // Assuming a fairly constant rate
+        //     var completionTimeEstimateSeconds = totalElements / elementProcessingRate;
+        //     var completionTimeEstimate = TimeSpan.FromSeconds(completionTimeEstimateSeconds);
 
-            var totalCompletionTimeEstimate = Helper.FormatElapsedTime(completionTimeEstimate);
+        //     var totalCompletionTimeEstimate = Helper.FormatElapsedTime(completionTimeEstimate);
 
-            queueBenchmarks[queueNumber].PendingElements = pendingElements;
-            queueBenchmarks[queueNumber].ProcessedElements = processedElements;
-            queueBenchmarks[queueNumber].ProcessingRate = elementProcessingRate;
-            queueBenchmarks[queueNumber].ElapsedTime = elapsedTime;
-            queueBenchmarks[queueNumber].ExpectedCompletionTime = totalCompletionTimeEstimate;
+        //     queueBenchmarks[queueNumber].PendingElements = pendingElements;
+        //     queueBenchmarks[queueNumber].ProcessedElements = processedElements;
+        //     queueBenchmarks[queueNumber].ProcessingRate = elementProcessingRate;
+        //     queueBenchmarks[queueNumber].ElapsedTime = elapsedTime;
+        //     queueBenchmarks[queueNumber].ExpectedCompletionTime = totalCompletionTimeEstimate;
 
-            var bestScoreQueue = GetBestScoreQueue(ref queueBenchmarks);
-            var worstScoreQueue = GetWorstScoreQueue(ref queueBenchmarks);
-            var averageEstimatedCompletionTime = GetAverageEstimatedCompletionTime(ref queueBenchmarks);
+        //     var bestScoreQueue = GetBestScoreQueue(ref queueBenchmarks);
+        //     var worstScoreQueue = GetWorstScoreQueue(ref queueBenchmarks);
+        //     var averageEstimatedCompletionTime = GetAverageEstimatedCompletionTime(ref queueBenchmarks);
 
-            string queueString                     = "                       Queue # ::";
-            string pendingElementString            = "              Pending elements ::";
-            string processedElementString          = "            Processed elements ::";
-            string processingRateString            = "Processing rate [elements / s] ::";
-            string elapsedTimeString               = "                  Elapsed time ::";
-            string expectedCompletionTimeString    = "     Estimated completion time ::";
-            string bestScoreString                 = "                Best (^) score ::";
-            string worstScoreString                = "               Worst (~) score ::";
-            string baseString = "\t{0,-18}";
-            for(int q =0; q < PersonaQueues.Count(); q++)
-            {
-                queueString += String.Format(baseString, q);
-                pendingElementString += String.Format(baseString, queueBenchmarks[q].PendingElements);
-                processedElementString += String.Format(baseString, queueBenchmarks[q].ProcessedElements);
-                processingRateString += String.Format(baseString, queueBenchmarks[q].ProcessingRate.ToString("F", CultureInfo.InvariantCulture));
-                elapsedTimeString += String.Format(baseString, queueBenchmarks[q].ElapsedTime);
-                expectedCompletionTimeString += String.Format(baseString, queueBenchmarks[q].ExpectedCompletionTime);
-                bestScoreString += String.Format(baseString, ((q==bestScoreQueue)? "^^^^^^^^^^^^":""));
-                worstScoreString += String.Format(baseString, ((q==worstScoreQueue)? "~~~~~~~~~~~~":""));
-            }
+        //     string queueString                     = "                       Queue # ::";
+        //     string pendingElementString            = "              Pending elements ::";
+        //     string processedElementString          = "            Processed elements ::";
+        //     string processingRateString            = "Processing rate [elements / s] ::";
+        //     string elapsedTimeString               = "                  Elapsed time ::";
+        //     string expectedCompletionTimeString    = "     Estimated completion time ::";
+        //     string bestScoreString                 = "                Best (^) score ::";
+        //     string worstScoreString                = "               Worst (~) score ::";
+        //     string baseString = "\t{0,-18}";
+        //     for(int q =0; q < PersonaQueues.Count(); q++)
+        //     {
+        //         queueString += String.Format(baseString, q);
+        //         pendingElementString += String.Format(baseString, queueBenchmarks[q].PendingElements);
+        //         processedElementString += String.Format(baseString, queueBenchmarks[q].ProcessedElements);
+        //         processingRateString += String.Format(baseString, queueBenchmarks[q].ProcessingRate.ToString("F", CultureInfo.InvariantCulture));
+        //         elapsedTimeString += String.Format(baseString, queueBenchmarks[q].ElapsedTime);
+        //         expectedCompletionTimeString += String.Format(baseString, queueBenchmarks[q].ExpectedCompletionTime);
+        //         bestScoreString += String.Format(baseString, ((q==bestScoreQueue)? "^^^^^^^^^^^^":""));
+        //         worstScoreString += String.Format(baseString, ((q==worstScoreQueue)? "~~~~~~~~~~~~":""));
+        //     }
 
-            queueString                  += "\t||" + String.Format(baseString, "Persona data set");
-            pendingElementString         += "\t||" + String.Format(baseString, dBSetBenchmark.PendingElements)                                            + " :: Pending elements";
-            processedElementString       += "\t||" + String.Format(baseString, dBSetBenchmark.ProcessedElements)                                          + " :: Processed elements";
-            processingRateString         += "\t||" + String.Format(baseString, dBSetBenchmark.ProcessingRate.ToString("F", CultureInfo.InvariantCulture)) + " :: Processing rate [elements / s]";
-            elapsedTimeString            += "\t||" + String.Format(baseString, dBSetBenchmark.ElapsedTime)                                                + " :: Elapsed time";
-            expectedCompletionTimeString += "\t||" + String.Format(baseString, dBSetBenchmark.ExpectedCompletionTime)                                     + " :: Estimated completion time";
+        //     queueString                  += "\t||" + String.Format(baseString, "Persona data set");
+        //     pendingElementString         += "\t||" + String.Format(baseString, dBSetBenchmark.PendingElements)                                            + " :: Pending elements";
+        //     processedElementString       += "\t||" + String.Format(baseString, dBSetBenchmark.ProcessedElements)                                          + " :: Processed elements";
+        //     processingRateString         += "\t||" + String.Format(baseString, dBSetBenchmark.ProcessingRate.ToString("F", CultureInfo.InvariantCulture)) + " :: Processing rate [elements / s]";
+        //     elapsedTimeString            += "\t||" + String.Format(baseString, dBSetBenchmark.ElapsedTime)                                                + " :: Elapsed time";
+        //     expectedCompletionTimeString += "\t||" + String.Format(baseString, dBSetBenchmark.ExpectedCompletionTime)                                     + " :: Estimated completion time";
             
-            logger.Debug(queueString);
-            logger.Debug(pendingElementString);
-            logger.Debug(processedElementString);
-            logger.Debug(processingRateString);
-            logger.Debug(elapsedTimeString);
-            logger.Debug(expectedCompletionTimeString);
-            logger.Debug(bestScoreString);
-            logger.Debug(worstScoreString);
-            logger.Debug("");
-            logger.Debug("Average estimated completion time :: {0}", averageEstimatedCompletionTime);
-            logger.Debug("");
-        }
+        //     logger.Debug(queueString);
+        //     logger.Debug(pendingElementString);
+        //     logger.Debug(processedElementString);
+        //     logger.Debug(processingRateString);
+        //     logger.Debug(elapsedTimeString);
+        //     logger.Debug(expectedCompletionTimeString);
+        //     logger.Debug(bestScoreString);
+        //     logger.Debug(worstScoreString);
+        //     logger.Debug("");
+        //     logger.Debug("Average estimated completion time :: {0}", averageEstimatedCompletionTime);
+        //     logger.Debug("");
+        // }
 
-        private static int GetBestScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
-        {
-            int bestScoreQueue = 0;
-            double bestProcessingRate = 0;
-            for(var s = 0; s < queueBenchmarks.Count; ++s)
-            {
-                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
-                {
-                    if(benchmark.ProcessingRate > bestProcessingRate)
-                    {
-                        bestProcessingRate = benchmark.ProcessingRate;
-                        bestScoreQueue = s;
-                    }
-                }
-            }
+        // private static int GetBestScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
+        // {
+        //     int bestScoreQueue = 0;
+        //     double bestProcessingRate = 0;
+        //     for(var s = 0; s < queueBenchmarks.Count; ++s)
+        //     {
+        //         if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
+        //         {
+        //             if(benchmark.ProcessingRate > bestProcessingRate)
+        //             {
+        //                 bestProcessingRate = benchmark.ProcessingRate;
+        //                 bestScoreQueue = s;
+        //             }
+        //         }
+        //     }
 
-            return bestScoreQueue;
-        }
+        //     return bestScoreQueue;
+        // }
 
-        private static int GetWorstScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
-        {
-            int worstScoreQueue = 0;
-            double worstProcessingRate = Double.PositiveInfinity;
-            for(var s = 0; s < queueBenchmarks.Count; ++s)
-            {
-                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
-                {
-                    if(benchmark.ProcessingRate < worstProcessingRate)
-                    {
-                        worstProcessingRate = benchmark.ProcessingRate;
-                        worstScoreQueue = s;
-                    }
-                }
-            }
+        // private static int GetWorstScoreQueue(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
+        // {
+        //     int worstScoreQueue = 0;
+        //     double worstProcessingRate = Double.PositiveInfinity;
+        //     for(var s = 0; s < queueBenchmarks.Count; ++s)
+        //     {
+        //         if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
+        //         {
+        //             if(benchmark.ProcessingRate < worstProcessingRate)
+        //             {
+        //                 worstProcessingRate = benchmark.ProcessingRate;
+        //                 worstScoreQueue = s;
+        //             }
+        //         }
+        //     }
 
-            return worstScoreQueue;
-        }
+        //     return worstScoreQueue;
+        // }
 
-        private static string GetAverageEstimatedCompletionTime(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
-        {
-            var numberOfBenchmarks = queueBenchmarks.Count;
-            TimeSpan timeStampAverage = TimeSpan.Zero;
-            for(var s = 0; s < numberOfBenchmarks; ++s)
-            {
-                if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
-                {
-                    if(benchmark.ExpectedCompletionTime is not null)
-                    {
-                        var timeStamp = TimeSpan.Parse(benchmark.ExpectedCompletionTime);
-                        timeStampAverage += timeStamp;
-                    }
-                }
-            }
+        // private static string GetAverageEstimatedCompletionTime(ref ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks)
+        // {
+        //     var numberOfBenchmarks = queueBenchmarks.Count;
+        //     TimeSpan timeStampAverage = TimeSpan.Zero;
+        //     for(var s = 0; s < numberOfBenchmarks; ++s)
+        //     {
+        //         if(queueBenchmarks.TryGetValue(s, out DataSetBenchmark? benchmark))
+        //         {
+        //             if(benchmark.ExpectedCompletionTime is not null)
+        //             {
+        //                 var timeStamp = TimeSpan.Parse(benchmark.ExpectedCompletionTime);
+        //                 timeStampAverage += timeStamp;
+        //             }
+        //         }
+        //     }
 
-            timeStampAverage = timeStampAverage / numberOfBenchmarks;
+        //     timeStampAverage = timeStampAverage / numberOfBenchmarks;
 
-            return Helper.FormatElapsedTime(timeStampAverage);
-        }
+        //     return Helper.FormatElapsedTime(timeStampAverage);
+        // }
 
         protected override async Task UploadRoutesAsync<U>()// where U: IRouteUploader
         {
