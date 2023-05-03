@@ -3,7 +3,6 @@ using NLog;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Implementation;
 using SytyRouting.Model;
-using NetTopologySuite.Utilities;
 
 namespace SytyRouting.Algorithms
 {
@@ -23,10 +22,7 @@ namespace SytyRouting.Algorithms
         private LineString _emptyLineString = null!;
         private Tuple<string[],DateTime[]> _emptyTTextTransition = null!;
 
-        //DEBUG:
-        protected int Steps = 0;
-        protected int Scores = 0;
-
+    
         public virtual void Initialize(Graph graph)
         {
             _graph = graph;
@@ -34,8 +30,6 @@ namespace SytyRouting.Algorithms
             _geometryFactory = new GeometryFactory(_sequenceFactory);
             _emptyLineString = new LineString(null, _geometryFactory);
 
-            // string[] _noTransportMode = new string[2] {TransportModes.NoTransportMode,TransportModes.NoTransportMode};
-            // DateTime[] _baseDateTime = new DateTime[2] {DateTime.UtcNow,DateTime.UtcNow.Add(TimeSpan.FromSeconds(1))};
             string[] _noTransportMode = new string[1] {TransportModes.NoTransportMode};
             DateTime[] _baseDateTime = new DateTime[1] {DateTime.UtcNow};
             _emptyTTextTransition = new Tuple<string[],DateTime[]>(_noTransportMode,_baseDateTime);
