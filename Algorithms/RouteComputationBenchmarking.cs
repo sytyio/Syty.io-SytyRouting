@@ -6,7 +6,7 @@ using SytyRouting.Model;
 
 namespace SytyRouting
 {
-    public class Benchmarking
+    public class RouteComputationBenchmarking
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();   
        
