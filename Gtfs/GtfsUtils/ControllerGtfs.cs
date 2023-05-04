@@ -70,7 +70,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
             }
             else
             {
-                logger.Info("Error downloading GTFS data for {0}",_provider);
+                logger.Info("Error fetching GTFS data for {0}",_provider);
                 return;
             }
 
@@ -648,7 +648,7 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
         private async Task<GTFSDownloadState> DownloadGtfs()
         {
-            logger.Info("Fetching GTFS data for {0}", _provider);
+            logger.Info("Fetching GTFS data for {0} from its URI", _provider);
 
             GTFSDownloadState state = GTFSDownloadState.Error;
             
@@ -677,19 +677,60 @@ namespace SytyRouting.Gtfs.GtfsUtils
                 
                 logger.Info("Downloading GTFS files for {0} completed", _provider);
 
-                if (Directory.Exists(fullPathExtract))
-                {
-                    File.Delete(fullPathDwln); //delete .zip
-                }
-                logger.Info("GTFS source file for {0} deleted", _provider);
+                ClearGTFSZipFile(fullPathExtract,fullPathDwln);
 
                 return GTFSDownloadState.Completed;
             }
             catch(Exception e)
             {
-                logger.Info("Unable to download GTFS data for {0}: {1}",_provider,e.Message);
+                logger.Info("Unable to download GTFS data for {0} from URI: {1}",_provider,e.Message);
+                state = GetLocalGtfs(zipFile, path, fullPathDwln, fullPathExtract);
+
+                return state;
+            }
+        }
+
+        private GTFSDownloadState GetLocalGtfs(string zipFile, string path, string fullPathDwln, string fullPathExtract)
+        {
+            logger.Info("Fetching GTFS data for {0} from the local repository", _provider);
+
+            GTFSDownloadState state = GTFSDownloadState.Error;
+            
+            string localPath = System.IO.Path.GetFullPath("GtfsLocal");
+            string fullLocalPath = $"{localPath}{Path.DirectorySeparatorChar}{_provider}{Path.DirectorySeparatorChar}{zipFile}";
+            
+            try
+            {
+                logger.Info("Extrancting GTFS files to {0}",fullPathExtract);
+                ZipFile.ExtractToDirectory(fullLocalPath, fullPathExtract);
+                
+                logger.Info("Extraction of GTFS files for {0} completed", _provider);
+
+                ClearGTFSZipFile(fullPathExtract,fullPathDwln);
+
+                return GTFSDownloadState.Completed;
+            }
+            catch(Exception e)
+            {
+                logger.Info("Unable to get GTFS data for {0} from the local repository: {1}",_provider,e.Message);
                 
                 return state;
+            }
+        }
+
+        private void ClearGTFSZipFile(string fullPathExtract, string fullPathDwln)
+        {
+            try
+            {
+                if (Directory.Exists(fullPathExtract))
+                {
+                    File.Delete(fullPathDwln); //delete .zip
+                }
+                logger.Info("GTFS source file for {0} deleted", _provider);
+            }
+            catch(Exception e)
+            {
+                logger.Info("Unable to delete GTFS ZIP file for {0} from the download repository: {1}",_provider,e.Message);
             }
         }
 
