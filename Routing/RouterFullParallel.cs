@@ -108,11 +108,7 @@ namespace SytyRouting.Routing
             logger.Info("%           Starting Full-Parallel process          %");
             logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
-
             tasks[0] = Task.Run(() => DownloadPersonasAsync<D>());
-
-            //Thread.Sleep(initialDataLoadSleepMilliseconds);
-
 
             Stopwatch routingWatch = new Stopwatch();
             routingWatch.Start();
@@ -126,8 +122,6 @@ namespace SytyRouting.Routing
             tasks[tasks.Length-2] = Task.Run(() => MonitorRouteCalculation());
             tasks[tasks.Length-1] = Task.Run(() => UploadRoutesAsync<U>());
             
-
-            
             var routingTasksWaitArray = tasks[1..(tasks.Length-2)];
             Task.WaitAll(routingTasksWaitArray);
             routingWatch.Stop();
@@ -137,22 +131,16 @@ namespace SytyRouting.Routing
             logger.Info("RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR");
             TotalRoutingTime = routingWatch.Elapsed;
 
-            routingTasksHaveEnded = true;
+            routingTasksHaveEnded = true;         
 
-            
-            
-
-            
             Task.WaitAll(tasks);
             foreach (Task t in tasks)
             {
                 Console.WriteLine("Task #{0} status: {1}", t.Id, t.Status);
-            }
-            
+            }        
 
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
-
 
             baseRouterStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(baseRouterStopWatch.Elapsed);
