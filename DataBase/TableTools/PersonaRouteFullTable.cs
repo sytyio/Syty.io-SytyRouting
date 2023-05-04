@@ -12,8 +12,8 @@ namespace SytyRouting.DataBase
 
             var originalPersonaTable = Configuration.PersonaTable;
             
-            int numberOfRows = 1360;//60; //1360;
-            //int numberOfRows = await Helper.DbTableRowCount(originalPersonaTable, logger);
+            //int numberOfRows = 1360; // For the sake of testing. (In the name of Science and in all its glory.)
+            int numberOfRows = await Helper.DbTableRowCount(originalPersonaTable, logger);
 
             string baseRouteTable = Configuration.PersonaRouteTable;
             var newRouteTable = baseRouteTable + "_full";

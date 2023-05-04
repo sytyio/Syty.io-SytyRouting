@@ -102,7 +102,7 @@ namespace SytyRouting
             /////////////////////////////////////////////////////
             // //   Route results uploading benchmarking    // //
             /////////////////////////////////////////////////////
-            await DataBase.RouteUploadBenchmarking.Start(graph);
+            //await DataBase.RouteUploadBenchmarking.Start(graph);
             /////////////////////////////////////////////////////
 
 
