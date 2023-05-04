@@ -1,15 +1,12 @@
 using System.Diagnostics;
-using NetTopologySuite.Geometries;
-using NetTopologySuite.Utilities;
 using NLog;
-using Npgsql;
 using SytyRouting.Algorithms;
-using SytyRouting.Model;
+using SytyRouting.DataBase;
 using SytyRouting.Routing;
 
-namespace SytyRouting.DataBase
+namespace SytyRouting
 {
-    public class PersonaDownloadBenchmarking : BaseBenchmarking
+    public class FullBenchmarking : BaseBenchmarking
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
@@ -17,7 +14,7 @@ namespace SytyRouting.DataBase
         {
             if (numberOfRuns < 1)
             {
-                logger.Debug("Only serious requests, please. Number of runs should be greater or equal to 1");
+                logger.Debug("You are kindly asked to avoid making jokes. The number of runs must be at least 1.");
                 return;
             }
 
@@ -33,7 +30,7 @@ namespace SytyRouting.DataBase
             //////////////
             // /////////////  ////////////// //
             downloadStrategies.Add("Sequential dowload->routing->upload; single DB conn., COPY, TEMP AUX tab. (ref.)");
-            var routeTable = baseRouteTable + "_t47d";
+            var routeTable = baseRouteTable + "_t47f";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             var comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
@@ -59,8 +56,8 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            downloadStrategies.Add("Full-Parallel download-routing, dual DB connection, COPY, TEMP AUX tab.");
-            routeTable = baseRouteTable + "_t48d";
+            downloadStrategies.Add("Full-Parallel, dual DB connection, COPY, TEMP AUX tab.");
+            routeTable = baseRouteTable + "_t48f";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
@@ -68,7 +65,7 @@ namespace SytyRouting.DataBase
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterFullParallelDownload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+                                    Routing.RouterFullParallel>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
 
             totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
 
@@ -86,26 +83,26 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            downloadStrategies.Add("Full-parallel download-routing, no concurrent structures, dual DB connection, COPY, TEMP AUX tab.");
-            routeTable = baseRouteTable + "_t56d";
-            await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
-            comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
-            tableNames.Add(routeTable);
+            // downloadStrategies.Add("Full-parallel, no concurrent structures, dual DB connection, COPY, TEMP AUX tab.");
+            // routeTable = baseRouteTable + "_t56d";
+            // await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
+            // comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
+            // tableNames.Add(routeTable);
 
-            totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
-                                    DataBase.PersonaDownloaderArrayBatch,
-                                    DataBase.RouteUploaderCOPY,
-                                    Routing.RouterFullParallelDownloadNonConcurrent>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+            // totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
+            //                         DataBase.PersonaDownloaderArrayBatch,
+            //                         DataBase.RouteUploaderCOPY,
+            //                         Routing.RouterFullParallelDownloadNonConcurrent>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
 
-            totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
+            // totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
 
-            totalTimes.Add(totalTime);
+            // totalTimes.Add(totalTime);
             
-            var comparisonTable56 = comparisonTable;
-            compTableNames.Add(comparisonTable);
+            // var comparisonTable56 = comparisonTable;
+            // compTableNames.Add(comparisonTable);
 
-            comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable47,comparisonTable56);
-            comparisonResults.Add(comparisonResult);
+            // comparisonResult = await DataBase.RouteUploadBenchmarking.CompareUploadedRoutesAsync(comparisonTable47,comparisonTable56);
+            // comparisonResults.Add(comparisonResult);
             // //////////////
             // //////////////
 
@@ -113,8 +110,8 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            downloadStrategies.Add("Parall. routing, batch downl., sequ. upload; single DB conn., COPY, TEMP AUX tab.");
-            routeTable = baseRouteTable + "_t57d";
+            downloadStrategies.Add("Parall. routing, batch downl - upload; dual DB conn., COPY, TEMP AUX tab.");
+            routeTable = baseRouteTable + "_t57f";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
             tableNames.Add(routeTable);
@@ -122,7 +119,7 @@ namespace SytyRouting.DataBase
             totalTime = await Run<Algorithms.Dijkstra.Dijkstra,
                                     DataBase.PersonaDownloaderArrayBatch,
                                     DataBase.RouteUploaderCOPY,
-                                    Routing.RouterBatchDownload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
+                                    Routing.RouterBatchDownUpload>(graph,connectionString,routeTable,comparisonTable,numberOfRuns);
 
             totalTime = TimeSpan.FromMilliseconds(totalTime.TotalMilliseconds / numberOfRuns);
 
