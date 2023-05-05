@@ -11,25 +11,11 @@ namespace SytyRouting.Routing
 {
     public class RouterFullParallelNonConcurrent : BaseRouter
     {
-        // private const int BatchesPerQueueDivisor = 1000;
-        // const int MinQueueWaitingTimeMilliseconds = 0_500;
-        // const int MaxQueueWaitingTimeMilliseconds = 5_000;
-
-
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        //private static int parallelTasks = Environment.ProcessorCount + 3; // +1 downloading task +1 uploading task +1 monitoring task
-        //private Task[] tasks = new Task[parallelTasks];
         private DataSetBenchmark dBSetBenchmark = null!;
         private bool Initialized = false;
-       //private bool PersonaDownloadEnded = false;
-        //private static ConcurrentQueue<Persona>[] PersonaQueues = new ConcurrentQueue<Persona>[parallelTasks-3];
-       //private ConcurrentDictionary<int, DataSetBenchmark> queueBenchmarks = new ConcurrentDictionary<int, DataSetBenchmark>(PersonaQueues.Count(), PersonaQueues.Count());
         private int numberOfBatches = 1; // At least one batch is expected (needs to be int for the thread lock mechanism to work)
-        //private static int stopRoutingProcess = 0; // 0 == DO NOT STOP; 1 == STOP;
-
-        //private ConcurrentQueue<Persona> routesQueue = new ConcurrentQueue<Persona>();
-
 
         private IRoutingAlgorithm[] routingAlgorithms = new IRoutingAlgorithm[simultaneousRoutingTasks];
         private IRouteUploader[] routeUploaders = new IRouteUploader[simultaneousRoutingTasks];
@@ -125,9 +111,9 @@ namespace SytyRouting.Routing
                 simultaneousRoutingTasks = elementsToProcess;
             }
 
-            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-            logger.Info("%  Starting Non-concurrrent full-parallel persona downupload process.  %");
-            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+            logger.Info("%  Starting Non-concurrrent full-parallel persona downupload process  %");
+            logger.Info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 
             
             await DownloadPersonasAsync<D>();
@@ -139,7 +125,7 @@ namespace SytyRouting.Routing
             routingWatch.Start();
             
 
-            Task.WaitAll(routingTasks);
+            //Task.WaitAll(routingTasks);
 
             routingWatch.Stop();
             var routingTime = Helper.FormatElapsedTime(routingWatch.Elapsed);
@@ -158,7 +144,7 @@ namespace SytyRouting.Routing
             ComputedRoutesCount = computedRoutes;
             Personas = personas;
 
-            await UploadRoutesAsync<U>();
+            //await UploadRoutesAsync<U>();
 
             baseRouterStopWatch.Stop();
             var totalTime = Helper.FormatElapsedTime(baseRouterStopWatch.Elapsed);
@@ -278,7 +264,7 @@ namespace SytyRouting.Routing
                 var taskIndex = t;
                 if(routingTasks[taskIndex].IsCompleted)
                 {
-                    routingTasks[taskIndex] = Task.Run(() => CalculateRoutes(routingAlgorithms[taskIndex], routeUploaders[taskIndex], personaTaskArray));
+                    routingTasks[taskIndex] = Task.Run(() => CalculateRoutes(taskIndex, personaTaskArray));
                     break;
                 }
             }
@@ -294,8 +280,11 @@ namespace SytyRouting.Routing
             dBSetBenchmark.ExpectedCompletionTime = benchmark.ExpectedCompletionTime;
         }
 
-        private async void CalculateRoutes(IRoutingAlgorithm routingAlgorithm, IRouteUploader uploader, Persona[] personaTaskArray)
+        private async void CalculateRoutes(int taskIndex, Persona[] personaTaskArray)
         {
+            IRoutingAlgorithm routingAlgorithm = routingAlgorithms[taskIndex];
+            IRouteUploader uploader = routeUploaders[taskIndex];
+
             logger.Debug("> CalculateRoutes started on Thread #{0} with {1} elements", Thread.CurrentThread.ManagedThreadId, personaTaskArray.Length);
             for(var i = 0; i < personaTaskArray.Length; i++)
             {
@@ -317,16 +306,19 @@ namespace SytyRouting.Routing
                 }
             }
             logger.Debug("> Uploading routes computed on Thread #{0}", Thread.CurrentThread.ManagedThreadId);
+
             var uploadBatch = personaTaskArray.ToList().FindAll(p => p.SuccessfulRouteComputation == true);
-            await UploadRoutesAsync(uploader,uploadBatch);
+            await UploadRoutesAsync(taskIndex,uploadBatch);
 
             logger.Debug("> CalculateRoutes ended on Thread #{0}", Thread.CurrentThread.ManagedThreadId);
         }
 
-        protected override async Task UploadRoutesAsync(IRouteUploader uploader, List<Persona> personaBatch)// where U: IRouteUploader
+        protected override async Task UploadRoutesAsync(int taskIndex, List<Persona> personaBatch)// where U: IRouteUploader
         {
             Stopwatch uploadWatch = new Stopwatch();
             uploadWatch.Start();
+
+            IRouteUploader uploader = routeUploaders[taskIndex];
 
             await uploader.UploadRoutesAsync(_connectionString,_routeTable,personaBatch,comparisonTable:_comparisonTable,benchmarkingTable:_benchmarkTable);
 
