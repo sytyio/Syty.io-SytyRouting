@@ -313,7 +313,14 @@ namespace SytyRouting.Routing
                     int expectedDbSetCompletionTime = 0; // [ms]
                     if(dBSetBenchmark.ExpectedCompletionTime is not null)
                     {
-                        expectedDbSetCompletionTime = Convert.ToInt32(TimeSpan.Parse(dBSetBenchmark.ExpectedCompletionTime).TotalMilliseconds);
+                        try
+                        {
+                            expectedDbSetCompletionTime = Convert.ToInt32(TimeSpan.Parse(dBSetBenchmark.ExpectedCompletionTime).TotalMilliseconds);
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Debug("Unknown error: {0}",e.Message);
+                        }
                     }
                     var pause = (expectedDbSetCompletionTime / numberOfBatches) > 0 ? expectedDbSetCompletionTime / numberOfBatches : MinQueueWaitingTimeMilliseconds;
                     if(pause > MaxQueueWaitingTimeMilliseconds)
