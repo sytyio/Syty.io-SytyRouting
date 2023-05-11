@@ -125,7 +125,7 @@ namespace SytyRouting.Routing
             routingWatch.Start();
             
 
-            //Task.WaitAll(routingTasks);
+            Task.WaitAll(routingTasks);
 
             routingWatch.Stop();
             var routingTime = Helper.FormatElapsedTime(routingWatch.Elapsed);
