@@ -96,7 +96,7 @@ namespace SytyRouting.Routing
             }
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
-            //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
+            await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
         }
 
         private static async Task<TimeSpan> Run<A,D,U,R>(Graph graph, string connectionString, string routeTable, string comparisonTable) where A: IRoutingAlgorithm, new() where D: IPersonaDownloader, new() where U: IRouteUploader, new() where R: IRouter, new()
