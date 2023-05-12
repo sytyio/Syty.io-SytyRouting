@@ -42,36 +42,22 @@ namespace SytyRouting
 
 
 
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            // //                                           Routing algorithms benchmarking                                                      // //
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            //var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // //                                           Routing algorithms benchmarking                                                               // //
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            var transportSequence=TransportModes.NamesToArray(Configuration.DefaultBenchmarkSequence);
+            RouteComputationBenchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra>(graph,transportSequence);           
 
-
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BackwardDijkstra.BackwardDijkstra>(graph,transportSequence);
-            //Benchmarking.RoutingAlgorithmBenchmarking<SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph,transportSequence);
-
-            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                    SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph,transportSequence);
-
-            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                    SytyRouting.Algorithms.HeuristicDijkstra.HeuristicDijkstra>(graph,transportSequence);
-
-            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                    SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph,transportSequence);
-
-            //Benchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
-            //                                                    SytyRouting.Algorithms.ArrayDijkstra.ArrayDijkstra>(graph,transportSequence);
-
-            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            RouteComputationBenchmarking.MultipleRoutingAlgorithmsBenchmarking<SytyRouting.Algorithms.Dijkstra.Dijkstra,
+                                                                SytyRouting.Algorithms.BidirectionalDijkstra.BidirectionalDijkstra>(graph,transportSequence);
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
             /////////////////////////////////////////////////////////////
             // //       Persona data downloading benchmarking       // //
             /////////////////////////////////////////////////////////////
-            //await DataBase.PersonaDownloadBenchmarking.Start(graph,1);
+            await DataBase.PersonaDownloadBenchmarking.Start(graph,1);
             /////////////////////////////////////////////////////////////
 
 
@@ -79,7 +65,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
             // //             Multimodal Persona spatial data generation and routing benchmarking             // //
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
-            //await Routing.MultimodalBenchmarking.Start(graph);
+             await Routing.MultimodalBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -87,7 +73,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////////////
             // //    Route results uploading benchmarking     // //
             ///////////////////////////////////////////////////////
-            //await DataBase.RouteUploadBenchmarking.Start(graph);
+            await DataBase.RouteUploadBenchmarking.Start(graph);
             ///////////////////////////////////////////////////////
 
 

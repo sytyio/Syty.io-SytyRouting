@@ -23,7 +23,7 @@ namespace SytyRouting.DataBase
 
             _graph = graph;
 
-            int numberOfRows = 2000; //1360;//60; //1360;
+            int numberOfRows = 200; //1360;//60; //1360;
             var connectionString = Configuration.ConnectionString;
             var personaRouteTable = new DataBase.PersonaRouteTable(connectionString);
                         
@@ -86,7 +86,7 @@ namespace SytyRouting.DataBase
 
             //////////////
             // /////////////  ////////////// //
-            downloadStrategies.Add("Full-parallel download-routing, no concurrent structures, dual DB connection, COPY, TEMP AUX tab.");
+            downloadStrategies.Add("Full-parall. downl., routing, no concurrent, dual DB conn., COPY, TEMP AUX tab.");
             routeTable = baseRouteTable + "_t56d";
             await personaRouteTable.CreateDataSet(Configuration.PersonaTable,routeTable,numberOfRows);
             comparisonTable = routeTable+Configuration.AuxiliaryTableSuffix+"_comp";
