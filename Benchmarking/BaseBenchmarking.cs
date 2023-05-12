@@ -241,7 +241,7 @@ namespace SytyRouting.Algorithms
             return result;
         }
 
-        private static async Task CleanComparisonTablesAsync(string connectionString, List<string> comparisonTables)
+        public static async Task CleanComparisonTablesAsync(string connectionString, List<string> comparisonTables)
         {
             Stopwatch stopWatch = new Stopwatch();
             stopWatch.Start();
