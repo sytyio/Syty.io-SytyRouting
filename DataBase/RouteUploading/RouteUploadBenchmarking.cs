@@ -134,7 +134,7 @@ namespace SytyRouting.DataBase
             logger.Info("=======================================================================================================================================================================================================================================================================================");
 
 
-            //await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
+            await CleanComparisonTablesAsync(Configuration.ConnectionString,compTableNames);
 
         }
 

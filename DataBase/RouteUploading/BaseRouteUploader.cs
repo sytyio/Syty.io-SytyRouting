@@ -74,20 +74,26 @@ namespace SytyRouting.DataBase
 
             if(!comparisonTableExists)
             {
-                await using var compTableBatch = new NpgsqlBatch(connection)
+                try
                 {
-                    BatchCommands =
+                    await using var compTableBatch = new NpgsqlBatch(connection)
                     {
-                        new("CREATE TABLE " + comparisonTable + " as (SELECT * FROM " + auxiliaryTable + ");"),
-                        new("ALTER TABLE " + comparisonTable + " ADD CONSTRAINT " + comparisonTablePK + " PRIMARY KEY (persona_id);")
+                        BatchCommands =
+                        {
+                            new("CREATE TABLE " + comparisonTable + " as (SELECT * FROM " + auxiliaryTable + ");"),
+                            new("ALTER TABLE " + comparisonTable + " ADD CONSTRAINT " + comparisonTablePK + " PRIMARY KEY (persona_id);")
+                        }
+                    };
+
+                    await using (await compTableBatch.ExecuteReaderAsync())
+                    {
+                        logger.Debug("{0} table creation",comparisonTable);
                     }
-                };
-
-                await using (await compTableBatch.ExecuteReaderAsync())
-                {
-                    logger.Debug("{0} table creation",comparisonTable);
                 }
-
+                catch(Exception e)
+                {
+                    logger.Debug("Error creating comparison table '{0}: {1}", comparisonTable, e.Message);
+                }
             }
             else
             {

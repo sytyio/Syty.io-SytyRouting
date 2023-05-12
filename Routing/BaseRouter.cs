@@ -220,5 +220,10 @@ namespace SytyRouting.Routing
         {
             throw new NotImplementedException();
         }
+
+        protected virtual Task UploadRoutesAsync(int taskIndex, List<Persona> personas)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
