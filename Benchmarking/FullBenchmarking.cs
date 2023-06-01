@@ -154,25 +154,32 @@ namespace SytyRouting
             logger.Info("=======================================================================================================================================================================================================================================================================================================");
             for(int i=0; i<comparisonResultsArray.Length; i++)
             {
-                double processingRate=-1.0;
-                double downloadingRoutingRatio = -1.0;
-                if(uploadResultsArray[i].Equals("SUCCEEDED"))
+                try
                 {
-                    processingRate = Helper.GetProcessingRate(numberOfRows,totalTimesArray[i].TotalMilliseconds);
-                    downloadingRoutingRatio = 100.0 * downloadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
+                    double processingRate=-1.0;
+                    double downloadingRoutingRatio = -1.0;
+                    if(uploadResultsArray[i].Equals("SUCCEEDED"))
+                    {
+                        processingRate = Helper.GetProcessingRate(numberOfRows,totalTimesArray[i].TotalMilliseconds);
+                        downloadingRoutingRatio = 100.0 * downloadingTimesArray[i].TotalSeconds / routingTimesArray[i].TotalSeconds;
+                    }
+                    
+                    logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}",
+                                                                uploadStrategiesArray[i],
+                                                                tableNamesArray[i],
+                                                                Helper.FormatElapsedTime(routingTimesArray[i]),
+                                                                Helper.FormatElapsedTime(downloadingTimesArray[i]),
+                                                                Helper.FormatElapsedTime(uploadingTimesArray[i]),
+                                                                downloadingRoutingRatio,
+                                                                Helper.FormatElapsedTime(totalTimesArray[i]),
+                                                                processingRate,
+                                                                uploadResultsArray[i],
+                                                                comparisonResultsArray[i]);
                 }
-                
-                logger.Info("{0,80}\t{1,20}\t{2,20}\t{3,20}\t{4,20}\t{5,20}\t{6,20}\t{7,20}\t{8,20}\t{9,20}",
-                                                            uploadStrategiesArray[i],
-                                                            tableNamesArray[i],
-                                                            Helper.FormatElapsedTime(routingTimesArray[i]),
-                                                            Helper.FormatElapsedTime(downloadingTimesArray[i]),
-                                                            Helper.FormatElapsedTime(uploadingTimesArray[i]),
-                                                            downloadingRoutingRatio,
-                                                            Helper.FormatElapsedTime(totalTimesArray[i]),
-                                                            processingRate,
-                                                            uploadResultsArray[i],
-                                                            comparisonResultsArray[i]);
+                catch (Exception e)
+                {
+                    logger.Debug("Error displying data: {0}", e.Message);
+                }
             }
             logger.Info("=======================================================================================================================================================================================================================================================================================================");
 

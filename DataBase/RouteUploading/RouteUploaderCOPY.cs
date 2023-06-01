@@ -30,11 +30,18 @@ namespace SytyRouting.DataBase
             using var importer = connection.BeginBinaryImport("COPY " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) FROM STDIN (FORMAT binary)");
             foreach (var persona in personas)
             {
-                await importer.StartRowAsync();
-                await importer.WriteAsync(persona.Id);
-                await importer.WriteAsync(persona.Route);
-                await importer.WriteAsync(persona.TTextTransitions.Item1);
-                await importer.WriteAsync(persona.TTextTransitions.Item2);
+                if (persona != null && persona.Route != null && persona.TTextTransitions != null && persona.TTextTransitions!.Item1 != null && persona.TTextTransitions.Item2 != null)
+                {
+                    await importer.StartRowAsync();
+                    await importer.WriteAsync(persona.Id);
+                    await importer.WriteAsync(persona.Route);
+                    await importer.WriteAsync(persona.TTextTransitions.Item1);
+                    await importer.WriteAsync(persona.TTextTransitions.Item2);
+                }
+                else
+                {
+                    logger.Debug("Error uploading persona data. Persona Id {0}", persona is null? "null person":persona!.Id);
+                }
             }
             await importer.CompleteAsync();
             await importer.CloseAsync();

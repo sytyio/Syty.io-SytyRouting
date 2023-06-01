@@ -32,27 +32,35 @@ namespace SytyRouting.DataBase
             var sb = new StringBuilder("INSERT INTO " + auxiliaryTable + " (persona_id, computed_route, transport_modes, time_stamps) VALUES ");
             for (var i = 0; i < personas.Count; i++)
             {
-                if (i != 0)
+                if (personas[i] == null || personas[i].Route == null || personas[i].TTextTransitions == null || personas[i].TTextTransitions!.Item1 == null || personas[i].TTextTransitions.Item2 == null)
                 {
-                    sb.Append(',');
-                }
-                var iName = (i * 4 + 1).ToString();
-                var rName = (i * 4 + 2).ToString();
-                var tmName = (i * 4 + 3).ToString();
-                var tsName = (i * 4 + 4).ToString();
-
-                sb.Append("(@").Append(iName).Append(", @").Append(rName).Append(", @").Append(tmName).Append(", @").Append(tsName).Append(')');
-                command.Parameters.Add(new NpgsqlParameter<int>(iName, personas[i].Id));
-                if(personas[i].Route!=null)
-                {
-                    command.Parameters.Add(new NpgsqlParameter<LineString?>(rName, personas[i].Route));
+                    logger.Debug("Error uploading persona data. Persona Id {0}", personas[i] is null? "null person":personas[i].Id);
+                    continue;
                 }
                 else
-                {
-                    command.Parameters.Add(new NpgsqlParameter<LineString>(rName, LineString.Empty));
+                {   
+                    if (i != 0)
+                    {
+                        sb.Append(',');
+                    }
+                    var iName = (i * 4 + 1).ToString();
+                    var rName = (i * 4 + 2).ToString();
+                    var tmName = (i * 4 + 3).ToString();
+                    var tsName = (i * 4 + 4).ToString();
+
+                    sb.Append("(@").Append(iName).Append(", @").Append(rName).Append(", @").Append(tmName).Append(", @").Append(tsName).Append(')');
+                    command.Parameters.Add(new NpgsqlParameter<int>(iName, personas[i].Id));
+                    if(personas[i].Route!=null)
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<LineString?>(rName, personas[i].Route));
+                    }
+                    else
+                    {
+                        command.Parameters.Add(new NpgsqlParameter<LineString>(rName, LineString.Empty));
+                    }
+                    command.Parameters.Add(new NpgsqlParameter<string[]>(tmName, personas[i].TTextTransitions.Item1));
+                    command.Parameters.Add(new NpgsqlParameter<DateTime[]>(tsName, personas[i].TTextTransitions.Item2));
                 }
-                command.Parameters.Add(new NpgsqlParameter<string[]>(tmName, personas[i].TTextTransitions.Item1));
-                command.Parameters.Add(new NpgsqlParameter<DateTime[]>(tsName, personas[i].TTextTransitions.Item2));
             }
             command.CommandText = sb.ToString();
             await command.ExecuteNonQueryAsync();

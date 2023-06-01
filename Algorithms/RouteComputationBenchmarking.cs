@@ -275,16 +275,25 @@ namespace SytyRouting
         private static double ForwardRouteCost(List<Node> route)
         {
             double cost = 0;
+            double minCost;
+            Edge edge = null!;
             for(int i = 0; i < route.Count-1; i++)
             {
                 var allValidEdges = route[i].OutwardEdges.FindAll(e => e.TargetNode.Idx == route[i+1].Idx);
-                var minCost = allValidEdges.Select(e => e.Cost).Min();
-                var edge = allValidEdges.Find(e => e.Cost == minCost);
-
-                if(edge is not null)
-                    cost = cost + edge.Cost;
+                if (allValidEdges.Count < 1)
+                {
+                    logger.Debug("No valid edge found.");
+                }
                 else
-                    logger.Debug("Outward Edge not found. Source Node {0}. Target Node {1}", route[i].OsmID, route[i+1].OsmID);
+                {
+                    minCost = allValidEdges.Select(e => e.Cost).Min();
+                    edge = allValidEdges.Find(e => e.Cost == minCost)!;
+
+                    if(edge is not null)
+                        cost = cost + edge.Cost;
+                    else
+                        logger.Debug("Outward Edge not found. Source Node {0}. Target Node {1}", route[i].OsmID, route[i+1].OsmID);
+                }
             }
 
             return cost;
