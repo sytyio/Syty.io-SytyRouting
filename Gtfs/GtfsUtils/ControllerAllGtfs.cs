@@ -69,7 +69,9 @@ namespace SytyRouting.Gtfs.GtfsUtils
 
             CleanGtfsControllers();
             AddGtfsData();
-            //debug: Clean();//:gudeb:
+            //debug:
+            Clean();
+            //:gudeb
         }
 
         private void CleanGtfsControllers()
