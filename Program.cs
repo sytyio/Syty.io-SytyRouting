@@ -47,7 +47,7 @@ namespace SytyRouting
             ///////////////////////////////////////////////
             // //  Create a new table for route results  //
             ///////////////////////////////////////////////
-            await DataBase.PersonaRouteFullTable.Create();
+            //await DataBase.PersonaRouteFullTable.Create();
             ///////////////////////////////////////////////
 
 
